@@ -1,20 +1,5 @@
 #!/usr/bin/env python
 # Copyright (C) 2018 Prayush Kumar
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 3 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-# Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
 #
 # =============================================================================
 #
@@ -22,10 +7,6 @@
 #
 # =============================================================================
 #
-#import matplotlib
-#matplotlib.use('Agg')
-#golden_ratio = (5.**0.5 + 1.)/2.
-
 import os
 import sys
 import h5py
@@ -41,10 +22,8 @@ from numpy import *
 import numpy as np
 from numpy.random import random
 
-from SupportFunctions import *
-
 ######################################################################
-__author__   = "Prayush Kumar <prkumar@cita.utoronto.ca>"
+__author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 verbose      = False
 

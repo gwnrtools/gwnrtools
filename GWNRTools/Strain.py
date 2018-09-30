@@ -1,20 +1,5 @@
 #!/usr/bin/env python
 # Copyright (C) 2018 Prayush Kumar
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 3 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
-# Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
 #
 # =============================================================================
 #
@@ -22,38 +7,30 @@
 #
 # =============================================================================
 #
-#import matplotlib
-#matplotlib.use('Agg')
-#golden_ratio = (5.**0.5 + 1.)/2.
-
 import os
 import sys
-
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
-
-from scipy.misc import derivative
-from scipy.optimize import bisect, brentq, minimize_scalar
-from scipy.integrate import simps, cumtrapz
+import h5py
 
 import commands as cmd
 import string
 from numpy import *
 import numpy as np
 from numpy.random import random
-import h5py
 
-from math import pow
+from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
+from scipy.misc import derivative
+from scipy.optimize import bisect, brentq, minimize_scalar
+from scipy.integrate import simps, cumtrapz
 
+import lal
 from pycbc.waveform import *
 from pycbc.types import *
 from pycbc.filter import *
 from pycbc.psd import from_string
-import lal
 
-from SupportFunctions import *
 
 ######################################################################
-__author__   = "Prayush Kumar <prkumar@cita.utoronto.ca>"
+__author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 verbose      = False
 
