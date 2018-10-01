@@ -1,0 +1,33 @@
+#!/bin/env python
+import numpy as np
+import h5py
+import sys
+
+verbose = False
+
+#####################################################
+def are_nans_present(fdata):
+    if hasattr(fdata, "value"):
+        d = fdata.value
+        try:
+            if np.any(np.isnan( d )):
+                return True
+        except:
+            for k in d.dtype.names:
+                if verbose:
+                    print " .. checking array ", k
+                if np.any(np.isnan( d[k] )):
+                    return True
+    else:
+        retval = np.array([])
+        for k in fdata:
+            if verbose: print "Now checking ", k
+            retval = np.append(retval, 
+                              are_nans_present( fdata[k] ) )
+        return np.any(retval)
+#####################################################
+for f in sys.argv[1:]:
+    fin = h5py.File( f )
+    print are_nans_present(fin)
+
+

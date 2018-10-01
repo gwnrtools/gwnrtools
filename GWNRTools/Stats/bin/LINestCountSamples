@@ -1,0 +1,40 @@
+#!/bin/env python
+import time
+import sys, os
+
+if len(sys.argv) < 2:
+    raise IOError("Please provide at least one argument: Path to LI error file")
+
+fnames = sys.argv[1:]
+
+if fnames[0] == "-h":
+    print """\
+This script counts the total number of actual waveform / likelihood evaluations
+in a given run of lalinference_nest. Full path of the corresponding condor 
+error file is the required input
+    """
+    exit()
+else:
+  for fname in fnames:
+    if not os.path.exists(fname):
+      raise IOError("Provided path %s does not exist!" % fname)
+
+def CountNMcmc():
+    cnt = 0
+    #fp = open(fname, "r")
+    #if True:
+    with open(fname) as fp:
+        useful_lines = [fl.rsplit() for fl in fp.readlines() if 'Nmcmc' in fl]
+        for line in useful_lines:
+            for wdx, word in enumerate(line):
+                if 'Nmcmc' in word:
+                    cnt += int(line[wdx+1])
+                    break
+    return cnt
+
+
+count = 0
+for fname in fnames:
+    count += CountNMcmc()
+print "Total steps taken: %e" % cnt
+print "Total time taken: %f" % (time.time() - _itime)
