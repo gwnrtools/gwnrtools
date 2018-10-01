@@ -1,0 +1,107 @@
+######################################################
+######################################################
+**SetupCceRun.py -- run_cce_from_data.py: 
+
+######################################################
+#1-Takes in an one head directory name for a sim. 
+    Assumptions:-
+    It has a CceData sub-directory containing Lev? subdirs, 
+    each with CCE data files.
+#2- Takes in the directory in which to set up the runs.
+
+Creates the output directory with the same name as head, 
+within the directory passed as the second argument.
+
+
+************** ******** ******** *****
+************** ******** ******** *****
+
+
+
+######################################################
+######################################################
+**SetupCceRuns.py -- make_cce_sims.py:
+
+######################################################
+#1- Takes in a directory containing all BBH run directories
+
+Runs SetupCceRun to create a run for EACH of the runs
+within *PWD*
+  Assumptions:-
+  run directories have names with CF_ and SKS_ in them.
+
+
+************** ******** ******** *****
+************** ******** ******** *****
+
+
+
+######################################################
+######################################################
+**SubmitCceRun.py -- submit_cce_sims.py:
+
+######################################################
+#1- Takes in the directory name where CCE run has been setup.
+Assumptions:-
+  Run is set up properly in each Lev? subdir.
+  The file to submit to qsub is 'Submit.input'
+
+Simply goes into each Lev? subdir and submits jobs to qsub.
+
+
+************** ******** ******** *****
+************** ******** ******** *****
+
+
+######################################################
+######################################################
+**ReSubmitCceRun.py -- resubmit_cce_sims.py:
+
+######################################################
+#1- TAkes the directory containing all CCE run directories
+
+For each Lev? subdir in each run dir, it firsts tests if the 
+run needs to be continued from where it stopped or not.
+
+
+
+************** ******** ******** *****
+************** ******** ******** *****
+
+
+######################################################
+######################################################
+** TestCompletionCceRuns.py
+
+######################################################
+#1- TAkes the directory containing all CCE run directories
+
+For each Lev? subdir in each run dir, it tests if the 
+run needs to be continued from where it stopped or not.
+
+
+
+######################################################
+######################################################
+** SubmitSelectiveRuns.py
+
+######################################################
+#1- Takes the name of the simulation directory (not full path)
+#2- Takes the FULL path where the data for different
+#   simulations is placed
+#3- Takes the FULL path to where the CCE output for different
+#   simulations is TO BE placed
+#
+# NOTE 1,2,3: 
+#  ARgs 2,3 are the paths that PREPEND the name in arg 1
+#  to finally form the FULL PATH of the exact run directory, etc
+#
+# Eg.
+#1- SKS_d14.2-q3-sA_0_0_0.6_sB_0_0_0.4
+#2- /home/p/pfeiffer/prayush/scratch/RunsForCce/
+#3- /home/p/pfeiffer/prayush/sprojects/CCE_3/
+#
+# NOTE 4: 
+#   Finally, all 3 LEVS are considered. change this
+#   as needed in the source code
+
