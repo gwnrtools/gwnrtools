@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+
+__author__  =  "Prayush Kumar <prayush.kumar@ligo.org>"
+
+import sys, os
+import h5py
+
+def copy_file_to_file(fin, fout):
+  """ Copy an entire HDF file to another open file"""
+  for l1k in fin.keys():
+    copy_group_to_file(fin[l1k], fout, l1k)
+  return
+
+def copy_group_to_file(data, fout, kk):
+  """ Copy a data group from one file to another """
+  #
+  # Create group in the outfile
+  foutkeys = [str(kkey) for kkey in fout.keys()]
+  if str(kk) not in foutkeys: fout.create_group(kk)
+  fout = fout[kk]
+  #  
+  # check all sub-groups for data sets
+  for kkey in data.keys():
+    if '.dat' in str(kkey):
+      fout.create_dataset(kkey, data=data[kkey].value)
+  #
+  # Check all sub-groups for data groups
+  for kkey in data.keys():
+    if '.dir' in str(kkey):
+      copy_group_to_file(data[kkey], fout, kkey)
+  return
+
+##############################################
+#
+# MAIN
+#
+##############################################
+
+infiles = sys.argv[1:-1]
+outfile = sys.argv[-1]
+
+print "Input files are :\n", infiles, "\nOutput to be written to : %s" % outfile
+
+openfiles = [h5py.File(fname, 'r') for fname in infiles]
+openfout  = h5py.File(outfile, 'a')
+
+
+for idx, d in enumerate(openfiles):
+  copy_file_to_file(d, openfout)
+  
+
+
+openfout.close()
+for fin in openfiles: fin.close()
