@@ -1,0 +1,6 @@
+#!/bin/sh
+PAPER=${1}
+pdflatex ${PAPER}.tex
+bibtex ${PAPER}
+pdflatex ${PAPER}.tex
+pdflatex ${PAPER}.tex
