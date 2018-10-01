@@ -1,0 +1,338 @@
+#!/usr/bin/env python
+# Copyright (C) 2014 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+#
+# =============================================================================
+#
+#                                   Preamble
+#
+# =============================================================================
+#
+import time
+start_time = time.time()
+elapsed_time = lambda: time.time()-start_time
+
+import os
+import sys
+ 
+from argparse import ArgumentParser
+
+from glue import lal
+from glue import segments
+from glue import segmentsUtils
+from glue import gpstime
+
+
+from glue import git_version
+from scipy.interpolate import interp1d
+import pylab
+from pylab import arange,pi,sin,cos,sqrt
+from numpy import loadtxt
+ 
+from pycbc.pnutils import mass1_mass2_to_mchirp_eta, f_SchwarzISCO
+from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
+from pycbc.waveform.utils import taper_timeseries
+from pycbc import DYN_RANGE_FAC
+from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as
+from pycbc.filter import match, sigmasq, resample_to_delta_t
+from math import ceil, log
+import pycbc.psd
+from pycbc.detector import overhead_antenna_pattern as generate_fplus_fcross
+
+from SupportFunctions import *
+from UseNRinDA import *
+from nr_waveform_sxs import *
+
+__author__  = "Prayush Kumar <prkumar@cita.utoronto.ca>"
+
+PROGRAM_NAME = os.path.abspath(sys.argv[0])
+
+params =  {'text.usetex': True }
+pylab.rcParams.update(params)
+ 
+
+#
+# =============================================================================
+#
+#                                   Option Parsing
+#
+# =============================================================================
+#
+use_approximants = False
+
+if use_approximants:
+  aprs = sorted(list(set(td_approximants() + fd_approximants())))
+
+parser = ArgumentParser(description="""
+
+This script does the following:\n
+    - Takes in ONE simulation directory containing evolutions at multiple Levs.\n
+    - Computes overlaps between the highest Lev waveform and all other Levs, for\n
+       a range of total mass values.\n
+    - Writes and Plots mismatches due to numerical resolution.\n
+
+""")
+
+#NR Wave Settings
+parser.add_argument("--simulation-dir", dest="sim_dir",
+                help="PATH to directory within which Lev?/rh*.h5 files reside.",
+                metavar="PATH")
+parser.add_argument("--waveform-filename", dest="sim_filename", 
+                help="PATH to directory within which Lev?/rh*.h5 files reside.",
+                metavar="PATH", default='rhOverM_Asymptotic_GeometricUnits.h5')
+parser.add_argument("--waveform-hdf-dir", dest="sim_hdf_dir", 
+                help="PATH to directory within which Lev?/rh*.h5 files reside.",
+                metavar="PATH", default='Extrapolated_N3.dir')
+                
+parser.add_argument("--total-mass-stepsize", type=float,
+                help="Stepsize with which to sweep total mass range (in MSolar).",
+                default=5.0)
+parser.add_argument("--min-total-mass", type=float,
+                help="Minimum value of total mass to sweep FROM.", default=50.0)
+parser.add_argument("--max-total-mass", type=float,
+                help="Maximum value of total mass to sweep TO.", default=100.0)
+
+parser.add_argument("--inclination", help="Source Inclination at flower Hz",
+                    type=float, default=0)
+parser.add_argument("--latitude", help="Source latitude at flower Hz",
+                    type=float, default=0)
+parser.add_argument("--longitude", help="Source longitude at flower Hz",
+                    type=float, default=0)
+parser.add_argument("--polarization", help="Source polarization at flower Hz",
+                    type=float, default=0)
+
+parser.add_argument("--modeL-min", dest="modeLmin",
+                help="From what L-modes should h_lm multipoles be included",
+                default=2, type=int)                    
+parser.add_argument("--modeL-max", dest="modeLmax",
+                help="Up to what L-modes should h_lm multipoles be included",
+                default=2, type=int)                    
+
+#Approximant Settings
+if use_approximants:
+  parser.add_argument("--template-approximant",
+                help="Waveform approximant for templates", choices=aprs,
+                default='SEOBNRv2')
+  parser.add_argument("--template-phase-order",
+                help="PN order to use for the template phase",
+                default=-1, type=int)
+  parser.add_argument("--template-amplitude-order",
+                help="PN order to use for the template amplitude",
+                default=-1, type=int)
+  parser.add_argument("--template-spin-order",
+                help="PN order to use for the template spin terms",
+                default=-1, type=int)
+  parser.add_argument("--template-start-frequency",
+                help="Starting frequency for templates [Hz]", type=float,
+                default=14.0)
+
+
+#Filtering Settings
+parser.add_argument("--sample-rate", help="Sample rate for templates [Hz]",
+                    type=float, default=8192.0)
+parser.add_argument('--low-frequency-cutoff', metavar='FREQ',
+                help='low frequency cutoff of matched filter', type=float,
+                default=15.0)
+parser.add_argument("--signal-length", 
+                help="""Length of signal for filtering, shoud be longer than all
+                 waveforms and include some padding [secs]""", type=int,
+                default=16)
+
+# add PSD options 
+#pycbc.psd.insert_psd_option_group(parser, output=False)
+parser.add_argument("--psd-model",
+                help="PSD Model for Filtering",
+                default='aLIGOZeroDetHighPower')
+
+# Output Settings
+parser.add_argument("--match-file", dest="out_file",
+                help="file to output match results", metavar="FILE",
+                default='mismatch.dat')
+parser.add_argument("--match-figure", dest="out_figname",
+                help="Filgure filename to show match results", metavar="FILE",
+                default='match.png')
+
+parser.add_argument("--verbose", action='store_true', default=False,
+                help="Print verbose statements")
+parser.add_argument("--debug", action='store_true', default=False,
+                help="Print debugging statements")
+
+
+# Parse
+options = parser.parse_args()
+
+# Verify Options
+if not os.path.exists(options.sim_dir):
+    raise IOError("Simulation directory: %s does not exist!" % options.sim_dir)
+
+if options.verbose:
+  print "Options read and verified, beginning banksim at %.2f s" % ( elapsed_time() )
+
+
+#
+# =============================================================================
+#
+#                              Read Data & Configure 
+#
+# =============================================================================
+#
+##### Filtering Settings
+filter_N = int(options.signal_length * options.sample_rate)
+filter_n = filter_N / 2 + 1
+filter_delta_f = 1.0 / float(options.signal_length)
+filter_delta_t = 1.0 / float(options.sample_rate)
+filter_flower  = float(options.low_frequency_cutoff)
+
+if use_approximants: template_flower = options.filter_sample_rate
+else: template_flower = filter_flower
+
+if options.verbose:
+  print("Reading and Interpolating PSD")
+psd = pycbc.psd.from_string(options.psd_model,
+                  filter_n, filter_delta_f, filter_flower)
+
+if options.verbose:
+  print("PSD interpolated at %fs" %(elapsed_time()))
+  print("\n\nPregenerating Signals")
+ 
+
+##### Signal Settings
+tmplt_pars = {}
+tmplt_pars['mtotal']       = options.max_total_mass
+tmplt_pars['distance']     = 1.0
+tmplt_pars['inclination']  = options.inclination
+tmplt_pars['f_lower']      = filter_flower
+
+# Sky location and polarization
+tmplt_pars['latitude'] = options.latitude
+tmplt_pars['longitude'] = options.longitude
+tmplt_pars['polarization'] = options.polarization
+
+# Extrinsic Parameters
+tmplt_pars['end_time']     = 0.0
+tmplt_pars['taper']        = True
+tmplt_pars['verbose']      = options.verbose
+
+# NR Parameters
+tmplt_pars['group_name']   = options.sim_hdf_dir
+LEVELS = ['Lev3', 'Lev4', 'Lev5']
+
+
+##### Read in NR files
+if options.verbose: print "Reading waveforms from disk.."
+
+nr_waves = {}
+for idx, lev in enumerate(LEVELS):
+    FILE = os.path.join(options.sim_dir, lev, options.sim_filename)
+    if not os.path.exists(FILE):
+      raise RuntimeError("Waveform file for %s: %s not found.." % (lev, FILE))
+    _, _, nr_wave = get_hplus_hcross_from_sxs(FILE, tmplt_pars,
+                        modeLmin=options.modeLmin, modeLmax=options.modeLmax,
+                        delta_t=filter_delta_t,
+                        verbose=options.debug, debug=options.debug)
+    nr_waves[lev] = nr_wave
+    if options.verbose: update_progress((idx+1.0) / 1.0 / len(LEVELS))
+
+
+#
+# =============================================================================
+#
+#                              Compute Overlaps
+#
+# =============================================================================
+#
+if options.verbose: print "\n\nComputing Overlaps.."
+
+##### Determine mass range for overlaps
+total_mass_range = get_uniform_mass_range( options.min_total_mass,
+                                          options.max_total_mass,
+                                          options.total_mass_stepsize)
+
+##### Determine the reference waveform
+lev_high  = LEVELS[-1]
+lev_others= LEVELS[:-1]
+
+matches = {}
+for lev in lev_others: matches[lev] = np.array([])
+
+for idx, mtotal in enumerate(total_mass_range):
+    tmplt_pars['mtotal'] = mtotal
+    tmplt_pars['taper']  = True
+    # Get lev_high waveform
+    nr_wave = nr_waves[lev_high]
+    _hp, _hc, _ = get_hplus_hcross_from_sxs(nr_wave, tmplt_pars,
+                        modeLmin=options.modeLmin, modeLmax=options.modeLmax,
+                        delta_t=filter_delta_t,
+                        verbose=options.debug, debug=options.debug)
+    wav1 = generate_detector_strain(tmplt_pars, _hp, _hc)
+    wav1 = extend_waveform_TimeSeries(wav1, filter_N)    
+    for jdx, lev in enumerate(lev_others):
+        nr_wave = nr_waves[lev]    
+        # Rescale to total mass
+        _hp, _hc, _ = get_hplus_hcross_from_sxs(nr_wave, tmplt_pars,
+                        modeLmin=options.modeLmin, modeLmax=options.modeLmax,
+                        delta_t=filter_delta_t,
+                        verbose=options.debug, debug=options.debug)
+        # Compute overlap with lev_high waveform
+        wav2 = generate_detector_strain(tmplt_pars, _hp, _hc)
+        wav2 = extend_waveform_TimeSeries(wav2, filter_N)    
+        match = overlap_between_waveforms( wav1, wav2, psd=psd, f_lower=filter_flower )
+        matches[lev] = np.append(matches[lev], match)
+    if options.verbose: update_progress((idx+1.0) / 1.0 / len(total_mass_range))
+
+
+if options.verbose: print("\nOverlaps finished at %fs" %(elapsed_time()))
+
+#
+# =============================================================================
+#
+#                              Write Output & Plot
+#
+# =============================================================================
+#
+if options.verbose: print("\n\n Writing Output to Disk and Plotting")
+
+
+with open(options.out_file, "w") as fout:
+  fout.write('# Total Mass [MSun]\n')
+  for lev in lev_others:
+    fout.write('# Mismatches between %s and %s\n' % (lev, lev_high))
+  #
+  for idx, mtotal in enumerate(total_mass_range):
+    match_str = ''
+    match_str += '%.12e\t' % mtotal            
+    for lev in lev_others: match_str += '%.18e\t' % (1.0 - matches[lev][idx])
+    match_str += '\n'
+    fout.write(match_str)
+
+
+pylab.figure(figsize=(9,6))
+pylab.hold(True)
+for lev in lev_others:
+  pylab.semilogy(total_mass_range, 1.0 - matches[lev],
+                  label='$\mathrm{%s}/\mathrm{%s}$' % (lev, lev_high),
+                  lw = 2)
+#
+pylab.legend(loc='best')
+pylab.ylim(ymin=1e-6, ymax=1)
+pylab.grid(True)
+pylab.xlabel('Total Mass $(M_\odot)$')
+pylab.ylabel('Mismatch')
+pylab.savefig(options.out_figname, dpi=400)
+
+
+if options.verbose: print "All Done!"
