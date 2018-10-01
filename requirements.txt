@@ -1,8 +1,9 @@
-numpy>=1.7
-scipy
-matplotlib
 h5py
-pytest
-pycbc
 lal
 lalsimulation
+numpy>=1.7
+matplotlib
+numexpr
+pycbc
+pytest
+scipy

@@ -7,11 +7,7 @@
 #
 # =============================================================================
 #
-from matplotlib import use
-use('Agg')
 import sys, os
-import matplotlib as plt # FIXME
-
 import h5py
 import glob
 import commands as cmd

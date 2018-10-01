@@ -7,9 +7,6 @@
 #
 # =============================================================================
 #
-from matplotlib import rc, use
-rc('text', usetex=True)
-
 import os, sys
 import time
 import numpy as np
@@ -41,20 +38,10 @@ import pycbc.pnutils as pnutils
 from pycbc.filter import match, make_frequency_series
 from pycbc.psd import from_string
 
-font = {'family' : 'normal',
-        'weight' : 'bold',
-        'size'   : 14}
-
-rc('font', **font)
-use('Agg')
-
-gratio = (5.**0.5 - 1) * 0.5
-print "Using golden ratio: %f" % gratio
 
 __author__  = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 __itime__ = time.time()
-
 
 
 ######################################################################

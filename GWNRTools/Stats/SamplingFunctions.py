@@ -22,19 +22,10 @@
 #
 # =============================================================================
 #
-from matplotlib import use
-use('Agg')
 import os, sys, time
-
 import copy as cp
 import commands as cmd
 import numpy as np
-import matplotlib
-from matplotlib import mlab, cm, use
-import matplotlib.pyplot as plt
-plt.rcParams.update({'text.usetex' : True})
-from mpl_toolkits.axes_grid1 import ImageGrid
-import seaborn as sns
 import h5py
 
 ######################################################
@@ -52,32 +43,6 @@ perc_int_95 = [2.28, 97.72]
 perc_int_99_7 = [0.13, 99.87] # 3 sigma
 
 CILevels=[90.0, 68.26895, 95.44997, 99.73002]
-
-######################################################
-# Function to make parameter bias plots
-######################################################
-linestyles = ['-', '--', '-.', '-x', '--o']
-linecolors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-plotdir = 'plots/'
-gmean = (5**0.5 + 1)/2.
-
-# Figure settings
-ppi=72.0
-aspect=(5.**0.5 - 1) * 0.5
-size=4.0 * 2# was 6
-figsize=(size,aspect*size)
-plt.rcParams.update({\
-'legend.fontsize':16, \
-'text.fontsize':16,\
-'axes.labelsize':16,\
-'font.family':'serif',\
-'font.size':16,\
-'xtick.labelsize':16,\
-'ytick.labelsize':16,\
-'figure.subplot.bottom':0.2,\
-'figure.figsize':figsize, \
-'savefig.dpi': 500.0, \
-'figure.autolayout': True})
 
 _itime = time.time()
 ######################################################################

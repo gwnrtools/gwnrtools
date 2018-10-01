@@ -23,7 +23,8 @@
 # =============================================================================
 #
 import matplotlib
-matplotlib.use('Agg')
+try: matplotlib.use('Agg')
+except: pass
 import os
 import sys
 

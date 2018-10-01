@@ -7,10 +7,7 @@
 #
 # =============================================================================
 #
-from matplotlib import use
-use('Agg')
 import os, sys, time
-
 import copy as cp
 import commands as cmd
 import numpy as np
