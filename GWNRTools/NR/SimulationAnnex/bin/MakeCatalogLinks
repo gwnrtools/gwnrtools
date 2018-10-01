@@ -1,0 +1,31 @@
+#!/bin/bash
+
+CDIR=/home/prayush/src/UseNRinDA/Scripts/SimulationAnnex/
+LDIR=IncomingLinks
+ANNEX_DIR=$(pwd)
+
+${CDIR}/PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${ANNEX_DIR}/${LDIR}/\
+ --input-tags="$(/bin/ls ${LDIR}/)"\
+ --lev-tag="Lev?"\
+ --wave-name="rhOverM_Asymptotic_GeometricUnits_CoM.h5"\
+ --output-catalog=${LDIR}\
+ --use-hdf\
+ --use-symlinks\
+ --store-path-relative-to=${ANNEX_DIR}/\
+ --use-highest-lev
+# --verbose
+
+LDIR=CatalogLinks
+
+${CDIR}/PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${ANNEX_DIR}/${LDIR}/\
+ --input-tags="$(/bin/ls ${LDIR}/)"\
+ --lev-tag="Lev?"\
+ --wave-name="rhOverM_Asymptotic_GeometricUnits_CoM.h5"\
+ --output-catalog=${LDIR}\
+ --use-hdf\
+ --use-symlinks\
+ --store-path-relative-to=${ANNEX_DIR}/\
+ --use-highest-lev
+# --verbose

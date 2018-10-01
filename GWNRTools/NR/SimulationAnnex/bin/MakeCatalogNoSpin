@@ -1,0 +1,105 @@
+#!/bin/bash
+#SIMDIR=/home/prayush/NR_waveform_data/SimulationAnnex/
+#SIMDIR=/scratch/p/pfeiffer/prayush/SimulationAnnex/
+SIMDIR=/home/prayush/src/SimulationAnnex/
+
+declare -A CATALOGS
+
+# ############ INCOMING #####################
+CATALOGS[Incoming/]=IncomingSimulationAnnex
+CATALOGS[Incoming/ChuAlignedRuns/]=IncomingChuAlignedSimulationAnnex
+CATALOGS[Incoming/nonSpinningSurrogate/]=IncomingnonSpinningSurrogateSimulationAnnex
+
+# ############# CATALOG  #####################
+CATALOGS[Catalog/NonSpinningSurrogate/]=CatalogNonSpinningSurrogateSimulationAnnex
+
+for d in Incoming/ Incoming/ChuAlignedRuns/ Incoming/nonSpinningSurrogate/ Catalog/NonSpinningSurrogate/ ; do
+
+echo "Cataloging from " ${d}
+
+DIR=${SIMDIR}/${d} ;
+CATALOG=${CATALOGS[${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep BBH_ | grep _q`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype=extrapolated \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --restrict-zero-spins \
+ --transverse-spin-threshold 0.001 \
+ --verbose ;
+
+done
+
+# ############ INCOMING #####################
+CATALOGS[Incoming/BHNS]=IncomingBHNSSimulationAnnex
+
+for d in Incoming/BHNS ; do
+
+echo "Cataloging from " ${d}
+
+DIR=${SIMDIR}/${d} ;
+CATALOG=${CATALOGS[${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep _q | grep _s`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype=extrapolated \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --restrict-zero-spins \
+ --transverse-spin-threshold 0.001 \
+ --verbose ;
+
+done
+
+# ###################################
+CATALOGS[Catalog/OldCF/]=CatalogOldCFSimulationAnnex
+CATALOGS[Catalog/q1.0/NS/]=Catalogq1_0NSSimulationAnnex
+CATALOGS[Catalog/q1.5/NS/]=Catalogq1_5NSSimulationAnnex
+CATALOGS[Catalog/q3.0/NS/]=Catalogq3_0NSSimulationAnnex
+CATALOGS[Catalog/q5.0/NS/]=Catalogq5_0NSSimulationAnnex
+CATALOGS[Catalog/q8.0/NS/]=Catalogq8_0NSSimulationAnnex
+
+
+for d in Catalog/OldCF/ Catalog/q1.0/NS/ Catalog/q1.5/NS/ Catalog/q3.0/NS/ Catalog/q5.0/NS/ Catalog/q8.0/NS/ ; do
+
+echo "Cataloging from " ${d} ;
+
+DIR=${SIMDIR}/${d} ;
+CATALOG=${CATALOGS[${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep d | grep 0`
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype=extrapolated \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --restrict-zero-spins \
+ --transverse-spin-threshold 0.001 \
+ --verbose ;
+
+ done
+
+
+# ############ JOIN THE CATALOGS ##################
+./JoinCatalogs.py \
+ --input-catalogs="`/bin/ls *.xml`" \
+ -t SimulationAnnex \
+ --verbose

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+CDIR=/home/prayush/src/UseNRinDA/catalog_scripts/
+
+${CDIR}/PopulateWaveformsInCatalog.py \
+  --nr-input-dir=/home/prayush/NR_waveform_data/dummy_SimulationAnnex/Incoming/CSUF15/Batch1 \
+  --input-tags="BBH_SKS_d14.3_q1.22_sA_0_0_0.330_sB_0_0_-0.440 BBH_SKS_d14.3_q1.22_sA_0_0_0.330_sB_0_0_-0.440ecc BBH_SKS_d14.3_q1.22_sA_0_0_0_sB_0_0_0 BBH_SKS_d14.4_q1.19_sA_0_0_0.420_sB_0_0_0.380" \
+  --lev-tag="Lev?" \
+  --wavetype=extrapolated \
+  --output-catalog=LoveLaceNew \
+  --use-hdf \
+  --use-symlinks \
+  --use-highest-lev \
+  --restrict-aligned-spins \
+  --transverse-spin-threshold 0.0001 \
+  --verbose

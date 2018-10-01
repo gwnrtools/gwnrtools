@@ -1,0 +1,81 @@
+#!/bin/bash
+SIMDIR=/home/prayush/NR_waveform_data/SimulationAnnex/
+#SIMDIR=/scratch/p/pfeiffer/prayush/SimulationAnnex/
+
+declare -A CATALOGS
+
+# ############ INCOMING #####################
+CATALOGS[Incoming/]=IncomingSimulationAnnex
+CATALOGS[Incoming/ChuAlignedRuns/]=IncomingChuAlignedSimulationAnnex
+CATALOGS[Incoming/PseudoBHNS/]=IncomingPseudoBHNSSimulationAnnex
+CATALOGS[Incoming/CSUF14/]=IncomingCSUF14SimulationAnnex
+
+# ############# CATALOG  #####################
+CATALOGS[Catalog/CSUF14/]=CatalogCSUF14SimulationAnnex
+CATALOGS[Catalog/HighSpinMethods/]=CatalogHighSpinMethodsSimulationAnnex
+
+
+for d in Incoming/ Incoming/PseudoBHNS/ Incoming/CSUF14/ Catalog/CSUF14/ Catalog/HighSpinMethods/ ; do
+
+echo "Cataloging from " ${d}
+
+DIR=${SIMDIR}/${d} ;
+CATALOG=${CATALOGS[${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep BBH_`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype=extrapolated \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --restrict-aligned-spins \
+ --transverse-spin-threshold 0.0001 \
+ --verbose ;
+
+done
+
+# ###################################
+CATALOGS[Catalog/SKS/]=CatalogSKSSimulationAnnex
+CATALOGS[Catalog/q1.0/SBBH/]=Catalogq1_0SBBHSimulationAnnex
+CATALOGS[Catalog/q1.5/SBBH/]=Catalogqq1_5SBBHSimulationAnnex
+CATALOGS[Catalog/q1.5/SSBBH/]=Catalogq1_5SSBBHSimulationAnnex
+CATALOGS[Catalog/q3.0/SBBH/]=Catalogq3_0SBBHSimulationAnnex
+CATALOGS[Catalog/q3.0/SSBBH/]=Catalogq3_0SSBBHSimulationAnnex
+CATALOGS[Catalog/q5.0/SBBH/]=Catalogq5_0SBBHSimulationAnnex
+CATALOGS[Catalog/q8.0/SBBH/]=Catalogq8_0SBBHSimulationAnnex
+
+for d in Catalog/SKS/ Catalog/q1.0/SBBH/ Catalog/q1.5/SBBH/ Catalog/q1.5/SSBBH/ Catalog/q3.0/SBBH/ Catalog/q3.0/SSBBH/ Catalog/q5.0/SBBH/ Catalog/q8.0/SBBH/ ; do
+
+echo "Cataloging from " ${d} ;
+
+DIR=${SIMDIR}/${d} ;
+CATALOG=${CATALOGS[${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep d | grep 0`
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype=extrapolated \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --restrict-aligned-spins \
+ --transverse-spin-threshold 0.0001 \
+ --verbose ;
+
+ done
+
+
+# ############ JOIN THE CATALOGS ##################
+./JoinCatalogs.py \
+ --input-catalogs="`/bin/ls *.xml`" \
+ -t SimulationAnnex \
+ --verbose

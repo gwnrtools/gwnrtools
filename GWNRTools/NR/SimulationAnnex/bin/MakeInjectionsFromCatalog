@@ -1,0 +1,13 @@
+#!/bin/bash
+
+CATALOG=${1}
+dM=${2}
+OUTCATALOG=${CATALOG##*/}
+
+/home/prayush/src/UseNRinDA/catalog_scripts/TurnCatalogIntoInjections.py \
+ --input-catalog ${CATALOG} \
+ --output-catalog ${OUTCATALOG%*.xml}-DM${dM}-Injections \
+ --upper-mass-threshold 150.0 \
+ --mass-sampling-step ${dM} \
+ --f-lower 29.0 \
+ --verbose --force-file-exists

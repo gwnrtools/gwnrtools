@@ -1,0 +1,221 @@
+#!/bin/bash
+
+## USE USER INPUT PATH TO SIMULATION ANNEX
+if [ -z "$1" ]
+  then
+    echo "Supply FULL path to SimulationAnnex";
+    exit 1
+fi
+
+#SIMDIR=/home/prayush/NR_waveform_data/SimulationAnnex/
+#SIMDIR=/scratch/p/pfeiffer/prayush/SimulationAnnex/
+SIMDIR=$1
+
+declare -A CATALOGS
+
+
+# ##############################################################
+# ############ PRECESSING-SPINNING #####################
+# ##############################################################
+
+
+# ##############################################################
+# ##############################################################
+
+
+# ############ INCOMING #####################
+CATALOGS[Incoming/4d2sB/]=Incoming4d2sBSimulationAnnex
+CATALOGS[Incoming/4d2sBecc/]=Incoming4d2sBeccSimulationAnnex
+CATALOGS[Incoming/AEIRuns/]=IncomingAEIRunsSimulationAnnex
+CATALOGS[Incoming/G268556/]=IncomingG268556SimulationAnnex
+CATALOGS[Incoming/HighSpin/]=IncomingHighSpinSimulationAnnex
+CATALOGS[Incoming/HinderAlignedRuns/]=IncomingHinderAlignedRunsSimulationAnnex
+CATALOGS[Incoming/PfeifferVis/]=IncomingPfeifferVisSimulationAnnex
+CATALOGS[Incoming/PrecBBH/]=IncomingPrecBBHSimulationAnnex
+CATALOGS[Incoming/q2_7d/]=Incomingq2_7dSimulationAnnex
+CATALOGS[Incoming/q4_7d/]=Incomingq4_7dSimulationAnnex
+CATALOGS[Incoming/q8_3dAl/]=Incomingq8_3dAlSimulationAnnex
+CATALOGS[Incoming/BHNS/]=IncomingBHNSSimulationAnnex
+
+
+
+for d in 4d2sB/ 4d2sBecc/ AEIRuns/ G268556/ HighSpin/ HinderAlignedRuns/ PfeifferVis/ PrecBBH/ q2_7d/ q4_7d/ q8_3dAl/ BHNS/ ; do
+
+echo "Cataloging from " Incoming/${d}
+
+DIR=${SIMDIR}/Incoming/${d} ;
+CATALOG=${CATALOGS[Incoming/${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep 0`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype="extrapolated finite-radius" \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --verbose ;
+
+done
+
+
+# ############# CATALOG  #####################
+CATALOGS[Catalog/AEIRuns/]=CatalogAEIRunsSimulationAnnex
+CATALOGS[Catalog/OldCF/]=CatalogOldCFSimulationAnnex
+
+
+for d in AEIRuns/ OldCF/ ; do
+
+echo "Cataloging from " Catalog/${d}
+
+DIR=${SIMDIR}/Catalog/${d} ;
+CATALOG=${CATALOGS[Catalog/${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep 0`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype="extrapolated finite-radius" \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --verbose ;
+
+done
+
+
+
+# ##############################################################
+# ##############################################################
+# ##############################################################
+
+# ############ INCOMING #####################
+CATALOGS[Incoming/./]=IncomingSimulationAnnex
+CATALOGS[Incoming/CSUF14/]=IncomingCSUF14SimulationAnnex
+CATALOGS[Incoming/CSUF15/]=IncomingCSUF15SimulationAnnex
+CATALOGS[Incoming/CSUF15/Batch1/]=IncomingCSUF15Batch1SimulationAnnex
+CATALOGS[Incoming/CSUF16/]=IncomingCSUF16SimulationAnnex
+CATALOGS[Incoming/nonSpinningSurrogate/]=IncomingnonSpinningSurrogateSimulationAnnex
+
+
+
+for d in ./ CSUF14/ CSUF15/ CSUF15/Batch1/ CSUF16/ nonSpinningSurrogate/ ; do
+
+echo "Cataloging from " Incoming/${d}
+
+DIR=${SIMDIR}/Incoming/${d} ;
+CATALOG=${CATALOGS[Incoming/${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep sA | grep sB`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype="extrapolated finite-radius" \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --verbose ;
+
+done
+
+
+# ############# CATALOG  #####################
+CATALOGS[Catalog/./]=CatalogSimulationAnnex
+CATALOGS[Catalog/ChuAlignedRuns/]=CatalogChuAlignedRunsSimulationAnnex
+CATALOGS[Catalog/CSUF14/]=CatalogCSUF14SimulationAnnex
+CATALOGS[Catalog/CSUF15/Batch1/]=CatalogCSUF15Batch1SimulationAnnex
+CATALOGS[Catalog/HighSpinMethods/]=CatalogHighSpinMethodsSimulationAnnex
+CATALOGS[Catalog/NonSpinningSurrogate/]=CatalogNonSpinningSurrogateSimulationAnnex
+CATALOGS[Catalog/PseudoBHNS/]=CatalogPseudoBHNSSimulationAnnex
+CATALOGS[Catalog/Random32/]=CatalogRandom32SimulationAnnex
+CATALOGS[Catalog/SKS/]=CatalogSKSSimulationAnnex
+
+
+for d in ./ ChuAlignedRuns/ CSUF14/ CSUF15/Batch1/ HighSpinMethods/ NonSpinningSurrogate/ PseudoBHNS/ Random32/ SXS/ ; do
+
+echo "Cataloging from " Catalog/${d}
+
+DIR=${SIMDIR}/Catalog/${d} ;
+CATALOG=${CATALOGS[Catalog/${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep sA | grep sB`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype="extrapolated finite-radius" \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --verbose ;
+
+done
+
+
+# ##############################################################
+# ##############################################################
+# ##############################################################
+
+# ############ INCOMING #####################
+
+
+
+# ############# CATALOG  #####################
+CATALOGS[Catalog/q1.0/SBBH/]=Catalogq1_0SBBHSimulationAnnex
+CATALOGS[Catalog/q1.5/SBBH/]=Catalogqq1_5SBBHSimulationAnnex
+CATALOGS[Catalog/q1.5/SSBBH/]=Catalogq1_5SSBBHSimulationAnnex
+CATALOGS[Catalog/q3.0/SBBH/]=Catalogq3_0SBBHSimulationAnnex
+CATALOGS[Catalog/q3.0/SSBBH/]=Catalogq3_0SSBBHSimulationAnnex
+CATALOGS[Catalog/q5.0/SBBH/]=Catalogq5_0SBBHSimulationAnnex
+CATALOGS[Catalog/q8.0/SBBH/]=Catalogq8_0SBBHSimulationAnnex
+CATALOGS[Catalog/q1.0/NS/]=Catalogq1_0NSSimulationAnnex
+CATALOGS[Catalog/q1.5/NS/]=Catalogq1_5NSSimulationAnnex
+CATALOGS[Catalog/q3.0/NS/]=Catalogq3_0NSSimulationAnnex
+CATALOGS[Catalog/q5.0/NS/]=Catalogq5_0NSSimulationAnnex
+CATALOGS[Catalog/q8.0/NS/]=Catalogq8_0NSSimulationAnnex
+
+
+
+for d in q1.0/SBBH/ q1.5/SBBH/ q1.5/SSBBH/ q3.0/SBBH/ q3.0/SSBBH/ q5.0/SBBH/ q8.0/SBBH/ q1.0/NS/ q1.5/NS/ q3.0/NS/ q5.0/NS/ q8.0/NS/ ; do
+
+echo "Cataloging from " Catalog/${d}
+
+DIR=${SIMDIR}/Catalog/${d} ;
+CATALOG=${CATALOGS[Catalog/${d}]} ;
+INPUT_TAGS=`/bin/ls ${DIR} | grep d`;
+echo $INPUT_TAGS ;
+
+./PopulateWaveformsInCatalog.py \
+ --nr-input-dir=${DIR} \
+ --input-tags="${INPUT_TAGS}" \
+ --lev-tag="Lev?" \
+ --wavetype="extrapolated finite-radius" \
+ --output-catalog=${CATALOG} \
+ --use-hdf \
+ --use-symlinks \
+ --use-highest-lev \
+ --verbose ;
+
+done
+
+
+
+# ############ JOIN THE CATALOGS ##################
+./JoinCatalogs.py \
+ --input-catalogs="`/bin/ls *.xml`" \
+ -t SimulationAnnex \
+ --verbose
+
+
+
