@@ -42,8 +42,8 @@ from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
 
 sys.path.append(cmd.getoutput('pwd -P'))
-import UseNRinDA
-from SupportFunctions import *
+import GWNRTools.NR as UseNRinDA
+from GWNRTools.Utils.SupportFunctions import *
 
 @lsctables.use_in
 class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
