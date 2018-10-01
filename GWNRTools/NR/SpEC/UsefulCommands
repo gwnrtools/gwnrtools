@@ -1,0 +1,29 @@
+
+## To operate on a Tensor<DataMesh> and get output into an ASCII file,
+## when the TdM is stored inside an .h5 output file ..
+
+IWD=$(pwd -P) ;
+
+for ld in $(/bin/ls -d {SXS0???/Ev/AhCMASKED_EVOLUTION,NewTestRunsNS_002/Ev_GhRDOnly/NSTEPS2_RINGDOWN_START_SEGMENTS,UltimateRun_001/Ev_GhRDOnly_003/AhCMASKED_EVOLUTION}/Lev*/{.,Lev*}/Run/* | grep ApparentHorizons) ; do 
+
+echo $ld ; 
+cd $ld ; 
+ExtractFromH5 -d "/*.dir/DetJac*.tdm" HorizonsDump.h5
+cd extracted-HorizonsDump/
+
+for d in `/bin/ls | grep dir` ; do 
+echo $d ;
+pushd $(pwd) ; 
+cd $d ; 
+PointwiseNorm -l min < DetJacInertialToHarmonic4D_KGKappasToJacobian_.dump >> DetJacInertialToHarmonic4D_KGKappasToJacobian.dat ; 
+popd ; 
+done
+
+cd $IWD ; 
+
+done
+
+
+#NdDataInfo DetJacInertialToHarmonic4D_KGKappasToJacobian_.dump
+
+ConvertH5SurfaceToVtk -c GridToInertial::MappedCoords.tdm -d InvpsiGh00.tdm,DetJacInertialToHarmonic4D_KGKappasToJacobian.tdm -s 10 HorizonsDump.h5

@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# continue a run that was started on guillimin
+# this is a quick-and-dirty script for all replacements
+#
+# Calling Sequence: 
+#  ContinueGuillimin Lev1_AO Lev1_AP
+#
+# The first argument is the last segment from Guillimin, the second
+# argument is the next segment, which will be the first to be run on 
+# GPC
+
+
+# TO USE THIS SCRIPT, ADJUST THE NEXT LINE, AND THE PATHS IN STEPS 5 and 7
+SPEC=/home/p/pfeiffer/prayush/src/SpEC/HarmonicCoordinates3/
+
+last=$1
+next=$2
+
+
+error() {
+    echo 
+    echo "ERROR"
+    echo $1
+    exit 1
+}
+
+
+echo "Segment to continue $last"
+echo "First Segment to run here $next"
+
+echo "-1- Update CoresPerNode in ${last}/MakeSubmit.input, lock to 40 cores"
+cd $last || error "cannot cd into ${last}."
+mv MakeSubmit.input MakeSubmit.input.orig
+sed -e "s/CoresPerNode = 8/CoresPerNode = 40/" \
+    -e "s/Hours = 48.0/Hours = 24.0/" \
+    -e "s/ForceCores = False/ForceCores = True/" \
+    MakeSubmit.input.orig > MakeSubmit.input
+cd -
+
+
+echo "-2- wipe $next"
+rm -rf $next
+
+
+echo "-3- MakeNextSegment"
+${SPEC}/Support/bin/MakeNextSegment -d $last -E ${SPEC}/Evolution/Executables/EvolveHyperbolicSystem -v
+
+
+echo "-3.5- adjust Processors in DoMultipleRuns"
+cd $next || error "cannot cd into ${next}. Did MakeNextSegment fail?"
+mv DoMultipleRuns.input DoMultipleRuns.input.orig
+sed -e "s,Processors = 48,Processors = 80," DoMultipleRuns.input.orig > DoMultipleRuns.input
+
+
+echo "-4- adjust TensorYlmDataBase"
+mv Evolution.input Evolution.input.orig
+DB=`grep TensorYlm ~/.SpEC`
+## FIXME
+## CHANGE THIS PATTERN MANUALLY
+sed -e "s,TensorYlmDataBaseDir = /scratch/p/pfeiffer/prayush/dbSpEC/TensorYlmDataBase;,${DB}," \
+    Evolution.input.orig > Evolution.input
+
+
+echo "-5- adjust paths in SurfaceCoefs and InitialConditions"
+for f in ApparentHorizonFinders.input GrInitialConditions.input SpatialCoordMap.input GrDataBoxItems.input WebDatabase.input ;
+do
+    mv ${f} ${f}.orig
+#### FIXME
+## CHANGE THIS PATTERN MANUALLY
+    sed -e "s,/sgfs1/scratch3/,/gpfs/fs0/scratch/," \
+	${f}.orig > ${f}
+done
+
+echo "-6- create new MakeSubmit.input"
+JOB=`MakeSubmit.py query Jobname`
+MakeSubmit.py create -J ${JOB} --cores=80 --force-cores
+
+echo "-7- fix email address and TerminationInfo"
+for f in Submit.sh MakeSubmit.input;
+do
+    mv ${f} ${f}.orig
+    sed -e "s/__EmailAddresses__//" \
+	-e "s,__TerminationInfoFile__,/home/p/pfeiffer/prayush/sprojects/STATUS.txt," \
+	${f}.orig > ${f}
+done
+
+#echo "-8- resubmit"
+#qsub Submit.sh
+
+
+

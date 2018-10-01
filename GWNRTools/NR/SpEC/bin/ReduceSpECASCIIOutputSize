@@ -1,0 +1,100 @@
+#!/usr/bin/env python
+import os, time, sys
+_itime = time.time()
+import numpy as np
+import glob
+from optparse import OptionParser
+
+## OPTION PARSING
+parser = OptionParser(
+    usage = "%prog [OPTIONS]",
+    description = "Downsample ASCII files, based on their first column that is assumed to be time.")
+
+parser.add_option("--input-files",help="All files to operate upon.",dest="files",type=str,default='')
+parser.add_option("--input-files-glob",help="Glob pattern for All files to operate upon.",dest="files_glob",type=str,default='')
+parser.add_option("--delta-x",help="Time step",type=float, default=0.5)
+parser.add_option("--downsample-by",help="Downsampling factor (integer)",type=int, default=0)
+parser.add_option("-V", "--verbose", action="store_true", help="Verbose output", default=False )
+parser.add_option("-C", "--comment", metavar="STRING", help="add the optional STRING as the process:comment", default='' )
+
+options, argv_frame_files = parser.parse_args()
+
+## Compress files independently, do not combine.
+if len(options.files_glob) >= 1:
+  print "Glob given : ", options.files_glob
+  files = glob.glob(options.files_glob)
+  if options.verbose:
+    print "Going to process :\n", files
+elif len(options.files) >= 1:
+  files = options.files.split()
+else:
+  raise IOError("Must input one of files or file globs")
+
+if options.verbose:
+    print "Will process the following files:\n", files
+dn = options.downsample_by
+dx = options.delta_x
+if dn == 0:
+    out_TAG = ("_downsampledDt%.4f" % dx).replace('.','_') + ".dat"
+else:
+    out_TAG = ("_downsampledBy%05d" % dn).replace('.','_') + ".dat"
+    
+## FUNCTIONS for IO
+def WriteDataAndClose(data, fout):
+    ndim = len(np.shape(data))
+    if ndim == 1:
+        for delem in data:
+            fout.write("%.12e\t" % delem)
+        fout.write("\n")
+    elif ndim == 2:
+        for dline in data:
+            for delem in dline:
+                fout.write("%.12e\t" % delem)
+            fout.write("\n")
+    else:
+        raise RuntimeError("Cannot write a %d-D array!" % ndim)
+    fout.close()
+    return
+
+def CompressRawFileData(data, dx=1.0):
+    # CHECK DATA, IN CASE IT IS 1-D, ASSUME THATS ONE ROW
+    if len(np.shape(data)) == 1: return data
+    ## Compute number of steps to skip
+    if dn != 0: n_skip = dn
+    else:
+        ## Get dt near start
+        dt_1 = data[1,0] - data[0,0]  
+        ## Get dt near end
+        dt_2 = data[-1,0] - data[-2,0]    
+        ## Calculate dx
+        dt_av = np.sqrt(dt_1 * dt_2)
+        n_skip = int(np.floor(dx / dt_av))
+        if options.verbose:
+            print "Using dt1, d2 = (%f, %f); <dt> = %f; NSkip = %d" % (dt_1, dt_2, dt_av, n_skip)
+    # DONT SKIP ANYTHING IF NSKIP is below 1 !!
+    if n_skip == 0: n_skip = 1
+    if options.verbose:
+        print "Should be left with %d out of %d rows.." % (np.shape(data)[0] / n_skip, np.shape(data)[0])
+    ## Store every dx'th value OR just its index
+    index_array = np.arange(0, np.shape(data)[0], n_skip)
+    if n_skip > 1: index_array = np.append(index_array, np.shape(data)[0]-1)
+    ## Get compressed data using this range of indices
+    return data[index_array,:]
+
+## MAIN
+for f in files:
+    fout_name = f.strip('.dat') + out_TAG
+    if os.path.exists(fout_name): os.system('/bin/rm -f %s' % fout_name)
+    with open(f, 'r') as fp:
+        fd = np.loadtxt(fp)
+        if options.verbose:
+            print "Reading ", f, " that has shape = ", np.shape(fd)
+            print "Writing to ", fout_name
+        fout = open(fout_name, 'w')
+        for fline in fp:
+            if fline[0] == "#":
+                fout.write(fline)
+            else: break
+        WriteDataAndClose(CompressRawFileData(fd, dx=dx), fout)
+
+print "All done in %.3f seconds" % (time.time() - _itime)

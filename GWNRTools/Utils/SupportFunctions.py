@@ -24,6 +24,7 @@ import math
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize_scalar
 
+from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as
 from pycbc.pnutils import nearest_larger_binary_number
 
 ######################################################################

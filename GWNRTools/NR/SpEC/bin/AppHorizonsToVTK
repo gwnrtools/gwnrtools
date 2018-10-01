@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+TAG=AB_
+STEP0=3240
+STEP1=3241
+
+rm ${TAG}* -rf ;
+ConvertH5SurfaceToVtk \
+                        -dir Ah?.dir \
+                        -c GridToInertialMappedCoords.tdm \
+                        -d DetJacHarmonicToGrid3D.tdm,DetJacHarmonicToGrid.tdm,DetJacHarmonicToInertial3DNew.tdm,DetJacHarmonicToGrid3DNew.tdm \
+                        -p ${TAG} \
+                        -f ${STEP0} -l ${STEP1} \
+                        -v HorizonsDump.h5
+
+
+TAG=C_
+STEP0=0
+STEP1=1
+
+rm ${TAG}* -rf ;
+ConvertH5SurfaceToVtk \
+  -dir AhC.dir \
+  -d DetJacHarmonicToGrid3D.tdm,DetJacHarmonicToGrid.tdm,DetJacHarmonicToInertial3DNew.tdm,DetJacHarmonicToGrid3DNew.tdm \
+  -p ${TAG} \
+  -f ${STEP0} -l ${STEP1} \
+  -v HorizonsDump.h5
