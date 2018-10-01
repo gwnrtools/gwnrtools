@@ -31,6 +31,6 @@ if __name__ == "__main__":
           author='Prayush Kumar',
           author_email='prayush.kumar@gmail.com',
           package_dir={'GWNRTools': 'GWNRTools'},
-          packages=['GWNRTools', 'GWNRTools.Utils'],
+          packages=['GWNRTools','GWNRTools.Cosmo','GWNRTools.DataAnalysis','GWNRTools.NR','GWNRTools.Plotting','GWNRTools.Stats','GWNRTools.Utils','GWNRTools.Waveforms'],
           requires=['numpy', 'scipy', 'pycbc', 'lal'],
     )
