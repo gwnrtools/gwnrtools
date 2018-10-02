@@ -28,7 +28,9 @@ from pycbc.types import *
 from pycbc.filter import *
 from pycbc.psd import from_string
 
-
+from GWNRTools.NR.DataContainers import nr_data
+from GWNRTools.NR.SingleMode import nr_mode
+from GWNRTools.Utils import get_time_at_frequency, zero_pad_beginning
 ######################################################################
 __author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
@@ -135,8 +137,6 @@ class nr_strain():
 ### 12: distance: distance to source (Pc, Default=1e6 or 1Mpc)
 
         """
-        from SupportFunctions import get_time_at_frequency
-        #
         self.verbose = verbose
         ##################################################################
         #   0. Ensure inputs are correct

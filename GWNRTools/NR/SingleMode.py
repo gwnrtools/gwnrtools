@@ -24,6 +24,8 @@ from scipy.integrate import simps, cumtrapz
 
 import lal
 from pycbc.types import *
+#from pycbc.types import TimeSeries
+from pycbc.waveform import phase_from_polarizations, frequency_from_polarizations
 
 ######################################################################
 __author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
@@ -68,11 +70,6 @@ Returns mode frequency as a numpy.FLOAT64 array
 [OPTIONAL]
 
         """
-        import lal
-        from pycbc.types import TimeSeries
-        from pycbc.waveform import phase_from_polarizations, frequency_from_polarizations
-        import numpy as np
-
         self.verbose   = verbose
         self.delta_t   = delta_t
         self.totalmass = None

@@ -22,6 +22,8 @@ from numpy import *
 import numpy as np
 from numpy.random import random
 
+from GWNRTools.NR.SingleMode import nr_mode
+#from .SingleMode import nr_mode
 ######################################################################
 __author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])

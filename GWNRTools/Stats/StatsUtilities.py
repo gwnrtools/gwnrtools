@@ -52,9 +52,7 @@ from sklearn.grid_search import GridSearchCV
 from statsmodels.nonparametric.kde import KDEUnivariate
 from statsmodels.nonparametric.kernel_density import KDEMultivariate
 
-from utils import *
-#from PlotOverlapsNR import make_contour_plot_multrow
-from LALInferenceUtilities import ParamLatexLabels
+from GWNRTools.Stats.LALInferenceUtilities import ParamLatexLabels
 import h5py
 
 ######################################################
