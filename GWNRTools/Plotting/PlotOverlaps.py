@@ -3,8 +3,8 @@
 
 import os, sys, commands as cmd
 import matplotlib as mp
-try: mp.use('Agg')
-except: pass
+#try: mp.use('Agg')
+#except: pass
 mp.rc('text', usetex=True)
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D

@@ -23,8 +23,8 @@
 # =============================================================================
 #
 from matplotlib import use
-try: use('Agg')
-except: pass
+#try: use('Agg')
+#except: pass
 import os, sys, time
 
 import copy as cp
