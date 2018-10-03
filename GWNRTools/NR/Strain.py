@@ -1011,10 +1011,12 @@ Compute (l,m) modes of Bondi's News function: N_lm = \dot{h}
             h_re = h_.real()
             h_im = h_.imag()
             # Here, we could use the interpolant created for each mode object
-            Nre = TimeSeries( np.gradient( h_re.data, h_re.delta_t ), \
-                          delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re) )
-            Nim = TimeSeries( np.gradient( h_im.data, h_im.delta_t ), \
-                          delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im) )
+            Nre = TimeSeries(np.gradient( h_re.data, h_re.delta_t ),
+                             delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re),
+                             epoch=h_._epoch)
+            Nim = TimeSeries(np.gradient( h_im.data, h_im.delta_t ),
+                             delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im),
+                             epoch=h_._epoch )
             self.News[modeL][modeM] = Nre + Nim * 1.0j
         return self.News
     #
@@ -1035,10 +1037,12 @@ Compute (l,m) modes of Psi4 from: \Psi_4 = - \ddot{h}
             h_re = h_.real()
             h_im = h_.imag()
             # Here, we could use the interpolant created for each mode object
-            Pre = TimeSeries( np.gradient( h_re.data, h_re.delta_t ), \
-                          delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re) )
-            Pim = TimeSeries( np.gradient( h_im.data, h_im.delta_t ), \
-                          delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im) )
+            Pre = TimeSeries(np.gradient( h_re.data, h_re.delta_t ),
+                             delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re),
+                             epoch=h_._epoch)
+            Pim = TimeSeries( np.gradient( h_im.data, h_im.delta_t ),
+                             delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im),
+                             epoch=h_._epoch)
             self.Psi4[modeL][modeM] = -1 * (Pre + Pim * 1.0j)
         return self.Psi4
     #
@@ -1060,8 +1064,9 @@ Compute dE/dt = \Sum_{l,m} ||h_lm||^2
                 print "Adding contribution to dEdt from mode ({},{})".format(modeL,modeM)
             dEdt += modeM * modeM * self.amplitudes[modeL][modeM].data * self.amplitudes[modeL][modeM].data
         dEdt *= momega.data * momega.data / 8. / np.pi
-        dEdt = TimeSeries(-1 * dEdt, delta_t = momega.delta_t,\
-                              dtype=real_same_precision_as(momega) )
+        dEdt = TimeSeries(-1 * dEdt, delta_t = momega.delta_t,
+                              dtype=real_same_precision_as(momega),
+                              epoch=momega._epoch)
         self.ValuedEdt = dEdt
         return dEdt
     #
@@ -1085,8 +1090,9 @@ Compute E = \int_0^T (dE/dt) dt, from start to end, as a function of time.
         if discrete:
             dEdt = self.dEdt(lMax=lMax)
             Edisc = cumtrapz( dEdt.data, dEdt.sample_times.data, initial=0 )
-            Edisc = TimeSeries( Edisc, delta_t=dEdt.delta_t,\
-                          dtype=real_same_precision_as(dEdt) )
+            Edisc = TimeSeries(Edisc, delta_t=dEdt.delta_t,
+                              dtype=real_same_precision_as(dEdt),
+                              epoch=dEdt._epoch)
         elif useNews:
             Nlm = self.get_bondi_news_modes()
             Edisc = None
@@ -1098,8 +1104,9 @@ Compute E = \int_0^T (dE/dt) dt, from start to end, as a function of time.
                     Edisc = cumtrapz( AbsNlm.data, AbsNlm.sample_times.data, initial=0 )
                 else:
                     Edisc += cumtrapz( AbsNlm.data, AbsNlm.sample_times.data, initial=0 )
-            Edisc = TimeSeries(Edisc, delta_t=AbsNlm.delta_t,\
-                               dtype=real_same_precision_as(AbsNlm))
+            Edisc = TimeSeries(Edisc, delta_t=AbsNlm.delta_t,
+                               dtype=real_same_precision_as(AbsNlm),
+                               epoch=dEdt._epoch)
         else:
             raise IOError("supply an integration method..?")
         self.ValueE = Edisc / 16. / np.pi
@@ -1126,8 +1133,9 @@ Compute J = [FIXME], from start to end, as a function of time.
                     Jdisc = modeM * cumtrapz( prodJh.data, prodJh.sample_times.data, initial=0 )
                 else:
                     Jdisc +=  modeM * cumtrapz( prodJh.data, prodJh.sample_times.data, initial=0 )
-            Jdisc = TimeSeries( Jdisc, delta_t=Nlm[2][2].delta_t,\
-                            dtype=real_same_precision_as(Nlm[2][2]))
+            Jdisc = TimeSeries(Jdisc, delta_t=Nlm[2][2].delta_t,
+                              dtype=real_same_precision_as(Nlm[2][2]),
+                              epoch=Nlm[2][2]._epoch)
         else:
             raise IOError("supply an integration method..?")
         self.ValueJ = Jdisc / 16. / np.pi
