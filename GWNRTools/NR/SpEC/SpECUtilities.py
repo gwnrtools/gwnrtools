@@ -8,6 +8,7 @@ import h5py
 import glob
 import numpy as np
 import re
+from GWNRTools.Utils import find_nearest
 
 verbose = False
 
