@@ -47,7 +47,6 @@ from scipy.optimize import minimize_scalar
 import scipy.integrate as si
 import scipy.optimize as so
 from sklearn.neighbors import KernelDensity
-from sklearn.grid_search import GridSearchCV
 
 from statsmodels.nonparametric.kde import KDEUnivariate
 from statsmodels.nonparametric.kernel_density import KDEMultivariate
