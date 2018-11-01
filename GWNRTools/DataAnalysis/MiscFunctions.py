@@ -53,6 +53,15 @@ __itime__ = time.time()
 ######################################################################
 
 #############################
+def get_unique_hex_tag(N = 1, num_digits = 10):
+  import random
+  if N == 1:
+    return '%0{}x'.format(num_digits) % random.randrange(16**num_digits)
+  else:
+    return ['%0{}x'.format(num_digits) % random.randrange(16**num_digits)\
+                                                        for i in range(N)]
+
+#############################
 def get_uniform_mass_range( m_lower, m_upper, m_sep ):
   #{{{
   mlist = [m_lower]
@@ -104,3 +113,7 @@ def get_chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
         else: den = A1 * m1_2
     chip = num / den; #  chip = max(A1 Sp1, A2 Sp2) / (A_i m_i^2) for i index of larger BH (See Eqn. 32 in technical document)
     return chip
+
+def get_q_from_eta(eta):
+  import numpy as np
+  return ((1. - 2.*eta + np.sqrt(1. - 4.*eta))/(2.*eta))

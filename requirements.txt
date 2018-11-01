@@ -1,9 +1,11 @@
 h5py
-lal
-lalsimulation
 numpy>=1.7
 matplotlib
 numexpr
-pycbc
 pytest
 scipy
+sklearn
+statsmodels
+#lal
+#lalsimulation
+#pycbc

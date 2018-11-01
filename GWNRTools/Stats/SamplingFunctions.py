@@ -59,36 +59,40 @@ verbose      = True
 #
 ######################################################################
 ######################################################################
+uniform_bound = np.random.uniform
+
 def uniform_CompactObject_massratio(N, q_min, q_max):
-    return np.random.uniform(q_min, q_max, N)
+    return uniform_bound(q_min, q_max, N)
 
 def uniform_CompactObject_mass(N, comp_min, comp_max):
-    return np.random.uniform(comp_min, comp_max, N)
+    return uniform_bound(comp_min, comp_max, N)
 
 def zero_distribution(N):
     return np.zeros(N)
 
 def uniform_spin_magnitude(N, a_min, a_max):
-    return np.random.uniform(a_min, a_max, N)
+    return uniform_bound(a_min, a_max, N)
 
 def coalescence_time(N, t_min=1170720018., t_max=1170806417.):
-    return np.random.uniform(t_min, t_max, N)
+    return uniform_bound(t_min, t_max, N)
 
 def uniform_in_cos_angle(N,costheta_min=-1, costheta_max=1, offset=0.):
     return np.arccos(np.random.uniform(costheta_min,costheta_max,N)) + offset
 
 def uniform_in_angle(N,theta_min=0., theta_max=2.*np.pi, offset=0.):
-    return np.random.uniform(theta_min,theta_max,N) + offset
+    return uniform_bound(theta_min,theta_max,N) + offset
 
 def CubeToUniformOnS2(u, v):
     """
     Taking in 2 random numbers drawn from U[0,1], and returns 2 that
-    are uniformly distributed over the surface of a 2-sphere
+    are uniformly distributed over the surface of a unit 2-sphere
     """
     if np.any(u < 0) or np.any(u > 1) or np.any(v < 0) or np.any(v > 1):
         raise IOError("Both inputs should be in [0,1]")
     return [2.*np.pi*u, np.arccos(2.*v - 1.)]
 
+def uniform_in_volume_distance(N, d_min, d_max):
+    return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1./3.)
 
 
 
