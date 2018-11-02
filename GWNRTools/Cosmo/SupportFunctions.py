@@ -11,7 +11,6 @@ import os, sys, time
 import copy as cp
 import commands as cmd
 import numpy as np
-import seaborn as sns
 import h5py
 
 import numexpr as ne

@@ -35,7 +35,6 @@ from matplotlib import mlab, cm, use
 import matplotlib.pyplot as plt
 plt.rcParams.update({'text.usetex' : True})
 from mpl_toolkits.axes_grid1 import ImageGrid
-import seaborn as sns
 
 from pydoc import help
 from scipy import stats
