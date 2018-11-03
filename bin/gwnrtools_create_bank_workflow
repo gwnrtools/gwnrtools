@@ -505,11 +505,12 @@ with open(dagfilename, "w") as fout:
 ########################### Submit the DAG #############################
 #########################################################################
 print """\
-Template bank generation algorithm is set to run in {},
-and the workflow is written to {}.
-Now run:
+Template bank generation algorithm is set to run in {}.
+Now:
+1) Place a seed bank as banks/bank_000000.xml
+2) Submit the DAG to Condor
 
   $ condor_submit_dag {}
 
-to submit the workflow.
-""".format(options.run_directory, dagfilename, dagfilename)
+to run the workflow.
+""".format(options.run_directory, dagfilename)
