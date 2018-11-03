@@ -51,6 +51,7 @@ pre-existing "old_bank". This is done to ensure that these new points are
 minimally overlapping in terms of the parameter space volume that they cover.
 """, formatter_class=argparse.RawTextHelpFormatter)
 
+# Sampling Parameters
 parser.add_argument("--iteration-id", dest="iid",
                     help="The index of the iteration",
                     type=int)
@@ -69,6 +70,76 @@ parser.add_argument("--old-bank",
 be a mchirp_window away""",
                     default="",
                     type=str)
+
+# Physical parameter ranges
+parser.add_argument('--component-mass-min',
+                    help="Minimum value allowed for component masses",
+                    default=5.0,
+                    type=float)
+parser.add_argument('--component-mass-max',
+                    help="Maximum value allowed for component masses",
+                    default=50.0,
+                    type=float)
+parser.add_argument('--total-mass-max',
+                    help="Maximum value allowed for total mass",
+                    default=100.0,
+                    type=float)
+
+parser.add_argument('--spin-mag-min',
+                    help="Minimum value allowed for component spin magnitudes",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--spin-mag-max',
+                    help="Maximum value allowed for component spin magnitudes",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--spin-component-min',
+                    help="Minimum value allowed for component spin x,y,z comps",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--spin-component-max',
+                    help="Maximum value allowed for component spin x,y,z comps",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--eccentricity-min',
+                    help="Minimum value allowed for eccentricity",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--eccentricity-max',
+                    help="Maximum value allowed for eccentricity",
+                    default=0.4,
+                    type=float)
+
+parser.add_argument('--inclination-min',
+                    help="Minimum value allowed for inclination angle",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--inclination-max',
+                    help="Maximum value allowed for inclination angle",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--mean-per-ano-min',
+                    help="Minimum value allowed for mean periastron anomaly",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--mean-per-ano-max',
+                    help="Maximum value allowed for mean periastron anomaly",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--long-asc-nodes-min',
+                    help="Minimum value allowed for longitude of ascending nodes",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--long-asc-nodes-max',
+                    help="Maximum value allowed for the longitude of ascending node",
+                    default=0.0,
+                    type=float)
+
+# Match parameters
 parser.add_argument('-w', '--mchirp-window', metavar='MC_WIN',
                     dest="mchirp_window",
                     help="""Fractional window on mchirp parameter. If waveform
@@ -81,6 +152,7 @@ parser.add_argument('-e', '--eccentricity-window', metavar='E0_WIN',
                     default=0.0,
                     type=float)
 
+# Others
 parser.add_argument("--output-prefix",
                     help="""Prefix to the name of the new bank, formatted
 finally as 'output_prefix' + '%%06d.xml'.""",
@@ -105,31 +177,31 @@ print "eccentricity-window = %f" % (options.ecc_window)
 #########################################################################
 
 ################### Parameter Ranges ##################
-mass_min   = 5.
-mass_max   = 50.
+mass_min   = options.component_mass_min
+mass_max   = options.component_mass_max
 eta_max    = 0.25
-mtotal_max = 100.
+mtotal_max = options.total_mass_max
 
-smag_min = 0.0
-smag_max = 0.0
+smag_min = options.spin_mag_min
+smag_max = options.spin_mag_max
 
-sxyz_min = 0.0
-sxyz_max = 0.0
+sxyz_min = options.spin_component_min
+sxyz_max = options.spin_component_max
 
-ecc_min = 0.
-ecc_max = 0.2
+ecc_min = options.eccentricity_min
+ecc_max = options.eccentricity_max
 
-mean_per_ano_min = 0.
-mean_per_ano_max = 0.
+mean_per_ano_min = options.mean_per_ano_min
+mean_per_ano_max = options.mean_per_ano_max
 
-long_asc_nodes_min = 0.
-long_asc_nodes_max = 0.
+long_asc_nodes_min = options.long_asc_nodes_min
+long_asc_nodes_max = options.long_asc_nodes_max
 
 coa_phase_min = 0.
 coa_phase_max = 0.
 
-inc_min = 0.
-inc_max = 0.
+inc_min = options.inclination_min
+inc_max = options.inclination_max
 
 dist_min = 1.e6
 dist_max = 1.e6

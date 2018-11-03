@@ -33,23 +33,79 @@ parser.add_argument("--elimination-dir", metavar="STRING",
                     default='testpoints_eliminated/')
 
 # Physics related inputs
-parser.add_argument("--component-mass-min",
-                    help="Minimun mass of each compact object",
-                    default=5.0,
-                    type=float)
-parser.add_argument("--component-mass-max",
-                    help="Maximun mass of each compact object",
-                    default=50.0,
-                    type=float)
-parser.add_argument("--total-mass-max",
-                    help="Maximun total mass of the binary",
-                    default=100.0,
-                    type=float)
-
 parser.add_argument("--waveform-approximant",
                     help="Waveform model to use in match computations",
                     default="EccentricFD",
                     type=str)
+
+# Parameter ranges
+parser.add_argument('--component-mass-min',                                                                                                                                     
+                    help="Minimum value allowed for component masses",                                                                                                          
+                    default=5.0,                                                                                                                                                
+                    type=float)                                                                                                                                                 
+parser.add_argument('--component-mass-max',                                                                                                                                     
+                    help="Maximum value allowed for component masses",                                                                                                          
+                    default=50.0,                                                                                                                                               
+                    type=float)                                                                                                                                                 
+parser.add_argument('--total-mass-max',                                                                                                                                         
+                    help="Maximum value allowed for total mass",                                                                                                                
+                    default=100.0,
+                    type=float)                                                                                                                                                 
+
+parser.add_argument('--spin-mag-min',                                                                                                                                           
+                    help="Minimum value allowed for component spin magnitudes",                                                                                                 
+                    default=0.0,                                                                                                                                                
+                    type=float)                                                                                                                                                 
+parser.add_argument('--spin-mag-max',                                                                                                                                           
+                    help="Maximum value allowed for component spin magnitudes",                                                                                                 
+                    default=0.0,                                                                                                                                                
+                    type=float)
+
+parser.add_argument('--spin-component-min',                                                                                                                                     
+                    help="Minimum value allowed for component spin x,y,z comps",                                                                                                
+                    default=0.0,
+                    type=float)                                                                                                                                                 
+parser.add_argument('--spin-component-max',
+                    help="Maximum value allowed for component spin x,y,z comps",                                                                                                
+                    default=0.0,
+                    type=float)                                                                                                                                                 
+
+parser.add_argument('--eccentricity-min',
+                    help="Minimum value allowed for eccentricity",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--eccentricity-max',
+                    help="Maximum value allowed for eccentricity",                                                                                                              
+                    default=0.4,                                                                                                                                                
+                    type=float)
+                    
+parser.add_argument('--inclination-min',                                                                                                                                        
+                    help="Minimum value allowed for inclination angle",                                                                                                         
+                    default=0.0,
+                    type=float)
+parser.add_argument('--inclination-max',                                                                                                                                        
+                    help="Maximum value allowed for inclination angle",                                                                                                         
+                    default=0.0,
+                    type=float)                                                                                                                                                 
+                    
+parser.add_argument('--mean-per-ano-min',                                                                                                                                       
+                    help="Minimum value allowed for mean periastron anomaly",                                                                                                   
+                    default=0.0,
+                    type=float)
+parser.add_argument('--mean-per-ano-max',                                                                                                                                       
+                    help="Maximum value allowed for mean periastron anomaly",                                                                                                   
+                    default=0.0,                                                                                                                                                
+                    type=float)                                                                                                                                                 
+
+parser.add_argument('--long-asc-nodes-min',                                                                                                                                     
+                    help="Minimum value allowed for longitude of ascending nodes",                                                                                              
+                    default=0.0,                                                                                                                                                
+                    type=float)                                                                                                                                                 
+parser.add_argument('--long-asc-nodes-max',                                                                                                                                     
+                    help="Maximum value allowed for the longitude of ascending node",                                                                                           
+                    default=0.0,
+                    type=float)                                                                                                                                                 
+
 
 # Bank design related inputs
 parser.add_argument("--num-iterations",
@@ -107,6 +163,12 @@ def get_tag(wav): return str(wav.simulation_id.column_name)
 #########################################################################
 #################### Initialize input/output files/tables ###############
 #########################################################################
+# Bank parameters
+NUM_OUTER_ITERS = options.num_iterations
+NUM_NEW_POINTS  = options.num_test_points_per_iteration
+ELIM_DIR        = options.elimination_dir
+MM              = options.mm
+
 # Sampling related parameters
 mass_min   = options.component_mass_min
 mass_max   = options.component_mass_max
@@ -118,12 +180,6 @@ mchirp_min = (2. * mass_min) * (eta_max**0.6)
 MCHIRP_MIN = np.floor(mchirp_min)
 MCHIRP_MAX = np.ceil(mchirp_max)
 
-# Make sure it does not become impossible to sample new testpoints
-# with the input mchirp_window and num_test_points_each_iteration
-x = (MCHIRP_MAX - MCHIRP_MIN) / NUM_NEW_POINTS
-if MCHIRP_WIN_TP > x:
-    MCHIRP_WIN_TP = 0.7 * x
-
 # Optimization window parameters
 MCHIRP_WIN_MATCH = options.mchirp_window_for_match
 ECC_WIN_MATCH    = options.eccentricity_window_for_match
@@ -131,11 +187,13 @@ MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
 ECC_WIN_TP       = options.eccentricity_window_for_testpoints
 K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
 
-# Bank parameters
-NUM_OUTER_ITERS = options.num_iterations
-NUM_NEW_POINTS  = options.num_test_points_per_iteration
-ELIM_DIR        = options.elimination_dir
-MM              = options.mm
+# Make sure it does not become impossible to sample new testpoints
+# with the input mchirp_window and num_test_points_each_iteration
+x = (MCHIRP_MAX - MCHIRP_MIN) / NUM_NEW_POINTS
+if MCHIRP_WIN_TP > x:
+    print """\t\t the mchirp window you supplied for sampling test points you
+provided, i.e. {}, is too big. Changing it to {}""".format(MCHIRP_WIN_TP, 0.5*x)
+    MCHIRP_WIN_TP = 0.5 * x
 
 # Make Directories
 options.run_directory = os.path.abspath(options.run_directory)
@@ -170,6 +228,14 @@ getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
 executable = choose_testpoints.py
 arguments = --iteration-id=$(Job_IID) --num-new-points=$(Num_New_Points) %s
+            --long-asc-nodes-min=%f --long-asc-nodes-max=%f %s
+            --mean-per-ano-min=%f --mean-per-ano-max=%f %s
+            --inclination-min=%f --inclination-max=%f %s
+            --eccentricity-min=%f --eccentricity-max=%f %s
+            --spin-component-min=%f --spin-component-max=%f %s
+            --spin-mag-min=%f --spin-mag-max=%f %s
+            --component-mass-min=%f --component-mass-max=%f %s
+            --total-mass-max=%f %s
             --mchirp-window=$(Mchirp_Window) %s
             --eccentricity-window=$(Ecc_Window) %s
             --output-prefix=$(OutFile_Prefix) --verbose
@@ -178,7 +244,16 @@ error = err/choose_testpoints_err.$(cluster)
 output = out/choose_testpoints_out.$(cluster)
 log = log/choose_testpoints_log.$(cluster)
 queue 1
-""" % ('\\', '\\', '\\')
+""" % ('\\',\
+        options.long_asc_nodes_min, options.long_asc_nodes_max, '\\',\
+        options.mean_per_ano_min, options.mean_per_ano_max, '\\',\
+        options.inclination_min, options.inclination_max, '\\',\
+        options.eccentricity_min, options.eccentricity_max, '\\',\
+        options.spin_component_min, options.spin_component_max, '\\',\
+        options.spin_mag_min, options.spin_mag_max, '\\',\
+        options.component_mass_min, options.component_mass_max, '\\',\
+        options.total_mass_max, '\\',\
+         '\\', '\\')
 
 submit_file_texts['split_table_geometrically.py'] = """\
 universe = vanilla
