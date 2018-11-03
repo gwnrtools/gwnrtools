@@ -107,6 +107,36 @@ def get_tag(wav): return str(wav.simulation_id.column_name)
 #########################################################################
 #################### Initialize input/output files/tables ###############
 #########################################################################
+# Sampling related parameters
+mass_min   = options.component_mass_min
+mass_max   = options.component_mass_max
+eta_max    = 0.25
+mtotal_max = options.total_mass_max
+mchirp_max = (2. * mass_max) * (eta_max**0.6)
+mchirp_min = (2. * mass_min) * (eta_max**0.6)
+
+MCHIRP_MIN = np.floor(mchirp_min)
+MCHIRP_MAX = np.ceil(mchirp_max)
+
+# Make sure it does not become impossible to sample new testpoints
+# with the input mchirp_window and num_test_points_each_iteration
+x = (MCHIRP_MAX - MCHIRP_MIN) / NUM_NEW_POINTS
+if MCHIRP_WIN_TP > x:
+    MCHIRP_WIN_TP = 0.7 * x
+
+# Optimization window parameters
+MCHIRP_WIN_MATCH = options.mchirp_window_for_match
+ECC_WIN_MATCH    = options.eccentricity_window_for_match
+MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
+ECC_WIN_TP       = options.eccentricity_window_for_testpoints
+K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
+
+# Bank parameters
+NUM_OUTER_ITERS = options.num_iterations
+NUM_NEW_POINTS  = options.num_test_points_per_iteration
+ELIM_DIR        = options.elimination_dir
+MM              = options.mm
+
 # Make Directories
 options.run_directory = os.path.abspath(options.run_directory)
 commands.getoutput("mkdir -pv {}".format(options.run_directory))
@@ -157,14 +187,14 @@ accounting_group = ligo.dev.o3.cbc.explore.test
 executable = split_table_geometrically.py
 arguments = --tmplt-bank=$(Bank_To_Split) --named=$(Split_Prefix) %s
             --num=$(N_Split) --mchirp-window=$(Mchirp_Window) %s
-            --mchirp-min=4. --mchirp-max=44.0 %s
+            --mchirp-min=%f --mchirp-max=%f %s
             --verbose
 
 error = err/split_table_geometrically_err.$(cluster)
 output = out/split_table_geometrically_out.$(cluster)
 log = log/split_table_geometrically_log.$(cluster)
 queue 1
-""" % ('\\', '\\', '\\')
+""" % ('\\', '\\', MCHIRP_MIN, MCHIRP_MAX, '\\')
 
 submit_file_texts['remove_eliminated_testpoints.py'] = """\
 universe = vanilla
@@ -234,31 +264,6 @@ for submit_file in submit_file_texts:
 #########################################################################
 ########################## Write the DAG ###############################
 #########################################################################
-# Sampling related parameters
-mass_min   = options.component_mass_min
-mass_max   = options.component_mass_max
-eta_max    = 0.25
-mtotal_max = options.total_mass_max
-mchirp_max = (2. * mass_max) * (eta_max**0.6)
-mchirp_min = (2. * mass_min) * (eta_max**0.6)
-
-MCHIRP_MIN = np.floor(mchirp_min)
-MCHIRP_MAX = np.ceil(mchirp_max)
-
-# Optimization window parameters
-MCHIRP_WIN_MATCH = options.mchirp_window_for_match
-ECC_WIN_MATCH    = options.eccentricity_window_for_match
-MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
-ECC_WIN_TP       = options.eccentricity_window_for_testpoints
-K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
-
-# Bank parameters
-NUM_OUTER_ITERS = options.num_iterations
-NUM_NEW_POINTS  = options.num_test_points_per_iteration
-ELIM_DIR        = options.elimination_dir
-MM              = options.mm
-
-
 # Deduce DAG number
 list_of_existing_dags = glob.glob('create_bank_*.dag')
 if len(list_of_existing_dags) > 0:

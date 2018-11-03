@@ -33,5 +33,5 @@ if __name__ == "__main__":
           package_dir={'GWNRTools': 'GWNRTools'},
           packages=['GWNRTools','GWNRTools.Cosmo','GWNRTools.DataAnalysis','GWNRTools.NR','GWNRTools.Plotting','GWNRTools.Stats','GWNRTools.Utils','GWNRTools.Waveforms'],
           requires=['numpy', 'scipy', 'pycbc', 'lal'],
-          scripts=['bin/Utils/makepdf'],
+          scripts=['bin/Utils/makepdf','bin/gwnrtools_create_bank_workflow','bin/banksim_generic.py','bin/choose_testpoints.py','bin/choose_best_testpoints.py','bin/remove_eliminated_testpoints.py','bin/split_table_geometrically.py'],
     )
