@@ -10,8 +10,10 @@ import commands
 
 #ctx = CUDAScheme()
 
+__dir__    = os.path.dirname(os.path.realpath(__file__))
 __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
+
 #########################################################################
 ####################       Input parsing     #####################
 #########################################################################
@@ -127,8 +129,7 @@ useful_scripts = ['choose_testpoints.py',
     'banksim_generic.py',
     'choose_best_testpoints.py']
 for s in useful_scripts:
-    commands.getoutput("cp {} {}/".format(os.path.join(\
-                              os.path.dirname(os.path.realpath(__file__)), s),
+    print commands.getoutput("cp {} {}/".format(os.path.join(__dir__, s),\
                               options.run_directory))
 
 # Write Submit files
