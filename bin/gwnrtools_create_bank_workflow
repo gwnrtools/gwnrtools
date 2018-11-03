@@ -1,0 +1,514 @@
+#!/usr/bin/env python
+import time
+_itime = time.time()
+import sys
+import os
+import glob
+import argparse
+import numpy as np
+import commands
+
+#ctx = CUDAScheme()
+
+__author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
+PROGRAM_NAME = os.path.abspath(sys.argv[0])
+#########################################################################
+####################       Input parsing     #####################
+#########################################################################
+#{{{
+parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
+Sets up a run directory and DAG for creation of template bank
+
+**NOTE on Restart**: Restart is possible. We will ignore testpoints or 
+  intermediate results, and restart from the most recent available completed
+  bank.
+""", formatter_class=argparse.RawTextHelpFormatter)
+
+# IO related inputs
+parser.add_argument("--run-directory", help="The run directory", type=str)
+parser.add_argument("--elimination-dir", metavar="STRING",
+                    help="Where are hashes of eliminated proposals stored?",
+                    default='testpoints_eliminated/')
+
+# Physics related inputs
+parser.add_argument("--component-mass-min",
+                    help="Minimun mass of each compact object",
+                    default=5.0,
+                    type=float)
+parser.add_argument("--component-mass-max",
+                    help="Maximun mass of each compact object",
+                    default=50.0,
+                    type=float)
+parser.add_argument("--total-mass-max",
+                    help="Maximun total mass of the binary",
+                    default=100.0,
+                    type=float)
+
+parser.add_argument("--waveform-approximant",
+                    help="Waveform model to use in match computations",
+                    default="EccentricFD",
+                    type=str)
+
+# Bank design related inputs
+parser.add_argument("--num-iterations",
+                    help="No of iterations for sample->reject->add",
+                    default=100,
+                    type=int)
+parser.add_argument("--num-test-points-per-iteration",
+                    help="No of sample points chosen in each iteration",
+                    default=500,
+                    type=int)
+parser.add_argument("--mchirp-window-for-testpoints",
+                    help="Mchirp window used while sampling new test points",
+                    default=0.01,
+                    type=float)
+parser.add_argument("--eccentricity-window-for-testpoints",
+                    help="Eccentricity window used while sampling new test points",
+                    default=0.02,
+                    type=float)
+
+# Filtering related inputs
+parser.add_argument("--mchirp-window-for-match",
+                    help="Mchirp window used while computing matches",
+                    default=0.4,
+                    type=float)
+parser.add_argument("--eccentricity-window-for-match",
+                    help="Eccentricity window used while computing matches.",
+                    default=0.2,
+                    type=float)
+parser.add_argument("--minimal-match",
+                    dest="mm",
+                    default=0.97,
+                    type=float)
+parser.add_argument("--batch-size-for-match",
+                    help="batch size for match computation (default is good!)",
+                    default=10,
+                    type=int)
+
+# Miscellaneous
+parser.add_argument("-V", "--verbose", action="store_true",
+                    help="print extra debugging information",
+                    default=False )
+parser.add_argument("-C", "--comment", metavar="STRING",
+                    help="add the optional STRING as the process:comment",
+                    default='' )
+
+options = parser.parse_args()
+#}}}
+
+#########################################################################
+####################### Functions to do things         ##################
+#########################################################################
+# Miscellaneous
+def get_tag(wav): return str(wav.simulation_id.column_name)
+
+#########################################################################
+#################### Initialize input/output files/tables ###############
+#########################################################################
+# Make Directories
+options.run_directory = os.path.abspath(options.run_directory)
+commands.getoutput("mkdir -pv {}".format(options.run_directory))
+os.chdir(options.run_directory)
+useful_directories = ['testpoints', 'testpoints_subparts',
+    'testpoints_sufficiently_far', 'testpoints_sufficiently_far_subparts',
+    options.elimination_dir,
+    'banks', 'banks_subparts',
+    'matches', 'matches_sufficiently_far',
+    'out', 'err', 'log']
+if not os.path.exists(options.run_directory):
+    commands.getoutput("mkdir -p {}".format(options.run_directory))
+for d in useful_directories:
+    commands.getoutput("mkdir -p {}".format(os.path.join(options.run_directory, d)))
+
+# Copy over scripts
+useful_scripts = ['choose_testpoints.py',
+    'split_table_geometrically.py',
+    'remove_eliminated_testpoints.py',
+    'banksim_generic.py',
+    'choose_best_testpoints.py']
+for s in useful_scripts:
+    commands.getoutput("cp {} {}/".format(os.path.join(\
+                              os.path.dirname(os.path.realpath(__file__)), s),
+                              options.run_directory))
+
+# Write Submit files
+submit_file_texts = {}
+submit_file_texts['choose_testpoints.py'] = """\
+universe = vanilla
+getenv = true
+accounting_group = ligo.dev.o3.cbc.explore.test
+executable = choose_testpoints.py
+arguments = --iteration-id=$(Job_IID) --num-new-points=$(Num_New_Points) %s
+            --mchirp-window=$(Mchirp_Window) %s
+            --eccentricity-window=$(Ecc_Window) %s
+            --output-prefix=$(OutFile_Prefix) --verbose
+
+error = err/choose_testpoints_err.$(cluster)
+output = out/choose_testpoints_out.$(cluster)
+log = log/choose_testpoints_log.$(cluster)
+queue 1
+""" % ('\\', '\\', '\\')
+
+submit_file_texts['split_table_geometrically.py'] = """\
+universe = vanilla
+getenv = true
+accounting_group = ligo.dev.o3.cbc.explore.test
+executable = split_table_geometrically.py
+arguments = --tmplt-bank=$(Bank_To_Split) --named=$(Split_Prefix) %s
+            --num=$(N_Split) --mchirp-window=$(Mchirp_Window) %s
+            --mchirp-min=4. --mchirp-max=44.0 %s
+            --verbose
+
+error = err/split_table_geometrically_err.$(cluster)
+output = out/split_table_geometrically_out.$(cluster)
+log = log/split_table_geometrically_log.$(cluster)
+queue 1
+""" % ('\\', '\\', '\\')
+
+submit_file_texts['remove_eliminated_testpoints.py'] = """\
+universe = vanilla
+getenv = true
+accounting_group = ligo.dev.o3.cbc.explore.test
+executable = remove_eliminated_testpoints.py
+arguments = --proposal-file-name=$(Prop_File) %s
+            --new-proposal-file-name=$(New_Prop_File) %s
+            --match-file-name-glob=$(Match_Glob) %s
+            --minimal-match=$(MM) --verbose
+
+error = err/remove_eliminated_testpoints_err.$(cluster)
+output = out/remove_eliminated_testpoints_out.$(cluster)
+log = log/remove_eliminated_testpoints_log.$(cluster)
+queue 1
+""" % ('\\', '\\', '\\')
+
+submit_file_texts['banksim_generic.py'] = """\
+universe = vanilla
+getenv = true
+accounting_group = ligo.dev.o3.cbc.explore.test
+executable = banksim_generic.py
+arguments = --verbose --bank-file-name=$(Bank_File) %s
+            --proposal-file-name=$(Prop_File) %s
+            --match-file-name=$(Match_File) %s
+            --bank-batch-size=%d %s
+            --proposal-batch-size=%s %s
+            --bank-approximant=%s %s
+            --proposal-approximant=%s %s
+            --mchirp-window=$(Mchirp_Window) %s
+            --eccentricity-window=$(Ecc_Window) %s
+            --eliminate --elimination-dir=$(Elim_Dir)
+
+error = err/banksim_generic_err.$(cluster)
+output = out/banksim_generic_out.$(cluster)
+log = log/banksim_generic_log.$(cluster)
+queue 1
+""" % ('\\', '\\', '\\', options.batch_size_for_match, '\\',\
+        options.batch_size_for_match, '\\',\
+        options.waveform_approximant, '\\',\
+        options.waveform_approximant, '\\', '\\', '\\')
+
+submit_file_texts['choose_best_testpoints.py'] = """\
+universe = vanilla
+getenv = true
+accounting_group = ligo.dev.o3.cbc.explore.test
+executable = choose_best_testpoints.py
+arguments = --proposal-file-name=$(Prop_File) %s
+            --old-bank-file-name=$(Old_Bank_File) %s
+            --new-bank-file-name=$(New_Bank_File) %s
+            --match-file-name-glob=$(Match_Glob) %s
+            --elimination-dir=$(Elim_Dir) -V
+
+error = err/choose_best_testpoints_err.$(cluster)
+output = out/choose_best_testpoints_out.$(cluster)
+log = log/choose_best_testpoints_log.$(cluster)
+queue 1
+""" % ('\\', '\\', '\\', '\\')
+
+for submit_file in submit_file_texts:
+    submit_file_name = os.path.join(options.run_directory,
+                                    submit_file.replace('.py', '.sub'))
+    with open(submit_file_name, "w") as fout:
+        fout.write(submit_file_texts[submit_file])
+
+
+#########################################################################
+########################## Write the DAG ###############################
+#########################################################################
+# Sampling related parameters
+mass_min   = options.component_mass_min
+mass_max   = options.component_mass_max
+eta_max    = 0.25
+mtotal_max = options.total_mass_max
+mchirp_max = (2. * mass_max) * (eta_max**0.6)
+mchirp_min = (2. * mass_min) * (eta_max**0.6)
+
+MCHIRP_MIN = np.floor(mchirp_min)
+MCHIRP_MAX = np.ceil(mchirp_max)
+
+# Optimization window parameters
+MCHIRP_WIN_MATCH = options.mchirp_window_for_match
+ECC_WIN_MATCH    = options.eccentricity_window_for_match
+MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
+ECC_WIN_TP       = options.eccentricity_window_for_testpoints
+K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
+
+# Bank parameters
+NUM_OUTER_ITERS = options.num_iterations
+NUM_NEW_POINTS  = options.num_test_points_per_iteration
+ELIM_DIR        = options.elimination_dir
+MM              = options.mm
+
+
+# Deduce DAG number
+list_of_existing_dags = glob.glob('create_bank_*.dag')
+if len(list_of_existing_dags) > 0:
+    list_of_existing_dags.sort()
+    iid  = int(list_of_existing_dags[-1].split('.')[0].split('_')[-1])
+else: iid = 0
+dagfilename =\
+    os.path.join(options.run_directory, "create_bank_%03d.dag" % (iid+1))
+
+# Deduce starting value of "i" (for restarts!)
+list_of_existing_banks = glob.glob('banks/bank_*.xml')
+if len(list_of_existing_banks) > 0:
+    list_of_existing_banks.sort()
+    i_start = int(list_of_existing_banks[-1].split('/')[-1].split('.')[0].split('_')[-1])
+else: i_start = 0
+
+## VARS that need to be specified inside DAG:
+# choose_testpoints.sub
+#~ Job_IID
+#~ Num_New_Points
+#~ Mchirp_Window
+#~ Ecc_Window
+#~ OutFile_Prefix
+
+#~split_table_geometrically.sub
+#~ Bank_To_Split
+#~ Split_Prefix
+#~ N_Split
+#~ Mchirp_Window
+
+#~remove_eliminated_testpoints.sub
+#~ Prop_File
+#~ New_Prop_File
+#~ Match_Glob
+#~ MM
+
+#~banksim_generic.sub
+#~ Bank_File
+#~ Prop_File
+#~ Match_File
+#~ Mchirp_Window
+#~ Ecc_Window
+#~ Elim_Dir
+
+#~choose_best_testpoints.sub
+#~ Prop_File
+#~ Old_Bank_File
+#~ New_Bank_File
+#~ Match_Glob
+#~ Elim_Dir
+
+with open(dagfilename, "w") as fout:
+    for i in range(i_start, i_start + NUM_OUTER_ITERS):
+        # 1) Write job choose_testpoints
+        # CHILD of previous iterations job (8)
+        # NAME is CHOOSETP_%06d % i
+        #~ Job_IID  = i
+        #~ Num_New_Points = 1000
+        #~ Mchirp_Window = 0.01
+        #~ Ecc_Window = 0.05
+        #~ OutFile_Prefix = testpoints/test_
+        job_name = "CHOOSETP_%06d" % i
+        out_prefix = "testpoints/test_"
+        mchirp_window = MCHIRP_WIN_TP
+        ecc_window = ECC_WIN_TP
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write("Job %s choose_testpoints.sub\n" % job_name)
+        fout.write('VARS %s Job_IID="%d"\n' % (job_name, i))
+        fout.write('VARS %s Num_New_Points="%d"\n' % (job_name, NUM_NEW_POINTS))
+        fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+        fout.write('VARS %s Ecc_Window="%f"\n' % (job_name, ecc_window))
+        fout.write('VARS %s OutFile_Prefix="%s"\n' % (job_name, out_prefix))
+        if i > 0:
+            fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE2_%06d"%(i-1), job_name))
+        fout.write('\n')
+        #
+        # 2) Write job split_table_geometrically on old bank
+        # CHILD of previous iterations job (8)
+        # NAME is SPLIT_STAGE1A_%d % i
+        #~ Bank_To_Split = banks/bank_%d.xml % i
+        #~ Split_Prefix  = banks_subparts/bank_
+        #~ N_Split       = K
+        #~ Mchirp_Window = 0.1
+        job_name = "SPLIT_STAGE1A_%06d" % i
+        bnk_name = "banks/bank_%06d.xml" % i
+        out_prefix = "banks_subparts/bank_%06d_" % i
+        mchirp_window = MCHIRP_WIN_MATCH
+        K1 = K
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write('Job %s split_table_geometrically.sub\n' % job_name)
+        fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
+        fout.write('VARS %s Split_Prefix="%s"\n' % (job_name, out_prefix))
+        fout.write('VARS %s N_Split="%d"\n' % (job_name, K1))
+        fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+        if i > 0:
+            fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE2_%06d"%(i-1), job_name))
+        fout.write('\n')
+        #
+        # 3) Write job split_table_geometrically on new testpoints
+        # CHILD of (1)
+        # NAME is SPLIT_STAGE1B_%d % i
+        #~ Bank_To_Split = testpoints/test_%d.xml % i
+        #~ Split_Prefix  = testpoints_subparts/test_
+        #~ N_Split       =
+        #~ Mchirp_Window = 0.1
+        job_name = "SPLIT_STAGE1B_%06d" % i
+        bnk_name = "testpoints/test_%06d.xml" % i
+        out_prefix = "testpoints_subparts/test_%06d_" % i
+        mchirp_window = MCHIRP_WIN_MATCH
+        K2 = K #int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + mchirp_window)))
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write('Job %s split_table_geometrically.sub\n' % job_name)
+        fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
+        fout.write('VARS %s Split_Prefix="%s"\n' % (job_name, out_prefix))
+        fout.write('VARS %s N_Split="%d"\n' % (job_name, K2))
+        fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+        fout.write('PARENT %s CHILD %s\n' % ("CHOOSETP_%06d" % i, job_name))
+        fout.write('\n')
+        #
+        # 4) Write all jobs to banksim between each part of old bank and each
+        #     each part of new testpoints.
+        # All are CHILDREN of (2, 3)
+        # All are PARENT of (5)
+        # NAME is BANKSIM_STAGE1_%d_%d_%d % (i, j, k)
+        #~ Bank_File      = banks_subparts/bank_%d_%d.xml % (i,j)
+        #~ Prop_File      = testpoints_subparts/test_%d_%d.xml % (i, k)
+        #~ Match_File     = matches/match_%d_%d_%d_%d.dat % (i, j, i, k)
+        #~ Mchirp_Window  = 0.2
+        #~ Ecc_Window     = 0.2
+        #~ Elim_Dir       = testpoints_eliminated
+        for j in range(K1):
+            for k in range(K2):
+                job_name = "BANKSIM_STAGE1_%06d_%06d_%06d" % (i, j, k)
+                bnk_name = "banks_subparts/bank_%06d_%06d.xml" % (i, j)
+                prop_name  = "testpoints_subparts/test_%06d_%06d.xml" % (i, k)
+                match_file = "matches/match_%06d_%06d_%06d_%06d.dat" % (i,j,i,k)
+                mchirp_window = MCHIRP_WIN_MATCH
+                ecc_window = ECC_WIN_MATCH
+                fout.write("#####  JOB {}\n".format(job_name))
+                fout.write('Job %s banksim_generic.sub\n' % job_name)
+                fout.write('VARS %s Bank_File="%s"\n' % (job_name, bnk_name))
+                fout.write('VARS %s Prop_File="%s"\n' % (job_name, prop_name))
+                fout.write('VARS %s Match_File="%s"\n' % (job_name, match_file))
+                fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+                fout.write('VARS %s Ecc_Window="%f"\n' % (job_name, ecc_window))
+                fout.write('VARS %s Elim_Dir="%s"\n' % (job_name, ELIM_DIR))
+                fout.write('PARENT %s %s CHILD %s\n'%("SPLIT_STAGE1A_%06d" % i,\
+                                                      "SPLIT_STAGE1B_%06d" % i,\
+                                                      job_name))
+                fout.write('PARENT %s CHILD %s\n' % (job_name, "ELIM_STAGE1_%06d" % i))
+                fout.write('\n')
+        #
+        # 5) Write job for remove_eliminated_testpoints to get reduced testpoints
+        # NAME is ELIM_STAGE1_%d % i
+        #~ Prop_File      = testpoints/test_%d.xml % i
+        #~ New_Prop_File  = testpoints_sufficiently_far/test_%d.xml % i
+        #~ Match_Glob     = matches/match_%d_*.dat % i
+        #~ MM             = MM
+        job_name = "ELIM_STAGE1_%06d" % i
+        prop_name = "testpoints/test_%06d.xml" % i
+        new_prop_name = "testpoints_sufficiently_far/test_%06d.xml" % i
+        match_glob = "matches/match_%06d_*.dat" % i
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write('Job %s remove_eliminated_testpoints.sub\n' % job_name)
+        fout.write('VARS %s Prop_File="%s"\n' % (job_name, prop_name))
+        fout.write('VARS %s New_Prop_File="%s"\n' % (job_name, new_prop_name))
+        fout.write('VARS %s Match_Glob="%s"\n' % (job_name, match_glob))
+        fout.write('VARS %s MM="%f"\n' % (job_name, MM))
+        fout.write('\n')
+        #
+        # 6) Write job to split_table_geometrically on new reduced testpoints
+        # CHILD of (5)
+        # NAME is SPLIT_STAGE2_%d % i
+        #~ Bank_To_Split  = testpoints_sufficiently_far/test_%d.xml % i
+        #~ Split_Prefix   = testpoints_sufficiently_far_subparts/test_
+        #~ N_Split        =
+        #~ Mchirp_Window  = 0.1
+        job_name = "SPLIT_STAGE2_%06d" % i
+        bnk_name = "testpoints_sufficiently_far/test_%06d.xml" % i
+        out_prefix = "testpoints_sufficiently_far_subparts/test_%06d_" % i
+        mchirp_window = MCHIRP_WIN_MATCH
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write('Job %s split_table_geometrically.sub\n' % job_name)
+        fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
+        fout.write('VARS %s Split_Prefix="%s"\n' % (job_name, out_prefix))
+        fout.write('VARS %s N_Split="%d"\n' % (job_name, K))
+        fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+        fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE1_%06d" % i, job_name))
+        fout.write('\n')
+        #
+        # 7) Write all jobs to banksim between various parts of reduced testpoints
+        # All are CHILDREN of (6)
+        # All are PARENT of (8)
+        # NAME is BANKSIM_STAGE2_%d_%d_%d % (i, j, k)
+        #~ Bank_File      = testpoints_sufficiently_far_subparts/test_%d_%d.xml % (i, j)
+        #~ Prop_File      = testpoints_sufficiently_far_subparts/test_%d_%d.xml % (i, k)
+        #~ Match_File     = matches_sufficiently_far/match_%d_%d_%d_%d.dat % (i,j,i,k)
+        #~ Mchirp_Window  = 0.2
+        #~ Ecc_Window     = 0.1
+        #~ Elim_Dir       = testpoints_eliminated
+        for j in range(K):
+            for k in range(K):
+                job_name = "BANKSIM_STAGE2_%06d_%06d_%06d" % (i, j, k)
+                bnk_name = "testpoints_sufficiently_far_subparts/test_%06d_%06d.xml" % (i, j)
+                prop_name  = "testpoints_sufficiently_far_subparts/test_%06d_%06d.xml" % (i, k)
+                match_file = "matches_sufficiently_far/match_%06d_%06d_%06d_%06d.dat" % (i,j,i,k)
+                mchirp_window = MCHIRP_WIN_MATCH
+                ecc_window = ECC_WIN_MATCH
+                fout.write("#####  JOB {}\n".format(job_name))
+                fout.write('Job %s banksim_generic.sub\n' % job_name)
+                fout.write('VARS %s Bank_File="%s"\n' % (job_name, bnk_name))
+                fout.write('VARS %s Prop_File="%s"\n' % (job_name, prop_name))
+                fout.write('VARS %s Match_File="%s"\n' % (job_name, match_file))
+                fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
+                fout.write('VARS %s Ecc_Window="%f"\n' % (job_name, ecc_window))
+                fout.write('VARS %s Elim_Dir="%s"\n' % (job_name, ELIM_DIR))
+                fout.write('PARENT %s CHILD %s\n' % ("SPLIT_STAGE2_%06d" % i,\
+                                                    job_name))
+                fout.write('PARENT %s CHILD %s\n' % (job_name,
+                                                    "ELIM_STAGE2_%06d" % i))
+                fout.write('\n')
+        #
+        # 8) Write job choose_best_testpoints.py to get the new bank
+        # NAME is ELIM_STAGE2_%d % i
+        #~ Prop_File      = testpoints_sufficiently_far/test_%d.xml % i
+        #~ Old_Bank_File  = banks/bank_%d.xml % i
+        #~ New_Bank_File  = banks/bank_%d.xml % (i+1)
+        #~ Match_Glob     = matches_sufficiently_far/match_%d_*.dat % i
+        #~ Elim_Dir       = testpoints_eliminated
+        job_name = "ELIM_STAGE2_%06d" % i
+        prop_name = "testpoints_sufficiently_far/test_%06d.xml" % i
+        old_bnk_name = "banks/bank_%06d.xml" % i
+        new_bnk_name = "banks/bank_%06d.xml" % (i + 1)
+        match_glob = "matches_sufficiently_far/match_%06d_*.dat" % i
+        fout.write("#####  JOB {}\n".format(job_name))
+        fout.write('Job %s choose_best_testpoints.sub\n' % job_name)
+        fout.write('VARS %s Prop_File="%s"\n' % (job_name, prop_name))
+        fout.write('VARS %s Old_Bank_File="%s"\n' % (job_name, old_bnk_name))
+        fout.write('VARS %s New_Bank_File="%s"\n' % (job_name, new_bnk_name))
+        fout.write('VARS %s Match_Glob="%s"\n' % (job_name, match_glob))
+        fout.write('VARS %s Elim_Dir="%s"\n' % (job_name, ELIM_DIR))
+        fout.write('\n')
+#########################################################################
+########################### Submit the DAG #############################
+#########################################################################
+print """\
+Template bank generation algorithm is set to run in {},
+and the workflow is written to {}.
+Now run:
+
+  $ condor_submit_dag {}
+
+to submit the workflow.
+""".format(options.run_directory, dagfilename, dagfilename)
