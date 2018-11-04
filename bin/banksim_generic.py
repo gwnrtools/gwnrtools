@@ -152,6 +152,19 @@ def outside_mchirp_window(bank, sim, w):
   return False
   #}}}
 
+def outside_ecc_window(bank, sim, w):
+    #{{{
+    b_ecc = 0
+    s_ecc = 0
+    if hasattr(bank, "alpha"):
+        b_ecc = bank.alpha
+    if hasattr(sim, "alpha"):
+        s_ecc = sim.alpha
+    if abs(s_ecc - b_ecc) > w:
+      return True
+    return False
+    #}}}
+
 def get_waveform(wav, approximant, f_min, dt, N):
     """This function will generate the waveform corresponding to the point
     taken as input"""
@@ -381,8 +394,9 @@ for i, bank_batch in enumerate(bank_batches):
                     if is_eliminated(pp):
                         append_one_match(pb, pp, -1)
                         continue
-                if options.mchirp_window and outside_mchirp_window(pp, pb,
-                                                    options.mchirp_window):
+                if options.mchirp_window and \
+                    outside_mchirp_window(pp, pb, options.mchirp_window) and \
+                    outside_ecc_window(pp, pb, options.ecc_window):
                     append_one_match(pb, pp, -1)
                     continue
                 if get_tag(pp) == get_tag(pb):
