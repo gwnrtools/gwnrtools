@@ -196,7 +196,8 @@ MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
 ECC_WIN_TP       = options.eccentricity_window_for_testpoints
 MCHIRP_WIN_SPLIT_TP = options.mchirp_window_to_split_testpoints
 MCHIRP_WIN_SPLIT_BK = options.mchirp_window_to_split_banks
-K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
+K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. +\
+    MCHIRP_WIN_MATCH)))
 
 # Make sure it does not become impossible to sample new testpoints
 # with the input mchirp_window and num_test_points_each_iteration
@@ -437,7 +438,8 @@ with open(dagfilename, "w") as fout:
         bnk_name = "banks/bank_%06d.xml" % i
         out_prefix = "banks_subparts/bank_%06d_" % i
         mchirp_window = MCHIRP_WIN_SPLIT_BK
-        K1 = K
+        K1 = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. +\
+            mchirp_window)))
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
         fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
@@ -459,7 +461,8 @@ with open(dagfilename, "w") as fout:
         bnk_name = "testpoints/test_%06d.xml" % i
         out_prefix = "testpoints_subparts/test_%06d_" % i
         mchirp_window = MCHIRP_WIN_SPLIT_TP
-        K2 = K #int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + mchirp_window)))
+        K2 = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. +\
+            mchirp_window)))
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
         fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
