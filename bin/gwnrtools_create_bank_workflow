@@ -21,7 +21,7 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
 Sets up a run directory and DAG for creation of template bank
 
-**NOTE on Restart**: Restart is possible. We will ignore testpoints or 
+**NOTE on Restart**: Restart is possible. We will ignore testpoints or
   intermediate results, and restart from the most recent available completed
   bank.
 """, formatter_class=argparse.RawTextHelpFormatter)
@@ -39,72 +39,73 @@ parser.add_argument("--waveform-approximant",
                     type=str)
 
 # Parameter ranges
-parser.add_argument('--component-mass-min',                                                                                                                                     
-                    help="Minimum value allowed for component masses",                                                                                                          
-                    default=5.0,                                                                                                                                                
-                    type=float)                                                                                                                                                 
-parser.add_argument('--component-mass-max',                                                                                                                                     
-                    help="Maximum value allowed for component masses",                                                                                                          
-                    default=50.0,                                                                                                                                               
-                    type=float)                                                                                                                                                 
-parser.add_argument('--total-mass-max',                                                                                                                                         
-                    help="Maximum value allowed for total mass",                                                                                                                
-                    default=100.0,
-                    type=float)                                                                                                                                                 
-
-parser.add_argument('--spin-mag-min',                                                                                                                                           
-                    help="Minimum value allowed for component spin magnitudes",                                                                                                 
-                    default=0.0,                                                                                                                                                
-                    type=float)                                                                                                                                                 
-parser.add_argument('--spin-mag-max',                                                                                                                                           
-                    help="Maximum value allowed for component spin magnitudes",                                                                                                 
-                    default=0.0,                                                                                                                                                
+parser.add_argument('--component-mass-min',
+                    help="Minimum value allowed for component masses",
+                    default=5.0,
                     type=float)
 
-parser.add_argument('--spin-component-min',                                                                                                                                     
-                    help="Minimum value allowed for component spin x,y,z comps",                                                                                                
+parser.add_argument('--component-mass-max',
+                    help="Maximum value allowed for component masses",
+                    default=50.0,
+                    type=float)
+parser.add_argument('--total-mass-max',
+                    help="Maximum value allowed for total mass",
+                    default=100.0,
+                    type=float)
+
+parser.add_argument('--spin-mag-min',
+                    help="Minimum value allowed for component spin magnitudes",
                     default=0.0,
-                    type=float)                                                                                                                                                 
+                    type=float)
+parser.add_argument('--spin-mag-max',
+                    help="Maximum value allowed for component spin magnitudes",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--spin-component-min',
+                    help="Minimum value allowed for component spin x,y,z comps",
+                    default=0.0,
+                    type=float)
 parser.add_argument('--spin-component-max',
-                    help="Maximum value allowed for component spin x,y,z comps",                                                                                                
+                    help="Maximum value allowed for component spin x,y,z comps",
                     default=0.0,
-                    type=float)                                                                                                                                                 
+                    type=float)
 
 parser.add_argument('--eccentricity-min',
                     help="Minimum value allowed for eccentricity",
                     default=0.0,
                     type=float)
 parser.add_argument('--eccentricity-max',
-                    help="Maximum value allowed for eccentricity",                                                                                                              
-                    default=0.4,                                                                                                                                                
+                    help="Maximum value allowed for eccentricity",
+                    default=0.4,
                     type=float)
-                    
-parser.add_argument('--inclination-min',                                                                                                                                        
-                    help="Minimum value allowed for inclination angle",                                                                                                         
-                    default=0.0,
-                    type=float)
-parser.add_argument('--inclination-max',                                                                                                                                        
-                    help="Maximum value allowed for inclination angle",                                                                                                         
-                    default=0.0,
-                    type=float)                                                                                                                                                 
-                    
-parser.add_argument('--mean-per-ano-min',                                                                                                                                       
-                    help="Minimum value allowed for mean periastron anomaly",                                                                                                   
-                    default=0.0,
-                    type=float)
-parser.add_argument('--mean-per-ano-max',                                                                                                                                       
-                    help="Maximum value allowed for mean periastron anomaly",                                                                                                   
-                    default=0.0,                                                                                                                                                
-                    type=float)                                                                                                                                                 
 
-parser.add_argument('--long-asc-nodes-min',                                                                                                                                     
-                    help="Minimum value allowed for longitude of ascending nodes",                                                                                              
-                    default=0.0,                                                                                                                                                
-                    type=float)                                                                                                                                                 
-parser.add_argument('--long-asc-nodes-max',                                                                                                                                     
-                    help="Maximum value allowed for the longitude of ascending node",                                                                                           
+parser.add_argument('--inclination-min',
+                    help="Minimum value allowed for inclination angle",
                     default=0.0,
-                    type=float)                                                                                                                                                 
+                    type=float)
+parser.add_argument('--inclination-max',
+                    help="Maximum value allowed for inclination angle",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--mean-per-ano-min',
+                    help="Minimum value allowed for mean periastron anomaly",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--mean-per-ano-max',
+                    help="Maximum value allowed for mean periastron anomaly",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--long-asc-nodes-min',
+                  help="Minimum value allowed for longitude of ascending nodes",
+                  default=0.0,
+                  type=float)
+parser.add_argument('--long-asc-nodes-max',
+              help="Maximum value allowed for the longitude of ascending node",
+              default=0.0,
+              type=float)
 
 
 # Bank design related inputs
@@ -121,9 +122,17 @@ parser.add_argument("--mchirp-window-for-testpoints",
                     default=0.01,
                     type=float)
 parser.add_argument("--eccentricity-window-for-testpoints",
-                    help="Eccentricity window used while sampling new test points",
-                    default=0.02,
+                help="Eccentricity window used while sampling new test points",
+                default=0.02,
+                type=float)
+parser.add_argument("--mchirp-window-to-split-banks",
+                    help="Mchirp window used while splitting bank for matches",
+                    default=0.01,
                     type=float)
+parser.add_argument("--mchirp-window-to-split-testpoints",
+              help="Mchirp window used while splitting test points for matches",
+              default=0.01,
+              type=float)
 
 # Filtering related inputs
 parser.add_argument("--mchirp-window-for-match",
@@ -185,6 +194,8 @@ MCHIRP_WIN_MATCH = options.mchirp_window_for_match
 ECC_WIN_MATCH    = options.eccentricity_window_for_match
 MCHIRP_WIN_TP    = options.mchirp_window_for_testpoints
 ECC_WIN_TP       = options.eccentricity_window_for_testpoints
+MCHIRP_WIN_SPLIT_TP = options.mchirp_window_to_split_testpoints
+MCHIRP_WIN_SPLIT_BK = options.mchirp_window_to_split_banks
 K = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + MCHIRP_WIN_MATCH)))
 
 # Make sure it does not become impossible to sample new testpoints
@@ -425,7 +436,7 @@ with open(dagfilename, "w") as fout:
         job_name = "SPLIT_STAGE1A_%06d" % i
         bnk_name = "banks/bank_%06d.xml" % i
         out_prefix = "banks_subparts/bank_%06d_" % i
-        mchirp_window = MCHIRP_WIN_MATCH
+        mchirp_window = MCHIRP_WIN_SPLIT_BK
         K1 = K
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
@@ -447,7 +458,7 @@ with open(dagfilename, "w") as fout:
         job_name = "SPLIT_STAGE1B_%06d" % i
         bnk_name = "testpoints/test_%06d.xml" % i
         out_prefix = "testpoints_subparts/test_%06d_" % i
-        mchirp_window = MCHIRP_WIN_MATCH
+        mchirp_window = MCHIRP_WIN_SPLIT_TP
         K2 = K #int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. + mchirp_window)))
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
