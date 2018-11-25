@@ -111,7 +111,7 @@ parser.add_argument('--long-asc-nodes-max',
 # Bank design related inputs
 parser.add_argument("--num-iterations",
                     help="No of iterations for sample->reject->add",
-                    default=100,
+                    default=10,
                     type=int)
 parser.add_argument("--num-test-points-per-iteration",
                     help="No of sample points chosen in each iteration",
@@ -153,6 +153,7 @@ parser.add_argument("--batch-size-for-match",
                     type=int)
 
 # Miscellaneous
+parser.add_argument("--condor-num-max-retries", default=4)
 parser.add_argument("-V", "--verbose", action="store_true",
                     help="print extra debugging information",
                     default=False )
@@ -176,6 +177,7 @@ def get_tag(wav): return str(wav.simulation_id.column_name)
 NUM_OUTER_ITERS = options.num_iterations
 NUM_NEW_POINTS  = options.num_test_points_per_iteration
 ELIM_DIR        = options.elimination_dir
+NUM_MAX_RETRIES = options.condor_num_max_retries
 MM              = options.mm
 
 # Sampling related parameters
@@ -425,6 +427,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s OutFile_Prefix="%s"\n' % (job_name, out_prefix))
         if i > 0:
             fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE2_%06d"%(i-1), job_name))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
         #
         # 2) Write job split_table_geometrically on old bank
@@ -440,6 +443,8 @@ with open(dagfilename, "w") as fout:
         mchirp_window = MCHIRP_WIN_SPLIT_BK
         K1 = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. +\
             mchirp_window)))
+        if i==0 and options.verbose:
+            print "Banks to be split into {} parts.".format(K1)
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
         fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
@@ -448,6 +453,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
         if i > 0:
             fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE2_%06d"%(i-1), job_name))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
         #
         # 3) Write job split_table_geometrically on new testpoints
@@ -463,6 +469,8 @@ with open(dagfilename, "w") as fout:
         mchirp_window = MCHIRP_WIN_SPLIT_TP
         K2 = int(np.ceil(np.log(MCHIRP_MAX / MCHIRP_MIN) / np.log(1. +\
             mchirp_window)))
+        if i==0 and options.verbose:
+            print "Testpoints to be split into {} parts.".format(K2)
         fout.write("#####  JOB {}\n".format(job_name))
         fout.write('Job %s split_table_geometrically.sub\n' % job_name)
         fout.write('VARS %s Bank_To_Split="%s"\n' % (job_name, bnk_name))
@@ -470,6 +478,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s N_Split="%d"\n' % (job_name, K2))
         fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
         fout.write('PARENT %s CHILD %s\n' % ("CHOOSETP_%06d" % i, job_name))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
         #
         # 4) Write all jobs to banksim between each part of old bank and each
@@ -503,6 +512,7 @@ with open(dagfilename, "w") as fout:
                                                       "SPLIT_STAGE1B_%06d" % i,\
                                                       job_name))
                 fout.write('PARENT %s CHILD %s\n' % (job_name, "ELIM_STAGE1_%06d" % i))
+                fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
                 fout.write('\n')
         #
         # 5) Write job for remove_eliminated_testpoints to get reduced testpoints
@@ -521,6 +531,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s New_Prop_File="%s"\n' % (job_name, new_prop_name))
         fout.write('VARS %s Match_Glob="%s"\n' % (job_name, match_glob))
         fout.write('VARS %s MM="%f"\n' % (job_name, MM))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
         #
         # 6) Write job to split_table_geometrically on new reduced testpoints
@@ -541,6 +552,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s N_Split="%d"\n' % (job_name, K))
         fout.write('VARS %s Mchirp_Window="%f"\n' % (job_name, mchirp_window))
         fout.write('PARENT %s CHILD %s\n' % ("ELIM_STAGE1_%06d" % i, job_name))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
         #
         # 7) Write all jobs to banksim between various parts of reduced testpoints
@@ -573,6 +585,7 @@ with open(dagfilename, "w") as fout:
                                                     job_name))
                 fout.write('PARENT %s CHILD %s\n' % (job_name,
                                                     "ELIM_STAGE2_%06d" % i))
+                fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
                 fout.write('\n')
         #
         # 8) Write job choose_best_testpoints.py to get the new bank
@@ -594,6 +607,7 @@ with open(dagfilename, "w") as fout:
         fout.write('VARS %s New_Bank_File="%s"\n' % (job_name, new_bnk_name))
         fout.write('VARS %s Match_Glob="%s"\n' % (job_name, match_glob))
         fout.write('VARS %s Elim_Dir="%s"\n' % (job_name, ELIM_DIR))
+        fout.write('Retry %s %d\n' % (job_name, NUM_MAX_RETRIES))
         fout.write('\n')
 #########################################################################
 ########################### Submit the DAG #############################
