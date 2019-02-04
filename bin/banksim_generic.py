@@ -377,13 +377,13 @@ cnt_bank_generations  = 0
 cnt_test_generations  = 0
 cnt_match_evaluations = 0
 cnt_eliminations      = 0
-prop_waveforms        = {}
 for i, bank_batch in enumerate(bank_batches):
     bank_batch_waveforms = {}
     if options.verbose:
         print "\t Processing bank batch {} of {} (size {})".format(i+1,\
             len(bank_batches), len(bank_batch))
     for j, prop_batch in enumerate(prop_batches):
+        prop_batch_waveforms = {}
         if options.verbose:
             print "\t\t Processing proposal batch {} of {} (size {})".format(\
                 j+1, len(prop_batches), len(prop_batch))
@@ -417,15 +417,15 @@ for i, bank_batch in enumerate(bank_batches):
                                                                         dt, N)
                     bank_batch_waveforms[get_tag(pb)] = stilde
 
-                if waveform_exists(pp, prop_waveforms):
-                    htilde = prop_waveforms[get_tag(pp)]
+                if waveform_exists(pp, prop_batch_waveforms):
+                    htilde = prop_batch_waveforms[get_tag(pp)]
                 else:
                     cnt_test_generations += 1
                     if options.verbose:
                         print "\t\t\t\t Computing waves for (o, {})".format(l)
                     htilde = get_waveform(pp, options.proposal_approximant,
                                                               f_min, dt, N)
-                    prop_waveforms[get_tag(pp)] = htilde
+                    prop_batch_waveforms[get_tag(pp)] = htilde
 
                 ## Compute match!
                 mval, _ = match(stilde, htilde, psd=psd,
