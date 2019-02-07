@@ -47,7 +47,7 @@ try:
   class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
     pass
 except:
-  print "Could not import ligolw, LIGO XML tables wont be read"
+  print "Could not import ligolw in %s, LIGO XML tables wont be read" % __file__
 
 from pycbc.pnutils import nearest_larger_binary_number
 from pycbc.detector import *
