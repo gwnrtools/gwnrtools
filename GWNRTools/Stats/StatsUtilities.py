@@ -785,7 +785,7 @@ Input:
                     label='', # LABEL THAT GOES ON EACH PANEL
                     params_labels=None,
                     plim_low=None, plim_high=None,
-                    legend_fontsize=12,
+                    legend_fontsize=18,
                     plot_type='scatter', # SCATTER OR CONTOUR
                     color=None,
                     hist_alpha=0.3, # Transparency of histograms
@@ -804,11 +804,12 @@ Input:
                     return_areas_in_contours=False,
                     label_oned_hists=-1, # Which one-d histograms to label?
                     skip_oned_hists=False,
-                    label_oned_loc='best',
+                    label_oned_loc='outside',
                     show_oned_median=False,
                     grid_oned_on=False,
                     debug=False, verbose=None
                     ):
+        #{{{
         """
 Generates a corner plot for given parameters. 2D panels can have data points
 directly or percentile contours, not both simultaneously yet.
@@ -925,7 +926,10 @@ Input:
                         ax.axvline(np.median(_data), ls = '-', color = rand_color)
                     try:
                         if label_oned_hists == -1 or nc in label_oned_hists:
-                            ax.legend(loc=label_oned_loc, fontsize=legend_fontsize)
+                            if label_oned_loc is not 'outside' and label_oned_loc is not '':
+                                ax.legend(loc=label_oned_loc, fontsize=legend_fontsize)
+                            else:
+                                ax.legend(fontsize=legend_fontsize, bbox_to_anchor=(1.3, 0.9))
                     except TypeError: raise TypeError("Pass a list for label_oned_hists")
                     if params_oned_priors is not None and p1 in params_oned_priors:
                         _data = params_oned_priors[p1]
@@ -1129,5 +1133,5 @@ Input:
             return fig, axes_array, contour_areas
         else:
             return fig, axes_array
-    ##
+    #}}}
 
