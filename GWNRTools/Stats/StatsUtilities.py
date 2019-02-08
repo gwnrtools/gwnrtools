@@ -778,6 +778,7 @@ Input:
                     params_true_vals=None, # TRUE / KNOWN values of PARAMETERS
                     params_oned_priors=None, # PRIOR DISTRIBUTION FOR PARAMETERS
                     fig=None, # CAN PLOT ON EXISTING FIGURE
+                    axes_array=None, # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
                     histogram_type='bar', # Histogram type (bar / step / barstacked)
                     nhbins=30,  # NO OF BINS IN HISTOGRAMS
                     projection='rectilinear',
@@ -869,8 +870,11 @@ Input:
         no_of_rows = len(params_plot)
         no_of_cols = len(params_plot)
 
-        if type(fig) != matplotlib.figure.Figure:
-            fig = plt.figure(figsize=(6*no_of_cols,4*no_of_rows))
+        if type(fig) != matplotlib.figure.Figure or axes_array is None:
+            #fig = plt.figure(figsize=(6*no_of_cols,4*no_of_rows))
+            fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
+                figsize=(6*no_of_cols,4*no_of_rows),
+                gridspec_kw = {'wspace':0, 'hspace':0})
 
         fig.hold(True)
 
@@ -886,14 +890,23 @@ Input:
             for nc in range(no_of_cols):
                 ## We keep the upper diagonal half of the figure empty.
                 ## FIXME: Could we use it for same data, different visualization?
-                if nc > nr: continue
+                if nc > nr:
+                    ax = axes_array[nr][nc]
+                    try:
+                        fig.delaxes(ax)
+                    except: pass
+                    continue
 
                 # Make 1D histograms along the diagonal
                 if nc == nr:
                     if skip_oned_hists: continue
                     p1 = params_plot[nc]
                     p1label = get_param_label(p1)
-                    ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
+                    #ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
+                    if no_of_rows == 1 and no_of_cols == 1:
+                        ax = axes_array
+                    else:
+                        ax = axes_array[nr][nc]
                     # Plot known / injected / true value if given
                     if params_true_vals != None:
                         p_true_val = params_true_vals[nc]
@@ -929,6 +942,9 @@ Input:
                     if nr == (no_of_rows-1): ax.set_xlabel(p1label)
                     if nc == 0 and (no_of_cols > 1 or no_of_rows > 1):
                         ax.set_ylabel(p1label)
+                    if nr < (no_of_rows-1):
+                        ax.set_xticklabels([])
+                    ax.set_yticklabels([])
                     continue
 
                 ## If execution reaches here, the current panel is in the lower diagonal half
@@ -936,8 +952,9 @@ Input:
                     print "Making plot (%d,%d,%d)" % (no_of_rows, no_of_cols, (nr*no_of_cols) + nc)
 
                 ## Get plot for this panel
-                ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
-                                          projection=projection)
+                #ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
+                #                          projection=projection)
+                ax = axes_array[nr][nc]
 
                 ## Plot known / injected / true value if given
                 if params_true_vals != None:
@@ -1092,12 +1109,25 @@ Input:
                     ax.grid(True)
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
+                if nc != 0:
+                    print "removing Yticklabels for (%d, %d)" % (nr, nc)
+                    ax.set_yticklabels([])
+                if nr != (no_of_rows - 1):
+                    print "removing Xticklabels for (%d, %d)" % (nr, nc)
+                    ax.set_xticklabels([])
         ##
+        for nc in range(1, no_of_cols):
+            ax = axes_array[no_of_rows - 1][nc]
+            #new_xticklabels = [ll.get_text() for ll in ax.get_xticklabels()]
+            new_xticklabels = ax.get_xticks().tolist()
+            new_xticklabels[0] = ''
+            ax.set_xticklabels(new_xticklabels)
+        #fig.subplots_adjust(wspace=0, hspace=0)
         if plot_type=='contour' and return_areas_in_contours and debug:
-            return fig, contour_areas, contour.get_paths(), im
+            return fig, axes_array, contour_areas, contour.get_paths(), im
         elif plot_type=='contour' and return_areas_in_contours:
-            return fig, contour_areas
+            return fig, axes_array, contour_areas
         else:
-            return fig
+            return fig, axes_array
     ##
 
