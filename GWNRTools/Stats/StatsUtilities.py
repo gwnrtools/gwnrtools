@@ -564,6 +564,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
                     npixels=50,
                     debug=False, verbose=None
                     ):
+        #{{{
         """
 Generates a corner plot for given parameters. 2D panels can have data points
 directly or percentile contours, not both simultaneously yet.
@@ -773,6 +774,7 @@ Input:
             return fig, contour_areas
         else:
             return fig
+    #}}}
     ##
     def corner_plot(self, params_plot,
                     params_true_vals=None, # TRUE / KNOWN values of PARAMETERS
@@ -937,7 +939,7 @@ Input:
                             _prior_xrange = (plim_low[nc], plim_high[nc])
                         else: _prior_xrange = None
                         im = ax.hist(_data, bins=nhbins,
-                                    histtype="step", color='k',
+                                    histtype="stepfilled", color='k', alpha=0.25,
                                     range=_prior_xrange, normed=True
                                     )
                     if plim_low is not None and plim_high is not None:
