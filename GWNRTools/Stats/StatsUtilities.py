@@ -781,7 +781,9 @@ Input:
                     params_oned_priors=None, # PRIOR DISTRIBUTION FOR PARAMETERS
                     fig=None, # CAN PLOT ON EXISTING FIGURE
                     axes_array=None, # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
+                    panel_size=(6,4),
                     histogram_type='bar', # Histogram type (bar / step / barstacked)
+                    priors_histogram_type='stepfilled',
                     nhbins=30,  # NO OF BINS IN HISTOGRAMS
                     projection='rectilinear',
                     label='', # LABEL THAT GOES ON EACH PANEL
@@ -806,7 +808,9 @@ Input:
                     return_areas_in_contours=False,
                     label_oned_hists=-1, # Which one-d histograms to label?
                     skip_oned_hists=False,
+                    rotate_last_oned_hist=True,
                     label_oned_loc='outside',
+                    label_oned_bbox=[(1.3, 0.9)],
                     show_oned_median=False,
                     grid_oned_on=False,
                     debug=False, verbose=None
@@ -874,10 +878,24 @@ Input:
         no_of_cols = len(params_plot)
 
         if type(fig) != matplotlib.figure.Figure or axes_array is None:
-            #fig = plt.figure(figsize=(6*no_of_cols,4*no_of_rows))
-            fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
-                figsize=(6*no_of_cols,4*no_of_rows),
-                gridspec_kw = {'wspace':0, 'hspace':0})
+            if no_of_rows == 2:
+                import matplotlib.gridspec as gridspec
+                _nrows = _ncols = 3
+                fig = plt.figure(figsize=(panel_size[0]*_ncols, panel_size[1]*_nrows))
+                gs = gridspec.GridSpec(2, 2,
+                       width_ratios=[2, 1],
+                       height_ratios=[1, 2]
+                       )
+                gs.update(hspace=0, wspace=0)
+                ax1 = fig.add_subplot(gs[0])
+                ax2 = fig.add_subplot(gs[1])
+                ax3 = fig.add_subplot(gs[2])
+                ax4 = fig.add_subplot(gs[3])
+                axes_array = [[ax1, ax2], [ax3, ax4]]
+            else:
+                fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
+                    figsize=(panel_size[0]*no_of_cols, panel_size[1]*no_of_rows),
+                    gridspec_kw = {'wspace':0, 'hspace':0})
 
         fig.hold(True)
 
@@ -903,6 +921,9 @@ Input:
                 # Make 1D histograms along the diagonal
                 if nc == nr:
                     if skip_oned_hists: continue
+                    hist_orientation = 'vertical'
+                    if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                        hist_orientation = 'horizontal'
                     p1 = params_plot[nc]
                     p1label = get_param_label(p1)
                     #ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
@@ -914,24 +935,39 @@ Input:
                     if params_true_vals != None:
                         p_true_val = params_true_vals[nc]
                         if p_true_val != None:
-                            ax.axvline(p_true_val,
-                                       lw = 0.5, ls='solid', color = rand_color)
+                            if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                                ax.axhline(p_true_val,
+                                           lw = 0.5, ls='solid', color = rand_color)
+                            else:
+                                ax.axvline(p_true_val,
+                                           lw = 0.5, ls='solid', color = rand_color)
                     # Plot one-d posterior
                     _data = self.sliced(p1).data()
                     im = ax.hist(_data, bins=nhbins,
                                   histtype=histogram_type,
                                   normed=True, alpha=hist_alpha,
-                                  color=rand_color, label=label)
-                    ax.axvline(np.percentile(_data, 5), lw=1, ls = 'dashed', color = rand_color, alpha=1)
-                    ax.axvline(np.percentile(_data, 95), lw=1, ls = 'dashed', color = rand_color, alpha=1)
+                                  color=rand_color, label=label,
+                                  orientation=hist_orientation)
+                    if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                        ax.axhline(np.percentile(_data, 5), lw=1, ls = 'dashed',
+                                  color = rand_color, alpha=1)
+                        ax.axhline(np.percentile(_data, 95), lw=1, ls = 'dashed',
+                                  color = rand_color, alpha=1)
+                    else:
+                        ax.axvline(np.percentile(_data, 5), lw=1, ls = 'dashed', color = rand_color, alpha=1)
+                        ax.axvline(np.percentile(_data, 95), lw=1, ls = 'dashed', color = rand_color, alpha=1)
                     if show_oned_median:
-                        ax.axvline(np.median(_data), ls = '-', color = rand_color)
+                        if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                            ax.axhline(np.median(_data), ls = '-', color = rand_color)
+                        else:
+                            ax.axvline(np.median(_data), ls = '-', color = rand_color)
                     try:
                         if label_oned_hists == -1 or nc in label_oned_hists:
                             if label_oned_loc is not 'outside' and label_oned_loc is not '':
                                 ax.legend(loc=label_oned_loc, fontsize=legend_fontsize)
                             else:
-                                ax.legend(fontsize=legend_fontsize, bbox_to_anchor=(1.3, 0.9))
+                                ax.legend(fontsize=legend_fontsize,
+                                          bbox_to_anchor=label_oned_bbox[0])
                     except TypeError: raise TypeError("Pass a list for label_oned_hists")
                     if params_oned_priors is not None and p1 in params_oned_priors:
                         _data = params_oned_priors[p1]
@@ -939,18 +975,23 @@ Input:
                             _prior_xrange = (plim_low[nc], plim_high[nc])
                         else: _prior_xrange = None
                         im = ax.hist(_data, bins=nhbins,
-                                    histtype="stepfilled", color='k', alpha=0.25,
-                                    range=_prior_xrange, normed=True
+                                    histtype=priors_histogram_type, color='k', alpha=0.25,
+                                    range=_prior_xrange, normed=True,
+                                    orientation=hist_orientation
                                     )
                     if plim_low is not None and plim_high is not None:
-                        ax.set_xlim(plim_low[nc], plim_high[nc])
+                        if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                            ax.set_ylim(plim_low[nc], plim_high[nc])
+                        else:
+                            ax.set_xlim(plim_low[nc], plim_high[nc])
                     ax.grid(grid_oned_on)
-                    if nr == (no_of_rows-1): ax.set_xlabel(p1label)
-                    if nc == 0 and (no_of_cols > 1 or no_of_rows > 1):
+                    if nr == (no_of_rows-1) and (no_of_cols > 2 or no_of_rows > 2):
+                        ax.set_xlabel(p1label)
+                    if nc == 0 and (no_of_cols > 2 or no_of_rows > 2):
                         ax.set_ylabel(p1label)
-                    if nr < (no_of_rows-1):
-                        ax.set_xticklabels([])
                     ax.set_yticklabels([])
+                    if nr < (no_of_rows-1) or rotate_last_oned_hist:
+                        ax.set_xticklabels([])
                     continue
 
                 ## If execution reaches here, the current panel is in the lower diagonal half
@@ -1123,6 +1164,8 @@ Input:
                     ax.set_xticklabels([])
         ##
         for nc in range(1, no_of_cols):
+            if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                continue
             ax = axes_array[no_of_rows - 1][nc]
             #new_xticklabels = [ll.get_text() for ll in ax.get_xticklabels()]
             new_xticklabels = ax.get_xticks().tolist()
