@@ -86,9 +86,9 @@ written to disk.
     os.system("mkdir -p %s" % (output_file_tag))
     ##
     ## Configure shell command to execute
-    cmd_string = "%s -m %.18e -M %.18e -x %d -n %.18e -N %.18e -y %d -e %.18e -E %.18e -z %d" %
+    cmd_string = "%s -m %.18e -M %.18e -x %d -n %.18e -N %.18e -y %d -e %.18e -E %.18e -z %d" %\
                     (EXE, m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins, e_min, e_max, e_nbins)
-    cmd_string += " -a %.18e -i %.18e -b %.18e -t %.18e -f %.18e -s %.18e" %
+    cmd_string += " -a %.18e -i %.18e -b %.18e -t %.18e -f %.18e -s %.18e" %\
                     (mean_anomaly, inclination, init_phase, tolerance, f_lower, 1./delta_t)
     cmd_string += " -o %s -v" % output_file_tag
     if verbose:
