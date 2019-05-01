@@ -12,6 +12,7 @@
 ########################################
 import os, sys
 import glob, commands as cmd
+import subprocess
 import h5py
 import numpy as np
 from scipy.optimize import minimize, minimize_scalar
@@ -61,6 +62,51 @@ def get_q_m_e_from_filename(filename):
 ########################################
 ## USER-FACING FUNCTIONS
 ########################################
+def generate_eccentric_waveforms(\
+                  m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins,
+                  e_min, e_max, e_nbins, f_lower, delta_t,
+                  mean_anomaly=0, inclination=0, init_phase=0, tolerance=1e-12,
+                  EXE='export LD_LIBRARY_PATH=/home/prayush/src/EccIMR/code/MergerRingdownModel/C_implementation/bin/:${LD_LIBRARY_PATH} && /home/prayush/src/EccIMR/code/map_link_codes/bbhall',
+                  output_directory = None,
+                  verbose=False):
+    """
+This function computes eccentric IMR waveforms with the ENIGMA model.
+It needs ranges for BH masses and initial orbital eccentricity, and
+specific values for the initial mean anomaly, orbital inclination,
+and orbital phase. The output + and x polarization time series are
+written to disk.
+    """
+    #{{{
+    import subprocess
+    ## Create directory to store output
+    if output_directory is None:
+        output_file_tag = 'tmp_%06d/' % int(np.random.random() * 1e7)
+    else:
+        output_file_tag = output_directory + "/"
+    os.system("mkdir -p %s" % (output_file_tag))
+    ##
+    ## Configure shell command to execute
+    cmd_string = "%s -m %.18e -M %.18e -x %d -n %.18e -N %.18e -y %d -e %.18e -E %.18e -z %d" %
+                    (EXE, m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins, e_min, e_max, e_nbins)
+    cmd_string += " -a %.18e -i %.18e -b %.18e -t %.18e -f %.18e -s %.18e" %
+                    (mean_anomaly, inclination, init_phase, tolerance, f_lower, 1./delta_t)
+    cmd_string += " -o %s -v" % output_file_tag
+    if verbose:
+        print >> sys.stdout, "Command being run: %s" % cmd_string
+        sys.stdout.flush()
+    ##
+    ## Call executable
+    cmd_output, cmd_error = subprocess.Popen(cmd_string, shell=True,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE).communicate()
+    if verbose:
+        print >> sys.stdout, cmd_output
+        sys.stdout.flush()
+    ##
+    ## Return command output
+    return cmd_output, cmd_error
+    #}}}
+
 def get_eccentric_waveform_and_dynamics(\
                   m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins,
                   e_min, e_max, e_nbins, f_lower, delta_t,
@@ -73,7 +119,8 @@ trajectory information as well as the GW polarizations.
     """
     #{{{
     if m1_nbins != 1 or m2_nbins != 1 or e_nbins != 1:
-        raise IOError("Function does not support generating multiple waveforms at present..")
+        raise IOError("Function does not support generating multiple waveforms at present. Call `generate_eccentric_waveforms` instead.")
+    from GWNRTools.NR.SpEC import ParseHeaderForSpECTabularOutputASCII
     cmd_string = "%s -m %.18e -M %.18e -x %d -n %.18e -N %.18e -y %d -e %.18e -E %.18e -z %d" %\
                     (EXE, m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins, e_min, e_max, e_nbins)
     cmd_string += " -a %.18e -i %.18e -b %.18e -t %.18e -f %.18e -s %.18e" %\
@@ -161,7 +208,6 @@ over {x_offset, e0, anom0). This is done in two steps:-
 
 2) Not specifying [x_low_lim, x_high_lim] is equivalent to integrating
    the mean-square difference over the complete (x2) vector.
-
     """
     #{{{
     if use_var != "r" and use_var != "omega":
