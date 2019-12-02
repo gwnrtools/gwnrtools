@@ -38,9 +38,7 @@ from glue import pidfile as pidfile
 from glue import git_version
 
 
-print "STARTING THE MATCHING"
-
-__author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
+__author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 #################### Input parsing #####################
 #{{{

@@ -11,7 +11,7 @@ import commands
 #ctx = CUDAScheme()
 
 __dir__    = os.path.dirname(os.path.realpath(__file__))
-__author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
+__author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 
 #########################################################################
@@ -147,13 +147,18 @@ parser.add_argument("--minimal-match",
                     dest="mm",
                     default=0.97,
                     type=float)
+parser.add_argument('-f', '--low-frequency-cutoff', metavar='FREQ',
+                    dest="f_min",
+                    help='low frequency cutoff of matched filter',
+                    default=15.0,
+                    type=float)
 parser.add_argument("--batch-size-for-match",
                     help="batch size for match computation (default is good!)",
                     default=10,
                     type=int)
 
 # Miscellaneous
-parser.add_argument("--condor-num-max-retries", default=4)
+parser.add_argument("--condor-num-max-retries", default=4, type=int)
 parser.add_argument("-V", "--verbose", action="store_true",
                     help="print extra debugging information",
                     default=False )
@@ -316,6 +321,7 @@ arguments = --verbose --bank-file-name=$(Bank_File) %s
             --proposal-approximant=%s %s
             --mchirp-window=$(Mchirp_Window) %s
             --eccentricity-window=$(Ecc_Window) %s
+            --low-frequency-cutoff=%f %s
             --eliminate --elimination-dir=$(Elim_Dir)
 
 error = err/banksim_generic_err.$(cluster)
@@ -325,7 +331,8 @@ queue 1
 """ % ('\\', '\\', '\\', options.batch_size_for_match, '\\',\
         options.batch_size_for_match, '\\',\
         options.waveform_approximant, '\\',\
-        options.waveform_approximant, '\\', '\\', '\\')
+        options.waveform_approximant, '\\', '\\', '\\',\
+        options.f_min, '\\')
 
 submit_file_texts['choose_best_testpoints.py'] = """\
 universe = vanilla
