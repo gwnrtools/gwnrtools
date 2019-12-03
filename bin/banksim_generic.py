@@ -17,6 +17,7 @@ from glue.ligolw import ligolw
 from glue.ligolw import table
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
+from glue.ligolw import ilwd
 
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.waveform import td_approximants, fd_approximants
@@ -187,10 +188,6 @@ def get_waveform(wav, approximant, f_min, dt, N):
     inc = wav.inclination
     dist = wav.distance
 
-    psi = wav.polarization
-    theta = wav.latitude
-    phi = wav.longitude
-
     df = 1./(dt * N)
     f_max = min( 1./(2.*dt), 0.15 / ((m1+m2)*lal.MTSUN_SI) )
 
@@ -217,7 +214,7 @@ def get_waveform(wav, approximant, f_min, dt, N):
         hcref_padded[0:len(hctilde)] = hctilde
         href_padded = generate_detector_strain(wav, hpref_padded, hcref_padded)
     elif approximant in td_approximants():
-        raise IOError("Time domain approximants not supported at the moment..")
+        #raise IOError("Time domain approximants not supported at the moment..")
         hp, hc = get_td_waveform(approximant=approximant,
                             mass1=m1, mass2=m2,
                             spin1x=s1x, spin1y=s1y, spin1z=s1z,
@@ -236,6 +233,23 @@ def get_waveform(wav, approximant, f_min, dt, N):
         href_padded = make_frequency_series(href_padded_td)
     return href_padded
     #}}}
+
+
+def get_sim_hash(N=1, num_digits=10):
+      return ilwd.ilwdchar(":%s:0"%DA.get_unique_hex_tag(N = N,
+                                                         num_digits = num_digits))
+
+def get_tag(wav): return str(wav.simulation_id.column_name)
+
+def waveform_exists(wav, waves):
+    sid = get_tag(wav)
+    if sid in waves: return True
+    return False
+
+def is_eliminated(wav):
+    sid = get_tag(wav)
+    if os.path.exists(os.path.join(options.elimination_dir, sid)): return True
+    return False
 
 
 #########################################################################
@@ -260,7 +274,22 @@ bank_doc = ligolw_utils.load_filename(options.bank_file_name,
 try:
     bank_table = lsctables.SimInspiralTable.get_table(bank_doc)
 except ValueError:
-    raise IOError("Only sim_inspiral tables are understood for banks..")
+    try:
+        bank_table = lsctables.SnglInspiralTable.get_table(bank_doc)
+        # We need to assign unique tags to all rows in this 
+        # table as we won't have those available under the 
+        # `simulation_id` column. We also addtionally include
+        # sensible values for `inclination`, `distance`, 
+        # `latitude`, `longitude` and `polarization` fields!
+        for row in bank_table:
+            row.simulation_id = get_sim_hash()
+            row.inclination = 0
+            row.distance = 1.e6
+            row.latitude = 0
+            row.longitude = 0
+            row.polarization = 0
+    except ValueError:
+        raise IOError("Only sim_inspiral tables are understood for banks..")
 #}}}
 
 # Open the input proposals file and get the table
@@ -321,18 +350,6 @@ psd = pycbc.psd.from_string(options.psd_name, n, df, f_min)
 # Storage
 waveforms = {}
 matches = {}
-
-def get_tag(wav): return str(wav.simulation_id.column_name)
-
-def waveform_exists(wav, waves):
-    sid = get_tag(wav)
-    if sid in waves: return True
-    return False
-
-def is_eliminated(wav):
-    sid = get_tag(wav)
-    if os.path.exists(os.path.join(options.elimination_dir, sid)): return True
-    return False
 
 ##########################################################
 # Split into batches
