@@ -192,7 +192,8 @@ def get_waveform(wav, approximant, f_min, dt, N):
     f_max = min( 1./(2.*dt), 0.15 / ((m1+m2)*lal.MTSUN_SI) )
 
     if approximant in fd_approximants():
-        hptild, hctild = get_fd_waveform(approximant=approximant,
+        try:
+            hptild, hctild = get_fd_waveform(approximant=approximant,
                                     mass1=m1, mass2=m2,
                                     spin1x=s1x, spin1y=s1y, spin1z=s1z,
                                     spin2x=s2x, spin2y=s2y, spin2z=s2z,
@@ -202,6 +203,11 @@ def get_waveform(wav, approximant, f_min, dt, N):
                                     coa_phase=coa_phase,
                                     inclination=inc, distance=dist,
                                     f_lower=f_min, f_final=f_max, delta_f=df)
+        except RuntimeError as re:
+            for c in dir(wav):
+                if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
+                    print(c, getattr(wav, c))
+            raise RuntimeError(re)
         hptilde = FrequencySeries(hptild, delta_f=df,
                                   dtype=np.complex128,copy=True)
         hpref_padded = FrequencySeries(zeros(N/2 + 1), delta_f=df,
@@ -215,7 +221,8 @@ def get_waveform(wav, approximant, f_min, dt, N):
         href_padded = generate_detector_strain(wav, hpref_padded, hcref_padded)
     elif approximant in td_approximants():
         #raise IOError("Time domain approximants not supported at the moment..")
-        hp, hc = get_td_waveform(approximant=approximant,
+        try:
+            hp, hc = get_td_waveform(approximant=approximant,
                             mass1=m1, mass2=m2,
                             spin1x=s1x, spin1y=s1y, spin1z=s1z,
                             spin2x=s2x, spin2y=s2y, spin2z=s2z,
@@ -225,6 +232,11 @@ def get_waveform(wav, approximant, f_min, dt, N):
                             coa_phase=coa_phase,
                             inclination=inc, distance=dist,
                             f_lower=f_min, delta_t=dt)
+        except RuntimeError as re:
+            for c in dir(wav):
+                if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
+                    print(c, getattr(wav, c))
+            raise RuntimeError(re)
         hpref_padded = TimeSeries(zeros(N), delta_t=dt,dtype=hp.dtype,copy=True)
         hpref_padded[:len(hp)] = hp
         hcref_padded = TimeSeries(zeros(N), delta_t=dt,dtype=hc.dtype,copy=True)
