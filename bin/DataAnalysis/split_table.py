@@ -8,12 +8,7 @@ import sys
 from optparse import OptionParser
 
 from glue import lal
-from glue import segments
-from glue import segmentsUtils
 from glue import gpstime
-
-import glue.pipeline
-import glue.utils
 
 from glue.ligolw import ligolw
 from glue.ligolw import table
@@ -27,7 +22,6 @@ lsctables.use_in(mycontenthandler)
 
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
-from glue.segmentdb import segmentdb_utils
 from glue import pidfile as pidfile
 from glue import git_version
 from scipy.interpolate import interp1d
@@ -63,7 +57,7 @@ print options.named
 indoc = ligolw_utils.load_filename(options.tmplt_bank, contenthandler=mycontenthandler)
 
 try:
-  template_bank_table = table.get_table(indoc, lsctables.SnglInspiralTable.tableName, contenthandler=mycontenthandler)
+  template_bank_table = table.get_table(indoc, lsctables.SnglInspiralTable.tableName)
   tabletype = lsctables.SnglInspiralTable
 except:
   template_bank_table = table.get_table(indoc, lsctables.SimInspiralTable.tableName)
