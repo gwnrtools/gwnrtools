@@ -121,6 +121,15 @@ parser.add_argument('--inclination-max',
                     default=0.0,
                     type=float)
 
+parser.add_argument('--coa-phase-min',
+                    help="Minimum value allowed for reference phase",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--coa-phase-max',
+                    help="Maximum value allowed for reference phase",
+                    default=0.0,
+                    type=float)
+
 parser.add_argument('--mean-per-ano-min',
                     help="Minimum value allowed for mean periastron anomaly",
                     default=0.0,
@@ -197,8 +206,8 @@ mean_per_ano_max = options.mean_per_ano_max
 long_asc_nodes_min = options.long_asc_nodes_min
 long_asc_nodes_max = options.long_asc_nodes_max
 
-coa_phase_min = 0.
-coa_phase_max = 0.
+coa_phase_min = options.coa_phase_min
+coa_phase_max = options.coa_phase_max
 
 inc_min = options.inclination_min
 inc_max = options.inclination_max

@@ -89,6 +89,15 @@ parser.add_argument('--inclination-max',
                     default=0.0,
                     type=float)
 
+parser.add_argument('--coa-phase-min',
+                    help="Minimum value allowed for reference phase",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--coa-phase-max',
+                    help="Maximum value allowed for reference phase",
+                    default=0.0,
+                    type=float)
+
 parser.add_argument('--mean-per-ano-min',
                     help="Minimum value allowed for mean periastron anomaly",
                     default=0.0,
@@ -250,6 +259,7 @@ arguments = --iteration-id=$(Job_IID) --num-new-points=$(Num_New_Points) %s
             --long-asc-nodes-min=%f --long-asc-nodes-max=%f %s
             --mean-per-ano-min=%f --mean-per-ano-max=%f %s
             --inclination-min=%f --inclination-max=%f %s
+            --coa-phase-min=%f --coa-phase-max=%f %s
             --eccentricity-min=%f --eccentricity-max=%f %s
             --spin-component-min=%f --spin-component-max=%f %s
             --spin-mag-min=%f --spin-mag-max=%f %s
@@ -267,6 +277,7 @@ queue 1
         options.long_asc_nodes_min, options.long_asc_nodes_max, '\\',\
         options.mean_per_ano_min, options.mean_per_ano_max, '\\',\
         options.inclination_min, options.inclination_max, '\\',\
+        options.coa_phase_min, options.coa_phase_max, '\\',\
         options.eccentricity_min, options.eccentricity_max, '\\',\
         options.spin_component_min, options.spin_component_max, '\\',\
         options.spin_mag_min, options.spin_mag_max, '\\',\
