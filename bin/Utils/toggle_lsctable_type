@@ -110,9 +110,11 @@ for c in map_column_in_sim_to_sngl_inspiral:
 if output_table_type is lsctables.SimInspiralTable:
     columns_needed = columns_needed_in_sim_inspiral
     map_columns = map_column_in_sngl_to_sim_inspiral
+    hash_field = "simulation_id"
 else:
     columns_needed = columns_needed_in_sngl_inspiral
     map_columns = map_column_in_sim_to_sngl_inspiral
+    hash_field = "event_id"
 
 ################ Create output document ##################
 new_points_doc = ligolw.Document()
@@ -147,14 +149,10 @@ for idx in range(len(input_table)):
     new_points_table.append(new_row)
 
 # Now, loop over the new table and make sure hashes are unique
-if output_table_type is lsctables.SimInspiralTable:
-    hash_field = "simulation_id"
-else:
-    hash_field = "event_id"
-
-if getattr(new_points_table[0], hash_field) == getattr(new_points_table[1], hash_field):
-    for row in new_points_table:
-        setattr(row, hash_field, get_sim_hash())
+if options.add_hashes:
+    if getattr(new_points_table[0], hash_field) == getattr(new_points_table[1], hash_field):
+        for row in new_points_table:
+            setattr(row, hash_field, get_sim_hash())
 
 ############## Write the new sample points to XML #############
 print("Writing {} new points to {}".format(len(new_points_table), options.output))
