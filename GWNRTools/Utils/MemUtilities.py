@@ -7,10 +7,8 @@ import os, sys
 from collections import Mapping, Container
 from sys import getsizeof
 import glob, commands as cmd
-#import numpy as np
-#import re
-sys.path.append('/home/prayush/src/UseNRinDA/NR/SpEC/src/')
-#from SpECUtilities import ParseHeaderForSpECTabularOutputASCII
+from numbers import Number
+from collections import Set, Mapping, deque
 
 
 ########################################
@@ -21,14 +19,14 @@ sys.path.append('/home/prayush/src/UseNRinDA/NR/SpEC/src/')
 ########################################
 ## USER-FACING FUNCTIONS
 ########################################
-def TotalMemoryUsage(o, ids=set()):
+def MemoryUsage(o):
     """Find the memory footprint of a Python object
 
     This is a recursive function that drills down a Python object graph
     like a dictionary holding nested dictionaries with lists of lists
     and tuples and sets.
 
-    The sys.getsizeof function does a shallow size of only. It counts each
+    The sys.getsizeof function does a shallow sizeof. It counts each
     object inside a container as pointer only regardless of how big it
     really is.
 
@@ -37,38 +35,52 @@ def TotalMemoryUsage(o, ids=set()):
     :return:
     """
     #{{{
-    d = TotalMemoryUsage
-    if id(o) in ids:
-        return 0
+    try: # Python 2
+        zero_depth_bases = (basestring, Number, xrange, bytearray)
+        iteritems = 'iteritems'
+    except NameError: # Python 3
+        zero_depth_bases = (str, bytes, Number, range, bytearray)
+        iteritems = 'items'
 
-    r = getsizeof(o)
-    ids.add(id(o))
+    _seen_ids = set()
 
-    if isinstance(o, str) or isinstance(0, unicode):
-        return r
+    def inner(obj):
+        obj_id = id(obj)
+        if obj_id in _seen_ids:
+            return 0
+        _seen_ids.add(obj_id)
 
-    if isinstance(o, Mapping):
-        return r + sum(d(k, ids) + d(v, ids) for k, v in o.iteritems())
+        size = sys.getsizeof(obj)
 
-    if isinstance(o, Container):
-        return r + sum(d(x, ids) for x in o)
+        if isinstance(obj, zero_depth_bases):
+            pass # bypass remaining control flow and return
+        elif isinstance(obj, (tuple, list, Set, deque)):
+            size += sum(inner(i) for i in obj)
+        elif isinstance(obj, Mapping) or hasattr(obj, iteritems):
+            size += sum(inner(k) + inner(v) for k, v in getattr(obj, iteritems)())
 
-    return r
+        # Check for custom object instances - may subclass above too
+        if hasattr(obj, '__dict__'):
+            size += inner(vars(obj))
+        if hasattr(obj, '__slots__'): # can have __slots__ with __dict__
+            size += sum(inner(getattr(obj, s)) for s in obj.__slots__ if hasattr(obj, s))
+        return size
+
+    return inner(o)
     #}}}
 
 def ShowMemoryUsage(objs=[], prefac=1e-6, prefac_name='Mb'):
     """
-This is a wrapper around TotalMemoryUsage that takes in a list
+This is a wrapper around MemoryUsage that takes in a list
 of arbitrary objects, and prints their total size
     """
     #{{{
     if type(objs) is not list: objs = [objs]
 
     mem = 0.0
-    for obj in objs: mem += TotalMemoryUsage(obj, set())
+    for obj in objs: mem += MemoryUsage(obj)
 
-    print >>sys.stdout,\
-          "Memory added: %.3f %s" % (mem * prefac, prefac_name)
+    print("Memory used: %.3f %s" % (mem * prefac, prefac_name))
 
     sys.stdout.flush()
     return
