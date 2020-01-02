@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import matplotlib as mp
-mp.use('pdf')
 import time
 import os
 import sys
@@ -35,7 +33,7 @@ allowed chirp mass that user provides.
 
 There should be N = log(m_max / m_min_0) / log(1 + mchirp_window) bins, and as
 many sub-banks created.
-""", formatter_class=argparse.RawTextHelpFormatter)
+""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 #~ parser.add_argument("--iteration-id", dest="iid",
                     #~ help="The index of the iteration",

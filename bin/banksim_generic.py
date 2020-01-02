@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import matplotlib as mp
-mp.use('pdf')
 import sys
 import os
 import time
@@ -35,10 +33,10 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 #########################################################################
 #{{{
 parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
-Takes in a sub-bank file, and of proposal points. Computes overlaps between the
-systems in those files, and stores the maximum of these overlaps (for each
-proposal point) in a file match_id_part_pid.dat.
-""", formatter_class=argparse.RawTextHelpFormatter)
+Takes in a sub-bank and proposal points (as XML). Computes overlaps between
+the systems in those files, and stores the maximum of these overlaps (for
+each proposal point) in a file match_id_part_pid.dat.
+""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--bank-file-name",

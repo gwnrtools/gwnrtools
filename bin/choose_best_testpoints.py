@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import matplotlib as mp
-mp.use('pdf')
 import sys
 import os
 import time
@@ -39,7 +37,7 @@ Reads in all match files for given testpoint set against itself. Then:
 5) Remove its nearest neighbors with which it had match > [MM]
 6) Repeat steps 3)-5) till max(G) = 0
 7) Add survivors to old bank
-""", formatter_class=argparse.RawTextHelpFormatter)
+""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--proposal-file-name",

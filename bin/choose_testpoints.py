@@ -2,8 +2,6 @@
 #########################################################################
 ##############          IMPORTS          ################################
 #########################################################################
-import matplotlib as mp
-mp.use('pdf')
 from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
 from pycbc import DYN_RANGE_FAC
 from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as, Array
@@ -49,7 +47,7 @@ Takes in the iteration id. It chooses 'num-new-points' new points. Each of these
 points are chosen in a way that they mchirp > (1+mw)*mchirp of all points in a
 pre-existing "old_bank". This is done to ensure that these new points are
 minimally overlapping in terms of the parameter space volume that they cover.
-""", formatter_class=argparse.RawTextHelpFormatter)
+""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # Sampling Parameters
 parser.add_argument("--iteration-id", dest="iid",
@@ -148,6 +146,34 @@ parser.add_argument('--long-asc-nodes-max',
                     default=0.0,
                     type=float)
 
+# Sky location and orientation parameters
+parser.add_argument('--latitude-min',
+                    help="Minimum value allowed for latitude (or declination)",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--latitude-max',
+                    help="Maximum value allowed for latitude (or declination)",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--longitude-min',
+                    help="Minimum value allowed for longitude (or right ascension)",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--longitude-max',
+                    help="Maximum value allowed for longitude (or right ascension)",
+                    default=0.0,
+                    type=float)
+
+parser.add_argument('--polarization-min',
+                    help="Minimum value allowed for polarization angle",
+                    default=0.0,
+                    type=float)
+parser.add_argument('--polarization-max',
+                    help="Maximum value allowed for polarization angle",
+                    default=0.0,
+                    type=float)
+
 # Match parameters
 parser.add_argument('-w', '--mchirp-window', metavar='MC_WIN',
                     dest="mchirp_window",
@@ -188,7 +214,7 @@ print "eccentricity-window = %f" % (options.ecc_window)
 ################### Parameter Ranges ##################
 mass_min   = options.component_mass_min
 mass_max   = options.component_mass_max
-eta_max    = 0.25
+eta_max    = 0.25 # for mass_min + mass_min
 mtotal_max = options.total_mass_max
 
 smag_min = options.spin_mag_min
@@ -215,14 +241,14 @@ inc_max = options.inclination_max
 dist_min = 1.e6
 dist_max = 1.e6
 
-pol_min = 0.
-pol_max = 0.
+pol_min = options.polarization_min
+pol_max = options.polarization_max
 
-lat_min = 0.
-lat_max = 0.
+lat_min = options.latitude_min
+lat_max = options.latitude_max
 
-lon_min = 0.
-lon_max = 0.
+lon_min = options.longitude_min
+lon_max = options.longitude_max
 
 mchirp_max = (2. * mass_max) * (eta_max**0.6)
 mchirp_min = (2. * mass_min) * (eta_max**0.6)
@@ -232,7 +258,6 @@ q_min = 1.
 q_max = DA.get_q_from_eta(eta_min)
 
 #{{{
-
 def sample_mass(N=1):
   return SU.uniform_CompactObject_mass(N, mass_min, mass_max)
 

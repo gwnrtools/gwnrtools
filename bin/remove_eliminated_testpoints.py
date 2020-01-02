@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import matplotlib as mp
-mp.use('pdf')
 import sys
 import os
 import time
@@ -29,7 +27,7 @@ parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
 Reads in all match files for given testpoint set against current bank. Removes
 all testpoints which have match > [MM] for at least one point in the existing
 bank. Write the final testpoints as testpoints_sufficiently_far/test_%d.xml.
-""", formatter_class=argparse.RawTextHelpFormatter)
+""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--proposal-file-name",
