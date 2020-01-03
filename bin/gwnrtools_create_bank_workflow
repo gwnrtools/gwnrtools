@@ -227,7 +227,7 @@ provided, i.e. {}, is too big. Changing it to {}""".format(MCHIRP_WIN_TP, 0.5*x)
 options.run_directory = os.path.abspath(options.run_directory)
 commands.getoutput("mkdir -pv {}".format(options.run_directory))
 os.chdir(options.run_directory)
-useful_directories = ['testpoints', 'testpoints_subparts',
+useful_directories = ['scripts', 'testpoints', 'testpoints_subparts',
     'testpoints_sufficiently_far', 'testpoints_sufficiently_far_subparts',
     options.elimination_dir,
     'banks', 'banks_subparts',
@@ -245,8 +245,8 @@ useful_scripts = ['choose_testpoints.py',
     'banksim_generic.py',
     'choose_best_testpoints.py']
 for s in useful_scripts:
-    print commands.getoutput("cp {} {}/".format(os.path.join(__dir__, s),\
-                              options.run_directory))
+    print(commands.getoutput("cp {} {}/".format(os.path.join(__dir__, s),\
+        os.path.join(options.run_directory, 'scripts'))))
 
 # Write Submit files
 submit_file_texts = {}
@@ -254,7 +254,7 @@ submit_file_texts['choose_testpoints.py'] = """\
 universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
-executable = choose_testpoints.py
+executable = scripts/choose_testpoints.py
 arguments = --iteration-id=$(Job_IID) --num-new-points=$(Num_New_Points) %s
             --long-asc-nodes-min=%f --long-asc-nodes-max=%f %s
             --mean-per-ano-min=%f --mean-per-ano-max=%f %s
@@ -289,7 +289,7 @@ submit_file_texts['split_table_geometrically.py'] = """\
 universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
-executable = split_table_geometrically.py
+executable = scripts/split_table_geometrically.py
 arguments = --tmplt-bank=$(Bank_To_Split) --named=$(Split_Prefix) %s
             --num=$(N_Split) --mchirp-window=$(Mchirp_Window) %s
             --mchirp-min=%f --mchirp-max=%f %s
@@ -306,7 +306,7 @@ universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
 request_memory = 8G
-executable = remove_eliminated_testpoints.py
+executable = scripts/remove_eliminated_testpoints.py
 arguments = --proposal-file-name=$(Prop_File) %s
             --new-proposal-file-name=$(New_Prop_File) %s
             --match-file-name-glob=$(Match_Glob) %s
@@ -322,7 +322,7 @@ submit_file_texts['banksim_generic.py'] = """\
 universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
-executable = banksim_generic.py
+executable = scripts/banksim_generic.py
 arguments = --verbose --bank-file-name=$(Bank_File) %s
             --proposal-file-name=$(Prop_File) %s
             --match-file-name=$(Match_File) %s
@@ -349,7 +349,7 @@ submit_file_texts['choose_best_testpoints.py'] = """\
 universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
-executable = choose_best_testpoints.py
+executable = scripts/choose_best_testpoints.py
 arguments = --proposal-file-name=$(Prop_File) %s
             --old-bank-file-name=$(Old_Bank_File) %s
             --new-bank-file-name=$(New_Bank_File) %s
