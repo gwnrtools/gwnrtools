@@ -107,6 +107,9 @@ def parse_match_file(mfile_name,
 
 def get_all_matches_against_point(p, mvals_dict):
     mkeys = mvals_dict[p].keys()
+    ##TESTME
+    # remove matches with points that have been removed from mvals_dict
+    mkeys = [k for k in mkeys if k in mvals_dict]
     return np.array([mvals_dict[p][k] for k in mkeys], dtype=np.float128), mkeys
 
 def get_all_G_values(mvals_dict):
@@ -213,34 +216,66 @@ for k in mvals_for_each_test_point:
 ## 3)
 best_testpoints = []
 gvals, gpoints  = get_all_G_values(mvals_for_each_test_point)
-if len(gvals.values()) > 0: max_g_value = np.max(gvals.values())
-else: max_g_value = -1
+if len(gvals.values()) > 0: max_gval = np.max(gvals.values())
+else: max_gval = -1
 if options.verbose:
-    logging.info("Initially, all G values are: {}".format(gvals.values()))
+    logging.info("Init:  G values of {} proposal points compued: {}".format(\
+        len(mvals_for_each_test_point), gvals.values()))
 
-while max_g_value > 0:
+while max_gval > 0:
     ## 4)
-    test_point_for_each_gval = {v:k for k,v in gvals.iteritems()}
-    test_point_with_max_g_value = test_point_for_each_gval[max_g_value]
-    best_testpoints.append(test_point_with_max_g_value)
+    test_points_for_each_gval = {v:k for k,v in gvals.iteritems()}
+    test_point_with_max_gval = test_points_for_each_gval[max_gval]
+    best_testpoints.append(test_point_with_max_gval)
     if options.verbose:
-        logging.info("\t maximum G value is {} for {}".format(max_g_value,\
-            test_point_with_max_g_value))
+        logging.info("\t maximum G value is {} for {}".format(max_gval,\
+            test_point_with_max_gval))
         logging.info("\t\t its G-points include: {}".format(\
-            gpoints[test_point_with_max_g_value]))
+            gpoints[test_point_with_max_gval]))
     ## 5)
-    if test_point_with_max_g_value in mvals_for_each_test_point:
-        mvals_for_each_test_point.pop(test_point_with_max_g_value)
-    for p in gpoints[test_point_with_max_g_value]:
-        if p in mvals_for_each_test_point:
-            mvals_for_each_test_point.pop(p)
-        else: logging.info("point {} to be removed not found!!".format(p))
-    if options.verbose:
-        logging.info("\t\t removed {} points.".format(\
-                      len(gpoints[test_point_with_max_g_value])))
+    ## TESTME
+    _test = True
+    if not _test:
+        if test_point_with_max_gval in mvals_for_each_test_point:
+            mvals_for_each_test_point.pop(test_point_with_max_gval)
+        for p in gpoints[test_point_with_max_gval]:
+            if p in mvals_for_each_test_point:
+                mvals_for_each_test_point.pop(p)
+            else: logging.info("point {} to be removed not found!!".format(p))
+        if options.verbose:
+            logging.info("\t\t removed {} points.".format(\
+                          1 + len(gpoints[test_point_with_max_gval])))
+    ##
     ## 3)
-    gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
-    max_g_value = np.max(gvals.values())
+    ## TESTME
+    # How about we try and remove things from gvals instead of 
+    # recomputing gvals
+    if _test:
+        # First remove all points that have been eliminated above
+        points_to_be_removed = set(gpoints[test_point_with_max_gval])
+        points_to_be_removed.add(test_point_with_max_gval)
+        for p in points_to_be_removed:
+            if p in mvals_for_each_test_point:
+                mvals_for_each_test_point.pop(p)
+            else: logging.info("point {} to be removed not found-1Of3!!".format(p))
+            if p in gvals: gvals.pop(p)
+            else: logging.info("point {} to be removed not found-2Of3!!".format(p))
+            if p in gpoints: gpoints.pop(p)
+            else: logging.info("point {} to be removed not found-3Of3!!".format(p))
+        if options.verbose:
+            logging.info("\t\t removed {} points.".format(\
+                          len(points_to_be_removed)))
+        for p in gvals:
+            # correct the list of G-points
+            gpoints[p] = list(set(gpoints[p]) - points_to_be_removed)
+            # correct the remaining points G-values
+            gvals[p] = len(gpoints[p])
+        if options.verbose:
+            logging.info("\t\t corrected G-values and G-points")
+    if not _test:
+        gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
+    ##
+    max_gval = np.max(gvals.values())
 ####
 ## 7)
 for p in best_testpoints:
