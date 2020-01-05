@@ -1,4 +1,5 @@
 h5py
+logging
 numpy>=1.7
 matplotlib
 numexpr
