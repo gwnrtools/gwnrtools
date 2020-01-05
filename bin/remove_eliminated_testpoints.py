@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
-import os
+import os, logging
+logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
+                     level=logging.INFO, stream=sys.stdout)
 import time
 _itime = time.time()
 
@@ -64,19 +66,19 @@ options = parser.parse_args()
 #########################################################################
 #################### Opening input/output files/tables ##################
 #########################################################################
-print "OPENING PROPOSAL FILE AND TABLES"
+logging.info("OPENING PROPOSAL FILE AND TABLES")
 # Open the input proposals file and get the table
 #{{{
 if not options.prop_file_name:
-    print "No proposal points file-name given!"
+    logging.info("No proposal points file-name given!")
     raise ValueError("No proposal points file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.prop_file_name):
-    print "This proposal point file does not exist !"
+    logging.info("This proposal point file does not exist !")
     raise IOError(\
         "The proposal point file %s does not exist !" % options.prop_file_name)
 
-print "Opening proposals file %s" % options.prop_file_name
+logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
                   contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
                   verbose=options.verbose)
@@ -166,7 +168,7 @@ for tp in mvals_for_each_test_point:
     ## 4)
     if np.max(mvalues) > options.mm:
         if options.verbose:
-            print "\t removing {}".format(tp)
+            logging.info("\t removing {}".format(tp))
         eliminated_testpoints.append(tp)
 ## 5)
 for p in prop_table:
@@ -182,9 +184,9 @@ ligolw_utils.write_filename(outdoc, outname)
 
 cnt_eliminations = len(prop_table) - len(new_inspiral_table)
 if options.verbose:
-    print "Written results to file: {}".format(outname)
-    print "Total {} test points eliminated, {} left.".format(cnt_eliminations,
-        len(new_inspiral_table))
-    print "Time taken: {} seconds".format(time.time() - _itime)
+    logging.info("Written results to file: {}".format(outname))
+    logging.info("Total {} test points eliminated, {} left.".format(cnt_eliminations,
+        len(new_inspiral_table)))
+    logging.info("Time taken: {} seconds".format(time.time() - _itime))
 
 sys.stdout.flush()
