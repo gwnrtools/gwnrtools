@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
-import os
+import os, logging
+logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
+                     level=logging.INFO, stream=sys.stdout)
 import time
 _itime = time.time()
 
@@ -120,19 +122,19 @@ def get_all_G_values(mvals_dict):
 #########################################################################
 #################### Opening input/output files/tables ##################
 #########################################################################
-print "OPENING PROPOSAL FILE AND TABLES"
+logging.info("OPENING PROPOSAL FILE AND TABLES")
 #{{{
 # Open the input proposals file and get the table
 if not options.prop_file_name:
-    print "No proposal points file-name given!"
+    logging.info("No proposal points file-name given!")
     raise ValueError("No proposal points file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.prop_file_name):
-    print "This proposal point file does not exist !"
+    logging.info("This proposal point file does not exist !")
     raise IOError(\
         "The proposal point file %s does not exist !" % options.prop_file_name)
 
-print "Opening proposals file %s" % options.prop_file_name
+logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
                   contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
                   verbose=options.verbose)
@@ -145,15 +147,15 @@ for p in prop_table: prop_table_tag_dict[get_tag(p)] = p
 
 # Open the old bank file and get the table
 if not options.old_bank_file_name:
-    print "No old bank file-name given!"
+    logging.info("No old bank file-name given!")
     raise ValueError("No old bank file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.old_bank_file_name):
-    print "This bank file does not exist !"
+    logging.info("This bank file does not exist !")
     raise IOError(\
         "The bank point file %s does not exist !" % options.old_bank_file_name)
 
-print "Opening bank file %s" % options.old_bank_file_name
+logging.info("Opening bank file %s" % options.old_bank_file_name)
 old_bank_doc = ligolw_utils.load_filename(options.old_bank_file_name,
                   contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
                   verbose=options.verbose)
@@ -197,20 +199,16 @@ sys.stdout.flush()
 ##########################################################
 ## 1)
 mfile_names = glob.glob(options.match_file_name_glob)
+logging.info("Total number of match files = {}".format(len(mfile_names)))
 ## 2)
-mvals_for_each_bank_point = {}
 mvals_for_each_test_point = {}
 for mfile_name in mfile_names:
-    mvals_for_each_bank_point, mvals_for_each_test_point =\
-        parse_match_file(mfile_name, mvals_for_each_bank_point,\
-            mvals_for_each_test_point)
+    _, mvals_for_each_test_point =\
+        parse_match_file(mfile_name, {}, mvals_for_each_test_point)
 # remove self-matches
 for k in mvals_for_each_test_point:
     if k in mvals_for_each_test_point[k]:
         mvals_for_each_test_point[k].pop(k)
-for k in mvals_for_each_bank_point:
-    if k in mvals_for_each_bank_point[k]:
-        mvals_for_each_bank_point[k].pop(k)
 ## 6)
 ## 3)
 best_testpoints = []
@@ -218,27 +216,28 @@ gvals, gpoints  = get_all_G_values(mvals_for_each_test_point)
 if len(gvals.values()) > 0: max_g_value = np.max(gvals.values())
 else: max_g_value = -1
 if options.verbose:
-    print "Initially, all G values are: ", gvals.values()
+    logging.info("Initially, all G values are: {}".format(gvals.values()))
 
 while max_g_value > 0:
     ## 4)
     test_point_for_each_gval = {v:k for k,v in gvals.iteritems()}
-    test_point_for_max_g_value = test_point_for_each_gval[max_g_value]
-    best_testpoints.append(test_point_for_max_g_value)
+    test_point_with_max_g_value = test_point_for_each_gval[max_g_value]
+    best_testpoints.append(test_point_with_max_g_value)
     if options.verbose:
-        print "\t maximum G value is {} for {}".format(max_g_value,\
-            test_point_for_max_g_value)
-        print "\t\t G-points include: ", gpoints[test_point_for_max_g_value]
+        logging.info("\t maximum G value is {} for {}".format(max_g_value,\
+            test_point_with_max_g_value))
+        logging.info("\t\t its G-points include: {}".format(\
+            gpoints[test_point_with_max_g_value]))
     ## 5)
-    if test_point_for_max_g_value in mvals_for_each_test_point:
-        mvals_for_each_test_point.pop(test_point_for_max_g_value)
-    for p in gpoints[test_point_for_max_g_value]:
+    if test_point_with_max_g_value in mvals_for_each_test_point:
+        mvals_for_each_test_point.pop(test_point_with_max_g_value)
+    for p in gpoints[test_point_with_max_g_value]:
         if p in mvals_for_each_test_point:
             mvals_for_each_test_point.pop(p)
-        else: print "point {} to be removed not found!!".format(p)
+        else: logging.info("point {} to be removed not found!!".format(p))
     if options.verbose:
-        print "\t\t removed {} points.".format(\
-                                      len(gpoints[test_point_for_max_g_value]))
+        logging.info("\t\t removed {} points.".format(\
+                      len(gpoints[test_point_with_max_g_value])))
     ## 3)
     gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
     max_g_value = np.max(gvals.values())
@@ -246,12 +245,13 @@ while max_g_value > 0:
 ## 7)
 for p in best_testpoints:
     new_inspiral_table.append(prop_table_tag_dict[p])
-if options.verbose:
-    print "\t N(best_testpoints) = {}".format(len(best_testpoints))
 
-print "LEngth of prop_table_tag_dict = ", len(prop_table_tag_dict.keys())
-print "LEngth of mvals_for_each_test_point = ",\
-    len(mvals_for_each_test_point.keys())
+logging.info("Total number of proposal points read = {}".format(\
+    len(prop_table_tag_dict)))
+logging.info("Number of surviving proposal points with high G-values = {}".format(\
+    len(best_testpoints)))
+logging.info("Number of other surviving proposal points with G=0 = {}".format(\
+    len(mvals_for_each_test_point.keys())))
 for p in mvals_for_each_test_point:
     new_inspiral_table.append(prop_table_tag_dict[p])
 
@@ -263,10 +263,10 @@ ligolw_utils.write_filename(outdoc, outname)
 
 cnt_additions = len(new_inspiral_table) - len(old_bank_table)
 if options.verbose:
-    print "Written results to file: {}".format(outname)
-    print "Total {} test points added, {} total now.".format(cnt_additions,
-        len(new_inspiral_table))
-    print "Time taken: {} seconds".format(time.time() - _itime)
+    logging.info("Written results to file: {}".format(outname))
+    logging.info("Total {} test points added, which add up to {} points now.".format(\
+        cnt_additions, len(new_inspiral_table)))
+    logging.info("Time taken: {} seconds".format(time.time() - _itime))
 ##
 with open('SummaryStatistics.dat', 'a+') as fout:
     fout.write("%d\t%d\t%d\n" % (\
