@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import time
-import os
 import sys
+import os, logging
+logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
+                     level=logging.INFO, stream=sys.stdout)
 
 import numpy as np
 import argparse
@@ -71,7 +73,7 @@ options = parser.parse_args()
 #########################################################################
 #################### Initialize #####################
 #########################################################################
-print options.named
+logging.info('{}'.format(options.named))
 indoc = ligolw_utils.load_filename(options.tmplt_bank,\
             contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
             verbose=options.verbose)
@@ -110,7 +112,7 @@ else:
   raise IOError("Could not split mchirp into bins suitably")
 
 if options.verbose:
-    print "Mchirp bin edges chosen are: ", mc_bins_edges
+    logging.info("Mchirp bin edges chosen are: {}".format(mc_bins_edges))
     sys.stdout.flush()
 for i in range(len(mc_bins_edges) - 1):
     # create a blank xml document and add points that fall within the i'th bin
@@ -129,8 +131,8 @@ for i in range(len(mc_bins_edges) - 1):
         new_inspiral_table.append(p)
 
     if options.verbose:
-      print "\t {} templates in sub-bank {}.".format(len(new_inspiral_table),\
-                                                    i)
+      logging.info("\t {} templates in sub-bank {}.".format(\
+        len(new_inspiral_table), i))
     # write the xml doc to disk
     proctable = table.get_table(outdoc, lsctables.ProcessTable.tableName)
     proctable[0].end_time = gpstime.GpsSecondsFromPyUTC(time.time())
@@ -138,4 +140,4 @@ for i in range(len(mc_bins_edges) - 1):
     outname = options.named + '%06d.xml' % i
     ligolw_utils.write_filename(outdoc, outname)
 
-print i
+logging.info("{}".format(i))
