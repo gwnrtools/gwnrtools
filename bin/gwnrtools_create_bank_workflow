@@ -349,6 +349,7 @@ submit_file_texts['choose_best_testpoints.py'] = """\
 universe = vanilla
 getenv = true
 accounting_group = ligo.dev.o3.cbc.explore.test
+request_memory = 8G
 executable = scripts/choose_best_testpoints.py
 arguments = --proposal-file-name=$(Prop_File) %s
             --old-bank-file-name=$(Old_Bank_File) %s
