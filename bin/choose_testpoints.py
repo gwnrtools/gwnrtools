@@ -15,7 +15,9 @@ from scipy.interpolate import interp1d
 import gc
 
 import sys
-import os
+import os, logging
+logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
+                     level=logging.INFO, stream=sys.stdout)
 import time
 import commands
 
@@ -203,8 +205,8 @@ parser.add_argument("-V", "--verbose", action="store_true",
 
 options = parser.parse_args()
 #}}}
-print "mchirp-window = %f" % (options.mchirp_window)
-print "eccentricity-window = %f" % (options.ecc_window)
+logging.info("mchirp-window = %f" % (options.mchirp_window))
+logging.info("eccentricity-window = %f" % (options.ecc_window))
 #ctx = CUDAScheme()
 
 #########################################################################
@@ -463,14 +465,14 @@ else:
   name2 = options.output_prefix + "%06d.xml" % idx
   while os.path.exists(name2):
     if options.verbose:
-      print "trying name.. ", name1, name2
+      logging.info("trying name.. " + name1 + name2)
     idx += 1
     name1 = name2
     name2 = options.output_prefix + "%06d.xml" % idx
   new_file_name = name1
   iid = idx - 1
-  print "Changing to iid = {}, all previous testpoints exist.".format(iid)
-print "Storing the new sample points in {}".format(new_file_name)
+  logging.info("Changing to iid = {}, all previous testpoints exist.".format(iid))
+logging.info("Storing the new sample points in {}".format(new_file_name))
 sys.stdout.flush()
 
 new_points_doc = ligolw.Document()
@@ -498,7 +500,7 @@ break_now = False
 cnt = 0
 while cnt < num_new_points:
   if options.verbose:
-    print "%d points chosen" % cnt
+    logging.info("%d points chosen" % cnt)
     sys.stdout.flush()
   if cnt == 0:
     new_point = get_new_sample_point()
@@ -518,7 +520,7 @@ while cnt < num_new_points:
                                 options.mchirp_window,\
                                 options.ecc_window)):
     if options.verbose and k % 1000 == 0:
-      print "\t\t ...rejecting sample %d" % k
+      logging.info("\t\t ...rejecting sample %d" % k)
       sys.stdout.flush()
     k += 1
     new_point = get_new_sample_point()
@@ -529,12 +531,12 @@ while cnt < num_new_points:
   new_points_table.append( new_point )
   cnt += 1
   if break_now:
-    print "ONLY FILLED IN {} POINTS IN REASONABLE TIME.".format(len(new_points_table))
+    logging.info("ONLY FILLED IN {} POINTS IN REASONABLE TIME.".format(len(new_points_table)))
     break
 
 #}}}
 ############## Write the new sample points to XML #############
-print "Writing %d new points to %s" % (len(new_points_table), new_file_name)
+logging.info("Writing %d new points to %s" % (len(new_points_table), new_file_name))
 sys.stdout.flush()
 
 new_points_proctable = table.get_table(new_points_doc, lsctables.ProcessTable.tableName)
