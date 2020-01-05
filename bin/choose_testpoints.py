@@ -500,8 +500,8 @@ break_now = False
 cnt = 0
 while cnt < num_new_points:
   if options.verbose:
-    logging.info("%d points chosen" % cnt)
-    sys.stdout.flush()
+    if cnt % (num_new_points / 50) == 0:
+      logging.info("%d points chosen" % cnt)
   if cnt == 0:
     new_point = get_new_sample_point()
     new_points_table.append( new_point )
@@ -519,7 +519,7 @@ while cnt < num_new_points:
                                 old_points_table,\
                                 options.mchirp_window,\
                                 options.ecc_window)):
-    if options.verbose and k % 1000 == 0:
+    if options.verbose and k % (num_new_points / 50) == 0:
       logging.info("\t\t ...rejecting sample %d" % k)
       sys.stdout.flush()
     k += 1
