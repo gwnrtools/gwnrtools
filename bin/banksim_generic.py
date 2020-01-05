@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
-import os
+import os, logging
+logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
+                     level=logging.INFO, stream=sys.stdout)
 import time
 _itime = time.time()
 
@@ -265,19 +267,19 @@ def is_eliminated(wav):
 #########################################################################
 #################### Opening input/output files/tables ##################
 #########################################################################
-print "OPENING SUB-BANK/PROPOSAL FILE AND TABLES"
+logging.info("OPENING SUB-BANK/PROPOSAL FILE AND TABLES")
 # Open the input sub-bank file and get the table
 #{{{
 if not options.bank_file_name:
-    print "No sub-bank file-name given!"
+    logging.info("No sub-bank file-name given!")
     raise ValueError("No sub-bank file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.bank_file_name):
-    print "This sub-bank file does not exist !"
+    logging.info("This sub-bank file does not exist !")
     raise IOError("The sub-bank file %s does not exist" % options.bank_file_name)
 
 if options.verbose:
-    print "..Opening bank file %s" % options.bank_file_name
+    logging.info("..Opening bank file %s" % options.bank_file_name)
 bank_doc = ligolw_utils.load_filename(options.bank_file_name,
                   contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
                   verbose=options.verbose)
@@ -305,15 +307,15 @@ except ValueError:
 # Open the input proposals file and get the table
 #{{{
 if not options.prop_file_name:
-    print "No proposal points file-name given!"
+    logging.info("No proposal points file-name given!")
     raise ValueError("No proposal points file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.prop_file_name):
-    print "This proposal point file does not exist !"
+    logging.info("This proposal point file does not exist !")
     raise IOError(\
         "The proposal point file %s does not exist !" % options.prop_file_name)
 
-print "Opening proposals file %s" % options.prop_file_name
+logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
                   contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
                   verbose=options.verbose)
@@ -338,8 +340,8 @@ N             = signal_length * sample_rate
 n             = N / 2 + 1
 df            = 1. / float(signal_length)
 if options.verbose:
-    print "f_min={}, sig_len={}, sample_rate={}, dt={}, N={}".format(f_min,\
-        signal_length,sample_rate,dt,N)
+    logging.info("f_min={}, sig_len={}, sample_rate={}, dt={}, N={}".format(f_min,\
+        signal_length,sample_rate,dt,N))
 
 # GET psd
 psd = pycbc.psd.from_string(options.psd_name, n, df, f_min)
@@ -367,7 +369,7 @@ bank_batch_size = options.bank_batch_size
 if len(bank_table) == 0:
     try: os.mknod(options.match_file_name)
     except OSError: pass
-    print "Bank file {} is empty. Exiting!".format(options.bank_file_name)
+    logging.info("Bank file {} is empty. Exiting!".format(options.bank_file_name))
     sys.exit(0)
 elif len(bank_table) <= bank_batch_size:
     bank_batches = [bank_table]
@@ -385,7 +387,7 @@ prop_batch_size = options.proposal_batch_size
 if len(prop_table) == 0:
     try: os.mknod(options.match_file_name)
     except OSError: pass
-    print "Proposal file {} is empty. Exiting!".format(options.prop_file_name)
+    logging.info("Proposal file {} is empty. Exiting!".format(options.prop_file_name))
     sys.exit(0)
 elif len(prop_table) <= prop_batch_size:
     prop_batches = [prop_table]
@@ -407,13 +409,13 @@ cnt_eliminations      = 0
 for i, bank_batch in enumerate(bank_batches):
     bank_batch_waveforms = {}
     if options.verbose:
-        print "\t Processing bank batch {} of {} (size {})".format(i+1,\
-            len(bank_batches), len(bank_batch))
+        logging.info("\t Processing bank batch {} of {} (size {})".format(i+1,\
+            len(bank_batches), len(bank_batch)))
     for j, prop_batch in enumerate(prop_batches):
         prop_batch_waveforms = {}
         if options.verbose:
-            print "\t\t Processing proposal batch {} of {} (size {})".format(\
-                j+1, len(prop_batches), len(prop_batch))
+            logging.info("\t\t Processing proposal batch {} of {} (size {})".format(\
+                j+1, len(prop_batches), len(prop_batch)))
         for k, pb in enumerate(bank_batch):
             for l, pp in enumerate(prop_batch):
                 ## Avoid computing match as much as possible!
@@ -432,14 +434,14 @@ for i, bank_batch in enumerate(bank_batches):
 
                 ## Now, we really need to generate both of these waveforms!
                 if options.verbose:
-                    print "\t\t\t Will need waves for ({}, {})".format(k, l)
+                    logging.info("\t\t\t Will need waves for ({}, {})".format(k, l))
 
                 if waveform_exists(pb, bank_batch_waveforms):
                     stilde = bank_batch_waveforms[get_tag(pb)]
                 else:
                     cnt_bank_generations += 1
                     if options.verbose:
-                        print "\t\t\t\t Computing waves for ({}, o)".format(k)
+                        logging.info("\t\t\t\t Computing waves for ({}, o)".format(k))
                     stilde = get_waveform(pb, options.bank_approximant, f_min,
                                                                         dt, N)
                     bank_batch_waveforms[get_tag(pb)] = stilde
@@ -449,7 +451,7 @@ for i, bank_batch in enumerate(bank_batches):
                 else:
                     cnt_test_generations += 1
                     if options.verbose:
-                        print "\t\t\t\t Computing waves for (o, {})".format(l)
+                        logging.info("\t\t\t\t Computing waves for (o, {})".format(l))
                     htilde = get_waveform(pp, options.proposal_approximant,
                                                               f_min, dt, N)
                     prop_batch_waveforms[get_tag(pp)] = htilde
@@ -472,10 +474,10 @@ for i, bank_batch in enumerate(bank_batches):
 
 
 if options.verbose:
-    print "Written results to file: {}".format(options.match_file_name)
-    print "Total {}+{} waves generated, {} matches evaluated.".format(\
-        cnt_bank_generations, cnt_test_generations, cnt_match_evaluations)
-    print "Total {} test points eliminated.".format(cnt_eliminations)
-    print "Time taken: {} seconds".format(time.time() - _itime)
+    logging.info("Written results to file: {}".format(options.match_file_name))
+    logging.info("Total {}+{} waves generated, {} matches evaluated.".format(\
+        cnt_bank_generations, cnt_test_generations, cnt_match_evaluations))
+    logging.info("Total {} test points eliminated.".format(cnt_eliminations))
+    logging.info("Time taken: {} seconds".format(time.time() - _itime))
 
 sys.stdout.flush()
