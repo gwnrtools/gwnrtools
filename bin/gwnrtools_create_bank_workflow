@@ -333,7 +333,8 @@ arguments = --verbose --bank-file-name=$(Bank_File) %s
             --mchirp-window=$(Mchirp_Window) %s
             --eccentricity-window=$(Ecc_Window) %s
             --low-frequency-cutoff=%f %s
-            --eliminate --elimination-dir=$(Elim_Dir)
+            --eliminate --elimination-dir=$(Elim_Dir) %s
+            --minimal-match=$(MM)
 
 error = err/banksim_generic_err.$(cluster)
 output = out/banksim_generic_out.$(cluster)
@@ -343,7 +344,7 @@ queue 1
         options.batch_size_for_match, '\\',\
         options.waveform_approximant, '\\',\
         options.waveform_approximant, '\\', '\\', '\\',\
-        options.f_min, '\\')
+        options.f_min, '\\', '\\')
 
 submit_file_texts['choose_best_testpoints.py'] = """\
 universe = vanilla
@@ -355,13 +356,14 @@ arguments = --proposal-file-name=$(Prop_File) %s
             --old-bank-file-name=$(Old_Bank_File) %s
             --new-bank-file-name=$(New_Bank_File) %s
             --match-file-name-glob=$(Match_Glob) %s
-            --elimination-dir=$(Elim_Dir) -V
+            --elimination-dir=$(Elim_Dir) %s
+            --minimal-match=$(MM) --verbose
 
 error = err/choose_best_testpoints_err.$(cluster)
 output = out/choose_best_testpoints_out.$(cluster)
 log = log/choose_best_testpoints_log.$(cluster)
 queue 1
-""" % ('\\', '\\', '\\', '\\')
+""" % ('\\', '\\', '\\', '\\', '\\')
 
 for submit_file in submit_file_texts:
     submit_file_name = os.path.join(options.run_directory,
