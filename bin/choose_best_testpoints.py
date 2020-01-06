@@ -68,6 +68,9 @@ parser.add_argument("--elimination-dir", metavar="STRING",
 parser.add_argument("-V", "--verbose", action="store_true",
                     help="print extra debugging information",
                     default=False )
+parser.add_argument("--debug", action="store_true",
+                    help="print debugging information",
+                    default=False )
 parser.add_argument("-C", "--comment", metavar="STRING",
                     help="add the optional STRING as the process:comment",
                     default='' )
@@ -272,6 +275,8 @@ while max_gval > 0:
             gvals[p] = len(gpoints[p])
         if options.verbose:
             logging.info("\t\t corrected G-values and G-points")
+        if options.debug:
+            logging.info("-- new gvals (total {}): {}".format(len(gvals), gvals))
     if not _test:
         gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
     ##
