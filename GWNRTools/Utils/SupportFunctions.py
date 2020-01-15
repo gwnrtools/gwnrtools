@@ -22,7 +22,6 @@ from scipy.optimize import minimize_scalar
 
 from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as
 from pycbc.pnutils import nearest_larger_binary_number
-
 ######################################################################
 __author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
@@ -283,7 +282,7 @@ def make_padded_frequency_series(vec, filter_N=None, delta_f=None):
         v_tilde = v_tilde[:n_freq_len:df_ratio]
         vectilde = FrequencySeries(v_tilde, delta_f=delta_f, dtype=complex64)
 
-    return FrequencySeries(vectilde * DYN_RANGE_FAC, delta_f=delta_f,
+    return FrequencySeries(vectilde, delta_f=delta_f,
                            dtype=complex64)
     #}}}
 
