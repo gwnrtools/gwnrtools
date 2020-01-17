@@ -18,6 +18,7 @@ import math
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize_scalar
 
+from glue.ligolw import ilwd
 from glue import gpstime, git_version
 from glue.ligolw import ligolw
 from glue.ligolw import lsctables
@@ -61,6 +62,9 @@ def get_unique_hex_tag(N = 1, num_digits = 10):
     return ['%0{}x'.format(num_digits) % random.randrange(16**num_digits)\
                                                         for i in range(N)]
 
+def get_sim_hash(N=1, num_digits=10):
+    return ilwd.ilwdchar(":{}:0".format(get_unique_hex_tag(N = N, num_digits = num_digits)))
+
 #############################
 def get_uniform_mass_range( m_lower, m_upper, m_sep ):
   #{{{
@@ -73,29 +77,30 @@ def get_uniform_mass_range( m_lower, m_upper, m_sep ):
 
 #############################
 def outside_mchirp_window(bank, sim, w):
-  #{{{
-  bmchirp = None
-  smchirp = None
+    # template mchirp
+    if hasattr(bank,"mchirp"):
+        bmchirp = bank.mchirp
+    elif hasattr(bank,"mass1") and hasattr(bank,"mass2"):
+        bmchirp, eta =\
+            pnutils.mass1_mass2_to_mchirp_eta(bank.mass1, bank.mass2)
+    elif hasattr(bank,"mtotal") and hasattr(bank,"eta"):
+        bmchirp = bank.mtotal * (bank.eta**0.6)
+    # signal / injection / proposal mchirp
+    if hasattr(sim,"mchirp"):
+        smchirp = sim.mchirp
+    elif hasattr(sim,"mass1") and hasattr(sim,"mass2"):
+        smchirp, eta =\
+            pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
+    elif hasattr(sim,"mtotal") and hasattr(sim,"eta"):
+        smchirp = sim.mtotal * (sim.eta**0.6)
+    return abs(smchirp - bmchirp) > (w * bmchirp)
 
-  if hasattr(bank,"mchirp"):
-    bmchirp = bank.mchirp
-  elif hasattr(bank,"mass1") and hasattr(bank,"mass2"):
-    bmchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(bank.mass1, bank.mass2)
-  elif hasattr(bank,"mtotal") and hasattr(bank,"eta"):
-    bmchirp = bank.mtotal * (bank.eta**0.6)
-
-  if hasattr(sim,"mchirp"):
-    smchirp = sim.mchirp
-  elif hasattr(sim,"mass1") and hasattr(sim,"mass2"):
-    smchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
-  elif hasattr(sim,"mtotal") and hasattr(sim,"eta"):
-    smchirp = sim.mtotal * (sim.eta**0.6)
-
-  if abs(smchirp - bmchirp) > (w*bmchirp) :
-    return True
-
-  return False
-  #}}}
+def outside_tau0_window(bank, sim, window, f_lower):
+    b_tau0,_ = pnutils.mass1_mass2_to_tau0_tau3(getattr(bank, 'mass1'),
+        getattr(bank, 'mass2'), f_lower)
+    s_tau0,_ = pnutils.mass1_mass2_to_tau0_tau3(getattr(sim, 'mass1'),
+        getattr(sim, 'mass2'), f_lower)
+    return abs(b_tau0 - s_tau0) > window
 
 ######################################################################
 ######################################################################

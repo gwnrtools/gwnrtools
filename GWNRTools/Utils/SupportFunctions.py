@@ -234,56 +234,35 @@ ALL ARGUMENTS ARE NECESSARY.
 
 
 def make_padded_frequency_series(vec, filter_N=None, delta_f=None):
-    """Convert vec (TimeSeries or FrequencySeries) to a FrequencySeries. If
-    filter_N and/or delta_f are given, the output will take those values. If
+    """
+Convert vec (TimeSeries or FrequencySeries) to a FrequencySeries. For
+a TimeSeries input, first it is resized to filter_N and  is  If
+filter_N and/or delta_f are given, the output will take those values. If
     not told otherwise the code will attempt to pad a timeseries first such that
     the waveform will not wraparound. However, if delta_f is specified to be
     shorter than the waveform length then wraparound *will* be allowed.
     """
     #{{{
-    if filter_N is None:
-        power = ceil(log(len(vec), 2)) + 1
-        N = 2 ** power
-    else:
-        N = filter_N
-    n = N / 2 + 1
+    if filter_N is None: filter_N = nearest_larger_binary_number(len(vec))
+    filter_n = filter_N / 2 + 1
 
     if isinstance(vec, FrequencySeries):
-        vectilde = FrequencySeries(zeros(n, dtype=complex_same_precision_as(vec)),
-                                   delta_f=1.0, copy=False)
-        if len(vectilde) < len(vec):
-            cplen = len(vectilde)
-        else:
-            cplen = len(vec)
-        vectilde[0:cplen] = vec[0:cplen]
-        delta_f = vec.delta_f
-
+        vectilde = FrequencySeries(zeros(filter_n), delta_f=vec.get_delta_f(),
+            dtype=complex_same_precision_as(vec))
+        cplen = min(len(vec), len(vectilde))
+        vectilde[:cplen] = vec[:cplen]
+        if delta_f is not None:
+            delta_f_ratio = max(1, int(ceil(vectilde.get_delta_f() / delta_f)))
+            vectilde = vectilde[:len(vectilde):delta_f_ratio]
+    
     elif isinstance(vec, TimeSeries):
-        # First determine if the timeseries is too short for the specified df
-        # and increase if necessary
-        curr_length = len(vec)
-        new_length = int(nearest_larger_binary_number(curr_length))
-        while new_length * vec.delta_t < 1./delta_f:
-            new_length = new_length * 2
-        vec.resize(new_length)
-        # Then convert to frequencyseries
+        delta_f_from_filter_N = 1. / filter_N / vec.get_delta_t()
+        vec.resize(filter_N)
         v_tilde = vec.to_frequencyseries()
-        # Then convert frequencyseries to required length and spacing by keeping
-        # only every nth sample if delta_f needs increasing, and cutting at
-        # Nyquist if the max frequency is too high.
-        # NOTE: This assumes that the input and output data is using binary
-        #       lengths.
-        i_delta_f = v_tilde.get_delta_f()
-        v_tilde = v_tilde.numpy()
-        df_ratio = int(delta_f / i_delta_f)
-        n_freq_len = int((n-1) * df_ratio +1)
-        assert(n <= len(v_tilde))
-        df_ratio = int(delta_f / i_delta_f)
-        v_tilde = v_tilde[:n_freq_len:df_ratio]
-        vectilde = FrequencySeries(v_tilde, delta_f=delta_f, dtype=complex64)
-
-    return FrequencySeries(vectilde, delta_f=delta_f,
-                           dtype=complex64)
+        vectilde = FrequencySeries(v_tilde[:], delta_f = delta_f_from_filter_N,
+                    dtype = complex_same_precision_as(vec), copy = True)
+    
+    return vectilde
     #}}}
 
 
