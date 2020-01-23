@@ -42,9 +42,8 @@ from pycbc.waveform import td_approximants, fd_approximants
 from pycbc.types import FrequencySeries, TimeSeries, zeros
 from pycbc.filter import make_frequency_series, match, sigma
 from pycbc.detector import overhead_antenna_pattern
-import pycbc.psd
+import pycbc.psd, pycbc.strain, pycbc.scheme
 
-#ctx = CUDAScheme()
 
 __author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
@@ -61,39 +60,49 @@ each proposal point) in a file match_id_part_pid.dat.
 aprs = sorted(list(set(td_approximants() + fd_approximants())))
 
 # IO related inputs
-parser.add_argument("--bank-file-name", required = True,
+parser.add_argument("--template-file", required = True,
                     dest="bank_file_name", help="The bank file")
-parser.add_argument("--proposal-file-name", required = True,
+parser.add_argument("--signal-file", required = True,
                     dest="prop_file_name", help="The new points file")
-parser.add_argument("--match-file-name", required = True,
+parser.add_argument("--match-file", required = True,
                     dest="match_file_name", help="The file to store matches")
+parser.add_argument("--template-batch-size", dest="bank_batch_size",
+                    default=100, type=int,
+                    help="No of points for which wavefors be pre-generated")
+parser.add_argument("--signal-batch-size", dest="proposal_batch_size",
+                    default=100, type=int,
+                    help="No of points for which wavefors be pre-generated")
 
 # Physics related inputs
-parser.add_argument("--bank-approximant", choices = aprs,
-                    help="Waveform Approximant for bank templates",
-                    default="SpinTaylorT4")
+parser.add_argument("--template-approximant", dest = "bank_approximant",
+                    choices = aprs, default="SpinTaylorT4",
+                    help="Waveform Approximant for bank templates")
 parser.add_argument("--proposal-approximant", choices = aprs,
-                    help="Waveform Approximant for signal / proposal templates",
-                    default="SpinTaylorT4")
+                    default="SpinTaylorT4",
+                    help="Waveform Approximant for signal / proposal templates")
 
-# Filtering related inputs
-parser.add_argument("--bank-batch-size", default=100, type=int,
-                    help="No of points for which wavefors be pre-generated")
-parser.add_argument("--proposal-batch-size", default=100, type=int,
-                    help="No of points for which wavefors be pre-generated")
+# Filtering reductioning inputs
 parser.add_argument("--mchirp-window", default=0.1, type=float)
 parser.add_argument("--tau0-window", default=0.0, type=float)
-parser.add_argument("--eccentricity-window", dest="ecc_window", default=0.01,
-                    type=float)
+# parser.add_argument("--eccentricity-window", dest="ecc_window", default=0.0,
+#                     type=float)
 
+# add PSD options
+pycbc.psd.insert_psd_option_group(parser, output=False)
+
+# Insert the data reading options
+pycbc.strain.insert_strain_option_group(parser)
+
+# add filtering options
 parser.add_argument('-f', '--low-frequency-cutoff', metavar='FREQ',
                     dest="f_min", default=15.0, type=float,
                     help='low frequency cutoff of matched filter')
-parser.add_argument("-r", "--sample-rate", dest="sample_rate",
-                    help="Sample Rate [Hz]", default=4096, type=int)
 parser.add_argument("-l", "--signal-length", dest="signal_length",
                     default=128, type=int, help="The length of the signal (s)")
-pycbc.psd.insert_psd_option_group(parser, output=False)
+
+#hardware support
+pycbc.scheme.insert_processing_option_group(parser)
+pycbc.fft.insert_fft_option_group(parser)
 
 parser.add_argument("--do-not-flush", action="store_true", default=False,
                     help="""If enabled, output will be written when all
@@ -105,8 +114,13 @@ parser.add_argument("-V", "--verbose", action="store_true", default=False,
 parser.add_argument("-C", "--comment", metavar="STRING", default='',
                     help="add the optional STRING as the process:comment")
 
-
 options = parser.parse_args()
+
+pycbc.psd.verify_psd_options(options, parser)
+
+if options.psd_estimation:
+    pycbc.strain.verify_strain_options(options, parser)
+
 #}}}
 
 
@@ -121,7 +135,13 @@ outside_tau0_window      = DA.outside_tau0_window
 get_sim_hash             = DA.get_sim_hash
 
 #############################
-def get_tag(wav): return str(wav.simulation_id.column_name)
+# def get_tag(wav): return str(wav.simulation_id.column_name)
+
+def get_tag(wav):
+    try:
+        return options.prop_file_name + ':{0}'.format(prop_table.index(wav))
+    except ValueError:
+        return options.bank_file_name + ':{0}'.format(bank_table.index(wav))
 
 def waveform_exists(wav, waves): return get_tag(wav) in waves
 
@@ -299,9 +319,18 @@ if options.verbose:
     logging.info("f_min={}, sig_len={}, sample_rate={}, dt={}, N={}".format(f_min,\
         signal_length,sample_rate,dt,N))
 
+# Get hardware context
+ctx = pycbc.scheme.from_cli(options)
+
+# If we are going to use h(t) to estimate a PSD we need h(t)
+if options.psd_estimation:
+    logging.info("Obtaining h(t) for PSD generation")
+    strain = pycbc.strain.from_cli(options, pycbc.DYN_RANGE_FAC)
+else:
+    strain = None
+
 # GET psd
-#psd = pycbc.psd.from_string(options.psd_name, n, df, f_min)
-psd = pycbc.psd.from_cli(options, n, df, f_min)
+psd = pycbc.psd.from_cli(options, n, df, f_min, strain = strain)
 
 ##########################################################
 ### Note on algorithm to follow:-
@@ -353,67 +382,66 @@ else:
 cnt_bank_generations  = 0
 cnt_test_generations  = 0
 cnt_match_evaluations = 0
-for i, bank_batch in enumerate(bank_batches):
-    if options.verbose:
-        logging.info("\t Processing bank batch {} of {} (size {})".format(i+1,\
-            len(bank_batches), len(bank_batch)))
-    for j, prop_batch in enumerate(prop_batches):
+with ctx:
+    for i, bank_batch in enumerate(bank_batches):
         if options.verbose:
-            logging.info("\t\t Processing proposal batch {} of {} (size {})".format(\
-                j+1, len(prop_batches), len(prop_batch)))
-        for k, pb in enumerate(bank_batch):
-            for l, pp in enumerate(prop_batch):
-                ## Avoid computing match as much as possible!
-                if options.mchirp_window and \
-                    outside_mchirp_window(pp, pb, options.mchirp_window):
-                    if options.verbose:
-                        logging.info(\
-                            "\t Skipped (o, {}) due to mchirp".format(k))
-                    append_one_match(pb, pp, -1)
-                    continue
-                if options.tau0_window and \
-                    outside_tau0_window(pp, pb, options.ecc_window, f_min):
-                    if options.verbose:
-                        logging.info(\
-                            "\t Skipped (o, {}) due to tau0".format(k))
-                    append_one_match(pb, pp, -1)
-                    continue
-                if get_tag(pp) == get_tag(pb):
-                    if options.verbose:
-                        logging.info(\
-                            "\t Skipped (o, {}) due to TAG".format(k))
-                    append_one_match(pb, pp, 1, 1, 1)
-                    continue
+            logging.info("\t Processing bank batch {} of {} (size {})".format(i+1,\
+                len(bank_batches), len(bank_batch)))
+        for j, prop_batch in enumerate(prop_batches):
+            if options.verbose:
+                logging.info("\t\t Processing proposal batch {} of {} (size {})".format(\
+                    j+1, len(prop_batches), len(prop_batch)))
+            for k, pb in enumerate(bank_batch):
+                for l, pp in enumerate(prop_batch):
+                    ## Avoid computing match as much as possible!
+                    if options.mchirp_window and \
+                        outside_mchirp_window(pp, pb, options.mchirp_window):
+                        if options.verbose:
+                            logging.warn(\
+                                "\t Skipped (o, {}) due to mchirp".format(k))
+                        append_one_match(pb, pp, -1)
+                        continue
+                    if options.tau0_window and \
+                        outside_tau0_window(pp, pb, options.tau0_window, f_min):
+                        if options.verbose:
+                            logging.warn(\
+                                "\t Skipped (o, {}) due to tau0".format(k))
+                        append_one_match(pb, pp, -1)
+                        continue
+                    if get_tag(pp) == get_tag(pb):
+                        if options.verbose:
+                            logging.warn(\
+                                "\t Skipped (o, {}) due to TAG".format(k))
+                        append_one_match(pb, pp, 1, 1, 1)
+                        continue
+                    
+                    ## Now, we really need to get both of these waveforms!
+                    # first the template
+                    if waveform_exists(pb, waveforms): stilde = waveforms[get_tag(pb)]
+                    else:
+                        cnt_bank_generations += 1
+                        if options.verbose:
+                            logging.info(\
+                                "\t Computing waves for ({}, o)".format(k))
+                        stilde = get_waveform(pb, options.bank_approximant,\
+                                            f_min, dt, N)
+                        waveforms[get_tag(pb)] = stilde
+                    # then the signal / injection / proposal
+                    if waveform_exists(pp, waveforms): htilde = waveforms[get_tag(pp)]
+                    else:
+                        cnt_test_generations += 1
+                        if options.verbose:
+                            logging.info("\t Computing waves for (o, {})".format(l))
+                        htilde = get_waveform(pp, options.proposal_approximant,
+                                                                  f_min, dt, N)
+                        waveforms[get_tag(pp)] = htilde
 
-                ## Now, we really need to get both of these waveforms!
-                # first the template
-                if waveform_exists(pb, waveforms):
-                    stilde = waveforms[get_tag(pb)]
-                else:
-                    cnt_bank_generations += 1
-                    if options.verbose:
-                        logging.info(\
-                            "\t\t\t\t Computing waves for ({}, o)".format(k))
-                    stilde = get_waveform(pb, options.bank_approximant,\
-                                          f_min, dt, N)
-                    waveforms[get_tag(pb)] = stilde
-                # then the signal / injection / proposal
-                if waveform_exists(pp, waveforms):
-                    htilde = waveforms[get_tag(pp)]
-                else:
-                    cnt_test_generations += 1
-                    if options.verbose:
-                        logging.info("\t\t\t\t Computing waves for (o, {})".format(l))
-                    htilde = get_waveform(pp, options.proposal_approximant,
-                                                              f_min, dt, N)
-                    waveforms[get_tag(pp)] = htilde
-
-                ## Compute match!
-                norm_s = sigma(stilde, psd = psd, low_frequency_cutoff = f_min)
-                norm_h = sigma(htilde, psd = psd, low_frequency_cutoff = f_min)
-                mval, _ = match(stilde, htilde, psd=psd, low_frequency_cutoff=f_min)
-                append_one_match(pb, pp, mval, norm_s, norm_h)
-                cnt_match_evaluations += 1
+                    ## Compute match!
+                    norm_s = sigma(stilde, psd = psd, low_frequency_cutoff = f_min)
+                    norm_h = sigma(htilde, psd = psd, low_frequency_cutoff = f_min)
+                    mval, _ = match(stilde, htilde, psd=psd, low_frequency_cutoff=f_min)
+                    append_one_match(pb, pp, mval, norm_s, norm_h)
+                    cnt_match_evaluations += 1
 
 if options.do_not_flush:
     with open(options.match_file_name, "a") as myfile:
