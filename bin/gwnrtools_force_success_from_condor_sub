@@ -3,7 +3,7 @@ import sys
 
 submit_files = sys.argv[1:]
 
-assert(len(submit_files) > 0, "Please provide at least one submit file!")
+assert(len(submit_files) >= 1, "Please provide (at least one) submit file(s)!")
 
 for submit_file in submit_files:
     with open(submit_file, 'r') as fin:

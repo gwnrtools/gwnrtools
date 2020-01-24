@@ -12,7 +12,7 @@ from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorDAG, CondorJob
 
 class BaseJob(CondorDAGJob, CondorJob):
     def __init__(self, log_dir, executable, cp, section, gpu=False,
-                 accounting_group=None):
+                 accounting_group=None, request_memory=None):
         CondorDAGJob.__init__(self, "vanilla", executable)
 
         if gpu:
@@ -30,6 +30,9 @@ class BaseJob(CondorDAGJob, CondorJob):
 
         if accounting_group:
             self.add_condor_cmd('accounting_group', accounting_group)
+
+        if request_memory:
+            self.add_condor_cmd('RequestMemory', request_memory)
 
 class BanksimNode(CondorDAGNode):
     def __init__(self, job, inj_file, tmplt_file, match_file, gpu=True,
@@ -170,6 +173,15 @@ except:
     logging.warn('Warning: accounting-group not specified, LDG clusters may'
                  ' reject this workflow!')
 
+try:
+    bs_request_memory = confs.get('banksim', 'request-memory')
+except:
+    bs_request_memory = None
+    logging.warn('Warning: workflow specific memory allocation has not'
+                 'been requested. Some jobs may be put on Hold as they'
+                 'are likely to need more memory than the default 2G'
+                 'allocation on the LDG.')
+
 logging.info("Making workspace directories")
 mkdir('scripts')
 mkdir('bank')
@@ -215,7 +227,8 @@ dag.set_dag_file("banksim")
 dag.set_dax_file("banksim")
 
 bsjob = BaseJob("log", "scripts/gwnrtools_banksim", confs, "banksim", gpu=gpu,
-                accounting_group=accounting_group)
+                accounting_group=accounting_group,
+                request_memory=bs_request_memory)
 cjob = BaseJob("log", "scripts/gwnrtools_banksim_match_combine", None, None,
                accounting_group=accounting_group)
 rjob = BaseJob("log", "scripts/gwnrtools_banksim_collect_results", None, None,
@@ -597,7 +610,8 @@ def mplot(c1, c2, c, name, xl="", yl="", vmin=None, vmax=None):
     pylab.figure()
     pylab.axes((0.15, 0.15, 0.8, 0.8))
     pylab.scatter(c1, c2, c=c, linewidth=0, s=3, vmin=vmin, vmax=vmax)
-    pylab.colorbar()
+    cb = pylab.colorbar()
+    cb.set_clim(vmin, vmax)
     pylab.xlim(min(c1), max(c1))
     pylab.ylim(min(c2), max(c2))
     pylab.xlabel(xl)
@@ -620,24 +634,24 @@ n, bins,patches=pylab.hist(match,cumulative=1,bins=hBins,normed=True)
 pylab.grid()
 pylab.savefig("plots/cum_hist.png")
     
-mplot(imass1, imass2, match, "plots/m1-m2-match.png")
-mplot(tmass1, tmass2, match, "plots/tm1-tm2-match.png")
-mplot(q, s1m, match, "plots/q-s1m-match.png")
-mplot(q, s2m, match, "plots/q-s2m-match.png")
-mplot(q, ispin1z, match, "plots/q-s1z-match.png")  
-mplot(q, ispin2z, match, "plots/q-s2z-match.png", "Mass Ratio", "Spin2z") 
-mplot(q, ispin2z, match, "plots/q-s2z-match97.png", "Mass Ratio", "Spin2z", vmin=0.97)
-mplot(q, ispin2z, match, "plots/q-s2z-match90.png", "Mass Ratio", "Spin2z", vmin=0.90)
-mplot(inclination, match, match, "plots/inc-match.png")   
+mplot(imass1, imass2, match, "plots/m1-m2-match.png", "Mass1", "Mass2", 0.9, 1.0)
+mplot(tmass1, tmass2, match, "plots/tm1-tm2-match.png", "Template Mass1", "Template Mass2", 0.9, 1.0)
+mplot(q, s1m, match, "plots/q-s1m-match.png", "Mass Ratio", "mag(spin1)", 0.9, 1.0)
+mplot(q, s2m, match, "plots/q-s2m-match.png", "Mass Ratio", "mag(spin2)", 0.9, 1.0)
+mplot(q, ispin1z, match, "plots/q-s1z-match.png", "Mass Ratio", "Spin1z", 0.9, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match.png", "Mass Ratio", "Spin2z", 0.9, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match97.png", "Mass Ratio", "Spin2z", 0.97, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match90.png", "Mass Ratio", "Spin2z", 0.90, 1.0)
+mplot(q, inclination, match, "plots/q-inc-match.png", "Mass Ratio", "Orbital Inclination", 0.9, 1.0)
+mplot(inclination, match, match, "plots/inc-match.png", "Orbital Inclination", "Match", 0.9, 1.0)
 
-mplot(imass1, imass2, imchirp-tmchirp, "plots/m1-m2-mchirpdiff.png")
+mplot(imass1, imass2, imchirp-tmchirp, "plots/m1-m2-mchirpdiff.png", "Mass1", "Mass2")
 mplot(q, ispin1z, imchirp-tmchirp, "plots/q-s1z-mchirpdiff.png", "Mass Ratio", "Spin1z")
 mplot(q, ispin2z, imchirp-tmchirp, "plots/q-s2z-mchirpdiff.png", "Mass Ratio", "Spin2z")
 
-mplot(imass1, imass2, (imchirp-tmchirp)/imchirp, "plots/m1-m2-mchirpreldiff.png")
-mplot(q, ispin1z, (imchirp-tmchirp)/imchirp, "plots/q-s1z-mchirpreldiff.png")
-mplot(q, ispin2z, (imchirp-tmchirp)/imchirp, "plots/q-s2z-mchirpreldiff.png")
-
+mplot(imass1, imass2, (imchirp-tmchirp)/imchirp, "plots/m1-m2-mchirpreldiff.png", "Mass1", "Mass2")
+mplot(q, ispin1z, (imchirp-tmchirp)/imchirp, "plots/q-s1z-mchirpreldiff.png", "Mass Ratio", "Spin1z")
+mplot(q, ispin2z, (imchirp-tmchirp)/imchirp, "plots/q-s2z-mchirpreldiff.png", "Mass Ratio", "Spin2z")
 """)
 os.chmod("scripts/gwnrtools_banksim_plots", 0o0777)
 

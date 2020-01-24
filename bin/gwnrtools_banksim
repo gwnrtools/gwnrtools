@@ -109,6 +109,9 @@ parser.add_argument("--do-not-flush", action="store_true", default=False,
                     calculation is complete.""")
 
 # Miscellaneous
+parser.add_argument("--tolerate-waveform-failures", action="store_true",
+                    default=False,
+                    help="Skip signal / bank waveforms that fail to generate")
 parser.add_argument("-V", "--verbose", action="store_true", default=False,
                     help="print extra debugging information")
 parser.add_argument("-C", "--comment", metavar="STRING", default='',
