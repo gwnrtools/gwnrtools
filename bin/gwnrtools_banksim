@@ -155,7 +155,9 @@ def outside_ecc_window(bank, sim, w, key = 'alpha'):
 
 def get_waveform(wav, approximant, f_min, dt, N):
     """This function will generate the waveform corresponding to the point
-    taken as input"""
+    taken as input.
+    Note: If waveform generation fails, the function will return None if 
+            --tolerate-waveform-failures is specified."""
     #{{{
     m1 = wav.mass1
     m2 = wav.mass2
@@ -195,6 +197,8 @@ def get_waveform(wav, approximant, f_min, dt, N):
             for c in dir(wav):
                 if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
                     print(c, getattr(wav, c))
+            if options.tolerate_waveform_failures:
+                return None
             raise RuntimeError(re)
         hptilde = FrequencySeries(hptild, delta_f=df,
                                   dtype=np.complex128,copy=True)
@@ -223,6 +227,8 @@ def get_waveform(wav, approximant, f_min, dt, N):
             for c in dir(wav):
                 if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
                     print(c, getattr(wav, c))
+            if options.tolerate_waveform_failures:
+                return None
             raise RuntimeError(re)
         hpref_padded = TimeSeries(zeros(N), delta_t=dt,dtype=hp.dtype,copy=True)
         hpref_padded[:len(hp)] = hp
@@ -440,9 +446,15 @@ with ctx:
                         waveforms[get_tag(pp)] = htilde
 
                     ## Compute match!
-                    norm_s = sigma(stilde, psd = psd, low_frequency_cutoff = f_min)
-                    norm_h = sigma(htilde, psd = psd, low_frequency_cutoff = f_min)
-                    mval, _ = match(stilde, htilde, psd=psd, low_frequency_cutoff=f_min)
+                    if stilde is not None:
+                        norm_s = sigma(stilde, psd = psd, low_frequency_cutoff = f_min)
+                    else: norm_s = -1
+                    if htilde is not None:
+                        norm_h = sigma(htilde, psd = psd, low_frequency_cutoff = f_min)
+                    else: norm_h = -1
+                    if stilde is not None and htilde is not None:
+                        mval, _ = match(stilde, htilde, psd=psd, low_frequency_cutoff=f_min)
+                    else: mval = -2
                     append_one_match(pb, pp, mval, norm_s, norm_h)
                     cnt_match_evaluations += 1
 

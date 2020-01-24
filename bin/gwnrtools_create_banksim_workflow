@@ -1,4 +1,23 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+"""Setup workflow to calculate fitting factors for a given template bank
+against a custom set of simulated signals"""
+
 import logging
 import os
 import shutil
@@ -174,7 +193,7 @@ except:
                  ' reject this workflow!')
 
 try:
-    bs_request_memory = confs.get('banksim', 'request-memory')
+    bs_request_memory = confs.get('workflow', 'banksim-request-memory')
 except:
     bs_request_memory = None
     logging.warn('Warning: workflow specific memory allocation has not'
@@ -411,6 +430,7 @@ for inj in m_vals_for_inj_points:
         except: all_xmls[max_m_bank_name] = lsctables.SnglInspiralTable.get_table(indoc)
 
 # Write results
+header = "# "
 with open('results.dat', 'w') as fout:
     for inj in m_vals_for_inj_points:
         inj_bank_name, inj_row_idx = inj.split(':')
@@ -432,6 +452,24 @@ with open('results.dat', 'w') as fout:
         outstr += str(max_m_row.spin2y) + " " 
         outstr += str(max_m_row.spin2z) + " "
 
+        header += "ff bmass1 bmass2 bspin1x bspin1y bspin1z bspin2x bspin2y bspin2z "
+
+        if hasattr(max_m_row, "inclination"):
+            outstr += str(max_m_row.inclination) + " "
+            header += "binclination "
+        if hasattr(max_m_row, "alpha"):
+            outstr += str(max_m_row.alpha) + " "
+            header += "beccentricity "
+        if hasattr(max_m_row, "alpha1"):
+            outstr += str(max_m_row.alpha1) + " "
+            header += "bmean_per_ano "
+        if hasattr(max_m_row, "alpha2"):
+            outstr += str(max_m_row.alpha2) + " "
+            header += "blong_asc_nodes "
+        if hasattr(max_m_row, "coa_phase"):
+            outstr += str(max_m_row.coa_phase) + " "
+            header += "bcoa_phase "
+
         outstr += str(inj_row.mass1) + " "
         outstr += str(inj_row.mass2) + " "
         outstr += str(inj_row.spin1x) + " "
@@ -441,6 +479,18 @@ with open('results.dat', 'w') as fout:
         outstr += str(inj_row.spin2y) + " " 
         outstr += str(inj_row.spin2z) + " "
 
+        header += "imass1 imass2 ispin1x ispin1y ispin1z ispin2x ispin2y ispin2z "
+
+        if hasattr(inj_row, "alpha"):
+            outstr += str(inj_row.alpha) + " "
+            header += "ieccentricity "
+        if hasattr(inj_row, "alpha1"):
+            outstr += str(inj_row.alpha1) + " "
+            header += "imean_per_ano "
+        if hasattr(inj_row, "alpha2"):
+            outstr += str(inj_row.alpha2) + " "
+            header += "ilong_asc_nodes "
+
         outstr += str(inj_row.coa_phase) + " "
         outstr += str(inj_row.inclination) + " "
         outstr += str(inj_row.latitude) + " " 
@@ -448,9 +498,17 @@ with open('results.dat', 'w') as fout:
         outstr += str(inj_row.polarization) + " "
 
         outstr += str(max_m_sigmasq) + " "
+
+        header += "icoa_phase iinclination ilatitude ilongitude ipolarization bsigmasq \\n"
         outstr += "\\n"
         
         fout.write(outstr)
+
+# Add header
+with open("results.dat", "r+") as fout:
+    s = fout.read()
+    fout.seek(0)
+    fout.write(header + s)
 """)
 os.chmod('scripts/gwnrtools_banksim_collect_results', 0o0777)
 
