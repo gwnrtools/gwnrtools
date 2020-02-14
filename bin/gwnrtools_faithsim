@@ -26,7 +26,7 @@
 from __future__ import print_function
 import sys
 import logging
-from numpy import loadtxt,complex64,float32
+from numpy import loadtxt, complex64, float32, isinf
 import argparse
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw import table, lsctables, ligolw
@@ -230,10 +230,12 @@ with ctx:
             m,i = match(htilde1, htilde2, psd=psd, 
                 low_frequency_cutoff=options.filter_low_frequency_cutoff,
                 high_frequency_cutoff=options.filter_high_frequency_cutoff)
+            if isinf(m): m = -2
 
             o = overlap(htilde1, htilde2, psd=psd, 
                 low_frequency_cutoff=options.filter_low_frequency_cutoff,
                 high_frequency_cutoff=options.filter_high_frequency_cutoff)
+            if isinf(o): o = -2
 
             s1 = sigma(htilde1, psd=psd,
                 low_frequency_cutoff=options.filter_low_frequency_cutoff,

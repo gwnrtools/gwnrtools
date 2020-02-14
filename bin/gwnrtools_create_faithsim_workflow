@@ -99,8 +99,8 @@ mkdir('log')
 mkdir('plots')
 
 logging.info("Copying scripts")
-shutil.copy(banksim_prog, 'scripts/pycbc_faithsim')
-os.chmod('scripts/pycbc_faithsim', 0o0777)
+shutil.copy(banksim_prog, 'scripts/gwnrtools_faithsim')
+os.chmod('scripts/gwnrtools_faithsim', 0o0777)
 
 logging.info("Creating injection file")
 inj_str = inspinj_prog + " " + get_ini_opts(confs, "inspinj") + "--output-prefix inj"
@@ -123,13 +123,13 @@ dag.set_dax_file("faithsim")
 fs_secs = matches_in_list(confs.sections(), 'faithsim')
 fsjobs = []
 for sec in fs_secs:
-    fsjobs.append(BaseJob("log", "scripts/pycbc_faithsim", confs, sec,
+    fsjobs.append(BaseJob("log", "scripts/gwnrtools_faithsim", confs, sec,
                           accounting_group=accounting_group))
 
-rjob = BaseJob("log", "scripts/pycbc_faithsim_collect_results", None,
+rjob = BaseJob("log", "scripts/gwnrtools_faithsim_collect_results", None,
                'collect_results', accounting_group=accounting_group)
 rnode = CondorDAGNode(rjob)
-pjob = BaseJob("log", "scripts/pycbc_faithsim_plots", None, 'faithsim_plots',
+pjob = BaseJob("log", "scripts/gwnrtools_faithsim_plots", None, 'faithsim_plots',
                accounting_group=accounting_group)
 pnode = CondorDAGNode(pjob)
 
@@ -146,7 +146,7 @@ dag.add_node(rnode)
 pnode.add_parent(rnode)
 dag.add_node(pnode)
 
-f = open("scripts/pycbc_faithsim_collect_results", "w")
+f = open("scripts/gwnrtools_faithsim_collect_results", "w")
 f.write("""#!/usr/bin/env python
 from os.path import isfile
 from numpy import *
@@ -203,7 +203,7 @@ if __name__ == "__main__":
             data = append(data, pdata)
         savetxt('result-' + tag + '.dat', data)
 """)
-os.chmod('scripts/pycbc_faithsim_collect_results', 0o0777)
+os.chmod('scripts/gwnrtools_faithsim_collect_results', 0o0777)
     
 logging.info("Creating submit script")
 f = open("submit.sh", 'w')
@@ -216,7 +216,7 @@ dag.write_sub_files()
 dag.write_script()
 dag.write_concrete_dag()
 
-f = open('scripts/pycbc_faithsim_plots', "w")
+f = open('scripts/gwnrtools_faithsim_plots', "w")
 f.write("""#!/usr/bin/env python
 import matplotlib
 matplotlib.use('Agg')
@@ -404,6 +404,6 @@ for fil in fils:
     name = pname + 'scatter' + v1 + '-' + v2 + '-' + v3
     basic_scatter(name, v1, v2, tag, v1d, v2d, v3d, v3, vmin=None, vmax=None)     
  """)
-os.chmod('scripts/pycbc_faithsim_plots', 0o0777)
+os.chmod('scripts/gwnrtools_faithsim_plots', 0o0777)
 
 logging.info('Done')
