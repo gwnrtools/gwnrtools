@@ -26,78 +26,10 @@ import subprocess
 import glob
 import tempfile
 from optparse import OptionParser
-from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorDAG, CondorJob
+from glue.pipeline import CondorDAGNode, CondorDAG
+from GWNRTools.Workflow.CondorUtilities import BaseJob, BanksimNode
+from GWNRTools.Workflow.CondorUtilities import BanksimCombineNode as CombineNode
 
-
-class BaseJob(CondorDAGJob, CondorJob):
-    def __init__(self, log_dir, executable, cp, section, gpu=False,
-                 accounting_group=None, request_memory=None):
-        CondorDAGJob.__init__(self, "vanilla", executable)
-
-        if gpu:
-            CondorJob.__init__(self, "vanilla", executable, 2)
-        # These are all python jobs so need to pull in the env
-        self.add_condor_cmd('getenv', 'True')
-        log_base = os.path.join(
-            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
-        self.set_stderr_file(log_base + '.err')
-        self.set_stdout_file(log_base + '.out')
-        self.set_sub_file(os.path.basename(executable) + '.sub')
-
-        if cp is not None:
-            self.add_ini_opts(cp, section)
-
-        if accounting_group:
-            self.add_condor_cmd('accounting_group', accounting_group)
-
-        if request_memory:
-            self.add_condor_cmd('RequestMemory', request_memory)
-
-class BanksimNode(CondorDAGNode):
-    def __init__(self, job, inj_file, tmplt_file, match_file, gpu=True,
-                 gpu_postscript=False, inj_per_job=None):
-        CondorDAGNode.__init__(self, job)
-
-        self.add_file_opt("signal-file", inj_file)
-        self.add_file_opt("template-file", tmplt_file)
-
-        if gpu:
-            self.add_var_opt("processing-scheme", 'cuda')
-
-        if gpu and gpu_postscript:
-            self.set_retry(5)
-            mf = match_file+".$(Process)"
-            mf1 = match_file+".0"
-            mf2 = match_file+".1"
-            self.add_file_opt("match-file", match_file+".$(Process)",
-                              file_is_output_file=True)
-            self.job().__queue = 2
-
-            # Needed to satisfy the requirements for both running on atlas and spice
-            job.add_condor_cmd('+WantsGPU', 'true')
-            job.add_condor_cmd('+WantGPU', 'true')
-            job.add_condor_cmd(
-                'Requirements',
-                '(GPU_PRESENT =?= true) || (HasGPU =?= "gtx580")')
-
-            self.set_post_script(gpu_postscript)
-            self.add_post_script_arg(mf1)
-            self.add_post_script_arg(mf2)
-            self.add_post_script_arg(".0001")
-            self.add_post_script_arg(match_file)
-            self.add_post_script_arg(str(inj_per_job))
-        else:
-            self.add_file_opt("match-file", match_file, file_is_output_file=True)
-        
-class CombineNode(CondorDAGNode):
-    def __init__(self, job, inj_num):
-        CondorDAGNode.__init__(self, job)
-        
-        self.add_var_opt("inj-num", inj_num)
-        
-        outf = "match/match" + str(inj_num) + ".dat"
-        
-        self.add_file_opt("output-file", outf)    
 
 def get_ini_opts(confs, section):
     op_str = ""
@@ -105,16 +37,19 @@ def get_ini_opts(confs, section):
         val = confs.get(section, opt)
         op_str += "--" + opt + " " + val + " \\" + "\n"
     return op_str
-    
+
+
 def mkdir(dir_name):
-    try :
+    try:
         os.mkdir(dir_name)
     except OSError:
         pass
-        
+
+
 def mc_min_max_from_sorted_file(fname):
     from glue.ligolw import lsctables
     from glue.ligolw.ligolw import LIGOLWContentHandler
+
     class mycontenthandler(LIGOLWContentHandler):
         pass
     lsctables.use_in(mycontenthandler)
@@ -122,36 +57,41 @@ def mc_min_max_from_sorted_file(fname):
     from glue.ligolw.table import get_table
     from pycbc.pnutils import mass1_mass2_to_mchirp_eta
     try:
-        t = get_table(load_filename(fname, False, contenthandler=mycontenthandler), "sngl_inspiral")
+        t = get_table(load_filename(
+            fname, False, contenthandler=mycontenthandler), "sngl_inspiral")
     except:
-        t = get_table(load_filename(fname, False, contenthandler=mycontenthandler), "sim_inspiral")
+        t = get_table(load_filename(
+            fname, False, contenthandler=mycontenthandler), "sim_inspiral")
     mc_max, et = mass1_mass2_to_mchirp_eta(t[0].mass1, t[0].mass2)
     mc_min, et = mass1_mass2_to_mchirp_eta(t[-1].mass1, t[-1].mass2)
     return mc_min, mc_max
-    
-        
+
+
 bf_mchirps = {}
 sf_mchirps = {}
+
+
 def check_outside_mchirp(bf, sf, w):
     if bf not in bf_mchirps:
-        bf_mchirps[bf] = mc_min_max_from_sorted_file(bf)    
+        bf_mchirps[bf] = mc_min_max_from_sorted_file(bf)
     if sf not in sf_mchirps:
-        sf_mchirps[sf] = mc_min_max_from_sorted_file(sf) 
-         
+        sf_mchirps[sf] = mc_min_max_from_sorted_file(sf)
+
     mc_min, mc_max = bf_mchirps[bf]
-    mc2_min, mc2_max =  sf_mchirps[sf]
-    
-    if (mc_min  <= mc2_max * (1+w) ) and (mc_max * (1+w) >= mc2_min):
+    mc2_min, mc2_max = sf_mchirps[sf]
+
+    if (mc_min <= mc2_max * (1+w)) and (mc_max * (1+w) >= mc2_min):
         return False
     else:
         return True
 
+
 parser = OptionParser()
-parser.add_option('--config', type=str)          
-(options, args) = parser.parse_args() 
+parser.add_option('--config', type=str)
+(options, args) = parser.parse_args()
 
 if options.config is None:
-    raise ValueError("Config file is required")  
+    raise ValueError("Config file is required")
 
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
@@ -167,15 +107,16 @@ templates_per_job = confs.get("workflow", "templates-per-job")
 log_path = confs.get("workflow", 'log-path')
 
 tempfile.tempdir = log_path
-tempfile.template='banksim.dag.log.'
+tempfile.template = 'banksim.dag.log.'
 logfile = tempfile.mktemp()
 
 mchirp_window = None
 if confs.has_option("banksim", "mchirp-window"):
     if ',' in confs.get("banksim", "mchirp-window"):
-         mchirp_window = max([float(x) for x in confs.get("banksim", "mchirp-window").split(",")])
+        mchirp_window = max([float(x) for x in confs.get(
+            "banksim", "mchirp-window").split(",")])
     else:
-         mchirp_window = float(confs.get("banksim", "mchirp-window"))
+        mchirp_window = float(confs.get("banksim", "mchirp-window"))
 
 gpu = False
 try:
@@ -215,7 +156,8 @@ shutil.copy(banksim_prog, 'scripts/gwnrtools_banksim')
 os.chmod('scripts/gwnrtools_banksim', 0o0777)
 
 logging.info("Creating injection file")
-inj_str = inspinj_prog + " " + get_ini_opts(confs, "inspinj") + "--output-prefix inj"
+inj_str = inspinj_prog + " " + \
+    get_ini_opts(confs, "inspinj") + "--output-prefix inj"
 os.system(inj_str)
 
 logging.info("Splitting template bank")
@@ -264,14 +206,14 @@ for inj_num in range(num_injs):
     for bank_num in range(num_banks):
         if mchirp_window is not None:
             bank_part = "bank/bank" + str(bank_num) + ".xml"
-            sim_part =  "injection/injection" + str(inj_num) + ".xml"
+            sim_part = "injection/injection" + str(inj_num) + ".xml"
             if check_outside_mchirp(bank_part, sim_part, mchirp_window):
                 skip_count += 1
                 continue
             else:
                 do_count += 1
         part_num = str(bank_num)
-        mfn = 'match-part/match' + num +'part' + part_num + '.dat'
+        mfn = 'match-part/match' + num + 'part' + part_num + '.dat'
         sn = 'injection/injection' + num + '.xml'
         bn = 'bank/bank' + part_num + '.xml'
         bsnode = BanksimNode(bsjob, sn, bn, mfn, gpu=gpu,
@@ -282,12 +224,12 @@ for inj_num in range(num_injs):
         combine_has_jobs = True
     if combine_has_jobs:
         rnode.add_parent(cnode)
-        dag.add_node(cnode)      
+        dag.add_node(cnode)
 dag.add_node(rnode)
 pnode.add_parent(rnode)
 dag.add_node(pnode)
 
-logging.info("DO : %d SKIP %d" %(do_count, skip_count))
+logging.info("DO : %d SKIP %d" % (do_count, skip_count))
 f.close()
 
 f = open("scripts/gwnrtools_banksim_match_combine", "w")
@@ -569,9 +511,9 @@ if gpu:
     exit 0
     """)
     os.chmod('scripts/diff_match.sh', 0o0777)
-    
+
 logging.info("Creating submit script")
-f = open("submit.sh","w")
+f = open("submit.sh", "w")
 if gpu:
     f.write("""#!/bin/bash
     condor_submit_dag -config cconfig banksim.dag

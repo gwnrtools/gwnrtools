@@ -1,4 +1,23 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+"""Setup workflow to perferm Bayesian parameter estimation runs on a
+custom set of simulated signals"""
+
 import os
 import logging
 import shutil
@@ -7,30 +26,11 @@ import subprocess
 import glob
 import tempfile
 from optparse import OptionParser
-from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorDAG, CondorJob
+from glue.pipeline import CondorDAGNode, CondorDAG
+from GWNRTools.Workflow.CondorUtilities import BaseJob
 
 
-class BaseJob(CondorDAGJob, CondorJob):
-    def __init__(self, log_dir, executable, cp, section, accounting_group=None):
-        CondorDAGJob.__init__(self, "vanilla", executable)
-
-        # These are all python jobs so need to pull in the env
-        self.add_condor_cmd('getenv', 'True')
-        self.add_condor_cmd('+Allow_OGrid', 'True')
-        log_base = os.path.join(
-            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
-        self.set_stderr_file(log_base + '.err')
-        self.set_stdout_file(log_base + '.out')
-        self.set_sub_file(section + ".sub")
-
-        if cp is not None:
-            self.add_ini_opts(cp, section)
-
-        if accounting_group:
-            self.add_condor_cmd('accounting_group', accounting_group)
-
-
-class FaithsimNode(CondorDAGNode):
+class InferenceNode(CondorDAGNode):
     def __init__(self, job, tmplt_file, match_file, inj_per_job=None):
         CondorDAGNode.__init__(self, job)
         self.add_file_opt("param-file", tmplt_file)

@@ -1,4 +1,20 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import os
 import logging
 import shutil
@@ -7,33 +23,9 @@ import subprocess
 import glob
 import tempfile
 from optparse import OptionParser
-from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorDAG, CondorJob
+from glue.pipeline import CondorDAGNode, CondorDAG
+from GWNRTools.Workflow.CondorUtilities import BaseJob, FaithsimNode
 
-
-class BaseJob(CondorDAGJob, CondorJob):
-    def __init__(self, log_dir, executable, cp, section, accounting_group=None):
-        CondorDAGJob.__init__(self, "vanilla", executable)
-
-        # These are all python jobs so need to pull in the env
-        self.add_condor_cmd('getenv', 'True')
-        self.add_condor_cmd('+Allow_OGrid', 'True')
-        log_base = os.path.join(
-            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
-        self.set_stderr_file(log_base + '.err')
-        self.set_stdout_file(log_base + '.out')
-        self.set_sub_file(section + ".sub")   
-
-        if cp is not None: 
-            self.add_ini_opts(cp, section)
-
-        if accounting_group:
-            self.add_condor_cmd('accounting_group', accounting_group)
-
-class FaithsimNode(CondorDAGNode):
-    def __init__(self, job, tmplt_file, match_file, inj_per_job=None):
-        CondorDAGNode.__init__(self, job)    
-        self.add_file_opt("param-file", tmplt_file)
-        self.add_file_opt("match-file", match_file, file_is_output_file=True) 
 
 def get_ini_opts(confs, section):
     op_str = ""
@@ -41,12 +33,14 @@ def get_ini_opts(confs, section):
         val = confs.get(section, opt)
         op_str += "--" + opt + " " + val + " \\" + "\n"
     return op_str
-    
+
+
 def mkdir(dir_name):
-    try :
+    try:
         os.mkdir(dir_name)
     except OSError:
         pass
+
 
 def matches_in_list(slist, match):
     import re
@@ -56,12 +50,13 @@ def matches_in_list(slist, match):
             matches.append(st)
     return matches
 
+
 parser = OptionParser()
-parser.add_option('--config', type=str)          
+parser.add_option('--config', type=str)
 parser.add_option("--skip-creating-injections", action="store_true",
-                    help="Skip calling lalapps_inspinj and assume injections already exist",
-                    default=False )
-(options, args) = parser.parse_args() 
+                  help="Skip calling lalapps_inspinj and assume injections already exist",
+                  default=False)
+(options, args) = parser.parse_args()
 
 if options.config is None:
     raise ValueError("Config file is required")
@@ -81,7 +76,7 @@ except:
     log_path = './'
 
 tempfile.tempdir = log_path
-tempfile.template='faithsim.dag.log.'
+tempfile.template = 'faithsim.dag.log.'
 logfile = tempfile.mktemp()
 
 try:
@@ -103,7 +98,8 @@ shutil.copy(banksim_prog, 'scripts/gwnrtools_faithsim')
 os.chmod('scripts/gwnrtools_faithsim', 0o0777)
 
 logging.info("Creating injection file")
-inj_str = inspinj_prog + " " + get_ini_opts(confs, "inspinj") + "--output-prefix inj"
+inj_str = inspinj_prog + " " + \
+    get_ini_opts(confs, "inspinj") + "--output-prefix inj"
 os.system(inj_str)
 
 logging.info("Splitting template bank")
@@ -135,13 +131,13 @@ pnode = CondorDAGNode(pjob)
 
 for inj_num in range(num_banks):
     bn = 'bank/bank' + str(inj_num) + '.xml'
-    
+
     for fsjob, sec in zip(fsjobs, fs_secs):
         sec_sub = str(sec[len('faithsim'):])
-        mf = 'match/match' + sec_sub + '-' +  str(inj_num) + '.dat'
+        mf = 'match/match' + sec_sub + '-' + str(inj_num) + '.dat'
         fsnode = FaithsimNode(fsjob, bn, mf, inj_per_job=templates_per_job)
         dag.add_node(fsnode)
-        rnode.add_parent(fsnode) 
+        rnode.add_parent(fsnode)
 dag.add_node(rnode)
 pnode.add_parent(rnode)
 dag.add_node(pnode)
@@ -204,7 +200,7 @@ if __name__ == "__main__":
         savetxt('result-' + tag + '.dat', data)
 """)
 os.chmod('scripts/gwnrtools_faithsim_collect_results', 0o0777)
-    
+
 logging.info("Creating submit script")
 f = open("submit.sh", 'w')
 f.write("""#!/bin/bash
