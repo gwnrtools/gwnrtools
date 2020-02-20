@@ -21,19 +21,21 @@ class BaseJob(CondorDAGJob, CondorJob):
             log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
         self.set_stderr_file(log_base + '.err')
         self.set_stdout_file(log_base + '.out')
-        self.set_sub_file(section + ".sub")   
+        self.set_sub_file(section + ".sub")
 
-        if cp is not None: 
+        if cp is not None:
             self.add_ini_opts(cp, section)
 
         if accounting_group:
             self.add_condor_cmd('accounting_group', accounting_group)
 
+
 class FaithsimNode(CondorDAGNode):
     def __init__(self, job, tmplt_file, match_file, inj_per_job=None):
-        CondorDAGNode.__init__(self, job)    
+        CondorDAGNode.__init__(self, job)
         self.add_file_opt("param-file", tmplt_file)
-        self.add_file_opt("match-file", match_file, file_is_output_file=True) 
+        self.add_file_opt("match-file", match_file, file_is_output_file=True)
+
 
 def get_ini_opts(confs, section):
     op_str = ""
@@ -41,12 +43,14 @@ def get_ini_opts(confs, section):
         val = confs.get(section, opt)
         op_str += "--" + opt + " " + val + " \\" + "\n"
     return op_str
-    
+
+
 def mkdir(dir_name):
-    try :
+    try:
         os.mkdir(dir_name)
     except OSError:
         pass
+
 
 def matches_in_list(slist, match):
     import re
@@ -56,20 +60,124 @@ def matches_in_list(slist, match):
             matches.append(st)
     return matches
 
-parser = OptionParser()
-parser.add_option('--config', type=str)          
-parser.add_option("--skip-creating-injections", action="store_true",
+
+############################################################
+# command line usage
+parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
+                                 description=__doc__)
+parser.add_argument("--version", action="version", version=__version__,
+                    help="Prints version information.")
+parser.add_argument("--verbose", action="store_true", default=False,
+                    help="Print logging messages.")
+# workflow options
+parser.add_argument("--skip-creating-injections", action="store_true",
                     help="Skip calling lalapps_inspinj and assume injections already exist",
-                    default=False )
-(options, args) = parser.parse_args() 
+                    default=False)
 
-if options.config is None:
-    raise ValueError("Config file is required")
+# output options
+parser.add_argument("--output-file", type=str, required=True,
+                    help="Output file path.")
+parser.add_argument("--force", action="store_true", default=False,
+                    help="If the output-file already exists, overwrite it. "
+                         "Otherwise, an OSError is raised.")
+parser.add_argument("--save-backup", action="store_true",
+                    default=False,
+                    help="Don't delete the backup file after the run has "
+                         "completed.")
+# parallelization options
+parser.add_argument("--nprocesses", type=int, default=1,
+                    help="Number of processes to use. If not given then only "
+                         "a single core will be used.")
+parser.add_argument("--use-mpi", action='store_true', default=False,
+                    help="Use MPI to parallelize the sampler")
+parser.add_argument("--samples-file", default=None,
+                    help="Use an iteration from an InferenceFile as the "
+                         "initial proposal distribution. The same "
+                         "number of walkers and the same [variable_params] "
+                         "section in the configuration file should be used. "
+                         "The priors must allow encompass the initial "
+                         "positions from the InferenceFile being read.")
+parser.add_argument("--seed", type=int, default=0,
+                    help="Seed to use for the random number generator that "
+                         "initially distributes the walkers. Default is 0.")
+# add config options
+configuration.add_workflow_command_line_group(parser)
+# add module pre-defined options
+fft.insert_fft_option_group(parser)
+opt.insert_optimization_option_group(parser)
+scheme.insert_processing_option_group(parser)
 
-logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+# parse command line
+opts = parser.parse_args()
 
-confs = ConfigParser.ConfigParser()
-confs.read(options.config)
+# debugPK
+print("In modified version of pycbc_inference ...\n")
+
+# setup log
+# If we're running in MPI mode, only allow the parent to print
+if opts.use_mpi:
+    from mpi4py import MPI
+    rank = MPI.COMM_WORLD.Get_rank()
+    opts.verbose &= rank == 0
+pycbc.init_logging(opts.verbose)
+
+# verify options are sane
+fft.verify_fft_options(opts, parser)
+opt.verify_optimization_options(opts, parser)
+scheme.verify_processing_options(opts, parser)
+
+# check that the output file doesn't already exist
+if os.path.exists(opts.output_file) and not opts.force:
+    raise OSError("output-file already exists; use force if you "
+                  "wish to overwrite it.")
+
+
+# set seed
+numpy.random.seed(opts.seed)
+logging.info("Using seed %i", opts.seed)
+
+# we'll silence numpy warnings since they are benign and make for confusing
+# logging output
+numpy.seterr(divide='ignore', invalid='ignore')
+
+# get scheme
+ctx = scheme.from_cli(opts)
+fft.from_cli(opts)
+
+with ctx:
+
+    # read configuration file
+    confs = configuration.WorkflowConfigParser.from_cli(opts)
+
+    # deubgPK
+    print("config options: ", confs)
+
+# parser = OptionParser()
+# parser.add_option('--config', type=str)
+# parser.add_option("--skip-creating-injections", action="store_true",
+#                   help="Skip calling lalapps_inspinj and assume injections already exist",
+#                   default=False)
+# (options, args) = parser.parse_args()
+
+# if options.config is None:
+#     raise ValueError("Config file is required")
+
+# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
+# confs = ConfigParser.ConfigParser()
+# confs.read(options.config)
+
+
+# Get executables:
+# 1. make_inj.sh --> calls `pycbc_create_injections`
+# 2. run.sh --> calls `pycbc_inference`
+
+
+# Iterate over variable portions of the analyses settings
+# 1. sampler
+# 2. approximant
+# 3. injection parameters
+# 4.
 
 banksim_prog = confs.get("executables", "faithsim")
 inspinj_prog = confs.get("executables", "inspinj")
@@ -81,7 +189,7 @@ except:
     log_path = './'
 
 tempfile.tempdir = log_path
-tempfile.template='faithsim.dag.log.'
+tempfile.template = 'faithsim.dag.log.'
 logfile = tempfile.mktemp()
 
 try:
@@ -103,7 +211,8 @@ shutil.copy(banksim_prog, 'scripts/gwnrtools_faithsim')
 os.chmod('scripts/gwnrtools_faithsim', 0o0777)
 
 logging.info("Creating injection file")
-inj_str = inspinj_prog + " " + get_ini_opts(confs, "inspinj") + "--output-prefix inj"
+inj_str = inspinj_prog + " " + \
+    get_ini_opts(confs, "inspinj") + "--output-prefix inj"
 os.system(inj_str)
 
 logging.info("Splitting template bank")
@@ -135,13 +244,13 @@ pnode = CondorDAGNode(pjob)
 
 for inj_num in range(num_banks):
     bn = 'bank/bank' + str(inj_num) + '.xml'
-    
+
     for fsjob, sec in zip(fsjobs, fs_secs):
         sec_sub = str(sec[len('faithsim'):])
-        mf = 'match/match' + sec_sub + '-' +  str(inj_num) + '.dat'
+        mf = 'match/match' + sec_sub + '-' + str(inj_num) + '.dat'
         fsnode = FaithsimNode(fsjob, bn, mf, inj_per_job=templates_per_job)
         dag.add_node(fsnode)
-        rnode.add_parent(fsnode) 
+        rnode.add_parent(fsnode)
 dag.add_node(rnode)
 pnode.add_parent(rnode)
 dag.add_node(pnode)
@@ -204,7 +313,7 @@ if __name__ == "__main__":
         savetxt('result-' + tag + '.dat', data)
 """)
 os.chmod('scripts/gwnrtools_faithsim_collect_results', 0o0777)
-    
+
 logging.info("Creating submit script")
 f = open("submit.sh", 'w')
 f.write("""#!/bin/bash
