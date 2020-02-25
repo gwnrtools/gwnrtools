@@ -13,13 +13,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import Cosmo
-import DataAnalysis
-import NR
-#import Plotting
-import Stats
-import Utils
-import Waveforms
+from . import Cosmo
+from . import DataAnalysis
+from . import NR
+#from . import Plotting
+from . import Stats
+from . import Utils
+from . import Waveforms
 
 from GWNRTools.Utils.SupportFunctions import *
 from GWNRTools.Utils.MemUtilities import *
