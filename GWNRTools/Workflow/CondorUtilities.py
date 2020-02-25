@@ -28,6 +28,7 @@ import tempfile
 from optparse import OptionParser
 from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorDAG, CondorJob
 
+
 class BaseJob(CondorDAGJob, CondorJob):
     def __init__(self, log_dir, executable, cp, section, gpu=False,
                  accounting_group=None, request_memory=None):
@@ -87,20 +88,52 @@ class BanksimNode(CondorDAGNode):
             self.add_post_script_arg(match_file)
             self.add_post_script_arg(str(inj_per_job))
         else:
-            self.add_file_opt("match-file", match_file, file_is_output_file=True)
-        
+            self.add_file_opt("match-file", match_file,
+                              file_is_output_file=True)
+
+
 class BanksimCombineNode(CondorDAGNode):
     def __init__(self, job, inj_num):
         CondorDAGNode.__init__(self, job)
-        
+
         self.add_var_opt("inj-num", inj_num)
-        
+
         outf = "match/match" + str(inj_num) + ".dat"
-        
-        self.add_file_opt("output-file", outf)    
+
+        self.add_file_opt("output-file", outf)
+
 
 class FaithsimNode(CondorDAGNode):
     def __init__(self, job, tmplt_file, match_file, inj_per_job=None):
-        CondorDAGNode.__init__(self, job)    
+        CondorDAGNode.__init__(self, job)
         self.add_file_opt("param-file", tmplt_file)
-        self.add_file_opt("match-file", match_file, file_is_output_file=True) 
+        self.add_file_opt("match-file", match_file, file_is_output_file=True)
+
+
+class InferenceJob(CondorDAGJob, CondorJob):
+    def __init__(self, log_dir, executable, cp, section, gpu=False,
+                 accounting_group=None, request_memory=None):
+        CondorDAGJob.__init__(self, "vanilla", os.path.abspath(executable))
+
+        self.add_condor_cmd('initialdir', os.path.dirname(
+            os.path.abspath(executable)))
+
+        if gpu:
+            CondorJob.__init__(
+                self, "vanilla", os.path.basename(executable), 2)
+        # These are all python jobs so need to pull in the env
+        self.add_condor_cmd('getenv', 'True')
+        log_base = os.path.join(
+            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
+        self.set_stderr_file(log_base + '.err')
+        self.set_stdout_file(log_base + '.out')
+        self.set_sub_file(executable + '.sub')
+
+        if cp is not None:
+            self.add_ini_opts(cp, section)
+
+        if accounting_group:
+            self.add_condor_cmd('accounting_group', accounting_group)
+
+        if request_memory:
+            self.add_condor_cmd('RequestMemory', request_memory)
