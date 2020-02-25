@@ -59,6 +59,7 @@ def mkdir(dir_name):
 class InjectionInferenceAnalysis():
     def __init__(self, opts, run_dir, config_files,
                  inj_exe_name='inspinj', inf_exe_name='inference',
+                 plt_exe_name='plot',
                  verbose=False):
         '''
         Setup and run inference on one single injection
@@ -82,6 +83,7 @@ class InjectionInferenceAnalysis():
         self.config_files = config_files
         self.inj_exe_name = inj_exe_name
         self.inf_exe_name = inf_exe_name
+        self.plt_exe_name = plt_exe_name
 
     def get_run_dir(self): return self.run_dir
 
@@ -98,6 +100,9 @@ class InjectionInferenceAnalysis():
 
     def get_inf_exe_path(self):
         return os.path.join(self.run_dir, "run_inference")
+
+    def get_plt_exe_path(self):
+        return os.path.join(self.run_dir, "make_plot")
 
     def get_log_dir(self): return os.path.join(self.run_dir, 'log')
 
@@ -123,20 +128,23 @@ class InjectionInferenceAnalysis():
                 os.path.join(self.run_dir, 'scripts/')))
         for _, exe in self.opts.items('executables'):
             shutil.copy(exe, os.path.join(self.run_dir, 'scripts/'))
-            os.chmod(os.path.join(self.run_dir, 'scripts/', exe), 0o0777)
+            os.chmod(os.path.join(self.run_dir, 'scripts/',
+                                  os.path.basename(exe)), 0o0777)
 
         # Write injection creation script
         self.opts.set(self.inj_exe_name, 'ninjections', '1')
         self.opts.set(self.inj_exe_name, 'seed',
                       str(numpy.random.randint(1, 1e5)))
         self.write_run_script(self.opts.items(self.inj_exe_name),
-                              "scripts/pycbc_create_injections",
+                              "scripts/{0}".format(os.path.basename(
+                                  self.opts.get('executables', self.inj_exe_name))),
                               os.path.join(
                                   self.run_dir, "make_injection"))
 
         # Write pycbc_inference run script
         self.write_run_script(self.opts.items(self.inf_exe_name),
-                              "scripts/pycbc_inference",
+                              "scripts/{0}".format(os.path.basename(
+                                  self.opts.get('executables', self.inf_exe_name))),
                               os.path.join(
                                   self.run_dir, "run_inference"),
                               """#!/bin/bash
@@ -146,6 +154,13 @@ class InjectionInferenceAnalysis():
 # from spawning multiple jobs that would otherwise be used
 # by pycbc_inference and cause a reduced runtime.
 OMP_NUM_THREADS=1 \\\n""")
+
+        # Write pycbc_plot_posterior run script
+        if self.opts.has_option('executables', self.plt_exe_name):
+            self.write_run_script(self.opts.items(self.plt_exe_name),
+                                  "scripts/{0}".format(os.path.basename(
+                                      self.opts.get('executables', self.plt_exe_name))),
+                                  os.path.join(self.run_dir, "make_plot"))
 
     def write_run_script(self, exe_opts, exe_path, script_name,
                          script_base="""#!/bin/bash\n"""):
@@ -161,7 +176,8 @@ OMP_NUM_THREADS=1 \\\n""")
 
 
 class InferenceOnInjectionBatch():
-    def __init__(self, opts, run_dir, verbose=False):
+    def __init__(self, opts, run_dir, inj_exe_name='inspinj', inf_exe_name='inference',
+                 plt_exe_name='plot', verbose=False):
         '''
         Thin wrapper class that encapsulates a suite of injection runs
 
@@ -174,24 +190,33 @@ class InferenceOnInjectionBatch():
         '''
         self.verbose = verbose
         self.opts = opts
-        self.num_injections = int(opts.get('inspinj', 'ninjections'))
-        self.inj_config = opts.get('inspinj', 'config-files')
+        self.inj_exe_name = inj_exe_name
+        self.inf_exe_name = inf_exe_name
+        self.plt_exe_name = plt_exe_name
+
+        self.num_injections = int(opts.get(self.inj_exe_name, 'ninjections'))
+        self.inj_config = opts.get(self.inj_exe_name, 'config-files')
+
         self.data_configs = opts.get('workflow', 'data').split()
         self.sampler_configs = opts.get('workflow', 'sampler').split()
         self.inf_configs = opts.get('workflow', 'inference').split()
+
         import itertools
-        self.config_files = list(itertools.product(self.data_configs,
-                                                   self.sampler_configs,
-                                                   self.inf_configs))
+        self.config_combos = list(itertools.product(self.data_configs,
+                                                    self.sampler_configs,
+                                                    self.inf_configs))
         self.runs = {}
         for inj_num in range(self.num_injections):
-            for configs in self.config_files:
+            for configs in self.config_combos:
                 confs = {}
                 confs['injection'] = self.inj_config
                 confs['data'], confs['sampler'], confs['inference'] = configs
                 run_tag = self.get_run_tag()
                 self.runs[run_tag] = InjectionInferenceAnalysis(
                     opts, self.name_run_dir(inj_num, confs), confs,
+                    inj_exe_name=self.inj_exe_name,
+                    inf_exe_name=self.inf_exe_name,
+                    plt_exe_name=self.plt_exe_name,
                     verbose=self.verbose)
 
     def get_opts(self): return self.opts
@@ -207,13 +232,11 @@ class InferenceOnInjectionBatch():
     def get_run_tag(self): return get_unique_hex_tag()
 
     def name_run_dir(self, inj_num, configs):
-        dir_name = 'injection{0:03d}/{1}/{2}/{3}'.format(inj_num,
-                                                         configs['data'].split('.ini')[
-                                                             0],
-                                                         configs['sampler'].split('.ini')[
-                                                             0],
-                                                         configs['inference'].split('.ini')[0])
-        return dir_name
+        return 'injection{0:03d}/{1}/{2}/{3}'.format(
+            inj_num,
+            configs['data'].split('.ini')[0],
+            configs['sampler'].split('.ini')[0],
+            configs['inference'].split('.ini')[0])
 
 
 ####
@@ -313,10 +336,7 @@ with ctx:
     for d in ['scripts', 'log', 'plots']:
         mkdir(d)
 
-    # Get executables
-    injection_prog = confs.get("executables", "inspinj")
-    inference_prog = confs.get("executables", "inference")
-
+    # Get logdir
     try:
         log_path = confs.get("workflow", 'log-path')
     except:
@@ -338,9 +358,6 @@ with ctx:
 
     dag.set_dag_file("pycbc_inference_injections")
     dag.set_dax_file("pycbc_inference_injections")
-
-    # deubgPK
-    print("config options: ", confs)
 
     analyses = InferenceOnInjectionBatch(confs, analyses_dir, verbose=True)
     # analyses.setup_runs()
@@ -373,111 +390,21 @@ with ctx:
         inf_node.add_parent(inj_node)
         dag.add_node(inf_node)
 
+        # Configure plotting job
+        req_mem = None
+        if confs.has_option('workflow', 'plot-request-memory'):
+            req_mem = confs.get('workflow', 'plot-request-memory')
+        if confs.has_option('executables', 'plot'):
+            plt_job = InferenceJob('log', run.get_plt_exe_path(), None, None,
+                                   accounting_group=accounting_group,
+                                   request_memory=req_mem)
+            plt_node = CondorDAGNode(plt_job)
+            plt_node.add_parent(inf_node)
+            dag.add_node(plt_node)
+
     # Write out the DAG
     dag.write_sub_files()
     dag.write_script()
     dag.write_concrete_dag()
-
-
-# parser = OptionParser()
-# parser.add_option('--config', type=str)
-# parser.add_option("--skip-creating-injections", action="store_true",
-#                   help="Skip calling lalapps_inspinj and assume injections already exist",
-#                   default=False)
-# (options, args) = parser.parse_args()
-#
-# if options.config is None:
-#     raise ValueError("Config file is required")
-#
-# logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
-#
-# confs = ConfigParser.ConfigParser()
-# confs.read(options.config)
-
-
-print(injection_prog)
-print(inference_prog)
-
-# banksim_prog = confs.get("executables", "inference")
-# inspinj_prog = confs.get("executables", "inspinj")
-# templates_per_job = confs.get("workflow", "templates-per-job")
-#
-# logging.info("Making workspace directories")
-# mkdir('scripts')
-# mkdir('match')
-# mkdir('bank')
-# mkdir('log')
-# mkdir('plots')
-#
-# logging.info("Copying scripts")
-# shutil.copy(banksim_prog, 'scripts/gwnrtools_faithsim')
-# os.chmod('scripts/gwnrtools_faithsim', 0o0777)
-#
-# logging.info("Creating injection file")
-# inj_str = inspinj_prog + " " + \
-#     get_ini_opts(confs, "inspinj") + "--output-prefix inj"
-# os.system(inj_str)
-#
-# logging.info("Splitting template bank")
-# subprocess.call(['pycbc_splitbank',
-#                  '--templates-per-bank', str(templates_per_job),
-#                  '-t', 'inj.xml',
-#                  '-o', 'bank/bank'])
-#
-# num_banks = len(glob.glob("bank/bank*"))
-#
-# logging.info("Creating DAG")
-#
-# dag = CondorDAG(logfile)
-# dag.set_dag_file("faithsim")
-# dag.set_dax_file("faithsim")
-#
-# fs_secs = matches_in_list(confs.sections(), 'faithsim')
-# fsjobs = []
-# for sec in fs_secs:
-#     fsjobs.append(BaseJob("log", "scripts/gwnrtools_faithsim", confs, sec,
-#                           accounting_group=accounting_group))
-#
-# rjob = BaseJob("log", "scripts/gwnrtools_faithsim_collect_results", None,
-#                'collect_results', accounting_group=accounting_group)
-# rnode = CondorDAGNode(rjob)
-# pjob = BaseJob("log", "scripts/gwnrtools_faithsim_plots", None, 'faithsim_plots',
-#                accounting_group=accounting_group)
-# pnode = CondorDAGNode(pjob)
-#
-# for inj_num in range(num_banks):
-#     bn = 'bank/bank' + str(inj_num) + '.xml'
-#
-#     for fsjob, sec in zip(fsjobs, fs_secs):
-#         sec_sub = str(sec[len('faithsim'):])
-#         mf = 'match/match' + sec_sub + '-' + str(inj_num) + '.dat'
-#         fsnode = FaithsimNode(fsjob, bn, mf, inj_per_job=templates_per_job)
-#         dag.add_node(fsnode)
-#         rnode.add_parent(fsnode)
-# dag.add_node(rnode)
-# pnode.add_parent(rnode)
-# dag.add_node(pnode)
-#
-# f = open("scripts/gwnrtools_faithsim_collect_results", "w")
-# f.write("""#!/usr/bin/env python
-# """)
-# os.chmod('scripts/gwnrtools_faithsim_collect_results', 0o0777)
-#
-# logging.info("Creating submit script")
-# f = open("submit.sh", 'w')
-# f.write("""#!/bin/bash
-# condor_submit_dag faithsim.dag
-# """)
-# os.chmod('submit.sh', 0o0777)
-#
-# dag.write_sub_files()
-# dag.write_script()
-# dag.write_concrete_dag()
-#
-# f = open('scripts/gwnrtools_faithsim_plots', "w")
-# f.write("""#!/usr/bin/env python
-# import matplotlib
-#  """)
-# os.chmod('scripts/gwnrtools_faithsim_plots', 0o0777)
 
 logging.info('Done')
