@@ -33,7 +33,7 @@ from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
 from GWNRTools.DataAnalysis.MiscFunctions import get_unique_hex_tag
-from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceNode, InferenceJob
+from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
 from GWNRTools import __version__
 
 
