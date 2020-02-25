@@ -15,7 +15,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-"""Setup workflow to perferm Bayesian parameter estimation runs on a
+"""Setup workflow to perform Bayesian parameter estimation runs on a
 custom set of simulated signals"""
 
 import os
@@ -56,10 +56,6 @@ parser.add_argument("--version", action="version", version=__version__,
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Print logging messages.")
 # workflow options
-parser.add_argument("--write-configs", type=str, required=False, default='',
-                    help="Write config files and exit. This expects an input"
-                         "of the form "
-                         "--write-configs data:TYPE,sampler:TYPE,inference:TYPE")
 parser.add_argument("--skip-creating-injections", action="store_true",
                     help="Skip calling lalapps_inspinj and assume "
                          "injections already exist", default=False)

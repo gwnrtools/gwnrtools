@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+"""Get and write configuration files for generating a workflow to perform
+Bayesian parameter estimation runs on a custom set of simulated signals"""
+
+import os
+import sys
+import argparse
+
+from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
+                                                     InferenceConfigs)
+from GWNRTools import __version__
+
+
+############################################################
+# command line usage
+parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
+                                 description=__doc__)
+parser.add_argument("--version", action="version", version=__version__,
+                    help="Prints version information.")
+parser.add_argument("--verbose", action="store_true", default=False,
+                    help="Print logging messages.")
+# workflow options
+parser.add_argument("--write-data-config", type=str, required=False, default='',
+                    help="Write data config files and exit.")
+parser.add_argument("--write-sampler-config", type=str, required=False, default='',
+                    help="Write sampler config files and exit.")
+parser.add_argument("--write-inference-config", type=str, required=False, default='',
+                    help="Write inference config files and exit.")
+
+# output options
+parser.add_argument("--show-available-configs", action="store_true", default=False,
+                    help="Show available options for all configurations.")
+
+parser.add_argument("--output-dir", type=str, required=False, default='.',
+                    help="Output directory path.")
+
+
+# parse command line
+opts = parser.parse_args()
+
+analyses_dir = opts.output_dir
+
+############################################################
+# write configs and exit!
+if __name__ == '__main__':
+
+    configs = InferenceConfigs(analyses_dir)
+
+    if opts.show_available_configs:
+        for name in configs.available_configs():
+            writer = configs.get_config_writer(name)
+            print("{0}: {1}".format(name, writer.types()))
+        sys.exit(0)
+
+    data_writer = configs.get_config_writer('data')
+    assert(opts.write_data_config in data_writer.types())
+    data_writer.write(opts.write_data_config)
+
+    smpl_writer = configs.get_config_writer('sampler')
+    assert(opts.write_sampler_config in smpl_writer.types())
+    smpl_writer.write(opts.write_sampler_config)
+
+    inf_writer = configs.get_config_writer('inference')
+    assert(opts.write_inference_config in inf_writer.types())
+    inf_writer.write(opts.write_inference_config)
