@@ -22,6 +22,8 @@ import os
 import sys
 import argparse
 
+import pycbc
+
 from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
                                                      InferenceConfigs)
 from GWNRTools import __version__
@@ -53,6 +55,7 @@ parser.add_argument("--output-dir", type=str, required=False, default='.',
 
 # parse command line
 opts = parser.parse_args()
+pycbc.init_logging(opts.verbose)
 
 analyses_dir = opts.output_dir
 
@@ -68,14 +71,22 @@ if __name__ == '__main__':
             print("{0}: {1}".format(name, writer.types()))
         sys.exit(0)
 
-    data_writer = configs.get_config_writer('data')
-    assert(opts.write_data_config in data_writer.types())
-    data_writer.write(opts.write_data_config)
+    if len(opts.write_data_config) > 0:
+        data_writer = configs.get_config_writer('data')
+        assert(opts.write_data_config in data_writer.types())
+        logging.info('Writing config file for data settings..')
+        data_writer.write(opts.write_data_config)
 
-    smpl_writer = configs.get_config_writer('sampler')
-    assert(opts.write_sampler_config in smpl_writer.types())
-    smpl_writer.write(opts.write_sampler_config)
+    if len(opts.write_sampler_config) > 0:
+        smpl_writer = configs.get_config_writer('sampler')
+        assert(opts.write_sampler_config in smpl_writer.types())
+        logging.info('Writing config file for sampler settings..')
+        smpl_writer.write(opts.write_sampler_config)
 
-    inf_writer = configs.get_config_writer('inference')
-    assert(opts.write_inference_config in inf_writer.types())
-    inf_writer.write(opts.write_inference_config)
+    if len(opts.write_inference_config) > 0:
+        inf_writer = configs.get_config_writer('inference')
+        assert(opts.write_inference_config in inf_writer.types())
+        logging.info('Writing config file for inference settings..')
+        inf_writer.write(opts.write_inference_config)
+
+logging.info('Done')
