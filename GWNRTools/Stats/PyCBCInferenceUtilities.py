@@ -76,11 +76,15 @@ class InferenceConfigs():
         run_dir : string
         configs : dict
 
-        Returns on demand. Compatible with ConfigWriter.
+        Usage
+        -----
+        Compatible with ConfigWriter.
+        This class is easiest used with the writer it returns.
 
         Configs for Injections
         ----------------------
         No special notes
+
 
         Configs for Events
         ------------------
@@ -148,8 +152,11 @@ class InferenceConfigs():
         self.configs[config_name] = configs
 
     def add_data_configs(self, event_name=None):
+        # Events
         if event_name is not None:
-            if '150914' in event_name or '170104' in event_name:
+            if '150914' in event_name or '170104' in event_name or\
+                    '151012' in event_name or '170608' in event_name or\
+                    '151226' in event_name or '170823' in event_name:
                 self.configs['data'][event_name] = """\
 [data]
 instruments = H1 L1
@@ -179,7 +186,8 @@ strain-high-pass = 15
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
 """
-            elif '170729' in event_name:
+            elif '170729' in event_name or '170814' in event_name or\
+                    '170809' in event_name or '170818' in event_name:
                 self.configs['data'][event_name] = """\
 [data]
 instruments = H1 L1 V1
@@ -209,8 +217,39 @@ strain-high-pass = 15
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
 """
+            elif '170817' in event_name:
+                self.configs['data'][event_name] = """\
+[data]
+instruments = H1 L1 V1 G1
+trigger-time = {gpstime}
+analysis-start-time = -6
+analysis-end-time = 2
+psd-estimation = median-mean
+psd-start-time = -256
+psd-end-time = 256
+psd-inverse-length = 8
+psd-segment-length = 8
+psd-segment-stride = 4
+; The frame files must be downloaded from GWOSC before running.
+frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file} G1:{G1_frame_file}
+channel-name = {H1_channel} {L1_channel} {V1_channel} {G1_channel}
+; this will cause the data to be resampled to 2048 Hz:
+sample-rate = {sample_rate}
+; We'll use a high-pass filter so as not to get numerical errors from the large
+; amplitude low frequency noise. Here we use 15 Hz, which is safely below the
+; low frequency cutoff of our likelihood integral (20 Hz)
+strain-high-pass = 15
+; The pad-data argument is for the high-pass filter: 8s are added to the
+; beginning/end of the analysis/psd times when the data is loaded. After the
+; high pass filter is applied, the additional time is discarded. This pad is
+; *in addition to* the time added to the analysis start/end time for the PSD
+; inverse length. Since it is discarded before the data is transformed for the
+; likelihood integral, it has little affect on the run time.
+pad-data = 8
+"""
             return
 
+        # Injections
         self.configs['data']['gw150914-like-gaussian'] = """\
 [data]
 instruments = H1 L1
@@ -223,11 +262,42 @@ fake-strain = H1:aLIGOaLIGODesignSensitivityT1800044 L1:aLIGOaLIGODesignSensitiv
 fake-strain-seed = H1:44 L1:45
 ; psd settings
 psd-estimation = median-mean
+psd-start-time = -256
+psd-end-time = 256
 psd-inverse-length = 8
 psd-segment-length = 8
 psd-segment-stride = 4
-psd-start-time = -256
-psd-end-time = 256
+; even though we're making fake strain, the strain
+; module requires a channel to be provided, so we'll
+; just make one up
+channel-name = H1:STRAIN L1:STRAIN
+; Providing an injection file will cause a simulated
+; signal to be added to the data
+injection-file = injection.hdf
+; We'll use a high-pass filter so as not to get numerical errors from the large
+; amplitude low frequency noise. Here we use 15 Hz, which is safely below the
+; low frequency cutoff of our likelihood integral (20 Hz)
+strain-high-pass = 15
+; The pad-data argument is for the high-pass filter: 8s are added to the
+; beginning/end of the analysis/psd times when the data is loaded. After the
+; high pass filter is applied, the additional time is discarded. This pad is
+; *in addition to* the time added to the analysis start/end time for the PSD
+; inverse length. Since it is discarded before the data is transformed for the
+; likelihood integral, it has little affect on the run time.
+pad-data = 8
+"""
+        self.configs['data']['gw150914-like-zeronoise'] = """\
+[data]
+instruments = H1 L1
+trigger-time = 1126259462.42
+analysis-start-time = -6
+analysis-end-time = 2
+; strain settings
+sample-rate = 2048
+fake-strain = H1:zeroNoise L1:zeroNoise
+; psd settings
+psd-model = aLIGOZeroDetHighPower
+psd-inverse-length = 0
 ; even though we're making fake strain, the strain
 ; module requires a channel to be provided, so we'll
 ; just make one up
@@ -249,11 +319,25 @@ pad-data = 8
 """
 
     def add_sampler_configs(self):
-        self.configs['sampler']['emcee_pt_v1'] = """\
+        self.configs['sampler']['emcee'] = """\
+[sampler]
+name = emcee
+nwalkers = 1000
+niterations = 2000
+;##### Other possible options
+effective-nsamples = 1000
+max-samples-per-chain = 1000
+checkpoint-interval = 2000
+
+;[sampler-burn_in]
+;burn-in-test = nacl & max_posterior
+"""
+        self.configs['sampler']['emcee_pt'] = """\
 [sampler]
 name = emcee_pt
 nwalkers = 500
 ntemps = 20
+;##### Other possible options
 effective-nsamples = 4000
 checkpoint-interval = 2000
 max-samples-per-chain = 1000
@@ -274,12 +358,69 @@ mass1, mass2 : mchirp, q
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
 """
-        self.configs['sampler']['cpnest_v1'] = """\
+        self.configs['sampler']['dynesty'] = """\
 [sampler]
+name = dynesty
+dlogz = 0.1
+nlive = 1500
+
+; Other arguments (see Dynesty package for details).
+; https://dynesty.readthedocs.io/en/latest/quickstart.html#nested-sampling-with-dynesty
+; bound, bootstrap, enlarge, update_interval, sample
+; loglikelihood-function = loglr
+"""
+        self.configs['sampler']['ultranest'] = """\
+[sampler]
+name = ultranest
+dlogz = 0.1
+
+;##### Other possible options (see ultranest package for useage)
+; update_interval_iter_fraction, update_interval_ncall
+; log_interval, show_status, dKL, frac_remain,
+; Lepsilon, min_ess, max_iters, max_ncalls,
+; max_num_improvement_loops, 
+min_num_live_points = 1500
+; cluster_num_live_points
+"""
+        self.configs['sampler']['epsie'] = """\
+[sampler]
+name = epsie
+nchains = 100
+niterations = 100
+ntemps = 4
+
+;##### Other possible options
+;effective-nsamples = 1000
+;max-samples-per-chain = 1000
+;checkpoint-interval = 2000
+
+;[sampler-burn_in]
+;burn-in-test = nacl & max_posterior
+
+[jump_proposal-x]
+name = normal
+"""
+        self.configs['sampler']['multinest'] = """\
+[sampler]
+name = multinest
+nlivepoints = 1500
+
+;##### Optional arguments
+;evidence-tolerance = 0.1
+;sampling-efficiency = 0.3
+;checkpoint-interval = 5000
+;importance-nested-sampling = True
+"""
+        self.configs['sampler']['cpnest'] = """\
+[sampler]
+;
+; WARNING: this sampler requires python3 support
+;
 name = cpnest
 nthreads = 8 
 nlive = 1500 ;(anything between 1000 (faster) and 2000 (slower), should be good)
 maxmcmc = 10000 ;(you should always use >= 5000)
+verbose = 1
 
 [sampler-burn_in]
 burn-in-test = nacl & max_posterior
@@ -299,7 +440,7 @@ name = mass1_mass2_to_mchirp_q
 """
 
     def add_inference_configs(self):
-        self.configs['inference']['gw150914_like'] = """\
+        self.configs['inference']['bbh_precessing'] = """\
 [model]
 name = gaussian_noise
 low-frequency-cutoff = 20.0
@@ -343,10 +484,34 @@ name = custom
 inputs = delta_tc
 tc = ${data|trigger-time} + delta_tc
 
+;Mass1 of GW151012 $\in$ [28.7, 38.1]
+;Mass1 of GW170608 $\in$ [12.7, 16.5]
+;Mass1 of GW170729 $\in$ [60.4, 66.4]
+;Mass1 of GW150914 $\in$ [38.7, 40.3]
+;Mass1 of GW151226 $\in$ [16.9, 22.5]
+;Mass1 of GW170814 $\in$ [33.6, 36.2]
+;Mass1 of GW170817 $\in$ [1.56, 1.58]
+;Mass1 of GW170104 $\in$ [36.4, 38.1]
+;Mass1 of GW170809 $\in$ [40.9, 43.3]
+;Mass1 of GW170818 $\in$ [40.1, 42.9]
+;Mass1 of GW170823 $\in$ [46.2, 50.7]
+
 [prior-mass1]
 name = uniform
 min-mass1 = 10.
 max-mass1 = 80.
+
+;Mass2 of GW151012 $\in$ [18.4, 17.7]
+;Mass2 of GW170608 $\in$ [9.8, 9.0]
+;Mass2 of GW170729 $\in$ [44.1, 43.1]
+;Mass2 of GW150914 $\in$ [35.0, 33.6]
+;Mass2 of GW151226 $\in$ [10.2, 9.9]
+;Mass2 of GW170814 $\in$ [29.2, 28.0]
+;Mass2 of GW170817 $\in$ [1.36, 1.36]
+;Mass2 of GW170104 $\in$ [24.6, 24.9]
+;Mass2 of GW170809 $\in$ [29.0, 28.9]
+;Mass2 of GW170818 $\in$ [31.9, 31.0]
+;Mass2 of GW170823 $\in$ [36.8, 35.7]
 
 [prior-mass2]
 name = uniform
