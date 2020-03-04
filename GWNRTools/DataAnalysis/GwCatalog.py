@@ -14,8 +14,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import subprocess
 import pycbc.catalog
+
+
+def mkdir(dir_name):
+    try:
+        subprocess.call(["mkdir", "-p", dir_name])
+    except OSError:
+        pass
 
 
 class Merger(pycbc.catalog.Merger):
@@ -26,6 +33,9 @@ class Merger(pycbc.catalog.Merger):
 
     def operating_ifos(self):
         return self.data['files']['OperatingIFOs'].split()
+
+    def gpstime(self):
+        return self.data['tc']['best']
 
     def fetch_data(self, ifo, duration=32, sample_rate=4096, save_dir=''):
         """ Download strain file around the event
@@ -50,7 +60,6 @@ class Merger(pycbc.catalog.Merger):
         import os
         import subprocess
         from astropy.utils.data import download_file
-        from pycbc.frame import read_frame
 
         length = "{}sec".format(duration)
         if sample_rate == 4096:
@@ -66,16 +75,25 @@ class Merger(pycbc.catalog.Merger):
         local_filename = url.split('/')[-1]
 
         if save_dir != '.' and save_dir != '':
-            try:
-                os.makedirs(save_dir)
-            except:
-                pass
+            mkdir(save_dir)
             local_filename = os.path.join(save_dir, local_filename)
 
-        cmd = 'mv {} {}'.format(filename, local_filename)
-        subprocess.call(cmd.split())
+        subprocess.call('mv {0} {1}'.format(filename, local_filename).split())
 
         return local_filename
+
+    def frame_data_name(self, ifo, duration, sample_rate):
+        """ Get the name of frame data file using pycbc.catalog API
+        """
+        length = "{}sec".format(duration)
+        if sample_rate == 4096:
+            sampling = "4KHz"
+        elif sample_rate == 16384:
+            sampling = "16KHz"
+        else:
+            raise IOError(
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(sample_rate))
+        return self.data['files'][ifo][length][sampling]['GWF'].split('/')[-1]
 
     def channel_name(self, ifo, sample_rate):
         """ Get the channel name in data

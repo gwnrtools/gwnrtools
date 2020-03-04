@@ -42,9 +42,17 @@ class ConfigWriter():
         self.configs = configs
         self.run_dir = run_dir
 
-    def write(self, name):
+    def write(self, name, **formatting_kwargs):
+        '''
+        Config file string may have some blanks that need to 
+        be filled, especially for data configs for GW events.
+        '''
+        out_str = self.configs[name]
         with open(os.path.join(self.run_dir, name + '.ini'), 'w') as fout:
-            fout.write(self.configs[name])
+            if len(formatting_kwargs) > 0:
+                fout.write(out_str.format(**formatting_kwargs))
+            else:
+                fout.write(out_str)
 
     def types(self):
         return self.configs.keys()
@@ -60,7 +68,7 @@ class ConfigWriter():
 class InferenceConfigs():
     def __init__(self, run_dir, configs={}):
         '''
-        Stores all config.ini files
+        Stores config files for pycbc_inference runs
 
         Parameters
         ----------
@@ -68,22 +76,49 @@ class InferenceConfigs():
         run_dir : string
         configs : dict
 
-        Returns on demand. Compatible with ConfigWriter
+        Returns on demand. Compatible with ConfigWriter.
+
+        Configs for Injections
+        ----------------------
+        No special notes
+
+        Configs for Events
+        ------------------
+        Need the following named variables to be provided
+        to the config writer's `write` function:
+
+        gpstime       : int
+        H1_frame_file : str
+        H1_channel    : str
+        L1_frame_file : str
+        L1_channel    : str
+        V1_frame_file : str
+        V1_channel    : str
+        sample_rate   : int (power of 2)
+
         '''
         self.run_dir = run_dir
         # Make this >>
         assert(isinstance(configs, dict))
         self.configs = configs
 
-        # Add data / sampler / inference configs
+        # Add data configs
         if 'data' not in self.configs:
             self.configs['data'] = {}
         self.add_data_configs()
 
+        # Add data configs for events
+        import pycbc.catalog
+        self.event_names = pycbc.catalog.Catalog().names
+        for event_name in self.event_names:
+            self.add_data_configs(event_name)
+
+        # Add sampler configs
         if 'sampler' not in self.configs:
             self.configs['sampler'] = {}
         self.add_sampler_configs()
 
+        # Add inference configs
         if 'inference' not in self.configs:
             self.configs['inference'] = {}
         self.add_inference_configs()
@@ -112,7 +147,70 @@ class InferenceConfigs():
     def set(self, config_name, config):
         self.configs[config_name] = configs
 
-    def add_data_configs(self):
+    def add_data_configs(self, event_name=None):
+        if event_name is not None:
+            if '150914' in event_name or '170104' in event_name:
+                self.configs['data'][event_name] = """\
+[data]
+instruments = H1 L1
+trigger-time = {gpstime}
+analysis-start-time = -6
+analysis-end-time = 2
+psd-estimation = median-mean
+psd-start-time = -256
+psd-end-time = 256
+psd-inverse-length = 8
+psd-segment-length = 8
+psd-segment-stride = 4
+; The frame files must be downloaded from GWOSC before running.
+frame-files = H1:{H1_frame_file} L1:{L1_frame_file}
+channel-name = {H1_channel} {L1_channel}
+; this will cause the data to be resampled to 2048 Hz:
+sample-rate = {sample_rate}
+; We'll use a high-pass filter so as not to get numerical errors from the large
+; amplitude low frequency noise. Here we use 15 Hz, which is safely below the
+; low frequency cutoff of our likelihood integral (20 Hz)
+strain-high-pass = 15
+; The pad-data argument is for the high-pass filter: 8s are added to the
+; beginning/end of the analysis/psd times when the data is loaded. After the
+; high pass filter is applied, the additional time is discarded. This pad is
+; *in addition to* the time added to the analysis start/end time for the PSD
+; inverse length. Since it is discarded before the data is transformed for the
+; likelihood integral, it has little affect on the run time.
+pad-data = 8
+"""
+            elif '170729' in event_name:
+                self.configs['data'][event_name] = """\
+[data]
+instruments = H1 L1 V1
+trigger-time = {gpstime}
+analysis-start-time = -6
+analysis-end-time = 2
+psd-estimation = median-mean
+psd-start-time = -256
+psd-end-time = 256
+psd-inverse-length = 8
+psd-segment-length = 8
+psd-segment-stride = 4
+; The frame files must be downloaded from GWOSC before running.
+frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file}
+channel-name = {H1_channel} {L1_channel} {V1_channel}
+; this will cause the data to be resampled to 2048 Hz:
+sample-rate = {sample_rate}
+; We'll use a high-pass filter so as not to get numerical errors from the large
+; amplitude low frequency noise. Here we use 15 Hz, which is safely below the
+; low frequency cutoff of our likelihood integral (20 Hz)
+strain-high-pass = 15
+; The pad-data argument is for the high-pass filter: 8s are added to the
+; beginning/end of the analysis/psd times when the data is loaded. After the
+; high pass filter is applied, the additional time is discarded. This pad is
+; *in addition to* the time added to the analysis start/end time for the PSD
+; inverse length. Since it is discarded before the data is transformed for the
+; likelihood integral, it has little affect on the run time.
+pad-data = 8
+"""
+            return
+
         self.configs['data']['gw150914-like-gaussian'] = """\
 [data]
 instruments = H1 L1
@@ -296,104 +394,5 @@ name = uniform_sky
 [prior-polarization]
 ; polarization prior
 name = uniform_angle
-"""
-####
-
-####
-# **`InferenceConfigs`**:
-# - stores all `config.ini` files
-# - returns on demand. Compatible with ConfigWriter
-
-
-class EventInferenceDataConfigs():
-    def __init__(self, run_dir, configs={}):
-        '''
-        Stores config files for pycbc_inference that 
-        provide the prescribed settings for handling data.
-
-        Parameters
-        ----------
-
-        run_dir : string
-            Directory to write the data configuration file to
-        configs : dict (optional)
-            User specified dictionary containing different
-            config files
-        '''
-        import pycbc.catalog
-        self.event_names = pycbc.catalog.Catalog().names
-
-        self.run_dir = run_dir  # Make this >>
-        assert(isinstance(configs, dict))
-        self.configs = configs
-
-        # Add data / sampler / inference configs
-        if 'data' not in self.configs:
-            self.configs['data'] = {}
-        for event in self.event_names:
-            self.add_data_configs(event)
-
-        self.config_names = self.configs.keys()
-
-        # Initialize their config writers
-        self.config_writers = {}
-        for config_name in self.config_names:
-            self.config_writers[config_name] = ConfigWriter(
-                config_name + '.ini',
-                self.configs[config_name], run_dir)
-
-    def available_configs(self):
-        return self.config_names
-
-    def available_events(self):
-        return self.configs['data'].keys()
-
-    def get_config_writer(self, name):
-        assert(name in self.available_configs())
-        return self.config_writers[name]
-
-    def get(self, config_name, type_name=None):
-        if type_name in self.configs[config_name]:
-            return self.configs[config_name][type_name]
-        return self.configs[config_name]
-
-    def set(self, config_name, config):
-        self.configs[config_name] = configs
-
-    def add_data_configs(self, event_name):
-        if '150914' or '170104' in event_name:
-            self.configs['data'][event_name] = """\
-[data]
-instruments = H1 L1
-trigger-time = 1126259462.43
-; See the documentation at
-; http://pycbc.org/pycbc/latest/html/inference.html#simulated-bbh-example
-; for details on the following settings:
-analysis-start-time = -6
-analysis-end-time = 2
-psd-estimation = median-mean
-psd-start-time = -256
-psd-end-time = 256
-psd-inverse-length = 8
-psd-segment-length = 8
-psd-segment-stride = 4
-; The frame files must be downloaded from GWOSC before running. Here, we
-; assume that the files have been downloaded to the same directory. Adjust
-; the file path as necessary if not.
-frame-files = H1:H-H1_GWOSC_16KHZ_R1-1126257415-4096.gwf L1:L-L1_GWOSC_16KHZ_R1-1126257415-4096.gwf
-channel-name = H1:GWOSC-16KHZ_R1_STRAIN L1:GWOSC-16KHZ_R1_STRAIN
-; this will cause the data to be resampled to 2048 Hz:
-sample-rate = 2048
-; We'll use a high-pass filter so as not to get numerical errors from the large
-; amplitude low frequency noise. Here we use 15 Hz, which is safely below the
-; low frequency cutoff of our likelihood integral (20 Hz)
-strain-high-pass = 15
-; The pad-data argument is for the high-pass filter: 8s are added to the
-; beginning/end of the analysis/psd times when the data is loaded. After the
-; high pass filter is applied, the additional time is discarded. This pad is
-; *in addition to* the time added to the analysis start/end time for the PSD
-; inverse length. Since it is discarded before the data is transformed for the
-; likelihood integral, it has little affect on the run time.
-pad-data = 8
 """
 ####

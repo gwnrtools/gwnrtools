@@ -32,19 +32,11 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
-                                                     InferenceConfigs)
-from GWNRTools.Workflow.InferenceUtilities import (EventInferenceAnalysis,
+from GWNRTools.Stats.PyCBCInferenceUtilities import InferenceConfigs
+from GWNRTools.Workflow.InferenceUtilities import (mkdir,
                                                    InferenceOnEventBatch)
 from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
 from GWNRTools import __version__
-
-
-def mkdir(dir_name):
-    try:
-        subprocess.call(["mkdir", "-p", dir_name])
-    except OSError:
-        pass
 
 
 ############################################################
@@ -174,7 +166,7 @@ with ctx:
         run.setup()
 
         # Procure GWOSC data
-        run.fetch_all_data(32, 4096)
+        run.fetch_all_data()
 
         # Configure inference job
         req_mem = None
