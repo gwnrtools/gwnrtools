@@ -21,6 +21,8 @@ import subprocess
 import numpy
 
 from GWNRTools.DataAnalysis.MiscFunctions import get_unique_hex_tag
+from GWNRTools.DataAnalysis.GwCatalog import Merger
+from GWNRTools.Stats.PyCBCInferenceUtilities import EventInferenceDataConfigs
 
 
 def get_ini_opts(confs, section):
@@ -225,6 +227,184 @@ class InferenceOnInjectionBatch():
         return 'injection{0:03d}/{1}/{2}/{3}'.format(
             inj_num,
             configs['data'].split('.ini')[0],
+            configs['sampler'].split('.ini')[0],
+            configs['inference'].split('.ini')[0])
+####
+####
+# **`EventInferenceAnalysis`**:
+# - setup individual analysis dir
+# - setup all analysis dirs
+# - start / stop / restart individual analysis
+# - check status of individual analysis
+
+
+class EventInferenceAnalysis():
+    def __init__(self, opts, run_dir, config_files, event_name,
+                 inf_exe_name='inference', plt_exe_name='plot',
+                 verbose=False):
+        '''
+        Setup and run inference on one single event
+
+        Parameters
+        ----------
+        opts : ConfigParser object
+            Configuration options
+        run_dir : string
+            Path to directory in which the analysis is to be run
+        config_files : dict
+            Dictionary with names and locations of ini files needed
+        inf_exe_name : string
+            Name of the inference exe's options' section in opts
+        '''
+        self.verbose = verbose
+        self.opts = opts
+        self.run_dir = run_dir
+        self.config_files = config_files
+        self.event_name = event_name
+        self.inf_exe_name = inf_exe_name
+        self.plt_exe_name = plt_exe_name
+
+    def get_run_dir(self): return self.run_dir
+
+    def get_opts(self): return self.opts
+
+    def get_config_files(self): return self.config_files
+
+    def get_inj_exe_name(self): return self.inj_exe_name
+
+    def get_inf_exe_name(self): return self.inf_exe_name
+
+    def get_inf_exe_path(self):
+        return os.path.join(self.run_dir, "run_inference")
+
+    def get_plt_exe_path(self):
+        return os.path.join(self.run_dir, "make_plot")
+
+    def get_log_dir(self): return os.path.join(self.run_dir, 'log')
+
+    def fetch_all_data(self, time_length, sample_rate):
+        m = Merger(self.event_name)
+        for ifo in m.operating_ifos():
+            m.fetch_data(ifo, time_length, sample_rate, 'data')
+
+    def setup(self):
+        # Make the analysis directory
+        if self.verbose:
+            logging.info("Making {0} in {1}".format(self.run_dir, os.getcwd()))
+        mkdir(self.run_dir)
+        mkdir(os.path.join(self.run_dir, 'scripts'))
+        mkdir(os.path.join(self.run_dir, 'log'))
+        mkdir(os.path.join(self.run_dir, 'plots'))
+
+        # Write the data.ini configuration for this event
+        EventInferenceDataConfigs(self.run_dir).get_config_writer(
+            'data').write(self.event_name)
+
+        # Copy over the relevant configuration files
+        if self.verbose:
+            logging.info("Copying config files to {0}".format(self.run_dir))
+        for conf_name in self.config_files:
+            shutil.copy(self.config_files[conf_name],
+                        os.path.join(self.run_dir, '{0}.ini'.format(conf_name)))
+
+        # Copy over executables
+        if self.verbose:
+            logging.info("Copying executables to {0}".format(
+                os.path.join(self.run_dir, 'scripts/')))
+        for _, exe in self.opts.items('executables'):
+            shutil.copy(exe, os.path.join(self.run_dir, 'scripts/'))
+            os.chmod(os.path.join(self.run_dir, 'scripts/',
+                                  os.path.basename(exe)), 0o0777)
+
+        # Write pycbc_inference run script
+        self.write_run_script(self.opts.items(self.inf_exe_name),
+                              "scripts/{0}".format(os.path.basename(
+                                  self.opts.get('executables', self.inf_exe_name))),
+                              os.path.join(
+                                  self.run_dir, "run_inference"),
+                              script_base="""#!/bin/bash
+
+# run sampler
+# Running with OMP_NUM_THREADS=1 stops lalsimulation
+# from spawning multiple jobs that would otherwise be used
+# by pycbc_inference and cause a reduced runtime.
+OMP_NUM_THREADS=1 \\\n""")
+
+        # Write pycbc_plot_posterior run script
+        if self.opts.has_option('executables', self.plt_exe_name):
+            self.write_run_script(self.opts.items(self.plt_exe_name),
+                                  "scripts/{0}".format(os.path.basename(
+                                      self.opts.get('executables', self.plt_exe_name))),
+                                  os.path.join(self.run_dir, "make_plot"))
+
+    def write_run_script(self, exe_opts, exe_path, script_name,
+                         script_base="""#!/bin/bash\n"""):
+        out_str = script_base
+        out_str += "{0} \\\n".format(exe_path)
+        for exe_opt_name, exe_opt in exe_opts:
+            out_str += "  --" + exe_opt_name + " " + exe_opt + " \\\n"
+        with open(script_name, "w") as fout:
+            fout.write(out_str)
+        os.chmod(script_name, 0o0777)
+####
+
+####
+
+
+class InferenceOnEventBatch():
+    def __init__(self, opts, run_dir, inf_exe_name='inference',
+                 plt_exe_name='plot', verbose=False):
+        '''
+        Thin wrapper class that encapsulates a suite of event analyses
+
+        Parameters
+        ----------
+        opts : workflow.ConfigParser object
+            Options for the workflow
+        run_dir : string
+            Path to the main directory where all analyses are to be run
+        '''
+        self.verbose = verbose
+        self.opts = opts
+        self.inf_exe_name = inf_exe_name
+        self.plt_exe_name = plt_exe_name
+
+        self.events = opts.get('workflow', 'events').split()
+
+        self.sampler_configs = opts.get('workflow', 'sampler').split()
+        self.inf_configs = opts.get('workflow', 'inference').split()
+
+        import itertools
+        self.config_combos = list(itertools.product(self.sampler_configs,
+                                                    self.inf_configs))
+        self.runs = {}
+        for event_num, event in enumerate(self.events):
+            for configs in self.config_combos:
+                confs = {}
+                confs['data'] = None
+                confs['sampler'], confs['inference'] = configs
+                run_tag = self.get_run_tag()
+                self.runs[run_tag] = EventInferenceAnalysis(
+                    opts, self.name_run_dir(event, confs), confs,
+                    inf_exe_name=self.inf_exe_name,
+                    plt_exe_name=self.plt_exe_name,
+                    verbose=self.verbose)
+
+    def get_opts(self): return self.opts
+
+    def get_run_dir(self): return self.run_dir
+
+    def setup_runs(self):
+        for r in self.runs:
+            self.runs[r].setup()
+
+    def get_runs(self): return self.runs
+
+    def get_run_tag(self): return get_unique_hex_tag()
+
+    def name_run_dir(self, event, configs):
+        return 'injection{0}/{1}/{2}'.format(
+            event,
             configs['sampler'].split('.ini')[0],
             configs['inference'].split('.ini')[0])
 ####

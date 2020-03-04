@@ -34,8 +34,8 @@ from pycbc.workflow import configuration
 
 from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
                                                      InferenceConfigs)
-from GWNRTools.Workflow.InferenceUtilities import (InjectionInferenceAnalysis,
-                                                   InferenceOnInjectionBatch)
+from GWNRTools.Workflow.InferenceUtilities import (EventInferenceAnalysis,
+                                                   InferenceOnEventBatch)
 from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
 from GWNRTools import __version__
 
@@ -56,9 +56,6 @@ parser.add_argument("--version", action="version", version=__version__,
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Print logging messages.")
 # workflow options
-parser.add_argument("--skip-creating-injections", action="store_true",
-                    help="Skip calling lalapps_inspinj and assume "
-                         "injections already exist", default=False)
 
 # output options
 parser.add_argument("--output-dir", type=str, required=False, default='',
@@ -150,7 +147,7 @@ with ctx:
         log_path = './'
 
     tempfile.tempdir = log_path
-    tempfile.template = 'pycbc_inference_injections.dag.log.'
+    tempfile.template = 'pycbc_inference_events.dag.log.'
     logfile = tempfile.mktemp()
 
     try:
@@ -163,28 +160,21 @@ with ctx:
     logging.info("Creating DAG")
     dag = CondorDAG(logfile)
 
-    dag.set_dag_file("pycbc_inference_injections")
-    dag.set_dax_file("pycbc_inference_injections")
+    dag.set_dag_file("pycbc_inference_events")
+    dag.set_dax_file("pycbc_inference_events")
 
-    analyses = InferenceOnInjectionBatch(confs, analyses_dir, verbose=True)
+    analyses = InferenceOnEventBatch(confs, analyses_dir, verbose=opts.verbose)
     # analyses.setup_runs()
-    all_injection_runs = analyses.get_runs()
+    all_event_runs = analyses.get_runs()
 
-    for tag in all_injection_runs:
-        run = all_injection_runs[tag]
+    for tag in all_event_runs:
+        run = all_event_runs[tag]
 
         # Setup analysis directory
         run.setup()
 
-        # Configure injection job
-        req_mem = None
-        if confs.has_option('workflow', 'inspinj-request-memory'):
-            req_mem = confs.get('workflow', 'inspinj-request-memory')
-        inj_job = InferenceJob('log', run.get_inj_exe_path(), None, None,
-                               accounting_group=accounting_group,
-                               request_memory=req_mem)
-        inj_node = CondorDAGNode(inj_job)
-        dag.add_node(inj_node)
+        # Procure GWOSC data
+        run.fetch_all_data(32, 4096)
 
         # Configure inference job
         req_mem = None
@@ -194,7 +184,6 @@ with ctx:
                                accounting_group=accounting_group,
                                request_memory=req_mem)
         inf_node = CondorDAGNode(inf_job)
-        inf_node.add_parent(inj_node)
         dag.add_node(inf_node)
 
         # Configure plotting job

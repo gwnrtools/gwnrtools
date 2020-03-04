@@ -20,6 +20,7 @@ Bayesian parameter estimation runs on a custom set of simulated signals"""
 
 import os
 import sys
+import logging
 import argparse
 
 import pycbc
