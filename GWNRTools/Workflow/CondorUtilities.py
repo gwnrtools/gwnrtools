@@ -112,7 +112,7 @@ class FaithsimNode(CondorDAGNode):
 
 class InferenceJob(CondorDAGJob, CondorJob):
     def __init__(self, log_dir, executable, cp, section, gpu=False,
-                 accounting_group=None, request_memory=None):
+                 accounting_group=None, request_memory=None, request_cpus=10):
         CondorDAGJob.__init__(self, "vanilla", os.path.abspath(executable))
 
         self.add_condor_cmd('initialdir', os.path.dirname(
@@ -136,4 +136,7 @@ class InferenceJob(CondorDAGJob, CondorJob):
             self.add_condor_cmd('accounting_group', accounting_group)
 
         if request_memory:
-            self.add_condor_cmd('RequestMemory', request_memory)
+            self.add_condor_cmd('request_memory', request_memory)
+
+        if request_cpus:
+            self.add_condor_cmd('request_cpus', request_cpus)
