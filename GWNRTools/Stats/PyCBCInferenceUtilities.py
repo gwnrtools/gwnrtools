@@ -66,7 +66,19 @@ class ConfigWriter():
 
 
 class InferenceConfigs():
-    def __init__(self, run_dir, configs={}):
+    def __init__(self, run_dir, configs={},
+                 # workflow opts
+                 n_cpus=10,
+                 checkpoint_interval=2000,
+                 # nested samplers opts
+                 n_live=2000,
+                 n_maxmcmc=8000,
+                 d_logz=0.1,
+                 # parallel mcmc opts
+                 n_walkers=1000,
+                 n_temperatures=20,
+                 n_maxsamps_per_walker=1000,
+                 n_eff_samples=4000):
         '''
         Stores config files for pycbc_inference runs
 
@@ -120,7 +132,15 @@ class InferenceConfigs():
         # Add sampler configs
         if 'sampler' not in self.configs:
             self.configs['sampler'] = {}
-        self.add_sampler_configs()
+        self.add_sampler_configs(n_cpus=n_cpus,
+                                 n_live=n_live,
+                                 n_maxmcmc=n_maxmcmc,
+                                 d_logz=d_logz,
+                                 n_walkers=n_walkers,
+                                 n_temperatures=n_temperatures,
+                                 n_maxsamps_per_walker=n_maxsamps_per_walker,
+                                 n_eff_samples=n_eff_samples,
+                                 ckpt_interval=checkpoint_interval)
 
         # Add inference configs
         if 'inference' not in self.configs:
@@ -286,7 +306,7 @@ strain-high-pass = 15
 ; inverse length. Since it is discarded before the data is transformed for the
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
-""".format(numpy.random.randint(1, 1e5), numpy.random.randint(1, 1e5))
+""".format(numpy.random.randint(1, 1e5), numpy.random.randint(1, 1e6))
         self.configs['data']['gw150914-like-zeronoise'] = """\
 [data]
 instruments = H1 L1
@@ -319,29 +339,32 @@ strain-high-pass = 15
 pad-data = 8
 """
 
-    def add_sampler_configs(self):
+    def add_sampler_configs(self, n_cpus=10,
+                            n_live=2000, n_maxmcmc=8000, d_logz=0.1,
+                            n_walkers=1000, n_temperatures=20, n_maxsamps_per_walker=1000,
+                            n_eff_samples=4000, ckpt_interval=2000):
         self.configs['sampler']['emcee'] = """\
 [sampler]
 name = emcee
-nwalkers = 1000
-niterations = 2000
-;##### Other possible options
-effective-nsamples = 1000
-max-samples-per-chain = 1000
-checkpoint-interval = 2000
+nprocesses = {n_cpus}
+nwalkers = {n_walkers}
+effective-nsamples = {n_eff_samples}
+max-samples-per-chain = {n_maxsamps_per_walker}
+checkpoint-interval = {ckpt_interval}
 
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
-"""
+""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
+           n_maxsamps_per_walker=n_maxsamps_per_walker, ckpt_interval=ckpt_interval)
         self.configs['sampler']['emcee_pt'] = """\
 [sampler]
 name = emcee_pt
-nwalkers = 500
-ntemps = 20
-;##### Other possible options
-effective-nsamples = 4000
-max-samples-per-chain = 1000
-checkpoint-interval = 2000
+nprocesses = {n_cpus}
+nwalkers = {n_walkers}
+ntemps = {n_temperatures}
+effective-nsamples = {n_eff_samples}
+max-samples-per-chain = {n_maxsamps_per_walker}
+checkpoint-interval = {ckpt_interval}
 
 [sampler-burn_in]
 burn-in-test = nacl & max_posterior
@@ -358,69 +381,74 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-"""
-        self.configs['sampler']['dynesty'] = """\
-[sampler]
-name = dynesty
-dlogz = 0.1
-nlive = 1500
-
-; Other arguments (see Dynesty package for details).
-; https://dynesty.readthedocs.io/en/latest/quickstart.html#nested-sampling-with-dynesty
-; bound, bootstrap, enlarge, update_interval, sample
-; loglikelihood-function = loglr
-"""
-        self.configs['sampler']['ultranest'] = """\
-[sampler]
-name = ultranest
-dlogz = 0.1
-
-;##### Other possible options (see ultranest package for useage)
-; update_interval_iter_fraction, update_interval_ncall
-; log_interval, show_status, dKL, frac_remain,
-; Lepsilon, min_ess, max_iters, max_ncalls,
-; max_num_improvement_loops, 
-min_num_live_points = 1500
-; cluster_num_live_points
-"""
+""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
+           n_maxsamps_per_walker=n_maxsamps_per_walker, ckpt_interval=ckpt_interval)
         self.configs['sampler']['epsie'] = """\
 [sampler]
 name = epsie
-nchains = 100
-niterations = 100
-ntemps = 4
-
-;##### Other possible options
-;effective-nsamples = 1000
-;max-samples-per-chain = 1000
-;checkpoint-interval = 2000
+nprocesses = {n_cpus}
+checkpoint-interval = {ckpt_interval}
+nchains = {n_walkers}
+ntemps = {n_temperatures}
+effective-nsamples = {n_eff_samples}
+max-samples-per-chain = {n_maxsamps_per_walker}
 
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
 
 [jump_proposal-x]
 name = normal
-"""
+""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
+           n_temperatures=n_temperatures, n_maxsamps_per_walker=n_maxsamps_per_walker,
+            ckpt_interval=ckpt_interval)
+        self.configs['sampler']['dynesty'] = """\
+[sampler]
+name = dynesty
+nprocesses = {n_cpus}
+dlogz = {d_logz}
+nlive = {n_live}
+
+; Other arguments (see Dynesty package for details).
+; https://dynesty.readthedocs.io/en/latest/quickstart.html#nested-sampling-with-dynesty
+; bound =
+; bootstrap =
+; enlarge =
+; update_interval =
+; sample =
+; loglikelihood-function = loglr
+""".format(n_cpus=n_cpus, d_logz=d_logz, n_live=n_live)
+        self.configs['sampler']['ultranest'] = """\
+[sampler]
+name = ultranest
+dlogz = {d_logz}
+min_num_live_points = {n_live}
+
+;##### Other possible options (see ultranest package for useage)
+; update_interval_iter_fraction, update_interval_ncall
+; log_interval, show_status, dKL, frac_remain,
+; Lepsilon, min_ess, max_iters, max_ncalls,
+; max_num_improvement_loops, 
+; cluster_num_live_points
+""".format(n_live=n_live, d_logz=d_logz)
         self.configs['sampler']['multinest'] = """\
 [sampler]
 name = multinest
-nlivepoints = 1500
-
-;##### Optional arguments
-;evidence-tolerance = 0.1
-;sampling-efficiency = 0.3
-;checkpoint-interval = 5000
-;importance-nested-sampling = True
-"""
+nprocesses = {n_cpus}
+nlivepoints = {n_live}
+checkpoint-interval = {ckpt_interval}
+evidence-tolerance = {d_logz}
+sampling-efficiency = 0.8
+importance-nested-sampling = True
+""".format(n_cpus=n_cpus, n_live=n_live, d_logz=d_logz, ckpt_interval=ckpt_interval)
         self.configs['sampler']['cpnest'] = """\
 [sampler]
 ;
 ; WARNING: this sampler requires python3 support
 ;
 name = cpnest
-nthreads = 8 
-nlive = 1500 ;(anything between 1000 (faster) and 2000 (slower), should be good)
-maxmcmc = 10000 ;(you should always use >= 5000)
+nthreads = {n_cpus}
+nlive = {n_live} ;(anything between 1000 (faster) and 2000 (slower), should be good)
+maxmcmc = {n_maxmcmc} ;(you should always use >= 5000)
 verbose = 1
 
 [sampler-burn_in]
@@ -438,7 +466,7 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-"""
+""".format(n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc)
 
     def add_inference_configs(self):
         self.configs['inference']['bbh_precessing'] = """\

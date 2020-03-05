@@ -46,6 +46,21 @@ parser.add_argument("--write-sampler-config", type=str, required=False, default=
 parser.add_argument("--write-inference-config", type=str, required=False, default='',
                     help="Write inference config files and exit.")
 
+parser.add_argument("--n-cpus", type=int, required=False, default=10)
+parser.add_argument("--checkpoint-interval", type=int,
+                    required=False, default=2000)
+
+# sampler options
+parser.add_argument("--n-live", type=int, required=False, default=2000)
+parser.add_argument("--n-maxmcmc", type=int, required=False, default=8000)
+parser.add_argument("--dlogz", type=float, required=False, default=0.1)
+
+parser.add_argument("--n-walkers", type=int, required=False, default=1000)
+parser.add_argument("--n-temperatures", type=int, required=False, default=20)
+parser.add_argument("--n-maxsamps-per-walker", type=int,
+                    required=False, default=1000)
+parser.add_argument("--n-eff-samples", type=int, required=False, default=4000)
+
 # output options
 parser.add_argument("--show-available-configs", action="store_true", default=False,
                     help="Show available options for all configurations.")
@@ -64,7 +79,19 @@ analyses_dir = opts.output_dir
 # write configs and exit!
 if __name__ == '__main__':
 
-    configs = InferenceConfigs(analyses_dir)
+    configs = InferenceConfigs(analyses_dir,
+                               # workflow opts
+                               n_cpus=opts.n_cpus,
+                               checkpoint_interval=opts.checkpoint_interval,
+                               # nested samplers opts
+                               n_live=opts.n_live,
+                               n_maxmcmc=opts.n_maxmcmc,
+                               d_logz=opts.dlogz,
+                               # parallel mcmc opts
+                               n_walkers=opts.n_walkers,
+                               n_temperatures=opts.n_temperatures,
+                               n_maxsamps_per_walker=opts.n_maxsamps_per_walker,
+                               n_eff_samples=opts.n_eff_samples)
 
     if opts.show_available_configs:
         for name in configs.available_configs():
