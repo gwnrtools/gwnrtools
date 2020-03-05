@@ -408,6 +408,8 @@ name = dynesty
 nprocesses = {n_cpus}
 dlogz = {d_logz}
 nlive = {n_live}
+sample = rwalk ; uniform, rwalk, rstagger, slice, rslice, hslice
+bound = multi  ; none, single, multi, balls, cubes
 
 ; Other arguments (see Dynesty package for details).
 ; https://dynesty.readthedocs.io/en/latest/quickstart.html#nested-sampling-with-dynesty
@@ -415,7 +417,6 @@ nlive = {n_live}
 ; bootstrap =
 ; enlarge =
 ; update_interval =
-; sample =
 ; loglikelihood-function = loglr
 """.format(n_cpus=n_cpus, d_logz=d_logz, n_live=n_live)
         self.configs['sampler']['ultranest'] = """\

@@ -55,6 +55,9 @@ parser.add_argument("--output-dir", type=str, required=False, default='',
 parser.add_argument("--force", action="store_true", default=False,
                     help="If the output-dir already exists, overwrite it. "
                          "Otherwise, an OSError is raised.")
+parser.add_argument("--do-not-fetch-data", action="store_true",
+                    default=False,
+                    help="Don't fetch GWOSC data.")
 parser.add_argument("--save-backup", action="store_true",
                     default=False,
                     help="Don't delete the backup file after the run has "
@@ -166,7 +169,8 @@ with ctx:
         run.setup()
 
         # Procure GWOSC data
-        run.fetch_all_data()
+        if not opts.do_not_fetch_data:
+            run.fetch_all_data()
 
         # Configure inference job
         req_mem = None
