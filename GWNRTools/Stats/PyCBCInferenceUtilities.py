@@ -250,6 +250,7 @@ pad-data = 8
             return
 
         # Injections
+        import numpy
         self.configs['data']['gw150914-like-gaussian'] = """\
 [data]
 instruments = H1 L1
@@ -259,7 +260,7 @@ analysis-end-time = 2
 ; strain settings
 sample-rate = 2048
 fake-strain = H1:aLIGOaLIGODesignSensitivityT1800044 L1:aLIGOaLIGODesignSensitivityT1800044
-fake-strain-seed = H1:44 L1:45
+fake-strain-seed = H1:{0} L1:{1}
 ; psd settings
 psd-estimation = median-mean
 psd-start-time = -256
@@ -285,7 +286,7 @@ strain-high-pass = 15
 ; inverse length. Since it is discarded before the data is transformed for the
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
-"""
+""".format(numpy.random.randint(1, 1e5), numpy.random.randint(1, 1e5))
         self.configs['data']['gw150914-like-zeronoise'] = """\
 [data]
 instruments = H1 L1
