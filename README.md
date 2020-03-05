@@ -4,6 +4,6 @@ A collection of tools for academic research in gravitational-wave astronomy & as
 
 ## Tutorials
 
- * [Inference on Injections](Tutorials/BayesianInferenceOnGWEvents.html)
- * [Inference on GW events](Tutorials/BayesianInferenceOnGWInjections.html)
+ * [Inference on GW events](Tutorials/BayesianInferenceOnGWEvents.html)
+ * [Inference on Injections](Tutorials/BayesianInferenceOnGWInjections.html)
  
