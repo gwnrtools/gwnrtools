@@ -22,7 +22,8 @@
 #
 # =============================================================================
 #
-import sys, os
+import sys
+import os
 import h5py
 import glob
 import commands as cmd
@@ -41,14 +42,6 @@ from scipy.optimize import minimize_scalar
 import lal
 import lalsimulation as ls
 
-try:
-  from glue.ligolw import ligolw
-  @lsctables.use_in
-  class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
-    pass
-except:
-  print "Could not import ligolw in %s, LIGO XML tables wont be read" % __file__
-
 from pycbc.pnutils import nearest_larger_binary_number
 from pycbc.detector import *
 from pycbc.waveform import get_td_waveform, get_fd_waveform
@@ -58,9 +51,9 @@ from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as, 
 
 _itime = time.time()
 ######################################################################
-__author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
+__author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
-verbose      = True
+verbose = True
 
 
 ######################################################################
@@ -72,7 +65,7 @@ verbose      = True
 ######################################################################
 
 #############################
-## Function to compute derivatives dh/dth
+# Function to compute derivatives dh/dth
 def get_waveform_derivatives_wrt_params(approximant='SEOBNRv2',
                                         mass1=None, mass2=None,
                                         spin1x=0, spin2x=0,
@@ -83,7 +76,8 @@ def get_waveform_derivatives_wrt_params(approximant='SEOBNRv2',
                                         f_lower=None,
                                         sample_rate=None,
                                         time_length=4,
-                                        deriv_params = ['mass1', 'mass2', 'spin1z', 'spin2z'],
+                                        deriv_params=[
+                                            'mass1', 'mass2', 'spin1z', 'spin2z'],
                                         delta_m1=1e-3, delta_m2=1e-3,
                                         delta_s1=1e-4, delta_s2=1e-4,
                                         abs_tolerance=1e-7,
@@ -144,34 +138,34 @@ h(t) = A(t - tc) * Exp(-i * Phi(t - tc) ), where tc \equiv 0 is the time of merg
         # Compute the waveform
         if approximant in td_approximants():
             test_hp, test_hc = get_td_waveform(approximant=approximant,
-                                                 mass1    = param_list['mass1'],
-                                                 mass2    = param_list['mass2'],
-                                                 spin1x   = param_list['spin1x'],
-                                                 spin1y   = param_list['spin1y'],
-                                                 spin1z   = param_list['spin1z'],
-                                                 spin2x   = param_list['spin2x'],
-                                                 spin2y   = param_list['spin2y'],
-                                                 spin2z   = param_list['spin2z'],
-                                                 distance = param_list['distance'],
-                                               inclination= param_list['inclination'],
-                                                 coa_phase= param_list['coa_phase'],
-                                                 f_lower=f_lower, delta_t=delta_t)
+                                               mass1=param_list['mass1'],
+                                               mass2=param_list['mass2'],
+                                               spin1x=param_list['spin1x'],
+                                               spin1y=param_list['spin1y'],
+                                               spin1z=param_list['spin1z'],
+                                               spin2x=param_list['spin2x'],
+                                               spin2y=param_list['spin2y'],
+                                               spin2z=param_list['spin2z'],
+                                               distance=param_list['distance'],
+                                               inclination=param_list['inclination'],
+                                               coa_phase=param_list['coa_phase'],
+                                               f_lower=f_lower, delta_t=delta_t)
             test_wav = generate_detector_strain(param_list, test_hp, test_hc)
             test_wav = extend_waveform_TimeSeries(test_wav, N)
         elif approximant in fd_approximants():
             test_hp, test_hc = get_fd_waveform(approximant=approximant,
-                                                 mass1    = param_list['mass1'],
-                                                 mass2    = param_list['mass2'],
-                                                 spin1x   = param_list['spin1x'],
-                                                 spin1y   = param_list['spin1y'],
-                                                 spin1z   = param_list['spin1z'],
-                                                 spin2x   = param_list['spin2x'],
-                                                 spin2y   = param_list['spin2y'],
-                                                 spin2z   = param_list['spin2z'],
-                                                 distance = param_list['distance'],
-                                               inclination= param_list['inclination'],
-                                                 coa_phase= param_list['coa_phase'],
-                                                 f_lower=f_lower, delta_f=delta_f)
+                                               mass1=param_list['mass1'],
+                                               mass2=param_list['mass2'],
+                                               spin1x=param_list['spin1x'],
+                                               spin1y=param_list['spin1y'],
+                                               spin1z=param_list['spin1z'],
+                                               spin2x=param_list['spin2x'],
+                                               spin2y=param_list['spin2y'],
+                                               spin2z=param_list['spin2z'],
+                                               distance=param_list['distance'],
+                                               inclination=param_list['inclination'],
+                                               coa_phase=param_list['coa_phase'],
+                                               f_lower=f_lower, delta_f=delta_f)
             test_wav = generate_detector_strain(param_list, test_hp, test_hc)
             test_wav = extend_waveform_FrequencySeries(test_wav, n)
         # Return waveform
@@ -180,33 +174,38 @@ h(t) = A(t - tc) * Exp(-i * Phi(t - tc) ), where tc \equiv 0 is the time of merg
     derivatives = {}
     for idx, deriv_param in enumerate(deriv_params):
         if verbose:
-            print "Computing derivative w.r.t. %s (%d / %d)" % (deriv_param,idx+1,len(deriv_params))
+            print "Computing derivative w.r.t. %s (%d / %d)" % (deriv_param, idx+1, len(deriv_params))
         param_list['deriv_param'] = deriv_param
         deriv_param_value = param_list[deriv_param]
         dx = 1e-4 * deriv_param_value
-        if dx < abs_tolerance: dx = abs_tolerance
-        dhdparam = sp.misc.derivative(FUNC, deriv_param_value, dx=dx, n=1, order=5)
+        if dx < abs_tolerance:
+            dx = abs_tolerance
+        dhdparam = sp.misc.derivative(
+            FUNC, deriv_param_value, dx=dx, n=1, order=5)
         derivatives[deriv_param] = dhdparam
 
     return derivatives
 
 #############################
+
+
 def get_correlation_fisher_matrices(approximant='SEOBNRv2',
-                                        mass1=None, mass2=None,
-                                        spin1x=0, spin2x=0,
-                                        spin1y=0, spin2y=0,
-                                        spin1z=0, spin2z=0,
-                                        distance=1, coa_phase=0, inclination=0,
-                                        latitude=0, longitude=0, polarization=0,
-                                        f_lower=None, f_upper=None,
-                                        sample_rate = None, time_length = 4,
-                                        deriv_params = ['mass1', 'mass2', 'spin1z', 'spin2z'],
-                                        psd='aLIGOZeroDetHighPower',
-                                        delta_m1=1e-3, delta_m2=1e-3,
-                                        delta_s1=1e-4, delta_s2=1e-4,
-                                        abs_tolerance=1e-7,
-                                        return_derivs=False,
-                                        verbose=True):
+                                    mass1=None, mass2=None,
+                                    spin1x=0, spin2x=0,
+                                    spin1y=0, spin2y=0,
+                                    spin1z=0, spin2z=0,
+                                    distance=1, coa_phase=0, inclination=0,
+                                    latitude=0, longitude=0, polarization=0,
+                                    f_lower=None, f_upper=None,
+                                    sample_rate=None, time_length=4,
+                                    deriv_params=[
+                                        'mass1', 'mass2', 'spin1z', 'spin2z'],
+                                    psd='aLIGOZeroDetHighPower',
+                                    delta_m1=1e-3, delta_m2=1e-3,
+                                    delta_s1=1e-4, delta_s2=1e-4,
+                                    abs_tolerance=1e-7,
+                                    return_derivs=False,
+                                    verbose=True):
     #
     # 0) Precompute parameters
     delta_t = 1./sample_rate
@@ -221,62 +220,67 @@ def get_correlation_fisher_matrices(approximant='SEOBNRv2',
     elif approximant in fd_approximants():
         out_type = FrequencySeries
     derivs = get_waveform_derivatives_wrt_params(approximant=approximant,
-                                                      mass1=mass1, mass2=mass2,
-                                                      spin1x=spin1x, spin2x=spin2x,
-                                                      spin1y=spin1y, spin2y=spin2y,
-                                                      spin1z=spin1z, spin2z=spin2z,
-                                                      distance=distance,
-                                                      coa_phase=coa_phase,
-                                                      inclination=inclination,
-                                                      latitude=latitude,
-                                                      longitude=longitude,
-                                                      polarization=polarization,
-                                                      f_lower=f_lower,
-                                                      sample_rate=sample_rate,
-                                                      time_length=time_length,
-                                                      deriv_params = deriv_params,
-                                                      delta_m1=1e-3, delta_m2=1e-3,
-                                                      delta_s1=1e-4, delta_s2=1e-4,
-                                                      abs_tolerance=abs_tolerance,
-                                                      verbose=verbose)
+                                                 mass1=mass1, mass2=mass2,
+                                                 spin1x=spin1x, spin2x=spin2x,
+                                                 spin1y=spin1y, spin2y=spin2y,
+                                                 spin1z=spin1z, spin2z=spin2z,
+                                                 distance=distance,
+                                                 coa_phase=coa_phase,
+                                                 inclination=inclination,
+                                                 latitude=latitude,
+                                                 longitude=longitude,
+                                                 polarization=polarization,
+                                                 f_lower=f_lower,
+                                                 sample_rate=sample_rate,
+                                                 time_length=time_length,
+                                                 deriv_params=deriv_params,
+                                                 delta_m1=1e-3, delta_m2=1e-3,
+                                                 delta_s1=1e-4, delta_s2=1e-4,
+                                                 abs_tolerance=abs_tolerance,
+                                                 verbose=verbose)
     #
     # 2) Compute noise PSD
-    if FrequencySeries == type(psd): pass
+    if FrequencySeries == type(psd):
+        pass
     elif type(psd) == str:
         psd_name = psd
         psd = from_string(psd_name, n, delta_f, f_lower)
     else:
-        raise IOError("Either provide a psd compatible with waveforms (difficult) or a string")
+        raise IOError(
+            "Either provide a psd compatible with waveforms (difficult) or a string")
 
     #
     # 3) Compute Correlations
     nrows = ncols = len(deriv_params)
-    correlation_matrix = np.zeros( (nrows, ncols) )
+    correlation_matrix = np.zeros((nrows, ncols))
 
     # Loop over outer indices
     for idx, outer_param in enumerate(deriv_params):
-        if type(derivs[outer_param]) == out_type: outer_vec = derivs[outer_param]
+        if type(derivs[outer_param]) == out_type:
+            outer_vec = derivs[outer_param]
         else:
-            derivs[outer_param] = convert_numpy_to_pycbc_type(\
-                                                  derivs[outer_param], out_type,
-                                                  sample_rate = sample_rate,
-                                                  time_length = time_length)
+            derivs[outer_param] = convert_numpy_to_pycbc_type(
+                derivs[outer_param], out_type,
+                sample_rate=sample_rate,
+                time_length=time_length)
             outer_vec = derivs[outer_param]
         # Loop over inner indices
         for jdx, inner_param in enumerate(deriv_params):
-            if type(derivs[inner_param]) == out_type: inner_vec = derivs[inner_param]
+            if type(derivs[inner_param]) == out_type:
+                inner_vec = derivs[inner_param]
             else:
-                derivs[inner_param] = convert_numpy_to_pycbc_type(\
-                                                  derivs[inner_param], out_type,
-                                                  sample_rate = sample_rate,
-                                                  time_length = time_length)
+                derivs[inner_param] = convert_numpy_to_pycbc_type(
+                    derivs[inner_param], out_type,
+                    sample_rate=sample_rate,
+                    time_length=time_length)
                 inner_vec = derivs[inner_param]
             # Compute inner products
             olap = overlap_cplx(inner_vec, outer_vec, psd=psd,
-                                low_frequency_cutoff     =f_lower,
-                                high_frequency_cutoff    =f_upper,
-                                normalized               =False)
-            correlation_matrix[jdx, idx] = olap.real # np.abs(olap) # FIXME ABS OR REAL ?
+                                low_frequency_cutoff=f_lower,
+                                high_frequency_cutoff=f_upper,
+                                normalized=False)
+            # np.abs(olap) # FIXME ABS OR REAL ?
+            correlation_matrix[jdx, idx] = olap.real
     #
     # 4) Compute Inverse of Correlation matrix
     try:
@@ -287,6 +291,6 @@ def get_correlation_fisher_matrices(approximant='SEOBNRv2',
 
     #
     # 5) RETURN
-    if return_derivs: return correlation_matrix, fisher_matrix, derivs
+    if return_derivs:
+        return correlation_matrix, fisher_matrix, derivs
     return correlation_matrix, fisher_matrix
-
