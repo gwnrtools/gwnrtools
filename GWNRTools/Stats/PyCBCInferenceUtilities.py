@@ -381,8 +381,9 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
-           n_maxsamps_per_walker=n_maxsamps_per_walker, ckpt_interval=ckpt_interval)
+""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_temperatures=n_temperatures,
+           n_maxsamps_per_walker=n_maxsamps_per_walker,
+           n_eff_samples=n_eff_samples, ckpt_interval=ckpt_interval)
         self.configs['sampler']['epsie'] = """\
 [sampler]
 name = epsie
