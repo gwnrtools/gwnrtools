@@ -340,8 +340,8 @@ nwalkers = 500
 ntemps = 20
 ;##### Other possible options
 effective-nsamples = 4000
-checkpoint-interval = 2000
 max-samples-per-chain = 1000
+checkpoint-interval = 2000
 
 [sampler-burn_in]
 burn-in-test = nacl & max_posterior
