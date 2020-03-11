@@ -194,7 +194,7 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'inference-request-memory'):
             req_mem = confs.get('workflow', 'inference-request-memory')
-        req_cpus = 1
+        req_cpus = 10
         if confs.has_option('workflow', 'inference-request-cpus'):
             req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
         inf_job = InferenceJob('log', run.get_inf_exe_path(), None, None,
