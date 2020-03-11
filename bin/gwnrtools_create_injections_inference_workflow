@@ -180,9 +180,13 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'inspinj-request-memory'):
             req_mem = confs.get('workflow', 'inspinj-request-memory')
+        req_cpus = 1
+        if confs.has_option('workflow', 'inspinj-request-cpus'):
+            req_cpus = int(confs.get('workflow', 'inspinj-request-cpus'))
         inj_job = InferenceJob('log', run.get_inj_exe_path(), None, None,
                                accounting_group=accounting_group,
-                               request_memory=req_mem)
+                               request_memory=req_mem,
+                               request_cpus=req_cpus)
         inj_node = CondorDAGNode(inj_job)
         dag.add_node(inj_node)
 
@@ -190,9 +194,13 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'inference-request-memory'):
             req_mem = confs.get('workflow', 'inference-request-memory')
+        req_cpus = 1
+        if confs.has_option('workflow', 'inference-request-cpus'):
+            req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
         inf_job = InferenceJob('log', run.get_inf_exe_path(), None, None,
                                accounting_group=accounting_group,
-                               request_memory=req_mem)
+                               request_memory=req_mem,
+                               request_cpus=req_cpus)
         inf_node = CondorDAGNode(inf_job)
         inf_node.add_parent(inj_node)
         dag.add_node(inf_node)
@@ -201,13 +209,21 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'plot-request-memory'):
             req_mem = confs.get('workflow', 'plot-request-memory')
+        req_cpus = 1
+        if confs.has_option('workflow', 'plot-request-cpus'):
+            req_cpus = int(confs.get('workflow', 'plot-request-cpus'))
         if confs.has_option('executables', 'plot'):
-            plt_job = InferenceJob('log', run.get_plt_exe_path(), None, None,
-                                   accounting_group=accounting_group,
-                                   request_memory=req_mem)
-            plt_node = CondorDAGNode(plt_job)
-            plt_node.add_parent(inf_node)
-            dag.add_node(plt_node)
+            # We allow for multiple plotting jobs
+            for ss in confs.get_subsections('plot'):
+                plt_job = InferenceJob('log',
+                                       run.get_plt_exe_path() +
+                                       '_{0}'.format(ss), None, None,
+                                       accounting_group=accounting_group,
+                                       request_memory=req_mem,
+                                       request_cpus=req_cpus)
+                plt_node = CondorDAGNode(plt_job)
+                plt_node.add_parent(inf_node)
+                dag.add_node(plt_node)
 
     # Write out the DAG
     dag.write_sub_files()
