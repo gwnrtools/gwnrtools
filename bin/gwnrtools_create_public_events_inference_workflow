@@ -58,23 +58,13 @@ parser.add_argument("--force", action="store_true", default=False,
 parser.add_argument("--do-not-fetch-data", action="store_true",
                     default=False,
                     help="Don't fetch GWOSC data.")
-parser.add_argument("--save-backup", action="store_true",
-                    default=False,
-                    help="Don't delete the backup file after the run has "
-                         "completed.")
+
 # parallelization options
-parser.add_argument("--nprocesses", type=int, default=1,
+parser.add_argument("--nprocesses", type=int, default=0,
                     help="Number of processes to use. If not given then only "
                          "a single core will be used.")
 parser.add_argument("--use-mpi", action='store_true', default=False,
                     help="Use MPI to parallelize the sampler")
-parser.add_argument("--samples-file", default=None,
-                    help="Use an iteration from an InferenceFile as the "
-                         "initial proposal distribution. The same "
-                         "number of walkers and the same [variable_params] "
-                         "section in the configuration file should be used. "
-                         "The priors must allow encompass the initial "
-                         "positions from the InferenceFile being read.")
 parser.add_argument("--seed", type=int, default=0,
                     help="Seed to use for the random number generator that "
                          "initially distributes the walkers. Default is 0.")
@@ -100,6 +90,31 @@ pycbc.init_logging(opts.verbose)
 fft.verify_fft_options(opts, parser)
 opt.verify_optimization_options(opts, parser)
 scheme.verify_processing_options(opts, parser)
+
+# read configuration file
+confs = configuration.WorkflowConfigParser.from_cli(opts)
+
+# override options based on CLI
+override_opts = [('seed', str(opts.seed))]
+try:
+    confs.add_options_to_section('inference', override_opts,
+                                 overwrite_options=False)
+except:
+    pass
+if opts.nprocesses >= 1:
+    override_opts = [('nprocesses', str(opts.nprocesses))]
+    try:
+        confs.add_options_to_section('inference', override_opts,
+                                     overwrite_options=False)
+    except:
+        pass
+if opts.use_mpi:
+    override_opts = [('use-mpi', '')]
+    try:
+        confs.add_options_to_section('inference', override_opts,
+                                     overwrite_options=False)
+    except:
+        pass
 
 # set seed
 numpy.random.seed(opts.seed)
@@ -127,20 +142,23 @@ with ctx:
         if not opts.force:
             raise IOError(
                 "Output directory {} exists. Use --force to overwrite it.".format(analyses_dir))
-    else: mkdir(analyses_dir)
+    else:
+        mkdir(analyses_dir)
     os.chdir(analyses_dir)
     logging.info("Will setup analyses in {0}".format(analyses_dir))
 
     # Workspace dirs
     logging.info("Making workspace directories")
-    for d in ['scripts', 'log', 'plots']:
-        mkdir(d)
+    # for d in ['log']:
+    #    mkdir(d)
 
     # Get logdir
     try:
         log_path = confs.get("workflow", 'log-path')
     except:
         log_path = './'
+    if not os.path.exists(log_path):
+        mkdir(log_path)
 
     tempfile.tempdir = log_path
     tempfile.template = 'pycbc_inference_events.dag.log.'
@@ -187,7 +205,7 @@ with ctx:
         inf_node = CondorDAGNode(inf_job)
         dag.add_node(inf_node)
 
-        # Configure plotting job
+        # Configure plotting job(s)
         req_mem = None
         if confs.has_option('workflow', 'plot-request-memory'):
             req_mem = confs.get('workflow', 'plot-request-memory')
@@ -195,13 +213,17 @@ with ctx:
         if confs.has_option('workflow', 'plot-request-cpus'):
             req_cpus = int(confs.get('workflow', 'plot-request-cpus'))
         if confs.has_option('executables', 'plot'):
-            plt_job = InferenceJob('log', run.get_plt_exe_path(), None, None,
-                                   accounting_group=accounting_group,
-                                   request_memory=req_mem,
-                                   request_cpus=req_cpus)
-            plt_node = CondorDAGNode(plt_job)
-            plt_node.add_parent(inf_node)
-            dag.add_node(plt_node)
+            # We allow for multiple plotting jobs
+            for ss in confs.get_subsections('plot'):
+                plt_job = InferenceJob('log',
+                                       run.get_plt_exe_path() +
+                                       '_{0}'.format(ss), None, None,
+                                       accounting_group=accounting_group,
+                                       request_memory=req_mem,
+                                       request_cpus=req_cpus)
+                plt_node = CondorDAGNode(plt_job)
+                plt_node.add_parent(inf_node)
+                dag.add_node(plt_node)
 
     # Write out the DAG
     dag.write_sub_files()

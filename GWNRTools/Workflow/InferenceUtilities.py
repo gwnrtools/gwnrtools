@@ -405,10 +405,15 @@ OMP_NUM_THREADS=1 \\\n""")
 
         # Write pycbc_plot_posterior run script
         if self.opts.has_option('executables', self.plt_exe_name):
-            self.write_run_script(self.opts.items(self.plt_exe_name),
-                                  "scripts/{0}".format(os.path.basename(
-                                      self.opts.get('executables', self.plt_exe_name))),
-                                  os.path.join(self.run_dir, "make_plot"))
+            from copy import deepcopy
+            plt_base_opts = self.opts.items(self.plt_exe_name)
+            for ss in self.opts.get_subsections(self.plt_exe_name):
+                curr_opts = deepcopy(plt_base_opts)
+                curr_opts.extend(self.opts.items(self.plt_exe_name + '-' + ss))
+                self.write_run_script(curr_opts,
+                                      "scripts/{0}".format(os.path.basename(
+                                          self.opts.get('executables', self.plt_exe_name))),
+                                      self.get_plt_exe_path() + '_{0}'.format(ss))
 ####
 
 
