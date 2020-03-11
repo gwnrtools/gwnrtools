@@ -109,17 +109,6 @@ logging.info("Using seed %i", opts.seed)
 # logging output
 numpy.seterr(divide='ignore', invalid='ignore')
 
-# Sort out the directory where all analyses are to be run
-analyses_dir = os.getcwd()
-if len(opts.output_dir) > 0:
-    analyses_dir = opts.output_dir
-if os.path.exists(analyses_dir):
-    if not opts.force:
-        raise IOError(
-            "Output directory {} exists. Use --force to overwrite it.".format(analyses_dir))
-os.chdir(analyses_dir)
-logging.info("Will setup analyses in {0}".format(analyses_dir))
-
 # get scheme
 ctx = scheme.from_cli(opts)
 fft.from_cli(opts)
@@ -129,6 +118,18 @@ with ctx:
 
     # read configuration file
     confs = configuration.WorkflowConfigParser.from_cli(opts)
+
+    # Sort out the directory where all analyses are to be run
+    analyses_dir = os.getcwd()
+    if len(opts.output_dir) > 0:
+        analyses_dir = opts.output_dir
+    if os.path.exists(analyses_dir):
+        if not opts.force:
+            raise IOError(
+                "Output directory {} exists. Use --force to overwrite it.".format(analyses_dir))
+    else: mkdir(analyses_dir)
+    os.chdir(analyses_dir)
+    logging.info("Will setup analyses in {0}".format(analyses_dir))
 
     # Workspace dirs
     logging.info("Making workspace directories")
@@ -176,9 +177,13 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'inference-request-memory'):
             req_mem = confs.get('workflow', 'inference-request-memory')
+        req_cpus = 10
+        if confs.has_option('workflow', 'inference-request-cpus'):
+            req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
         inf_job = InferenceJob('log', run.get_inf_exe_path(), None, None,
                                accounting_group=accounting_group,
-                               request_memory=req_mem)
+                               request_memory=req_mem,
+                               request_cpus=req_cpus)
         inf_node = CondorDAGNode(inf_job)
         dag.add_node(inf_node)
 
@@ -186,10 +191,14 @@ with ctx:
         req_mem = None
         if confs.has_option('workflow', 'plot-request-memory'):
             req_mem = confs.get('workflow', 'plot-request-memory')
+        req_cpus = 1
+        if confs.has_option('workflow', 'plot-request-cpus'):
+            req_cpus = int(confs.get('workflow', 'plot-request-cpus'))
         if confs.has_option('executables', 'plot'):
             plt_job = InferenceJob('log', run.get_plt_exe_path(), None, None,
                                    accounting_group=accounting_group,
-                                   request_memory=req_mem)
+                                   request_memory=req_mem,
+                                   request_cpus=req_cpus)
             plt_node = CondorDAGNode(plt_job)
             plt_node.add_parent(inf_node)
             dag.add_node(plt_node)

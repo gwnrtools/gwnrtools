@@ -397,7 +397,63 @@ max-samples-per-chain = {n_maxsamps_per_walker}
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
 
-[jump_proposal-x]
+[jump_proposal-distance]
+name = normal
+
+
+[jump_proposal-mass1]
+name = normal
+
+
+[jump_proposal-delta_tc]
+name = normal
+
+
+[jump_proposal-mass2]
+name = normal
+
+
+[jump_proposal-spin2_polar]
+name = normal
+
+
+[jump_proposal-spin1_polar]
+name = normal
+
+
+[jump_proposal-spin2_azimuthal]
+name = normal
+
+
+[jump_proposal-polarization]
+name = normal
+
+
+[jump_proposal-spin1_azimuthal]
+name = normal
+
+
+[jump_proposal-ra]
+name = normal
+
+
+[jump_proposal-inclination]
+name = normal
+
+
+[jump_proposal-spin1_a]
+name = normal
+
+
+[jump_proposal-dec]
+name = normal
+
+
+[jump_proposal-coa_phase]
+name = normal
+
+
+[jump_proposal-spin2_a]
 name = normal
 """.format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
            n_temperatures=n_temperatures, n_maxsamps_per_walker=n_maxsamps_per_walker,
