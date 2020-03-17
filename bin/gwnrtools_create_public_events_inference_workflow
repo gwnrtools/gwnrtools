@@ -33,9 +33,9 @@ from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
 from GWNRTools.Stats.PyCBCInferenceUtilities import InferenceConfigs
-from GWNRTools.Workflow.InferenceUtilities import (mkdir,
-                                                   InferenceOnEventBatch)
+from GWNRTools.Workflow.InferenceUtilities import InferenceOnEventBatch
 from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
+from GWNRTools.Utils.SupportFunctions import (mkdir, rmdir)
 from GWNRTools import __version__
 
 
@@ -94,6 +94,21 @@ scheme.verify_processing_options(opts, parser)
 # read configuration file
 confs = configuration.WorkflowConfigParser.from_cli(opts)
 
+# Set defaults in configuration
+if True:
+    if not confs.has_option('workflow', 'log-path'):
+        confs.set('workflow', 'log-path', './')
+    if not confs.has_option('workflow', 'psd-estimation'):
+        confs.set('workflow', 'psd-estimation', 'download')
+    if not confs.has_option('workflow', 'inference-request-memory'):
+        confs.set('workflow', 'inference-request-memory', '')
+    if not confs.has_option('workflow', 'inference-request-cpus'):
+        confs.set('workflow', 'inference-request-cpus', '10')
+    if not confs.has_option('workflow', 'plot-request-memory'):
+        confs.set('workflow', 'plot-request-memory', '')
+    if not confs.has_option('workflow', 'plot-request-cpus'):
+        confs.set('workflow', 'plot-request-cpus', '1')
+
 # override options based on CLI
 override_opts = [('seed', str(opts.seed))]
 try:
@@ -131,9 +146,6 @@ fft.from_cli(opts)
 
 with ctx:
 
-    # read configuration file
-    confs = configuration.WorkflowConfigParser.from_cli(opts)
-
     # Sort out the directory where all analyses are to be run
     analyses_dir = os.getcwd()
     if len(opts.output_dir) > 0:
@@ -153,10 +165,7 @@ with ctx:
     #    mkdir(d)
 
     # Get logdir
-    try:
-        log_path = confs.get("workflow", 'log-path')
-    except:
-        log_path = './'
+    log_path = confs.get("workflow", 'log-path')
     if not os.path.exists(log_path):
         mkdir(log_path)
 
@@ -190,14 +199,12 @@ with ctx:
         # Procure GWOSC data
         if not opts.do_not_fetch_data:
             run.fetch_all_data()
+            if confs.get('workflow', 'psd-estimation') == 'download':
+                run.fetch_all_psds()
 
         # Configure inference job
-        req_mem = None
-        if confs.has_option('workflow', 'inference-request-memory'):
-            req_mem = confs.get('workflow', 'inference-request-memory')
-        req_cpus = 10
-        if confs.has_option('workflow', 'inference-request-cpus'):
-            req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
+        req_mem = confs.get('workflow', 'inference-request-memory')
+        req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
         inf_job = InferenceJob('log', run.get_inf_exe_path(), None, None,
                                accounting_group=accounting_group,
                                request_memory=req_mem,
@@ -206,12 +213,8 @@ with ctx:
         dag.add_node(inf_node)
 
         # Configure plotting job(s)
-        req_mem = None
-        if confs.has_option('workflow', 'plot-request-memory'):
-            req_mem = confs.get('workflow', 'plot-request-memory')
-        req_cpus = 1
-        if confs.has_option('workflow', 'plot-request-cpus'):
-            req_cpus = int(confs.get('workflow', 'plot-request-cpus'))
+        req_mem = confs.get('workflow', 'plot-request-memory')
+        req_cpus = int(confs.get('workflow', 'plot-request-cpus'))
         if confs.has_option('executables', 'plot'):
             # We allow for multiple plotting jobs
             for ss in confs.get_subsections('plot'):
@@ -230,4 +233,5 @@ with ctx:
     dag.write_script()
     dag.write_concrete_dag()
 
+rmdir(log_path)
 logging.info('Done')

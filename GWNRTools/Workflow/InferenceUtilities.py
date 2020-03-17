@@ -23,6 +23,7 @@ import numpy
 from GWNRTools.DataAnalysis.MiscFunctions import get_unique_hex_tag
 from GWNRTools.DataAnalysis.GwCatalog import Merger
 from GWNRTools.Stats.PyCBCInferenceUtilities import InferenceConfigs
+from GWNRTools.Utils.SupportFunctions import mkdir
 
 
 def get_ini_opts(confs, section):
@@ -32,12 +33,6 @@ def get_ini_opts(confs, section):
         op_str += "--" + opt + " " + val + " \\" + "\n"
     return op_str
 
-
-def mkdir(dir_name):
-    try:
-        subprocess.call(["mkdir", "-p", dir_name])
-    except OSError:
-        pass
 
 ####
 # **`OneInferenceAnalysis`**:
@@ -343,16 +338,50 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
         self.event_name = event_name
         self.merger = Merger(self.event_name)
 
+        if opts.get('workflow', 'psd-estimation') == 'download':
+            self.psd_options = 'psd-file ='
+            for ifo in self.merger.operating_ifos():
+                self.psd_options += ' {0}:{1}'.format(
+                    ifo,
+                    os.path.join(os.path.relpath(self.get_data_dir(),
+                                                 self.get_analysis_dir()),
+                                 self.merger.psd_file_name(ifo)))
+        elif opts.get('workflow', 'psd-estimation') == 'data-standard':
+            self.psd_options = '''
+psd-estimation = median-mean
+psd-start-time = -256
+psd-end-time = 256
+psd-inverse-length = 8
+psd-segment-length = 8
+psd-segment-stride = 4
+'''
+        else:
+            raise IOError('''The option psd-estimation in section workflow
+        is required. Currently supported values are:
+        download : Download the PSD for event
+        data-standard : Use 512 secs around the event with 8s segments to
+                        determine PSD''')
+
     def get_event_name(self): return self.event_name
 
     def get_data_dir(self): return self.data_dir
 
     def fetch_all_data(self, data_dir=None):
+        if self.verbose:
+            logging.info('Fetching GWOSC frame data')
         if data_dir is None:
             data_dir = self.data_dir
         for ifo in self.merger.operating_ifos():
             self.merger.fetch_data(
                 ifo, self.data_duration, self.data_sample_rate, data_dir)
+
+    def fetch_all_psds(self, data_dir=None):
+        if self.verbose:
+            logging.info("Fetching PSD files")
+        if data_dir is None:
+            data_dir = self.data_dir
+        self.merger.fetch_psds(
+            self.data_duration, self.data_sample_rate, data_dir)
 
     def setup(self):
         # Make the analysis directory
@@ -363,16 +392,22 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
         mkdir(os.path.join(self.run_dir, 'log'))
         mkdir(os.path.join(self.run_dir, 'plots'))
 
-        # Write the data.ini configuration for this event
+        # Setup formatting options for data.ini for this event
         myargs = {'gpstime': self.merger.gpstime(),
-                  'sample_rate': self.sample_rate}
+                  'sample_rate': self.sample_rate,
+                  'psd_options': self.psd_options}
 
         for ifo in self.merger.operating_ifos():
-            myargs['{0}_frame_file'.format(ifo)] = os.path.join(os.path.relpath(self.get_data_dir(
-            ), self.get_analysis_dir()), self.merger.frame_data_name(ifo, self.data_duration, self.data_sample_rate))
+            myargs['{0}_frame_file'.format(ifo)] = os.path.join(
+                os.path.relpath(self.get_data_dir(),
+                                self.get_analysis_dir()),
+                self.merger.frame_data_name(ifo,
+                                            self.data_duration,
+                                            self.data_sample_rate))
             myargs['{0}_channel'.format(ifo)] = self.merger.channel_name(
                 ifo, self.data_sample_rate)
 
+        # Write data.ini configuring options in ConfigWriter.write
         InferenceConfigs(self.run_dir).get_config_writer(
             'data').write(self.event_name, **myargs)
         subprocess.call(

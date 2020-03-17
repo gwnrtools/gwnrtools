@@ -88,20 +88,27 @@ class InferenceConfigs():
         run_dir : string
         configs : dict
 
-        Usage
-        -----
-        Compatible with ConfigWriter.
+
+        Usage Notes
+        -----------
+
+        [1] Compatible with `ConfigWriter`.
         This class is easiest used with the writer it returns.
 
-        Configs for Injections
-        ----------------------
+        [2] Arguments for `sampler.ini` and `inference.ini`
+            are formatted in the initialization of this class
+
+        Therefore, when configuring for Injections
+        ------------------------------------------
         No special notes
 
+        [3] Arguments for `data.ini` are not formatted in this class,
+        but can be when writing it through its ConfigWriter.
 
-        Configs for Events
-        ------------------
-        Need the following named variables to be provided
-        to the config writer's `write` function:
+        Therefore, when configuring for Events
+        --------------------------------------
+        Need the following named variables to be provided to the
+        ConfigWriter's `write` function:
 
         gpstime       : int
         H1_frame_file : str
@@ -183,12 +190,7 @@ instruments = H1 L1
 trigger-time = {gpstime}
 analysis-start-time = -6
 analysis-end-time = 2
-psd-estimation = median-mean
-psd-start-time = -256
-psd-end-time = 256
-psd-inverse-length = 8
-psd-segment-length = 8
-psd-segment-stride = 4
+{psd_options}
 ; The frame files must be downloaded from GWOSC before running.
 frame-files = H1:{H1_frame_file} L1:{L1_frame_file}
 channel-name = {H1_channel} {L1_channel}
@@ -214,12 +216,7 @@ instruments = H1 L1 V1
 trigger-time = {gpstime}
 analysis-start-time = -6
 analysis-end-time = 2
-psd-estimation = median-mean
-psd-start-time = -256
-psd-end-time = 256
-psd-inverse-length = 8
-psd-segment-length = 8
-psd-segment-stride = 4
+{psd_options}
 ; The frame files must be downloaded from GWOSC before running.
 frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file}
 channel-name = {H1_channel} {L1_channel} {V1_channel}
@@ -244,12 +241,7 @@ instruments = H1 L1 V1 G1
 trigger-time = {gpstime}
 analysis-start-time = -6
 analysis-end-time = 2
-psd-estimation = median-mean
-psd-start-time = -256
-psd-end-time = 256
-psd-inverse-length = 8
-psd-segment-length = 8
-psd-segment-stride = 4
+{psd_options}
 ; The frame files must be downloaded from GWOSC before running.
 frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file} G1:{G1_frame_file}
 channel-name = {H1_channel} {L1_channel} {V1_channel} {G1_channel}
@@ -306,7 +298,7 @@ strain-high-pass = 15
 ; inverse length. Since it is discarded before the data is transformed for the
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
-""".format(numpy.random.randint(1, 1e5), numpy.random.randint(1, 1e6))
+""".format(numpy.random.randint(1, 1e6), numpy.random.randint(1, 1e6))
         self.configs['data']['gw150914-like-zeronoise'] = """\
 [data]
 instruments = H1 L1
@@ -339,10 +331,16 @@ strain-high-pass = 15
 pad-data = 8
 """
 
-    def add_sampler_configs(self, n_cpus=10,
-                            n_live=2000, n_maxmcmc=8000, d_logz=0.1,
-                            n_walkers=1000, n_temperatures=20, n_maxsamps_per_walker=1000,
-                            n_eff_samples=4000, ckpt_interval=2000):
+    def add_sampler_configs(self,
+                            n_cpus=10,
+                            n_live=2000,
+                            n_maxmcmc=8000,
+                            d_logz=0.1,
+                            n_walkers=1000,
+                            n_temperatures=20,
+                            n_maxsamps_per_walker=1000,
+                            n_eff_samples=4000,
+                            ckpt_interval=2000):
         self.configs['sampler']['emcee'] = """\
 [sampler]
 name = emcee
