@@ -190,6 +190,10 @@ with ctx:
     # analyses.setup_runs()
     all_event_runs = analyses.get_runs()
 
+    # list to store event names that have been configured once,
+    # as we do not want to download either data/psd multiple times
+    events_already_setup = []
+
     for tag in all_event_runs:
         run = all_event_runs[tag]
 
@@ -197,10 +201,11 @@ with ctx:
         run.setup()
 
         # Procure GWOSC data
-        if not opts.do_not_fetch_data:
+        if not opts.do_not_fetch_data and run.get_event_name() not in events_already_setup:
             run.fetch_all_data()
             if confs.get('workflow', 'psd-estimation') == 'download':
                 run.fetch_all_psds()
+            events_already_setup.append(run.get_event_name())
 
         # Configure inference job
         req_mem = confs.get('workflow', 'inference-request-memory')

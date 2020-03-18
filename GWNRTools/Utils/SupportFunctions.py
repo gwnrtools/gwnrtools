@@ -201,6 +201,7 @@ def format_string(string_template, **string_kwargs):
 
 
 def mkdir(dir_name):
+    import subprocess
     try:
         subprocess.call(["mkdir", "-p", dir_name])
     except OSError:
@@ -208,6 +209,7 @@ def mkdir(dir_name):
 
 
 def rmdir(dir_name):
+    import subprocess
     try:
         subprocess.call(["rm", "-rf", dir_name])
     except OSError:
