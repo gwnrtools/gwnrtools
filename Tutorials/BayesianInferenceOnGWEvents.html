@@ -13017,45 +13017,6 @@ ul.typeahead-list  > li > a.pull-right {
 .highlight .vm { color: #19177C } /* Name.Variable.Magic */
 .highlight .il { color: #666666 } /* Literal.Number.Integer.Long */
     </style>
-<style type="text/css">
-    
-/* Temporary definitions which will become obsolete with Notebook release 5.0 */
-.ansi-black-fg { color: #3E424D; }
-.ansi-black-bg { background-color: #3E424D; }
-.ansi-black-intense-fg { color: #282C36; }
-.ansi-black-intense-bg { background-color: #282C36; }
-.ansi-red-fg { color: #E75C58; }
-.ansi-red-bg { background-color: #E75C58; }
-.ansi-red-intense-fg { color: #B22B31; }
-.ansi-red-intense-bg { background-color: #B22B31; }
-.ansi-green-fg { color: #00A250; }
-.ansi-green-bg { background-color: #00A250; }
-.ansi-green-intense-fg { color: #007427; }
-.ansi-green-intense-bg { background-color: #007427; }
-.ansi-yellow-fg { color: #DDB62B; }
-.ansi-yellow-bg { background-color: #DDB62B; }
-.ansi-yellow-intense-fg { color: #B27D12; }
-.ansi-yellow-intense-bg { background-color: #B27D12; }
-.ansi-blue-fg { color: #208FFB; }
-.ansi-blue-bg { background-color: #208FFB; }
-.ansi-blue-intense-fg { color: #0065CA; }
-.ansi-blue-intense-bg { background-color: #0065CA; }
-.ansi-magenta-fg { color: #D160C4; }
-.ansi-magenta-bg { background-color: #D160C4; }
-.ansi-magenta-intense-fg { color: #A03196; }
-.ansi-magenta-intense-bg { background-color: #A03196; }
-.ansi-cyan-fg { color: #60C6C8; }
-.ansi-cyan-bg { background-color: #60C6C8; }
-.ansi-cyan-intense-fg { color: #258F8F; }
-.ansi-cyan-intense-bg { background-color: #258F8F; }
-.ansi-white-fg { color: #C5C1B4; }
-.ansi-white-bg { background-color: #C5C1B4; }
-.ansi-white-intense-fg { color: #A1A6B2; }
-.ansi-white-intense-bg { background-color: #A1A6B2; }
-
-.ansi-bold { font-weight: bold; }
-
-    </style>
 
 
 <style type="text/css">
@@ -13196,17 +13157,6 @@ div#notebook {
 </div>
 </div>
 
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
@@ -13229,7 +13179,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>pwd
@@ -13260,7 +13210,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>rm -rf *
@@ -13283,6 +13233,24 @@ div#notebook {
 </div>
 </div>
 
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>bbh_precessing.ini  config.ini	emcee_pt.ini  log
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
@@ -13293,7 +13261,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>gwnrtools_write_inference_configs -h
@@ -13313,8 +13281,7 @@ div#notebook {
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-usage: /home/prayush/src/GWNRTools/bin//gwnrtools_write_inference_configs [--options]
+<pre>usage: /home/prayush/src/GWNRTools/bin//gwnrtools_write_inference_configs [--options]
 
 Get and write configuration files for generating a workflow to perform
 Bayesian parameter estimation runs on a custom set of simulated signals
@@ -13329,6 +13296,15 @@ optional arguments:
                         Write sampler config files and exit.
   --write-inference-config WRITE_INFERENCE_CONFIG
                         Write inference config files and exit.
+  --n-cpus N_CPUS
+  --checkpoint-interval CHECKPOINT_INTERVAL
+  --n-live N_LIVE
+  --n-maxmcmc N_MAXMCMC
+  --dlogz DLOGZ
+  --n-walkers N_WALKERS
+  --n-temperatures N_TEMPERATURES
+  --n-maxsamps-per-walker N_MAXSAMPS_PER_WALKER
+  --n-eff-samples N_EFF_SAMPLES
   --show-available-configs
                         Show available options for all configurations.
   --output-dir OUTPUT_DIR
@@ -13343,7 +13319,7 @@ optional arguments:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>gwnrtools_write_inference_configs --show-available-configs
@@ -13363,9 +13339,8 @@ optional arguments:
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-inference: [&#39;bbh_precessing&#39;]
-data: [&#39;gw150914-like-zeronoise&#39;, u&#39;GW170608&#39;, u&#39;GW170729&#39;, u&#39;GW170817&#39;, u&#39;GW151012&#39;, u&#39;GW170818&#39;, u&#39;GW170814&#39;, u&#39;GW150914&#39;, u&#39;GW170104&#39;, &#39;gw150914-like-gaussian&#39;, u&#39;GW170809&#39;, u&#39;GW151226&#39;, u&#39;GW170823&#39;]
+<pre>inference: [&#39;bbh_precessing&#39;]
+data: [u&#39;GW151012&#39;, u&#39;GW170608&#39;, u&#39;GW170729&#39;, u&#39;GW170817&#39;, u&#39;GW170818&#39;, u&#39;GW170814&#39;, u&#39;GW150914&#39;, u&#39;GW170104&#39;, u&#39;GW170809&#39;, u&#39;GW151226&#39;, u&#39;GW170823&#39;]
 sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt&#39;, &#39;ultranest&#39;, &#39;emcee&#39;, &#39;cpnest&#39;]
 </pre>
 </div>
@@ -13377,7 +13352,7 @@ sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>gwnrtools_write_inference_configs --verbose<span class="err">\</span>
@@ -13398,10 +13373,9 @@ sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-2020-03-04 19:11:19,386 Writing config file for sampler settings..
-2020-03-04 19:11:19,386 Writing config file for inference settings..
-2020-03-04 19:11:19,386 Done
+<pre>2020-03-17 15:41:12,043 Writing config file for sampler settings..
+2020-03-17 15:41:12,043 Writing config file for inference settings..
+2020-03-17 15:41:12,043 Done
 </pre>
 </div>
 </div>
@@ -13412,7 +13386,7 @@ sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>ls
@@ -13443,7 +13417,7 @@ sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>cat emcee_pt.ini bbh_precessing.ini
@@ -13465,12 +13439,12 @@ sampler: [&#39;epsie&#39;, &#39;dynesty&#39;, &#39;multinest&#39;, &#39;emcee_pt
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>[sampler]
 name = emcee_pt
-nwalkers = 500
+nprocesses = 10
+nwalkers = 1000
 ntemps = 20
-;##### Other possible options
 effective-nsamples = 4000
-checkpoint-interval = 2000
 max-samples-per-chain = 1000
+checkpoint-interval = 2000
 
 [sampler-burn_in]
 burn-in-test = nacl &amp; max_posterior
@@ -13622,10 +13596,11 @@ name = uniform_angle
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="n">out_str</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;</span><span class="se">\</span>
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;config.ini&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
+    <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&#39;&#39;</span><span class="se">\</span>
 <span class="s1">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
 <span class="s1">;   Executables</span>
 <span class="s1">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
@@ -13645,6 +13620,7 @@ name = uniform_angle
 <span class="s1">sample-rate = 2048</span>
 <span class="s1">data-sample-rate = 4096</span>
 <span class="s1">data-duration = 4096</span>
+<span class="s1">psd-estimation = download ; or data-standard</span>
 
 <span class="s1">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
 <span class="s1">;   Inference</span>
@@ -13662,14 +13638,14 @@ name = uniform_angle
 <span class="s1">;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;</span>
 <span class="s1">[plot]</span>
 <span class="s1">input-file = inference.hdf</span>
-<span class="s1">output-file = plots/posteriors.png</span>
 <span class="s1">plot-scatter =</span>
 <span class="s1">plot-marginal =</span>
 <span class="s1">plot-prior = inference.ini data.ini</span>
-<span class="s1">&#39;&#39;&#39;</span>
 
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;config.ini&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fout</span><span class="p">:</span>
-    <span class="n">fout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out_str</span><span class="p">)</span>
+<span class="s1">[plot-mass1mass2]</span>
+<span class="s1">output-file = plots/posteriors.png</span>
+<span class="s1">parameters = &#39;mass1 mass2&#39;</span>
+<span class="s1">&#39;&#39;&#39;</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13679,7 +13655,7 @@ name = uniform_angle
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>cat config.ini
@@ -13718,6 +13694,7 @@ events = GW150914 GW170104
 sample-rate = 2048
 data-sample-rate = 4096
 data-duration = 4096
+psd-estimation = download ; or data-standard
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;   Inference
@@ -13735,10 +13712,13 @@ force =
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [plot]
 input-file = inference.hdf
-output-file = plots/posteriors.png
 plot-scatter =
 plot-marginal =
 plot-prior = inference.ini data.ini
+
+[plot-mass1mass2]
+output-file = plots/posteriors.png
+parameters = &#39;mass1 mass2&#39;
 </pre>
 </div>
 </div>
@@ -13756,7 +13736,7 @@ plot-prior = inference.ini data.ini
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_inference_workflow -h
@@ -13776,8 +13756,7 @@ plot-prior = inference.ini data.ini
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-usage: /home/prayush/src/GWNRTools/bin//gwnrtools_create_public_events_inference_workflow [--options]
+<pre>usage: /home/prayush/src/GWNRTools/bin//gwnrtools_create_public_events_inference_workflow [--options]
 
 Setup workflow to perform Bayesian parameter estimation runs on a custom set
 of public gravitational-wave events using open data
@@ -13790,19 +13769,11 @@ optional arguments:
                         Output directory path.
   --force               If the output-dir already exists, overwrite it.
                         Otherwise, an OSError is raised.
-  --save-backup         Don&#39;t delete the backup file after the run has
-                        completed.
+  --do-not-fetch-data   Don&#39;t fetch GWOSC data.
   --nprocesses NPROCESSES
                         Number of processes to use. If not given then only a
                         single core will be used.
   --use-mpi             Use MPI to parallelize the sampler
-  --samples-file SAMPLES_FILE
-                        Use an iteration from an InferenceFile as the initial
-                        proposal distribution. The same number of walkers and
-                        the same [variable_params] section in the
-                        configuration file should be used. The priors must
-                        allow encompass the initial positions from the
-                        InferenceFile being read.
   --seed SEED           Seed to use for the random number generator that
                         initially distributes the walkers. Default is 0.
 
@@ -13879,10 +13850,10 @@ Options for selecting the processing scheme in this program.:
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_inference_workflow --config-files config.ini --output-dir . --force --verbose
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">run</span> <span class="o">-</span><span class="n">i</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">prayush</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">GWNRTools</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">gwnrtools_create_public_events_inference_workflow</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">files</span> <span class="n">config</span><span class="o">.</span><span class="n">ini</span> <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">.</span> <span class="o">--</span><span class="n">force</span> <span class="o">--</span><span class="n">verbose</span>
 </pre></div>
 
     </div>
@@ -13898,29 +13869,110 @@ Options for selecting the processing scheme in this program.:
     <div class="prompt"></div>
 
 
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2020-03-17 17:49:18,790 Reading configuration file
+2020-03-17 17:49:18,792 Using seed 0
+2020-03-17 17:49:18,794 Running with CPU support: 1 threads
+2020-03-17 17:49:18,904 Will setup analyses in .
+2020-03-17 17:49:18,906 Making workspace directories
+2020-03-17 17:49:18,907 Creating DAG
+2020-03-17 17:49:18,914 Making eventGW170104/emcee_pt/bbh_precessing in /home/prayush/research/test_pycbc_gw150914
+2020-03-17 17:49:18,984 Copying config files to eventGW170104/emcee_pt/bbh_precessing
+2020-03-17 17:49:18,986 Copying executables to eventGW170104/emcee_pt/bbh_precessing/scripts/
+2020-03-17 17:49:18,988 Fetching GWOSC frame data
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>Could not import ligolw in /home/prayush/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
-2020-03-04 19:11:48,878 Using seed 0
-2020-03-04 19:11:48,879 Will setup analyses in .
-2020-03-04 19:11:48,879 Running with CPU support: 1 threads
-2020-03-04 19:11:49,101 Reading configuration file
-2020-03-04 19:11:49,103 Making workspace directories
-2020-03-04 19:11:49,160 Creating DAG
-2020-03-04 19:11:49,172 Making eventGW170104/emcee_pt/bbh_precessing in /home/prayush/research/test_pycbc_gw150914
-2020-03-04 19:11:49,304 Copying config files to eventGW170104/emcee_pt/bbh_precessing
-2020-03-04 19:11:49,305 Copying executables to eventGW170104/emcee_pt/bbh_precessing/scripts/
-Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW170104/H-H1_GWOSC_4KHZ_R1-1167557889-4096.gwf
-|<span class="ansi-blue-fg">==========================================</span>| 129M/129M (100.00%)        25sETA     0s
-Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW170104/L-L1_GWOSC_4KHZ_R1-1167557889-4096.gwf
-|<span class="ansi-blue-fg">==========================================</span>| 125M/125M (100.00%)        22sETA     0s
-2020-03-04 19:12:39,789 Making eventGW150914/emcee_pt/bbh_precessing in /home/prayush/research/test_pycbc_gw150914
-2020-03-04 19:12:39,953 Copying config files to eventGW150914/emcee_pt/bbh_precessing
-2020-03-04 19:12:39,953 Copying executables to eventGW150914/emcee_pt/bbh_precessing/scripts/
-Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW150914/H-H1_GWOSC_4KHZ_R1-1126257415-4096.gwf
-|<span class="ansi-blue-fg">==========================================</span>| 130M/130M (100.00%)        24sETA     0s
-Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW150914/L-L1_GWOSC_4KHZ_R1-1126257415-4096.gwf
-|<span class="ansi-blue-fg">==========================================</span>| 125M/125M (100.00%)        24sETA     0s
-2020-03-04 19:13:33,056 Done
+<pre>Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW170104/H-H1_GWOSC_4KHZ_R1-1167557889-4096.gwf [Done]
+Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW170104/L-L1_GWOSC_4KHZ_R1-1167557889-4096.gwf [Done]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2020-03-17 17:50:43,606 Fetching PSD files
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Downloading https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_GW170104_PSDs.dat [Done]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2020-03-17 17:51:37,611 Making eventGW150914/emcee_pt/bbh_precessing in /home/prayush/research/test_pycbc_gw150914
+2020-03-17 17:51:37,701 Copying config files to eventGW150914/emcee_pt/bbh_precessing
+2020-03-17 17:51:37,704 Copying executables to eventGW150914/emcee_pt/bbh_precessing/scripts/
+2020-03-17 17:51:37,706 Fetching GWOSC frame data
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW150914/H-H1_GWOSC_4KHZ_R1-1126257415-4096.gwf [Done]
+Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW150914/L-L1_GWOSC_4KHZ_R1-1126257415-4096.gwf [Done]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2020-03-17 17:52:54,887 Fetching PSD files
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Downloading https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_GW150914_PSDs.dat [Done]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2020-03-17 17:53:50,550 Done
 </pre>
 </div>
 </div>
@@ -13931,7 +13983,7 @@ Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW15091
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython2"><pre><span></span><span class="o">!</span>tree
@@ -13958,14 +14010,25 @@ Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW15091
 ├── <span class="ansi-blue-intense-fg ansi-bold">eventGW150914</span>
 │   ├── <span class="ansi-blue-intense-fg ansi-bold">data</span>
 │   │   ├── H-H1_GWOSC_4KHZ_R1-1126257415-4096.gwf
-│   │   └── L-L1_GWOSC_4KHZ_R1-1126257415-4096.gwf
+│   │   ├── L-L1_GWOSC_4KHZ_R1-1126257415-4096.gwf
+│   │   ├── psd_H1.dat
+│   │   └── psd_L1.dat
 │   └── <span class="ansi-blue-intense-fg ansi-bold">emcee_pt</span>
 │       └── <span class="ansi-blue-intense-fg ansi-bold">bbh_precessing</span>
 │           ├── data.ini
+│           ├── inference.hdf.bkup
+│           ├── inference.hdf.checkpoint
 │           ├── inference.ini
 │           ├── <span class="ansi-blue-intense-fg ansi-bold">log</span>
-│           ├── <span class="ansi-green-intense-fg ansi-bold">make_plot</span>
-│           ├── make_plot.sub
+│           │   ├── run_inference-166-0.err
+│           │   ├── run_inference-166-0.out
+│           │   ├── run_inference-169-0.err
+│           │   ├── run_inference-169-0.out
+│           │   ├── run_inference-173-0.err
+│           │   ├── run_inference-173-0.out
+│           │   └── tmpFgLflx
+│           ├── <span class="ansi-green-intense-fg ansi-bold">make_plot_mass1mass2</span>
+│           ├── make_plot_mass1mass2.sub
 │           ├── <span class="ansi-blue-intense-fg ansi-bold">plots</span>
 │           ├── <span class="ansi-green-intense-fg ansi-bold">run_inference</span>
 │           ├── run_inference.sub
@@ -13976,14 +14039,23 @@ Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW15091
 ├── <span class="ansi-blue-intense-fg ansi-bold">eventGW170104</span>
 │   ├── <span class="ansi-blue-intense-fg ansi-bold">data</span>
 │   │   ├── H-H1_GWOSC_4KHZ_R1-1167557889-4096.gwf
-│   │   └── L-L1_GWOSC_4KHZ_R1-1167557889-4096.gwf
+│   │   ├── L-L1_GWOSC_4KHZ_R1-1167557889-4096.gwf
+│   │   ├── psd_H1.dat
+│   │   └── psd_L1.dat
 │   └── <span class="ansi-blue-intense-fg ansi-bold">emcee_pt</span>
 │       └── <span class="ansi-blue-intense-fg ansi-bold">bbh_precessing</span>
 │           ├── data.ini
 │           ├── inference.ini
 │           ├── <span class="ansi-blue-intense-fg ansi-bold">log</span>
-│           ├── <span class="ansi-green-intense-fg ansi-bold">make_plot</span>
-│           ├── make_plot.sub
+│           │   ├── run_inference-165-0.err
+│           │   ├── run_inference-165-0.out
+│           │   ├── run_inference-168-0.err
+│           │   ├── run_inference-168-0.out
+│           │   ├── run_inference-172-0.err
+│           │   ├── run_inference-172-0.out
+│           │   └── tmpFgLflx
+│           ├── <span class="ansi-green-intense-fg ansi-bold">make_plot_mass1mass2</span>
+│           ├── make_plot_mass1mass2.sub
 │           ├── <span class="ansi-blue-intense-fg ansi-bold">plots</span>
 │           ├── <span class="ansi-green-intense-fg ansi-bold">run_inference</span>
 │           ├── run_inference.sub
@@ -13992,12 +14064,20 @@ Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW15091
 │               ├── <span class="ansi-green-intense-fg ansi-bold">pycbc_inference</span>
 │               └── <span class="ansi-green-intense-fg ansi-bold">pycbc_inference_plot_posterior</span>
 ├── <span class="ansi-blue-intense-fg ansi-bold">log</span>
-├── <span class="ansi-blue-intense-fg ansi-bold">plots</span>
 ├── pycbc_inference_events.dag
-├── <span class="ansi-green-intense-fg ansi-bold">pycbc_inference_events.sh</span>
-└── <span class="ansi-blue-intense-fg ansi-bold">scripts</span>
+├── pycbc_inference_events.dag.condor.sub
+├── pycbc_inference_events.dag.dagman.log
+├── pycbc_inference_events.dag.dagman.out
+├── pycbc_inference_events.dag.lib.err
+├── pycbc_inference_events.dag.lib.out
+├── pycbc_inference_events.dag.lock
+├── pycbc_inference_events.dag.metrics
+├── pycbc_inference_events.dag.nodes.log
+├── pycbc_inference_events.dag.rescue001
+├── pycbc_inference_events.dag.rescue002
+└── <span class="ansi-green-intense-fg ansi-bold">pycbc_inference_events.sh</span>
 
-17 directories, 27 files
+15 directories, 57 files
 </pre>
 </div>
 </div>
