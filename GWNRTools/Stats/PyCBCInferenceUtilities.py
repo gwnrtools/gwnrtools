@@ -645,4 +645,116 @@ name = uniform_sky
 ; polarization prior
 name = uniform_angle
 """
+
+    def add_inference_configs(self):
+        self.configs['inference']['bbh_alignedspin'] = """\
+[model]
+name = gaussian_noise
+low-frequency-cutoff = 20.0
+
+[variable_params]
+; waveform parameters that will vary in MCMC
+delta_tc =
+mass1 =
+mass2 =
+spin1z =
+spin2z =
+distance =
+coa_phase =
+inclination =
+polarization =
+ra =
+dec =
+
+[static_params]
+; waveform parameters that will not change in MCMC
+approximant = IMRPhenomD
+f_lower = 20
+f_ref = 20
+spin1x = 0
+spin1y = 0
+spin2x = 0
+spin2y = 0
+; we'll set the tc by using the trigger time in the data
+; section of the config file + delta_tc
+trigger_time = ${data|trigger-time}
+
+[prior-delta_tc]
+; coalescence time prior
+name = uniform
+min-delta_tc = -0.1
+max-delta_tc = 0.1
+
+[waveform_transforms-tc]
+; we need to provide tc to the waveform generator
+name = custom
+inputs = delta_tc
+tc = ${data|trigger-time} + delta_tc
+
+;Mass1 of GW151012 $\in$ [28.7, 38.1]
+;Mass1 of GW170608 $\in$ [12.7, 16.5]
+;Mass1 of GW170729 $\in$ [60.4, 66.4]
+;Mass1 of GW150914 $\in$ [38.7, 40.3]
+;Mass1 of GW151226 $\in$ [16.9, 22.5]
+;Mass1 of GW170814 $\in$ [33.6, 36.2]
+;Mass1 of GW170817 $\in$ [1.56, 1.58]
+;Mass1 of GW170104 $\in$ [36.4, 38.1]
+;Mass1 of GW170809 $\in$ [40.9, 43.3]
+;Mass1 of GW170818 $\in$ [40.1, 42.9]
+;Mass1 of GW170823 $\in$ [46.2, 50.7]
+
+[prior-mass1]
+name = uniform
+min-mass1 = 10.
+max-mass1 = 80.
+
+;Mass2 of GW151012 $\in$ [18.4, 17.7]
+;Mass2 of GW170608 $\in$ [9.8, 9.0]
+;Mass2 of GW170729 $\in$ [44.1, 43.1]
+;Mass2 of GW150914 $\in$ [35.0, 33.6]
+;Mass2 of GW151226 $\in$ [10.2, 9.9]
+;Mass2 of GW170814 $\in$ [29.2, 28.0]
+;Mass2 of GW170817 $\in$ [1.36, 1.36]
+;Mass2 of GW170104 $\in$ [24.6, 24.9]
+;Mass2 of GW170809 $\in$ [29.0, 28.9]
+;Mass2 of GW170818 $\in$ [31.9, 31.0]
+;Mass2 of GW170823 $\in$ [36.8, 35.7]
+
+[prior-mass2]
+name = uniform
+min-mass2 = 10.
+max-mass2 = 80.
+
+[prior-spin1z]
+name = uniform
+min-spin1z = -0.99
+max-spin1z = 0.99
+
+[prior-spin2z]
+name = uniform
+min-spin2z = -0.99
+max-spin2z = 0.99
+
+[prior-distance]
+; following gives a uniform volume prior
+name = uniform_radius
+min-distance = 10
+max-distance = 1000
+
+[prior-coa_phase]
+; coalescence phase prior
+name = uniform_angle
+
+[prior-inclination]
+; inclination prior
+name = sin_angle
+
+[prior-ra+dec]
+; sky position prior
+name = uniform_sky
+
+[prior-polarization]
+; polarization prior
+name = uniform_angle
+"""
 ####
