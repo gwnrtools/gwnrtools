@@ -17,7 +17,9 @@ from . import Cosmo
 from . import DataAnalysis
 from . import NR
 #from . import Plotting
-from . import Stats
+try:
+  from . import Stats
+except: pass
 from . import Utils
 from . import Waveforms
 

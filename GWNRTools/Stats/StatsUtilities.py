@@ -47,8 +47,10 @@ import scipy.integrate as si
 import scipy.optimize as so
 from sklearn.neighbors import KernelDensity
 
-from statsmodels.nonparametric.kde import KDEUnivariate
-from statsmodels.nonparametric.kernel_density import KDEMultivariate
+try:
+    from statsmodels.nonparametric.kde import KDEUnivariate
+    from statsmodels.nonparametric.kernel_density import KDEMultivariate
+except: pass
 
 from GWNRTools.Stats.LALInferenceUtilities import ParamLatexLabels
 import h5py

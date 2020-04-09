@@ -339,7 +339,9 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
         self.merger = Merger(self.event_name)
 
         if opts.get('workflow', 'psd-estimation') == 'download':
-            self.psd_options = 'psd-file ='
+            self.psd_options = '''\
+psd-inverse-length = 8 ; not sure why, but we need this for now!
+psd-file ='''
             for ifo in self.merger.operating_ifos():
                 self.psd_options += ' {0}:{1}'.format(
                     ifo,
@@ -347,7 +349,7 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
                                                  self.get_analysis_dir()),
                                  self.merger.psd_file_name(ifo)))
         elif opts.get('workflow', 'psd-estimation') == 'data-standard':
-            self.psd_options = '''
+            self.psd_options = '''\
 psd-estimation = median-mean
 psd-start-time = -256
 psd-end-time = 256
