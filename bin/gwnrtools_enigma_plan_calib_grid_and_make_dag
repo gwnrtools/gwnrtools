@@ -44,7 +44,7 @@ parser.add_argument("--version", action="version", version=__version__,
                     help="Prints version information.")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Print logging messages.")
-# workflow options
+# Parameter ranges
 parser.add_argument("--min-mass1", type=float, default=3.0,
                     help="Lower limit for mass of bigger BH.")
 parser.add_argument("--max-mass1", type=float, default=100.0,
@@ -63,6 +63,16 @@ parser.add_argument("--grid-spacing-mass1", type=float, default=1.0,
 parser.add_argument("--grid-spacing-mass2", type=float, default=1.0,
                     help="Step size for sampling mass of smaller BH.")
 
+parser.add_argument("--min-omega-attach", type=float, default=0.01,
+                    help="Lower limit for dimless attachment freq.")
+parser.add_argument("--max-omega-attach", type=float, default=0.1,
+                    help="Upper limit for dimless attachment freq.")
+
+# Discrete parameter choices
+parser.add_argument("--choices-pn-order", type=str, required=False,
+                    default='6,7,8,9,10,11,12',
+                    help="Comma-separated list of PN orders to try")
+
 parser.add_argument("--choices-f-lower", type=str, required=False,
                     default='15',
                     help="Comma-separated list of f_lowers to try")
@@ -71,9 +81,27 @@ parser.add_argument("--choices-psd", type=str, required=False,
                     default='aLIGOZeroDetHighPower',
                     help="Comma-separated list of PSDs to try")
 
+parser.add_argument("--signal-approx", type=str, required=False,
+                    default='SEOBNRv4_ROM',
+                    help="Signal approximant to test against (FD)")
+
+# MCMC and filtering options
+parser.add_argument("--num-samplers", type=int, default=32,
+                    help="No of MCMC walkers")
+parser.add_argument("--num-mcmc-steps", type=int, default=100,
+                    help="No of MCMC steps per walker")
+parser.add_argument("--sample-rate", type=int, default=4096,
+                    help="Sampling rate for wave gen and matches")
+parser.add_argument("--time-length", type=int, default=32,
+                    help="Expected max duration of waves")
+
 # output options
 parser.add_argument("--run-dir", type=str, required=False, default='.',
                     help="Run directory path.")
+# output options
+parser.add_argument("--output-prefix", type=str, required=False,
+                    default='results/matches_vs_',
+                    help="Input parameter file")
 
 
 # parallelization options
@@ -132,7 +160,7 @@ if opts.verbose:
 __submit_text__ = '''\
 universe = vanilla
 executable = scripts/gwnrtools_enigma_sample_parameters
-arguments = " --parameter-file $(macroparamfile) "
+arguments = " --job-id $(macrojobid) --parameter-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8}"
 accounting_group = ligo.dev.o3.cbc.explore.test
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
@@ -140,7 +168,16 @@ error = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).err
 output = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).out
 notification = never
 queue 1
-'''
+'''.format(
+    opts.min_omega_attach,
+    opts.max_omega_attach,
+    opts.choices_pn_order,
+    opts.signal_approx,
+    opts.num_samplers,
+    opts.num_mcmc_steps,
+    opts.sample_rate,
+    opts.time_length
+)
 
 
 def job_id(job_num):
@@ -165,6 +202,7 @@ def write_job_to_dag(job_id, param_file):
     with open(dag_file(), 'a+') as fout:
         fout.write('''\
 JOB TUNE{0} sampler.submit
+VARS TUNE{0} macrojobid="{0}"
 VARS TUNE{0} macroparamfile="{1}"
 
 '''.format(job_id, param_file))
