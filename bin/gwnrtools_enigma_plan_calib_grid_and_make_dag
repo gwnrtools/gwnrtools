@@ -219,7 +219,7 @@ for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
                     curr_job_id = job_id(job_num)
                     job_params = [[m1, m2, f_lower, psd_name]]
 
-                    num_mcmc_in_job = 0
+                    num_mcmc_in_job = 1
                     job_num += 1
 
 logging.info(" .. parameter grid constructed.")
