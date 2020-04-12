@@ -25,6 +25,7 @@ import emcee
 import h5py
 import numpy as np
 import os
+import shutil
 import argparse
 import logging
 
@@ -156,11 +157,14 @@ if opts.verbose:
         " Setting up the workflow in {0} now ...\n".format(run_directory))
 ############################################################
 # temporaries
+__script_name__ = 'gwnrtools_enigma_sample_calib_parameters'
+__submit_file_name__ = 'sampler.submit'
 
 __submit_text__ = '''\
 universe = vanilla
-executable = scripts/gwnrtools_enigma_sample_parameters
-arguments = " --job-id $(macrojobid) --parameter-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8}"
+initialdir = {10}
+executable = scripts/{9}
+arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8} --verbose"
 accounting_group = ligo.dev.o3.cbc.explore.test
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
@@ -177,7 +181,9 @@ queue 1
     opts.num_mcmc_steps,
     opts.sample_rate,
     opts.time_length,
-    opts.output_prefix
+    opts.output_prefix,
+    __script_name__,
+    os.path.abspath(run_directory)
 )
 
 
@@ -202,11 +208,11 @@ def dag_file():
 def write_job_to_dag(job_id, param_file):
     with open(dag_file(), 'a+') as fout:
         fout.write('''\
-JOB TUNE{0} sampler.submit
+JOB TUNE{0} {2}
 VARS TUNE{0} macrojobid="{0}"
 VARS TUNE{0} macroparamfile="{1}"
 
-'''.format(job_id, param_file))
+'''.format(job_id, param_file, __submit_file_name__))
 
 
 ############################################################
@@ -218,10 +224,14 @@ if not os.path.exists(run_directory):
 os.chdir(run_directory)
 
 # Make directories
-dirs_to_make = ['input', 'results']
+dirs_to_make = ['scripts', 'input', 'results', 'log']
 for d in dirs_to_make:
     if not os.path.exists(d):
         os.makedirs(d)
+
+sampling_prog = os.popen('which {0}'.format(__script_name__)).read().strip()
+shutil.copy(sampling_prog, 'scripts/{0}'.format(__script_name__))
+os.chmod('scripts/{0}'.format(__script_name__), 0o0777)
 
 logging.info(".. directories made.")
 
@@ -264,7 +274,7 @@ for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
 logging.info(" .. parameter grid constructed.")
 ############################################################
 # Write submit file
-with open("sampler.sub", "w") as fout:
+with open(__submit_file_name__, "w") as fout:
     fout.write(__submit_text__)
 
 logging.info(" .. condor submission file written.")
