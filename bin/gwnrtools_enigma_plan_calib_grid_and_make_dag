@@ -106,23 +106,23 @@ choices_psd = opts.choices_psd.split(",")
 num_unique_mcmc_per_job = opts.num_calcs_per_job
 run_directory = opts.run_dir
 
-logging.info("Going to setup run with:\n")
-logging.info("Mass1 $\in$ [{0}, {1}]Msun\n".format(
+logging.warn("Going to setup run with:\n")
+logging.warn("Mass1 $\in$ [{0}, {1}]Msun\n".format(
     range_of_mass1[0], range_of_mass1[1]))
-logging.info("Mass2 $\in$ [{0}, {1}]Msun\n".format(
+logging.warn("Mass2 $\in$ [{0}, {1}]Msun\n".format(
     range_of_mass2[0], range_of_mass2[1]))
-logging.info("Mass-ratio $\in$ [{0}, {1}]Msun\n".format(
+logging.warn("Mass-ratio $\in$ [{0}, {1}]Msun\n".format(
     range_of_q[0], range_of_q[1]))
-logging.info("... with spacing: {0}, {1}\n".format(
+logging.warn("... with spacing: {0}, {1}\n".format(
     spacing_mass1, spacing_mass2))
 
-logging.info(
+logging.warn(
     "\n Will sample lower freq cutoff from: {}".format(choices_f_lower))
-logging.info("\n Will sample PSD from: {}".format(choices_psd))
+logging.warn("\n Will sample PSD from: {}".format(choices_psd))
 
-logging.info("\n Will setup {0} calculations per job".format(
+logging.warn("\n Will setup {0} calculations per job".format(
     num_unique_mcmc_per_job))
-logging.info(
+logging.warn(
     "\n Setting up the workflow in {0} now ...\n".format(run_directory))
 ############################################################
 # temporaries
@@ -182,7 +182,7 @@ for d in dirs_to_make:
     if not os.path.exists(d):
         os.makedirs(d)
 
-logging.info(".. directories made.\n")
+logging.warn(".. directories made.\n")
 
 ############################################################
 # Make the grid
@@ -220,13 +220,13 @@ for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
                     num_mcmc_in_job = 0
                     job_num += 1
 
-logging.info(" .. parameter grid constructed.\n")
+logging.warn(" .. parameter grid constructed.\n")
 ############################################################
 # Write submit file
 with open("sampler.sub", "w") as fout:
     fout.write(__submit_text__)
 
-logging.info(" .. condor submission file written.\n")
+logging.warn(" .. condor submission file written.\n")
 ############################################################
 # Design DAG
 # Iterate over the grid, and add a job for each!
@@ -249,5 +249,5 @@ for job_id in jobs:
     parameter_file_name = write_parameter_file(job_id, job_params_dict)
     write_job_to_dag(job_id, parameter_file_name)
 
-logging.info(" .. DAG written.\n")
-logging.info("All Done in {0} seconds".format(time.time() - __itime__))
+logging.warn(" .. DAG written.\n")
+logging.warn("All Done in {0} seconds".format(time.time() - __itime__))
