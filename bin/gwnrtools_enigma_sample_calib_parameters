@@ -174,6 +174,7 @@ Function to write output of ONE MCMC sampler to txt file
 
     if True:
         out_array = []
+        logging.info("Collecting results for sampler")
         for pno, omega_att, mch in zip(pno_samples[notfailed],
                                        omega_attach_samples[notfailed],
                                        match_samples[notfailed]):
@@ -194,6 +195,7 @@ Function to write output of ONE MCMC sampler to txt file
         out_array = np.array(out_array)
         print(np.shape(out_array))
         # write samples
+        logging.info("Writing results to disk")
         np.savetxt(output_file_name, np.array(out_array),
                    delimiter='\t',
                    header=out_header)
@@ -308,31 +310,33 @@ for idx in range(len(inputs[inputs.keys()[0]])):
             psd = make_padded_frequency_series(psd, N, delta_f)
 
         # RUN THE SAMPLER
-        logging.warn("Initializing the MCMC sampler and burning-in")
+        logging.info("Initializing the MCMC sampler and burning-in")
         samplers[idx] = get_sampler(log_prob,
                                     [mass1, mass2, f_lower, sample_rate, psd],
                                     nwalkers=num_samplers,
                                     omega_attach_lims=limits_omega_attach,
                                     PNO_choices=choices_PNO)
 
-        logging.warn(
+        logging.info(
             "Running the MCMC sampler for {0} steps".format(num_steps))
         s, state = samplers[idx]
         s.run_mcmc(state, num_steps)
 
         # WRite output from the sampler
+        logging.info("Writing output now..")
         write_output_from_sampler(output_file(output_prefix, job_id, idx),
                                   s,
                                   [mass1, mass2, f_lower, psd])
         old_f_lower = f_lower
+        logging.info("Written output")
         # Early stop
         if idx >= 1e9:
             break
     except:
-        logging.warn("Error in parameter set[{0}]: m1={1:.3f}, m2={2:.3f}, f_low={3:.0f}".format(idx,
-                                                                                                 mass1,
-                                                                                                 mass2,
-                                                                                                 f_lower))
+        logging.error("Error in parameter set[{0}]: m1={1:.3f}, m2={2:.3f}, f_low={3:.0f}".format(idx,
+                                                                                                  mass1,
+                                                                                                  mass2,
+                                                                                                  f_lower))
 
 logging.info(" .. MCMC samples written.")
 logging.info("All Done in {0} seconds".format(time.time() - __itime__))
