@@ -17,20 +17,20 @@
 
 """Setup workflow to perform calibration of ENIGMA model using another BBH model """
 
-from GWNRTools.Utils import make_padded_frequency_series
-import GWNRTools as gwnrtools
 import os
+import argparse
 import logging
 import numpy as np
 import h5py
 import emcee
-
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
 from pycbc.filter import match
-
-import sys
-sys.path.append(os.path.join(os.environ['HOME'], 'src/GWNRTools'))
+if True:
+    import sys
+    sys.path.append(os.path.join(os.environ['HOME'], 'src/GWNRTools'))
+    import GWNRTools as gwnrtools
+    from GWNRTools.Utils import make_padded_frequency_series
 
 
 ############################################################
