@@ -1,0 +1,223 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+"""Setup workflow to perform calibration of ENIGMA model using another BBH model """
+
+from GWNRTools.Utils import make_padded_frequency_series
+import GWNRTools as gwnrtools
+import os
+import logging
+import numpy as np
+import h5py
+import emcee
+
+from pycbc.waveform import get_td_waveform, get_fd_waveform
+from pycbc.psd import from_string
+from pycbc.filter import match
+
+import sys
+sys.path.append(os.path.join(os.environ['HOME'], 'src/GWNRTools'))
+
+
+############################################################
+# command line usage
+parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
+                                 description=__doc__)
+parser.add_argument("--version", action="version", version=__version__,
+                    help="Prints version information.")
+parser.add_argument("--verbose", action="store_true", default=False,
+                    help="Print logging messages.")
+# workflow options
+parser.add_argument("--min-mass1", type=float, default=3.0,
+                    help="Lower limit for mass of bigger BH.")
+parser.add_argument("--max-mass1", type=float, default=100.0,
+                    help="Upper limit for mass of bigger BH.")
+parser.add_argument("--min-mass2", type=float, default=3.0,
+                    help="Lower limit for mass of smaller BH.")
+parser.add_argument("--max-mass2", type=float, default=100.0,
+                    help="Upper limit for mass of smaller BH.")
+parser.add_argument("--min-q", type=float, default=1.0,
+                    help="Lower limit for mass of smaller BH.")
+parser.add_argument("--max-q", type=float, default=10.0,
+                    help="Upper limit for mass of smaller BH.")
+
+parser.add_argument("--grid-spacing-mass1", type=float, default=1.0,
+                    help="Step size for sampling mass of bigger BH.")
+parser.add_argument("--grid-spacing-mass2", type=float, default=1.0,
+                    help="Step size for sampling mass of smaller BH.")
+
+parser.add_argument("--choices-f-lower", type=str, required=False,
+                    default='15',
+                    help="Comma-separated list of f_lowers to try")
+
+parser.add_argument("--choices-psd", type=str, required=False,
+                    default='aLIGOZeroDetHighPower',
+                    help="Comma-separated list of PSDs to try")
+
+# output options
+parser.add_argument("--run-dir", type=str, required=False, default='.',
+                    help="Run directory path.")
+
+
+# parallelization options
+parser.add_argument("--num-calcs-per-job", type=int, default=100,
+                    help="Number of calculations per job ")
+
+
+# parse command line
+opts = parser.parse_args()
+
+
+############################################################
+# inputs
+range_of_mass1 = np.array([opts.min_mass1, opts.max_mass1])
+range_of_mass2 = np.array([opts.min_mass2, opts.max_mass2])
+range_of_q = np.array([opts.min_q, opts.max_q])
+
+spacing_mass1 = opts.grid_spacing_mass1
+spacing_mass2 = opts.grid_spacing_mass2
+
+choices_f_ = []
+for c in opts.choices_f_lower.split(","):
+    try:
+        choices_f_.append(float(c))
+    except:
+        pass
+choices_f_lower = np.array(choices_f_)
+
+choices_psd = opts.choices_psd.split(",")
+num_unique_mcmc_per_job = opts.num_calcs_per_job
+run_directory = opts.run_dir
+
+############################################################
+# Setup
+# Move to run directory
+if not os.path.exists(run_directory):
+    os.makedirs(run_directory)
+os.chdir(run_directory)
+
+# Make directories
+dirs_to_make = ['input', 'results']
+for d in dirs_to_make:
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+
+__submit_text__ = '''\
+universe = vanilla
+executable = scripts/gwnrtools_enigma_sample_parameters
+arguments = " --parameter-file $(macroparamfile) "
+accounting_group = ligo.dev.o3.cbc.explore.test
+getenv = True
+log = /usr1/prayush.kumar/tmpc8uHuQ
+error = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).err
+output = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).out
+notification = never
+queue 1
+'''
+
+
+def job_id(job_num):
+    return '{:06d}'.format(job_num)
+
+
+def write_parameter_file(job_id, params):
+    file_name = os.path.join('input/parameters_{0}.hdf'.format(job_id))
+    if os.path.exists(file_name):
+        return file_name
+    with h5py.File(file_name) as fout:
+        for param_name in params:
+            fout.create_dataset(param_name, data=params[param_name])
+    return file_name
+
+
+def dag_file():
+    return 'retune_enigma.dag'
+
+
+def write_job_to_dag(job_id, param_file):
+    with open(dag_file(), 'a+') as fout:
+        fout.write('''\
+JOB TUNE{0} sampler.submit
+VARS TUNE{0} macroparamfile="{1}"
+
+'''.format(job_id, param_file))
+
+
+############################################################
+# Make the grid
+jobs = {}
+
+num_mcmc_in_job = 1e9
+job_num = 0
+job_params = None
+
+for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
+    for m2 in np.arange(range_of_mass2[0], range_of_mass2[-1], spacing_mass2):
+        q = m1 / m2
+        if q < range_of_q[0] or q > range_of_q[-1]:
+            continue
+
+        for f_lower in choices_f_lower:
+            for psd_name in choices_psd:
+                # prepare the job
+                if num_mcmc_in_job < num_unique_mcmc_per_job:
+                    # add to current job
+                    job_params.append([m1, m2, f_lower, psd_name])
+
+                    num_mcmc_in_job += 1
+                    job_num += 1
+
+                else:
+                    # close current job
+                    if job_params:
+                        jobs[curr_job_id] = job_params
+
+                    # start new job
+                    curr_job_id = job_id(job_num)
+                    job_params = [[m1, m2, f_lower, psd_name]]
+
+                    num_mcmc_in_job = 0
+                    job_num += 1
+
+############################################################
+# Write submit file
+with open("sampler.sub", "w") as fout:
+    fout.write(__submit_text__)
+
+
+############################################################
+# Design DAG
+# Iterate over the grid, and add a job for each!
+for job_id in jobs:
+    job_params = jobs[job_id]
+
+    # m1, m2, f_lower, psd
+    job_p0_vals = [p[0] for p in job_params]
+    job_p1_vals = [p[1] for p in job_params]
+    job_p2_vals = [p[2] for p in job_params]
+    job_p3_vals = [p[3] for p in job_params]
+
+    job_params_dict = {
+        'mass1': job_p0_vals,
+        'mass2': job_p1_vals,
+        'f_lower': job_p2_vals,
+        'psd': job_p3_vals
+    }
+
+    parameter_file_name = write_parameter_file(job_id, job_params_dict)
+    write_job_to_dag(job_id, parameter_file_name)
