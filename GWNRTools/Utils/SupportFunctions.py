@@ -328,6 +328,10 @@ filter_N and/or delta_f are given, the output will take those values. If
         vectilde = FrequencySeries(v_tilde[:], delta_f=delta_f_from_filter_N,
                                    dtype=complex_same_precision_as(vec), copy=True)
 
+    else:
+        raise IOError(
+          "Input {} is neither a TimeSeries nor a FrequencySeries".format(vec))
+
     return vectilde
     # }}}
 
