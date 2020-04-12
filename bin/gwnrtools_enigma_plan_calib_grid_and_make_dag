@@ -176,7 +176,8 @@ queue 1
     opts.num_samplers,
     opts.num_mcmc_steps,
     opts.sample_rate,
-    opts.time_length
+    opts.time_length,
+    opts.output_prefix
 )
 
 
