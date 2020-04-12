@@ -27,7 +27,6 @@ import numpy as np
 import os
 import argparse
 import logging
-logging.basicConfig(level=logging.DEBUG)
 
 if True:
     import sys
@@ -171,6 +170,7 @@ VARS TUNE{0} macroparamfile="{1}"
 
 ############################################################
 # Setup
+logging.basicConfig(level=logging.DEBUG)
 # Move to run directory
 if not os.path.exists(run_directory):
     os.makedirs(run_directory)
