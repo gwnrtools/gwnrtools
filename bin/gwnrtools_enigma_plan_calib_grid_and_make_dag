@@ -106,24 +106,25 @@ choices_psd = opts.choices_psd.split(",")
 num_unique_mcmc_per_job = opts.num_calcs_per_job
 run_directory = opts.run_dir
 
-logging.warn("Going to setup run with:\n")
-logging.warn("Mass1 $\in$ [{0}, {1}]Msun\n".format(
-    range_of_mass1[0], range_of_mass1[1]))
-logging.warn("Mass2 $\in$ [{0}, {1}]Msun\n".format(
-    range_of_mass2[0], range_of_mass2[1]))
-logging.warn("Mass-ratio $\in$ [{0}, {1}]Msun\n".format(
-    range_of_q[0], range_of_q[1]))
-logging.warn("... with spacing: {0}, {1}\n".format(
-    spacing_mass1, spacing_mass2))
+if opts.verbose:
+    logging.warn("Going to setup run with:\n")
+    logging.warn("Mass1 $\in$ [{0}, {1}]Msun\n".format(
+        range_of_mass1[0], range_of_mass1[1]))
+    logging.warn("Mass2 $\in$ [{0}, {1}]Msun\n".format(
+        range_of_mass2[0], range_of_mass2[1]))
+    logging.warn("Mass-ratio $\in$ [{0}, {1}]Msun\n".format(
+        range_of_q[0], range_of_q[1]))
+    logging.warn("... with spacing: {0}, {1}\n".format(
+        spacing_mass1, spacing_mass2))
 
-logging.warn(
-    "\n Will sample lower freq cutoff from: {}".format(choices_f_lower))
-logging.warn("\n Will sample PSD from: {}".format(choices_psd))
+    logging.warn(
+        "\n Will sample lower freq cutoff from: {}".format(choices_f_lower))
+    logging.warn("\n Will sample PSD from: {}".format(choices_psd))
 
-logging.warn("\n Will setup {0} calculations per job".format(
-    num_unique_mcmc_per_job))
-logging.warn(
-    "\n Setting up the workflow in {0} now ...\n".format(run_directory))
+    logging.warn("\n Will setup {0} calculations per job".format(
+        num_unique_mcmc_per_job))
+    logging.warn(
+        "\n Setting up the workflow in {0} now ...\n".format(run_directory))
 ############################################################
 # temporaries
 
