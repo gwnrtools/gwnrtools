@@ -16,20 +16,24 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Setup workflow to perform calibration of ENIGMA model using another BBH model """
-
-import os
-import argparse
-import logging
-import numpy as np
-import h5py
-import emcee
+import time
+__itime__ = time.time()
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
 from pycbc.filter import match
+import emcee
+import h5py
+import numpy as np
+import os
+import argparse
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 if True:
     import sys
     sys.path.append(os.path.join(os.environ['HOME'], 'src/GWNRTools'))
     import GWNRTools as gwnrtools
+    from GWNRTools import __version__
     from GWNRTools.Utils import make_padded_frequency_series
 
 
@@ -103,19 +107,26 @@ choices_psd = opts.choices_psd.split(",")
 num_unique_mcmc_per_job = opts.num_calcs_per_job
 run_directory = opts.run_dir
 
+logging.info("Going to setup run with:\n")
+logging.info("Mass1 $\in$ [{0}, {1}]Msun\n".format(
+    range_of_mass1[0], range_of_mass1[1]))
+logging.info("Mass2 $\in$ [{0}, {1}]Msun\n".format(
+    range_of_mass2[0], range_of_mass2[1]))
+logging.info("Mass-ratio $\in$ [{0}, {1}]Msun\n".format(
+    range_of_q[0], range_of_q[1]))
+logging.info("... with spacing: {0}, {1}\n".format(
+    spacing_mass1, spacing_mass2))
+
+logging.info(
+    "\n Will sample lower freq cutoff from: {}".format(choices_f_lower))
+logging.info("\n Will sample PSD from: {}".format(choices_psd))
+
+logging.info("\n Will setup {0} calculations per job".format(
+    num_unique_mcmc_per_job))
+logging.info(
+    "\n Setting up the workflow in {0} now ...\n".format(run_directory))
 ############################################################
-# Setup
-# Move to run directory
-if not os.path.exists(run_directory):
-    os.makedirs(run_directory)
-os.chdir(run_directory)
-
-# Make directories
-dirs_to_make = ['input', 'results']
-for d in dirs_to_make:
-    if not os.path.exists(d):
-        os.makedirs(d)
-
+# temporaries
 
 __submit_text__ = '''\
 universe = vanilla
@@ -159,6 +170,21 @@ VARS TUNE{0} macroparamfile="{1}"
 
 
 ############################################################
+# Setup
+# Move to run directory
+if not os.path.exists(run_directory):
+    os.makedirs(run_directory)
+os.chdir(run_directory)
+
+# Make directories
+dirs_to_make = ['input', 'results']
+for d in dirs_to_make:
+    if not os.path.exists(d):
+        os.makedirs(d)
+
+logging.info(".. directories made.\n")
+
+############################################################
 # Make the grid
 jobs = {}
 
@@ -194,12 +220,13 @@ for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
                     num_mcmc_in_job = 0
                     job_num += 1
 
+logging.info(" .. parameter grid constructed.\n")
 ############################################################
 # Write submit file
 with open("sampler.sub", "w") as fout:
     fout.write(__submit_text__)
 
-
+logging.info(" .. condor submission file written.\n")
 ############################################################
 # Design DAG
 # Iterate over the grid, and add a job for each!
@@ -221,3 +248,6 @@ for job_id in jobs:
 
     parameter_file_name = write_parameter_file(job_id, job_params_dict)
     write_job_to_dag(job_id, parameter_file_name)
+
+logging.info(" .. DAG written.\n")
+logging.info("All Done in {0} seconds".format(time.time() - __itime__))
