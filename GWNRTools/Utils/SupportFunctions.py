@@ -320,17 +320,16 @@ filter_N and/or delta_f are given, the output will take those values. If
         if delta_f is not None:
             delta_f_ratio = max(1, int(ceil(vectilde.get_delta_f() / delta_f)))
             vectilde = vectilde[:len(vectilde):delta_f_ratio]
-
     elif isinstance(vec, TimeSeries):
         delta_f_from_filter_N = 1. / filter_N / vec.get_delta_t()
         vec.resize(filter_N)
         v_tilde = vec.to_frequencyseries()
         vectilde = FrequencySeries(v_tilde[:], delta_f=delta_f_from_filter_N,
                                    dtype=complex_same_precision_as(vec), copy=True)
-
     else:
+        vectilde = None
         raise IOError(
-          "Input {} is neither a TimeSeries nor a FrequencySeries".format(vec))
+          "Input is neither a TimeSeries nor a FrequencySeries")
 
     return vectilde
     # }}}
