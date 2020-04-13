@@ -27,6 +27,7 @@ import numpy as np
 import os
 import argparse
 import logging
+from multiprocessing import Pool
 
 if True:
     import sys
@@ -70,6 +71,10 @@ parser.add_argument("--sample-rate", type=int, default=4096,
                     help="Sampling rate for wave gen and matches")
 parser.add_argument("--time-length", type=int, default=32,
                     help="Expected max duration of waves")
+
+# parallelization options
+parser.add_argument("--num-processes", type=int, default=2,
+                    help="No of Multiprocessing processes")
 
 # output options
 parser.add_argument("--output-prefix", type=str, required=False,
@@ -120,6 +125,10 @@ if opts.verbose:
         sample_rate, time_length))
 ############################################################
 # temporaries
+try:
+    __my_pool__ = Pool(processes=opts.num_processes)
+except:
+    __my_pool__ = None
 
 
 def get_sampler(log_probability, myarglist,
@@ -133,8 +142,11 @@ Function to Initialize and burn-in MCMC sampler
     ndim = 2
 
     # Initialize emsemble sampler
-    sampler = emcee.EnsembleSampler(
-        nwalkers, ndim, log_probability, args=myarglist)
+    sampler = emcee.EnsembleSampler(nwalkers,
+                                    ndim,
+                                    log_probability,
+                                    pool=__my_pool__,
+                                    args=myarglist)
 
     # Run the sampler for a few steps to burn-in,
     # ie erase memory of the starting locations
@@ -337,6 +349,7 @@ for idx in range(len(inputs[inputs.keys()[0]])):
                                                                                                   mass1,
                                                                                                   mass2,
                                                                                                   f_lower))
-
+__my_pool__.close()
+__my_pool__.terminate()
 logging.info(" .. MCMC samples written.")
 logging.info("All Done in {0} seconds".format(time.time() - __itime__))
