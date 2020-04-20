@@ -43,7 +43,7 @@ class tidalWavs():
         if mf <= mfA: return 1
         # Impose cutoffs on mass-ratio, and BH spins
         if eta < 6./49.: 
-            print eta, 6./49.
+            print(eta, 6./49.)
             raise IOError("Eta too small")
         if sBH > 0.75: raise IOError("BH spin too large")
         if sBH < -0.75: raise IOError("BH spin too small")
@@ -113,9 +113,9 @@ class tidalWavs():
         else: raise IOError("Approx not supported")
         if not tidal or Lambda==0:
             if self.verbose:
-                print "Returning WITHOUT tidal corrections"
+                print("Returning WITHOUT tidal corrections")
                 tid = int(0.1/M/lal.MTSUN_SI / delta_f)
-                print hc[tid], hp[tid]
+                print(hc[tid], hp[tid])
             return hp, hc
         # Tidal corrections to be incorporated
         freqs =  M * lal.MTSUN_SI * hp.sample_frequencies.data
@@ -128,8 +128,8 @@ class tidalWavs():
         hc = FrequencySeries(hc * Corr, delta_f=delta_f, epoch=hp._epoch, dtype=hp.dtype, copy=True)
         if self.verbose:
             tid = int(0.1/M/lal.MTSUN_SI / delta_f)
-            print ampC[tid], phsC[tid], Corr[tid]
-            print hc[tid], hp[tid]
+            print(ampC[tid], phsC[tid], Corr[tid])
+            print(hc[tid], hp[tid])
         return hp, hc
     #}}}
 

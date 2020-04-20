@@ -6,7 +6,7 @@
 import time
 import sys, os
 
-import glob, commands as cmd
+import glob, subprocess as cmd
 from math import pow
 import re
 import h5py
@@ -140,12 +140,12 @@ over x_offset.
             idx2, x2val = find_nearest(x2, x1val)
             if np.abs(x2val - x1val) > delta_x:
                 if objective_function_alignment.counter % 100 == 0 and verbose:
-                    print np.abs(x2val - x1val)
+                    print(np.abs(x2val - x1val))
                 #raise RuntimeError("""Cannot solve the problem without either a) INcreasing delta_x, or b) interpolation. Vectors are not sampled finely enough.""")
             s += (y2[idx2] - y1[idx1]) ** 2
         #s = s ** 0.5
         if objective_function_alignment.counter % 100 == 0:
-            print "Objective function for offset = %.3f is %.6f" % (x, s)
+            print("Objective function for offset = %.3f is %.6f" % (x, s))
         return s
     objective_function_alignment.counter = 0
     ###
@@ -154,9 +154,9 @@ over x_offset.
     opt_args = (x1, y1, x2, y2, x_low_lim, x_high_lim)
 
     if debug:
-        print "Testing objective function"
-        print "Offset 0: ", objective_function_alignment(0, *opt_args)
-        print "Offset 550: ", objective_function_alignment(-550, *opt_args)
+        print("Testing objective function")
+        print("Offset 0: ", objective_function_alignment(0, *opt_args))
+        print("Offset 550: ", objective_function_alignment(-550, *opt_args))
 
     ## NOW SET THE RANGE OF OFFSETS TO BE PROBED
     xd1, xd2 = x1[-1] - x2[0], x1[0] - x2[-1]
@@ -168,19 +168,18 @@ over x_offset.
     else: x_max = offset_high_lim
     #
     if verbose:
-        print "Searching for optimal offset in range:", x_min, " to ", x_max
+        print("Searching for optimal offset in range:", x_min, " to ", x_max)
     ##
     for idx in range(num_retries):
         if verbose:
-            print >>sys.stdout, "\nTry %d to compute alignment" % idx
+            print("\nTry %d to compute alignment" % idx, file=sys.stdout)
             sys.stdout.flush()
         retval = minimize_scalar(objective_function_alignment,
                                  args=opt_args,
                                  bounds=(x_min, x_max))
     ##
     if verbose:
-        print >>sys.stdout,\
-            "optimization took %d objective func evals" % objective_function_alignment.counter
+        print("optimization took %d objective func evals" % objective_function_alignment.counter, file=sys.stdout)
         sys.stdout.flush()
     ### RETURN OPTIMIZED PARAMETERS
     return [retval.x, retval]
@@ -189,19 +188,19 @@ over x_offset.
 
 def get_waveform(approximant, phase_order, amplitude_order, spin_order, template_params, start_frequency, sample_rate, length, datafile=None, verbose=False):
     #{{{
-    print "IN hERE"
+    print("IN hERE")
     delta_t  = 1./sample_rate
     delta_f  = 1./length
     filter_N = int(length)
     filter_n = filter_N / 2 + 1
     if approximant in fd_approximants() and 'Eccentric' not in approximant:
-        print "NORMAL FD WAVEFORM for", approximant
+        print("NORMAL FD WAVEFORM for", approximant)
         delta_f = sample_rate / length
         hplus, hcross = get_fd_waveform(template_params, approximant=approximant, spin_order=spin_order,
                                phase_order=phase_order, delta_f=delta_f,
                                f_lower=start_frequency, amplitude_order=amplitude_order)
     elif approximant in td_approximants() and 'Eccentric' not in approximant:
-        print "NORMAL TD WAVEFORM for", approximant
+        print("NORMAL TD WAVEFORM for", approximant)
         hplus,hcross = get_td_waveform(template_params, approximant=approximant, spin_order=spin_order,
                                    phase_order=phase_order, delta_t=1.0 / sample_rate,
                                    f_lower=start_frequency, amplitude_order=amplitude_order)
@@ -230,7 +229,7 @@ def get_waveform(approximant, phase_order, amplitude_order, spin_order, template
         fmin  = start_frequency
         sample_rate = sample_rate
         #
-        print >>sys.stdout, " Using phase order: %d" % phase_order
+        print(" Using phase order: %d" % phase_order, file=sys.stdout)
         sys.stdout.flush()
         hplus, hcross = Ecc.generate_eccentric_waveform(mass1, mass2,\
                             ecc, anom, inc, beta,\
@@ -310,7 +309,7 @@ def get_waveform(approximant, phase_order, amplitude_order, spin_order, template
         # Legacy support
         if not os.path.exists(datafile): raise IOError("File %s not found!" % datafile)
         if verbose:
-          print "Reading from data file %s" % datafile
+          print("Reading from data file %s" % datafile)
 
         # Figure out waveform parameters from filename
         #q_value, M_value, w_value, _, _ = EA.get_q_m_e_pn_o_from_filename(datafile)
@@ -325,12 +324,12 @@ def get_waveform(approximant, phase_order, amplitude_order, spin_order, template
         if not approx_equal(downsample_ratio, np.int(downsample_ratio)):
           raise RuntimeError("Cannot handling resampling at a fractional factor = %e" % downsample_ratio)
         elif verbose:
-          print "Downsampling by a factor of %d" % int(downsample_ratio)
+          print("Downsampling by a factor of %d" % int(downsample_ratio))
         h_real = TimeSeries(data[::int(downsample_ratio),1]/DYN_RANGE_FAC, delta_t=delta_t)
         h_imag = TimeSeries(data[::int(downsample_ratio),2]/DYN_RANGE_FAC, delta_t=delta_t)
 
         if verbose:
-          print "max, min,len of h_real = ", max(h_real.data), min(h_real.data), len(h_real.data)
+          print("max, min,len of h_real = ", max(h_real.data), min(h_real.data), len(h_real.data))
 
         # Compute Strain
         tmplt_pars = template_params
@@ -343,7 +342,7 @@ def get_waveform(approximant, phase_order, amplitude_order, spin_order, template
         htilde = extend_waveform_FrequencySeries(htilde, filter_n)
 
         if verbose:
-          print "ISNAN(htilde from file) = ", np.any(np.isnan(htilde.data))
+          print("ISNAN(htilde from file) = ", np.any(np.isnan(htilde.data)))
         return htilde, [m1, m2, w_value, dt]
         #}}}
     else: raise IOError(".. APPROXIMANT %s not found.." % approximant)
@@ -352,18 +351,18 @@ def get_waveform(approximant, phase_order, amplitude_order, spin_order, template
     htilde = make_frequency_series( hvec )
     htilde = extend_waveform_FrequencySeries(htilde, filter_n)
     #
-    print "type of hplus, hcross = ", type(hplus.data), type(hcross.data)
+    print("type of hplus, hcross = ", type(hplus.data), type(hcross.data))
     if any(isnan(hplus.data)) or any(isnan(hcross.data)):
-      print "..### %s hplus or hcross have NANS!!" % approximant
+      print("..### %s hplus or hcross have NANS!!" % approximant)
     #
     if any(isinf(hplus.data)) or any(isinf(hcross.data)):
-      print "..### %s hplus or hcross have INFS!!" % approximant
+      print("..### %s hplus or hcross have INFS!!" % approximant)
     #
     if any(isnan(htilde.data)):
-      print "..### %s Fourier transform htilde has NANS!!" % approximant
+      print("..### %s Fourier transform htilde has NANS!!" % approximant)
     #
     if any(isinf(htilde.data)):
-      print "..### %s Fourier transform htilde has INFS!!" % approximant
+      print("..### %s Fourier transform htilde has INFS!!" % approximant)
     #
     return htilde
     #}}}
@@ -409,9 +408,9 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     hp0._epoch = hc0._epoch = 0
     amp = TimeSeries(np.sqrt(hp0**2 + hc0**2), copy=True, delta_t=hp0.delta_t)
     max_a, max_a_index = amp.abs_max_loc()
-    print "\n\n In blend:\nTotal Mass = %f, len(hp0,hc0) = %d, %d = %f s" %\
-          (mm, len(hp0), len(hc0), hp0.sample_times[-1]-hp0.sample_times[0])
-    print "Waveform max = %e, located at %d" % (max_a, max_a_index)
+    print("\n\n In blend:\nTotal Mass = %f, len(hp0,hc0) = %d, %d = %f s" %\
+          (mm, len(hp0), len(hc0), hp0.sample_times[-1]-hp0.sample_times[0]))
+    print("Waveform max = %e, located at %d" % (max_a, max_a_index))
     #amp_after_peak = amp
     #amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
@@ -422,7 +421,7 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     iB, vB = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.1*max_a))
     iB += max_a_index
     if iA <= max_a_index:
-      print >>sys.stdout,"iA = %d, iB = %d, vA = %e, vB = %e" % (iA,iB,vA,vB)
+      print("iA = %d, iB = %d, vA = %e, vB = %e" % (iA,iB,vA,vB), file=sys.stdout)
       sys.stdout.flush()
       raise RuntimeError("Couldnt find amplitude threshold time iA")
       # do something
@@ -437,18 +436,18 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
       for idx in range( max_a_index, len(amp) ):
         if tmp_data[idx] < target_amp: break
       iA = idx
-      print "Newfound iA = %d" % iA
+      print("Newfound iA = %d" % iA)
       # Yet another way
       amp_after_peak = amp[max_a_index:]
       iA, vA = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.01*max_a))
       iA += max_a_index
-      print "Newfound iA another way = %d" % iA
+      print("Newfound iA another way = %d" % iA)
       raise RuntimeError("Had to find amplitude threshold the hard way")
     if iB <= max_a_index:
       raise RuntimeError("Couldnt find amplitude threshold time iB")
       # this doesn't happen yet
       pass
-    print "NEW: iA = %d, iB = %d, vA = %e, vB = %e" % (iA, iB, vA, vB)
+    print("NEW: iA = %d, iB = %d, vA = %e, vB = %e" % (iA, iB, vA, vB))
     t = [ [ t_opt[0]*mm,500*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm], # Prayush's E
           [ t_opt[0]*mm,t_opt[1]*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm ],
           [ t_opt[0]*mm,t_opt[1]*mm,hp0.sample_times.data[iB]/mtsun,hp0.sample_times.data[iB]/mtsun+t_opt[4]*mm ],
@@ -458,9 +457,9 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     hphc.append(hp0)
     for i in range(len(t)):
       if (WinID >= 0 and WinID < len(t)) and i != WinID: continue
-      print "Testing window with t = ", t[i]
+      print("Testing window with t = ", t[i])
       hphc.append(hin.blending_function(hp0=hp0,t=t[i],sample_rate=sample,time_length=time))
-    print "No of blending windows being tested = %d" % (len(hphc)-1)
+    print("No of blending windows being tested = %d" % (len(hphc)-1))
     return hphc
     #}}}
 
@@ -477,13 +476,13 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     nrtool = nr_waveform()
     amp = TimeSeries(np.sqrt(hp0**2 + hc0**2), copy=True, delta_t=hp0.delta_t)
     max_a, max_a_index = amp.abs_max_loc()
-    print "Waveform max = %e, located at %d" % (max_a, max_a_index)
+    print("Waveform max = %e, located at %d" % (max_a, max_a_index))
     amp_after_peak = amp
     amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
     iA, vA = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.01*max_a))
     iB, vB = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.1*max_a))
-    print iA, iB
+    print(iA, iB)
     t = [ [ t_opt[0]*mm,500*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm], # Prayush's E
           [ t_opt[0]*mm,t_opt[1]*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm ],
           [ t_opt[0]*mm,t_opt[1]*mm,hp0.sample_times.data[iB]/mtsun,hp0.sample_times.data[iB]/mtsun+t_opt[4]*mm ],
@@ -492,10 +491,10 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     hphc = []
     #hphc.append(hp0)
     for i in range(len(t)):
-      print t[i]
+      print(t[i])
       hphc.append(nrtool.blending_function_Tukey(hp0=hp0,t=t[i],\
                           sample_rate=sample,time_length=time))
-    print "No of blending windows being tested = %d" % len(hphc)
+    print("No of blending windows being tested = %d" % len(hphc))
     return hphc
     #}}}
 

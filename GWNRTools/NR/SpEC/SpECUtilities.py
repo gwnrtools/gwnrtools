@@ -218,12 +218,12 @@ This function returns the following:
                 break
             else:
                 if verbose:
-                    print "\n\nChecking out line %d : %s" % (i, _header[i])
+                    print("\n\nChecking out line %d : %s" % (i, _header[i]))
                 _header_string = _header[i].strip().strip('#').strip(' ')
                 _header_col, _header_key =\
                       ParseHeaderLineForSpECTabularOutputASCII(_header_string)
                 if verbose:
-                    print "%s parsed to %s and %s" % (_header_string, _header_col, _header_key)
+                    print("%s parsed to %s and %s" % (_header_string, _header_col, _header_key))
                 ## NOW checking for comments in headers
                 ## They should be parsed to None and None
                 if _header_col == None and _header_key == None:
@@ -235,9 +235,9 @@ This function returns the following:
                         idx += 1
                         continue
                     if verbose:
-                        print "Trying header line : " , _header_key
+                        print("Trying header line : " , _header_key)
                     _header_quantity, _header_sdname = GetQuantitySdNameFromKey(_header_key)
-                    if _header_quantity not in header_quantities.keys():
+                    if _header_quantity not in list(header_quantities.keys()):
                         header_quantities[_header_quantity] = {}
                     header_quantities[_header_quantity][_header_sdname] = _header_col
                 else:
@@ -267,7 +267,7 @@ def GetSegmentDirectories(DIR, LEV, use_non_standard_segments=False,
   inspiral_dirs = sorted(glob.glob(os.path.join(DIR, 'Lev%d_??/') % LEV))
   ringdown_dirs = sorted(glob.glob(os.path.join(DIR, 'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
   if len(ringdown_dirs) >= 1: inspiral_dirs.extend(ringdown_dirs)
-  if verbose: print "Reading from following dirs:\n", inspiral_dirs
+  if verbose: print("Reading from following dirs:\n", inspiral_dirs)
   return inspiral_dirs
 
 def GetSegmentLettersFromName(NAME):
@@ -287,13 +287,13 @@ def GetNonStandardSegmentDirectories(DIR, LEV,
   ringdown_dirs = sorted(glob.glob(os.path.join(DIR, non_standard_prefix+'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
   ##
   if debug:
-    for kk in standard_inspiral_dirs: print kk
-    print "\n"
-    for kk in inspiral_dirs: print kk
-    print "\n"
-    for kk in standard_ringdown_dirs: print kk
-    print "\n"
-    for kk in ringdown_dirs: print kk
+    for kk in standard_inspiral_dirs: print(kk)
+    print("\n")
+    for kk in inspiral_dirs: print(kk)
+    print("\n")
+    for kk in standard_ringdown_dirs: print(kk)
+    print("\n")
+    for kk in ringdown_dirs: print(kk)
   ##
   final_dirs = []
   for idx, d in enumerate(standard_inspiral_dirs):
@@ -330,7 +330,7 @@ def GetNonStandardSegmentDirectories(DIR, LEV,
     if d in final_dirs: continue
     final_dirs.append(d)
   ##
-  if verbose: print "Reading from following dirs:\n", final_dirs
+  if verbose: print("Reading from following dirs:\n", final_dirs)
   return final_dirs
   ##}}}
 
@@ -339,12 +339,12 @@ def GetNonStandardSegmentDirectories(DIR, LEV,
 ## USER-FACING FUNCTIONS
 ########################################
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: ReadSpECTabularOutputFromASCII
 Function: Read in SpEC's .dat or .txt (ASCII) output files from all available
 segments and combine them. Provide file name with respect to Lev?_??/
 directory. Returns combined data in a numpy.array.
-"""
+""")
 
 def ReadSpECTabularOutputFromASCII(DIR, LEV, FILE,
                             use_non_standard_segments=False,
@@ -374,9 +374,9 @@ directory. Returns combined data in a numpy.array.
   for jdx, _dir in enumerate(inspiral_dirs):
     filename = os.path.join(_dir, FILE)
     if not os.path.exists(filename):
-      if verbose: print "Skipping: %s" % filename
+      if verbose: print("Skipping: %s" % filename)
       continue
-    if debug: print "READING %s" % filename
+    if debug: print("READING %s" % filename)
     _data = np.loadtxt(filename)
     #
     if len(np.shape(_data))==1:
@@ -385,12 +385,12 @@ directory. Returns combined data in a numpy.array.
     else:
       ncol = np.shape(_data)[1]
       nrow = np.shape(_data)[0]
-    if debug: print "shape of data = (%d,%d)" % (nrow, ncol)
+    if debug: print("shape of data = (%d,%d)" % (nrow, ncol))
     ncol = min(NCOL, ncol)
     if get_NCOL: 
         NCOL = ncol
         get_NCOL = False
-    if debug: print "nco, NCOL, MAX_NCOL = (%d, %d,%d)" % (ncol, NCOL, MAX_NCOL)
+    if debug: print("nco, NCOL, MAX_NCOL = (%d, %d,%d)" % (ncol, NCOL, MAX_NCOL))
     #
     # Ensure new data can be accommodated
     while (NROW + nrow) > MAX_NROW:
@@ -409,7 +409,7 @@ directory. Returns combined data in a numpy.array.
   #}}}
 
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: ReadSpECTabularOutputWithColsFromASCII
 Function: Reads in data from SpEC output files that contains variables written
  **subdomain-by-subdomain**.  The same variable needs to be stored in separate
@@ -423,7 +423,7 @@ header, and then the data is combined.
 This makes sure that if some segments are missing certain columns,
 those are smoothly glossed over. E.g. subdomain X may exist between t = 0-1000M
 but not between 1000-1500M and then again from 1500-\infty M.
-"""
+""")
 
 def ReadSpECTabularOutputWithColsFromASCII(DIR, LEV, FILE, downsample_by=1,
                                         use_non_standard_segments=False,
@@ -455,28 +455,28 @@ but not between 1000-1500M and then again from 1500-\infty M.
   for idx, _dir in enumerate(inspiral_dirs):
     filename = os.path.join(_dir, FILE)
     if not os.path.exists(filename):
-      if verbose: print "Skipping: %s" % filename
+      if verbose: print("Skipping: %s" % filename)
       continue
-    if debug: print "READING %s" % filename
+    if debug: print("READING %s" % filename)
     #
     # Read in data
     _data = np.loadtxt(filename)
     if np.shape(_data) == (0,):
-      if debug: print "No data found for %s" % filename
+      if debug: print("No data found for %s" % filename)
       continue
     header_string, header_quantities = ParseHeaderForSpECTabularOutputASCII(filename)
     #
     # Now, parse columns as per column header strings
     for jdx, qty in enumerate(header_quantities):
-      if qty not in data.keys(): data[qty] = {}
+      if qty not in list(data.keys()): data[qty] = {}
       for kdx, sdn in enumerate(header_quantities[qty]):
         col_num = header_quantities[qty][sdn]
         try:
-          tmpd = np.array(zip( _data[::downsample_by,0], _data[::downsample_by,col_num] ))
+          tmpd = np.array(list(zip( _data[::downsample_by,0], _data[::downsample_by,col_num] )))
         except:
           tmpd = np.array([[ _data[0], _data[col_num]]] )
         #
-        if sdn not in data[qty].keys():
+        if sdn not in list(data[qty].keys()):
           data[qty][sdn] = tmpd
         else:
           data[qty][sdn] = np.append(data[qty][sdn], tmpd, axis=0)
@@ -486,7 +486,7 @@ but not between 1000-1500M and then again from 1500-\infty M.
   #}}}
 
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: ReadSpECGlobalOutputWithColsFromASCII
 Function: Reads in data from SpEC output files that contains global variables
 dumped as a function of time.
@@ -501,7 +501,7 @@ those are smoothly glossed over. E.g. subdomain X may exist between t = 0-1000M
 but not between 1000-1500M and then again from 1500-\infty M.
 
 Note 2: SEE SIMILAR FUNCTION ReadSpECTabularOutputFromASCII.
-  """
+  """)
 
 def ReadSpECGlobalOutputWithColsFromASCII(DIR, LEV, FILE,
                               downsample_by=1,
@@ -535,14 +535,14 @@ Note 2: SEE SIMILAR FUNCTION ReadSpECTabularOutputFromASCII.
   for idx, _dir in enumerate(inspiral_dirs):
     filename = os.path.join(_dir, FILE)
     if not os.path.exists(filename):
-      if verbose: print "Skipping: %s" % filename
+      if verbose: print("Skipping: %s" % filename)
       continue
-    if debug: print "READING %s" % filename
+    if debug: print("READING %s" % filename)
     #
     # Read in data
     _data = np.loadtxt(filename)
     if np.shape(_data) == (0,):
-      if debug: print "No data found for %s" % filename
+      if debug: print("No data found for %s" % filename)
       continue
     _, header_quantities = ParseHeaderForSpECTabularOutputASCII(filename,
                                              separate_quantities_from_subdomains=False)
@@ -551,11 +551,11 @@ Note 2: SEE SIMILAR FUNCTION ReadSpECTabularOutputFromASCII.
     for jdx, qty in enumerate(header_quantities):
         col_num = header_quantities[qty]
         try:
-            tmpd = np.array(zip( _data[::downsample_by,0], _data[::downsample_by,col_num] ))
+            tmpd = np.array(list(zip( _data[::downsample_by,0], _data[::downsample_by,col_num] )))
         except:
             tmpd = np.array([[ _data[0], _data[col_num]]] )
         #
-        if qty not in data.keys():
+        if qty not in list(data.keys()):
           data[qty] = tmpd
         else:
           data[qty] = np.append(data[qty], tmpd, axis=0)
@@ -569,13 +569,13 @@ Get the time at which ringdown segments are started for a given simulation.
 Inputs needed are the main run directory (path to "Ev"), and Lev number (int)
     """
     if not os.path.exists( os.path.join(DIR,'Lev%s_Ringdown/' % LEV) ):
-        print "  Warning: Run in %s has NOT STARTED RINGDOWN AT LEV%d" % (DIR, LEV)
+        print("  Warning: Run in %s has NOT STARTED RINGDOWN AT LEV%d" % (DIR, LEV))
         return -1
     filename = os.path.join(DIR,
                 'Lev%s_Ringdown/Lev%d_AA/Run/ConstraintNorms/GhCe_Norms.dat' %
                             (LEV,LEV))
     if not os.path.exists(filename):
-        print "PATH %s does not exist" % filename
+        print("PATH %s does not exist" % filename)
         raise IOError("Could not determine ringdown start time")
     d = np.loadtxt(filename)
     if len(np.shape(d))==1: return d[0]
@@ -591,21 +591,21 @@ Inputs needed are the main run directory (path to "Ev"), and Lev number (int)
                           "Lev%d_??/Run/ForContinuation/AhC.dat" % LEV))
     ahc_glob = sorted(ahc_glob)
     if len(ahc_glob) == 0:
-        print "  Warning: AhC as not been found even once @ Run IN %s AT LEV%d" % (DIR, LEV)
+        print("  Warning: AhC as not been found even once @ Run IN %s AT LEV%d" % (DIR, LEV))
         return -1
     ahc_file = ahc_glob[0]
     if not os.path.exists(ahc_file):
-        print "PATH %s does not exist" % ahc_file
+        print("PATH %s does not exist" % ahc_file)
         raise IOError("Could not determine the time when AhC was found.")
     d = np.loadtxt(ahc_file)
     if len(np.shape(d))==1: return d[0]
     elif len(np.shape(d))==2: return d[0,0]
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: ReadSpECTabularOutputFromH5
 Function:  Read in SpEC's HDF5 output files from all available segments and
  combine them. Provide file name with respect to Lev?_?? directory.
-  """
+  """)
 def ReadSpECTabularOutputFromH5(DIR,
                                 LEV,
                                 FILE,
@@ -640,9 +640,9 @@ def ReadSpECTabularOutputFromH5(DIR,
     for jdx, _dir in enumerate(inspiral_dirs):
         filename = os.path.join(_dir, FILE)
         if not os.path.exists(filename):
-            if verbose: print "Skipping: %s" % filename
+            if verbose: print("Skipping: %s" % filename)
             continue
-        if debug: print "READING %s" % filename
+        if debug: print("READING %s" % filename)
         with h5py.File(filename, 'r') as fp:
             try:
                 if GROUP is not '': _data = fp[GROUP]
@@ -652,7 +652,7 @@ def ReadSpECTabularOutputFromH5(DIR,
             if DATASET is not '': _data = _data[DATASET]
             else: raise IOError("Please provide name of dataset to read")
             #
-            if debug: print "Shape of dataset = ", np.shape(_data)
+            if debug: print("Shape of dataset = ", np.shape(_data))
             if len(np.shape(_data)) == 1:
                 ncol = len(_data)
                 nrow = 1
@@ -681,13 +681,13 @@ def ReadSpECTabularOutputFromH5(DIR,
     #}}}
 
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Read HDF5 files completely, recursively. Returns a dictionary with structure
 of input file preserved.
 
 NOTE: First input needed is the dictionary output has to be appended to.
  If reading the first time, pass "{}"
-    """
+    """)
 
 def ReadH5Dir(out_dict, in_dir,
               downsample_by=1,
@@ -703,28 +703,28 @@ NOTE: First input needed is the dictionary output has to be appended to.
     """
     #{{{
     retval = out_dict
-    for kk in in_dir.keys():
+    for kk in list(in_dir.keys()):
         if type(in_dir[kk]) == h5py._hl.group.Group:
             if read_dirs_matching_0level != '':
                 if kk.find(read_dirs_matching_0level) < 0:
-                    if verbose: print "Skipping directory: ", kk
+                    if verbose: print("Skipping directory: ", kk)
                     continue
-            if verbose: print "Reading directory: ", kk
-            if kk not in retval.keys():
+            if verbose: print("Reading directory: ", kk)
+            if kk not in list(retval.keys()):
                 retval[kk] = {}
             retval[kk] = ReadH5Dir(retval[kk], in_dir[kk],
                                    read_dirs_matching_0level=read_dirs_matching_alllevels,
                                    verbose=debug)
         elif type(in_dir[kk]) == h5py._hl.dataset.Dataset:
-            if kk not in retval.keys():
-                if verbose: print "Reading dataset: ", kk
+            if kk not in list(retval.keys()):
+                if verbose: print("Reading dataset: ", kk)
                 retval[kk] = ReadH5DatasetWithLegend(in_dir[kk], downsample_by=downsample_by)
             else:
-                if verbose: print "Appending dataset: ", kk
+                if verbose: print("Appending dataset: ", kk)
                 ## TO CHANGE DATATYPE TO PANDAS, CHANGE THE FOLLOWING
                 _data = ReadH5DatasetWithLegend(in_dir[kk], downsample_by=downsample_by)
                 for col_num, col_name in enumerate(_data.keys()):
-                    if col_name not in retval[kk].keys():
+                    if col_name not in list(retval[kk].keys()):
                         retval[kk][col_name] = _data[col_name]
                     else:
                         retval[kk][col_name] = np.append(retval[kk][col_name], _data[col_name], axis=0)
@@ -732,7 +732,7 @@ NOTE: First input needed is the dictionary output has to be appended to.
     #}}}
 
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: ReadSpECTabularOutputWithColsFromH5
 Function: Reads in SpEC output stored in HDF5 format. The structure of HDF5 file is
 preserved in output dictionary. And output from different segments is combined.
@@ -744,7 +744,7 @@ header, and then the data is combined.
 This makes sure that if some segments are missing certain columns,
 those are smoothly glossed over. E.g. subdomain X may exist between t = 0-1000M
 but not between 1000-1500M and then again from 1500-\infty M.
-    """
+    """)
 
 def ReadSpECTabularOutputWithColsFromH5(DIR, LEV, FILE,
                                         downsample_by=1,
@@ -777,9 +777,9 @@ but not between 1000-1500M and then again from 1500-\infty M.
     for idx, _dir in enumerate(inspiral_dirs):
         filename = os.path.join(_dir, FILE)
         if not os.path.exists(filename):
-            if verbose: print "Skipping: %s" % filename
+            if verbose: print("Skipping: %s" % filename)
             continue
-        if debug: print "READING %s" % filename
+        if debug: print("READING %s" % filename)
         # Read in data
         fin = h5py.File(filename, 'r')
         data = ReadH5Dir(data, fin,
@@ -792,7 +792,7 @@ but not between 1000-1500M and then again from 1500-\infty M.
     #}}}
 
 
-if verbose: print """>>>>>>>>>>>>>>>>>>>>>>>>>
+if verbose: print(""">>>>>>>>>>>>>>>>>>>>>>>>>
 Name: GetOpOfQuantityOverDomain
 Function: Wrapper function that takes in a dataset that contains some quantity
 Q_i == Q_i(t) over each subdomain, as a function of time; and maps them all
@@ -804,7 +804,7 @@ INPUTS:
 data_dict : (dictionary, with keys "SUBDOMAIN-NAME.dir")
 op_func   : (function) It takes in all {Q_i} together and maps
             them to a single value Q_o
-    """
+    """)
 
 def DummyMin(vals, sds): return np.min(vals)
 
@@ -822,14 +822,14 @@ data_dict : (dictionary, with keys "SUBDOMAIN-NAME.dir")
 op_func   : (function) It takes in all {Q_i} together and maps
             them to a single value Q_o
     """
-    all_subdomains = data_dict.keys()
+    all_subdomains = list(data_dict.keys())
     if len(all_subdomains) == 0:
         raise RuntimeError("No subdomains found in input dictionary..")
-    if debug: print "All subdomains:- ", all_subdomains
+    if debug: print("All subdomains:- ", all_subdomains)
 
     # Get time series from data
     if verbose:
-        print "Extracting global times .. "
+        print("Extracting global times .. ")
 
     for idx, sd in enumerate(all_subdomains):
         if idx != 0:
@@ -845,7 +845,7 @@ op_func   : (function) It takes in all {Q_i} together and maps
 
     # Get min/max over *available* subdomains at all times
     if verbose:
-        print "Computing min/max data at those times .. "
+        print("Computing min/max data at those times .. ")
 
     yseries = np.array([])
     subdomainseries = []
