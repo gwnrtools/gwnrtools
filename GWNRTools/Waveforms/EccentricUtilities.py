@@ -11,7 +11,7 @@
 ## IMPORTS
 ########################################
 import os, sys
-import glob, commands as cmd
+import glob, subprocess as cmd
 import subprocess
 import h5py
 import numpy as np
@@ -45,9 +45,9 @@ def get_q_m_e_from_filename(filename):
     # FIXME
     if 'good' in filename or 'bad' in filename:
       filename = filename.split('/')[-1]
-      print "filename received: %s" % filename
+      print("filename received: %s" % filename)
       filename = filename.strip('bad_14Hz_').strip('good_14Hz_')
-      print "filename trimmed: %s" % filename
+      print("filename trimmed: %s" % filename)
       m1str, m2str, e0str = [s.split('-')[-1] for s in filename.split('/')[-1].split('_')]
       m1 = float(m1str)
       m2 = float(m2str)
@@ -92,7 +92,7 @@ written to disk.
                     (mean_anomaly, inclination, init_phase, tolerance, f_lower, 1./delta_t)
     cmd_string += " -o %s -v" % output_file_tag
     if verbose:
-        print >> sys.stdout, "Command being run: %s" % cmd_string
+        print("Command being run: %s" % cmd_string, file=sys.stdout)
         sys.stdout.flush()
     ##
     ## Call executable
@@ -100,7 +100,7 @@ written to disk.
                                             stdout=subprocess.PIPE,
                                             stderr=subprocess.PIPE).communicate()
     if verbose:
-        print >> sys.stdout, cmd_output
+        print(cmd_output, file=sys.stdout)
         sys.stdout.flush()
     ##
     ## Return command output
@@ -128,16 +128,16 @@ trajectory information as well as the GW polarizations.
     output_file_tag = 'tmp_%06d' % int(np.random.random() * 1e7)
     cmd_string += " -o %s -v" % output_file_tag
     if verbose:
-        print >> sys.stdout, "Command being run: %s" % cmd_string
+        print("Command being run: %s" % cmd_string, file=sys.stdout)
         sys.stdout.flush()
     cmd_output = cmd.getoutput(cmd_string)
     if verbose:
-        print >> sys.stdout, cmd_output
+        print(cmd_output, file=sys.stdout)
         sys.stdout.flush()
     ##
     dynamics_filename = sorted(glob.glob(output_file_tag + "*" + "Dynamics*"))[-1]
     if verbose:
-        print >> sys.stdout, "Reading dynamics from: %s" % dynamics_filename
+        print("Reading dynamics from: %s" % dynamics_filename, file=sys.stdout)
         sys.stdout.flush()
     ##
     dynamics_headers, _= ParseHeaderForSpECTabularOutputASCII(dynamics_filename,
@@ -146,17 +146,17 @@ trajectory information as well as the GW polarizations.
     dynamics = {}
     for idx in dynamics_headers:
         label = dynamics_headers[idx].split()[0]
-        if verbose: print "reading %s from col %d" % (label, idx)
+        if verbose: print("reading %s from col %d" % (label, idx))
         dynamics[label] = dynamics_data[:,idx]
     ##
     wave_filename = sorted(glob.glob(output_file_tag + "*"))[0]
     if verbose:
-        print >> sys.stdout, "Reading waveform from: %s" % wave_filename
+        print("Reading waveform from: %s" % wave_filename, file=sys.stdout)
         sys.stdout.flush()
     ##
     wave_data = np.loadtxt(wave_filename)
     if verbose:
-        print >> sys.stdout, "Reading polarization timeseries from OBJ of shape: ", np.shape(wave_data)
+        print("Reading polarization timeseries from OBJ of shape: ", np.shape(wave_data), file=sys.stdout)
     dynamics['h_Time'] = wave_data[:,0]
     dynamics['hp'] = wave_data[:,1]
     dynamics['hc'] = wave_data[:,2]
@@ -220,7 +220,7 @@ over {x_offset, e0, anom0). This is done in two steps:-
         anom0, e0 = x
         x1, y1, q = args
         lbl = '%.12f,%.12f' % (e0, anom0)
-        if lbl not in objective_function_eccentricity.waves.keys():
+        if lbl not in list(objective_function_eccentricity.waves.keys()):
             try:
                 if EXE is None:
                     retval = get_eccentric_waveform_and_dynamics(\
@@ -245,8 +245,8 @@ over {x_offset, e0, anom0). This is done in two steps:-
                                   offset_low_lim=-400,
                                   offset_high_lim=-100)
         if objective_function_eccentricity.counter % 1 == 0:
-            print "trying out: e0 = %.12f, anom0 = %.12f, objective = %.12f" %\
-                    (e0, anom0, objective_scaling_fac*res.fun)
+            print("trying out: e0 = %.12f, anom0 = %.12f, objective = %.12f" %\
+                    (e0, anom0, objective_scaling_fac*res.fun))
         objective_function_eccentricity.counter += 1
         return res.fun * objective_scaling_fac
     objective_function_eccentricity.counter = 0
@@ -256,13 +256,13 @@ over {x_offset, e0, anom0). This is done in two steps:-
     opt_args = (x1, y1, q)
 
     if debug:
-        print "Testing objective function"
-        print "Offset 0: ", objective_function_eccentricity([0,0], *opt_args)
-        print "Offset 550: ", objective_function_eccentricity([np.pi,0.01], *opt_args)
+        print("Testing objective function")
+        print("Offset 0: ", objective_function_eccentricity([0,0], *opt_args))
+        print("Offset 550: ", objective_function_eccentricity([np.pi,0.01], *opt_args))
 
     for idx in range(num_retries):
         if verbose:
-            print >>sys.stdout, "\nTry %d to compute optimal eccentricity" % idx
+            print("\nTry %d to compute optimal eccentricity" % idx, file=sys.stdout)
             sys.stdout.flush()
         ##
         bnds = ((anom_low, anom_high), (ecc_low, ecc_high))
@@ -274,8 +274,7 @@ over {x_offset, e0, anom0). This is done in two steps:-
         anom_init, ecc_init = retval.x
     ##
     if verbose:
-        print >>sys.stdout,\
-            "optimization took %d objective func evals" % objective_function_eccentricity.counter
+        print("optimization took %d objective func evals" % objective_function_eccentricity.counter, file=sys.stdout)
         sys.stdout.flush()
     ### 7) RETURN OPTIMIZED PARAMETERS
     return [retval.x, retval]

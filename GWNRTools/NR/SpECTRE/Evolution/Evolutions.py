@@ -18,8 +18,8 @@
 
 class BatchEvolutions(object):
     def __init__(self, exes, tests, test_dir,
-                 reduction_data_file_name='PlaneWave2DPeriodicReductions.h5',
-                 volume_data_file_name='PlaneWave2DPeriodicVolume0.h5'):
+                reduction_data_file_name='PlaneWave2DPeriodicReductions.h5',
+                volume_data_file_name='PlaneWave2DPeriodicVolume0.h5'):
         '''
 Input:
 ------
@@ -27,30 +27,27 @@ exes     : dict, executables for all executable configs
 tests    : list, analysis tags for all test configs
 test_dir : str, Base directory within which to run all tests
 
-[Optional]
-reduction_data_file_name : str, assuming 1 reduction observer
-volume_data_file_name : str, assuming 1 volume observer
-
 Functions:
 ----------
 
 1) Setup tests
 2) Run tests
+3) Visualize output (**development**)
         '''
-        self.exes = exes
-        self.tests = tests
-        self.test_dirs = {x: os.path.join(test_dir, x) for x in self.tests}
+        self.exes     = exes
+        self.tests    = tests
+        self.test_dirs = {x:os.path.join(test_dir, x) for x in self.tests}
         self.output_files = {
-            'reduction': reduction_data_file_name,
-            'volume': volume_data_file_name
+            'reduction' : reduction_data_file_name,
+            'volume'    : volume_data_file_name
         }
-
+    
     def available_tests(self):
         '''
 Names of planned tests
         '''
         return self.tests
-
+    
     def check_exes(self):
         '''
 Check whether executables for all tests planned actually exist. 
@@ -59,37 +56,37 @@ Returns True if they do for all tests.
         for test in self.tests:
             config_name, test_name = test.split('/')
             assert(config_name in self.exes.keys(),
-                   "Config name {0} not defined above...".format(config_name))
+                  "Config name {0} not defined above...".format(config_name));
             logging.info("Exec for test {0:s}: Found".format(config_name))
-
+            
     def exe(self, config_name):
         '''
 Full path to executable file for a given test
         '''
         assert(config_name in self.exes.keys(),
-               "Config name {0} not defined above...".format(config_name))
+              "Config name {0} not defined above...".format(config_name));
         return self.exes[config_name]
-
+    
     def run_dir(self, test):
         '''
 Full path to cluster directory to run the given test
         '''
         assert(test in self.test_dirs.keys(),
-               "Test name {0} not defined above...".format(test))
+               "Test name {0} not defined above...".format(test));
         return self.test_dirs[test]
-
+    
     def input_file(self, test):
         '''
 Full path to test input file for a given test
         '''
         return os.path.join(self.run_dir(test), "TestInput.yaml")
-
+    
     def cluster_submission_file(self, test, cluster):
         '''
 Full path to cluster submission file for a given test
         '''
         return os.path.join(self.run_dir(test), "{0:s}.sh".format(cluster))
-
+    
     def setup_run(self, test, cluster='local'):
         '''
 Setup a single test run:
@@ -99,14 +96,14 @@ Setup a single test run:
  - TODO: Add option to symlink exec instead of copying it over;
         '''
         config_name, test_name = test.split('/')
-        exe = self.exe(config_name)
+        exe        = self.exe(config_name)
         input_file = self.input_file(test)
-        run_dir = self.run_dir(test)
-
+        run_dir    = self.run_dir(test)
+        
         # Make directory
         logging.info("Making run dir: {0:s}".format(run_dir))
         subprocess.call(['mkdir', '-p', run_dir])
-
+        
         # Copy the executable over
         logging.info("Copying over {0:s}".format(exe))
         if not os.path.exists(exe):
@@ -114,13 +111,13 @@ Setup a single test run:
             # Make it executable
             subprocess.call(['chmod', '+x', exe])
             logging.info("..exe copied to {0:s}".format(exe))
-
+        
         # Write appropriate input file
         in_file_name = self.input_file(test)
         logging.info("Writing input file: {0:s}".format(in_file_name))
         with open(in_file_name, 'w') as fout:
             fout.write(input_files[test_name])
-
+        
         # Write appropriate submission file if needed
         if cluster != 'local':
             sub_file_name = self.cluster_submission_file(test, cluster)
@@ -143,7 +140,7 @@ Setup a single test run:
         else:
             pass
         return exe, run_dir
-
+    
     def submit_to_cluster(self, test, cluster):
         '''
 Function to submit a prepared test
@@ -152,11 +149,11 @@ Function to submit a prepared test
         os.chdir(self.run_dir(test))
         # Submit
         return subprocess.check_output([
-            'sbatch',
-            os.path.split(self.cluster_submission_file(test, cluster))[-1],
-            '> sub.out'
-        ], shell=True)
-
+                'sbatch',
+                    os.path.split(self.cluster_submission_file(test, cluster))[-1],
+                        '> sub.out'
+            ], shell=True)
+        
     def run(self, test, setup=False, ncores=4, cluster='local'):
         '''
 Run a single test:
@@ -171,14 +168,15 @@ Run a single test:
             config_name, test_name = test.split('/')
             exe = self.exe(config_name)
             run_dir = self.run_dir(test)
-
+        
+        
         # move to analysis directory
         os.chdir(run_dir)
-
+        
         if cluster != 'local':
             exe = os.path.split(exe)[-1]
-            input_file = os.path.split(self.input_file(test))[-1]
-
+            input_file   = os.path.split(self.input_file(test))[-1]
+            
             # Run SpECTRE here
             subprocess.check_output([
                 './' + exe,
@@ -187,13 +185,13 @@ Run a single test:
             ], shell=True)
         else:
             self.submit_to_cluster(self, test, cluster)
-
+    
     def output_file(self, test, which='reduction'):
         '''
 Full path to reduction or volume observer file for a given test
         '''
         return os.path.join(self.run_dir(test), self.output_files[which])
-
+    
     def check_output(self, test, which=['volume', 'reduction']):
         '''
 Verify if reduction and / or volume observer outputs have been
@@ -210,14 +208,13 @@ written for a given test
                 if size < 1:
                     size = os.path.getsize(out_file) / (1024 * 1)
                     unit = 'k'
-                logging.info(
-                    "...Found with size {0:.2f}{1:s}".format(size, unit))
+                logging.info("...Found with size {0:.2f}{1:s}".format(size, unit))
                 out_found.append(True)
             else:
                 logging.info("...Not Written.")
                 out_found.append(False)
         return np.all(out_found)
-
+    
     def read_output_file(self, test, which='reduction'):
         '''
 H5Py File pointer to reduction or volume observer output

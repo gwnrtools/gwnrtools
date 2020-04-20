@@ -10,7 +10,7 @@
 import sys, os
 import h5py
 import glob
-import commands as cmd
+import subprocess as cmd
 import time
 from numpy import *
 import numpy as np
@@ -70,10 +70,10 @@ def smooth(x,window_len=11,window='flat'):
     """
 
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
+        raise ValueError("smooth only accepts 1 dimension arrays.")
 
     if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
+        raise ValueError("Input vector needs to be bigger than window size.")
 
 
     if window_len<3:
@@ -81,7 +81,7 @@ def smooth(x,window_len=11,window='flat'):
 
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
 
     s=np.r_[x[window_len-1:0:-1],x,x[-1:-window_len:-1]]
@@ -178,7 +178,7 @@ def shift_waveform_phase_time(hp, hc, t_shift, ph_shift,
   if ph_shift != 0.:
     amplitude = amplitude_from_polarizations(hpnew, hcnew)
     phase = phase_from_polarizations(hpnew, hcnew)
-    if verbose: print "shifting by %f radians" % ph_shift
+    if verbose: print("shifting by %f radians" % ph_shift)
     phase = phase + ph_shift
     hpnew = TimeSeries(amplitude * np.cos(phase + np.pi), \
                   epoch=hpnew._epoch, delta_t=hpnew.delta_t, dtype=hpnew.dtype)
@@ -187,7 +187,7 @@ def shift_waveform_phase_time(hp, hc, t_shift, ph_shift,
   # Now apply time shift
   if t_shift != 0:
     id_shift = int(np.round(np.abs(t_shift) / hpnew.delta_t))
-    if verbose: print "shifting by %d (%f)" % (id_shift, t_shift)
+    if verbose: print("shifting by %d (%f)" % (id_shift, t_shift))
     if t_shift > 0:
       hpnew.append_zeros(id_shift)
       hcnew.append_zeros(id_shift)
@@ -234,14 +234,14 @@ def align_waveforms_amplitude_peak(hplus1, hcross1, hplus2, hcross2,
   h2_max_amp_time = tmp['x']
   h2_max_amp = -1 * tmp['fun']
   if verbose:
-    print "h1 max time = %f, epoch = %f" % (h1_max_amp_time, float(hp1._epoch))
-    print "h2 max time = %f, epoch = %f" % (h2_max_amp_time, float(hp2._epoch))
+    print("h1 max time = %f, epoch = %f" % (h1_max_amp_time, float(hp1._epoch)))
+    print("h2 max time = %f, epoch = %f" % (h2_max_amp_time, float(hp2._epoch)))
 
   # Amplitude location from the start
   t1 = h1_max_amp_time
   t2 = h2_max_amp_time
   t_shift = t1 - t2
-  if verbose: print "time shift = %f to be added to waveform 2" % t_shift
+  if verbose: print("time shift = %f to be added to waveform 2" % t_shift)
   #
   # Find phase shift
   #
@@ -255,9 +255,9 @@ def align_waveforms_amplitude_peak(hplus1, hcross1, hplus2, hcross2,
   ph_shift = np.float64(ph1 - ph2)
 
   if verbose:
-    print "phase1 at peak idx = %d, = %f" % (int(np.round(t1 / hp1.delta_t)), ph1)
-    print "phase2 at peak idx = %d, = %f" % (int(np.round(t2 / hp2.delta_t)), ph2)
-    print "phase shift = %f, time shift = %f" % (ph_shift, t_shift)
+    print("phase1 at peak idx = %d, = %f" % (int(np.round(t1 / hp1.delta_t)), ph1))
+    print("phase2 at peak idx = %d, = %f" % (int(np.round(t2 / hp2.delta_t)), ph2))
+    print("phase shift = %f, time shift = %f" % (ph_shift, t_shift))
   #
   # Shift whichever needs to be shifted to future time.
   # Shifting back in time is tricky.
@@ -322,7 +322,7 @@ def align_waveforms_at_frequency(hplus1, hcross1, hplus2, hcross2, falign,
   t1 = f1_align_time
   t2 = f2_align_time
   t_shift = t1 - t2
-  if verbose: print "time shift = %f to be added to waveform 2" % t_shift
+  if verbose: print("time shift = %f to be added to waveform 2" % t_shift)
   #
   # Find phase shift at the time
   #
@@ -335,11 +335,11 @@ def align_waveforms_at_frequency(hplus1, hcross1, hplus2, hcross2, falign,
   ph2 = phs2I(f2_align_time)
   ph_shift = (ph1 - ph2) * 1
   if verbose:
-    print "time @ f1 = %f : %f" % (falign, f1_align_time)
-    print "time @ f2 = %f : %f" % (falign, f2_align_time)
-    print "ph1 = %f, ph2 = %f" % (ph1, ph2)
-    print "phase shift = %f, time shift = %f" % (ph_shift, t_shift)
-    print "type of ph_shift, t_shift: ", type(ph_shift), type(t_shift)
+    print("time @ f1 = %f : %f" % (falign, f1_align_time))
+    print("time @ f2 = %f : %f" % (falign, f2_align_time))
+    print("ph1 = %f, ph2 = %f" % (ph1, ph2))
+    print("phase shift = %f, time shift = %f" % (ph_shift, t_shift))
+    print("type of ph_shift, t_shift: ", type(ph_shift), type(t_shift))
   #
   # Shift whichever needs to be shifted to future time.
   # Shifting back in time is tricky.
@@ -415,12 +415,12 @@ def align_waveforms_optimally(hplus1, hcross1, hplus2, hcross2,
             high_frequency_cutoff=high_frequency_cutoff)
   optimal_overlap = m[0] # FIXME
   if verbose:
-    print "Overlap BEFORE ALIGNMENT:", \
+    print("Overlap BEFORE ALIGNMENT:", \
         overlap_cplx(h_plus1, h_plus2, psd=psd,
                     low_frequency_cutoff=low_frequency_cutoff,
                     high_frequency_cutoff=high_frequency_cutoff,
-                    normalized=True)
-    print "Match BEFORE ALIGNMENT:", m
+                    normalized=True))
+    print("Match BEFORE ALIGNMENT:", m)
   #############################################################################
   ## Iterate to obtain the correct phase and time shifts, using which we
   ## align the two waveforms such that their unmaximized and maximized overlaps
@@ -462,9 +462,9 @@ def align_waveforms_optimally(hplus1, hcross1, hplus2, hcross2,
     ph_shift_counter+= ph_shift
     #
     if verbose:
-      print " >> Iteration %d\n" % (idx+1)
-      print "max_id = %d, id_shift = %d" % (max_id, int(t_shift / snr.delta_t))
-      print "t_shift = %f,\n ph_shift = %f" % (t_shift, ph_shift)
+      print(" >> Iteration %d\n" % (idx+1))
+      print("max_id = %d, id_shift = %d" % (max_id, int(t_shift / snr.delta_t)))
+      print("t_shift = %f,\n ph_shift = %f" % (t_shift, ph_shift))
     #
     ####
     ## 3) Shift the second hp/hc pair (ORIGINAL) by cumulative phase/time offset
@@ -491,11 +491,11 @@ def align_waveforms_optimally(hplus1, hcross1, hplus2, hcross2,
                       high_frequency_cutoff=high_frequency_cutoff,
                       normalized=True)
     if verbose:
-      print "Overlap AFTER ALIGNMENT = ", olap
-      print "Optimal Overlap = ", optimal_overlap
+      print("Overlap AFTER ALIGNMENT = ", olap)
+      print("Optimal Overlap = ", optimal_overlap)
     #
     idx += 1
-    if verbose: print "\n"
+    if verbose: print("\n")
   ## >>>>>>
   # 3) Iteration ended.
 
@@ -504,7 +504,7 @@ def align_waveforms_optimally(hplus1, hcross1, hplus2, hcross2,
   ###
   if verify:
     #
-    print "Verifying time alignment..."
+    print("Verifying time alignment...")
     #
     # 1) Determine the phase and time shifts for optimal match
     snr, corr, snr_norm = \
@@ -512,30 +512,30 @@ def align_waveforms_optimally(hplus1, hcross1, hplus2, hcross2,
                         psd, low_frequency_cutoff, high_frequency_cutoff, None)
     max_snr, max_id = snr.abs_max_loc()
     if verbose:
-      print "Post-Alignment Index of MAX SNR (should be 0 or 1 or %d): %d" %\
-                (len(snr)-1, max_id)
-      print "Length of whole SNR time-series: ", len(snr)
+      print("Post-Alignment Index of MAX SNR (should be 0 or 1 or %d): %d" %\
+                (len(snr)-1, max_id))
+      print("Length of whole SNR time-series: ", len(snr))
     #
     # 2) Test if current time shift is within tolerance
     if max_id !=0 and max_id !=1 and \
         max_id != (len(snr)-1) and max_id != (len(snr)-2):
       raise RuntimeError( "Warning: ALIGNMENT NOT CORRECT (see above)" )
     else:
-      print "Alignment in time correct.."
+      print("Alignment in time correct..")
     #
     # 3) Test if current phase shift is within tolerance
-    print "Verifying phase alignment..."
+    print("Verifying phase alignment...")
     ph_shift = np.angle(snr[max_id])
     if np.abs(ph_shift) > phase_tolerance:
       if verbose:
-        print "dphi, dphi+pi, dphi-pi: ", ph_shift, ph_shift + np.pi, ph_shift - np.pi
-        print "dphi/pi, dphi*pi: ", ph_shift / np.pi, ph_shift * np.pi
+        print("dphi, dphi+pi, dphi-pi: ", ph_shift, ph_shift + np.pi, ph_shift - np.pi)
+        print("dphi/pi, dphi*pi: ", ph_shift / np.pi, ph_shift * np.pi)
       raise RuntimeError( "Warning: Phasing alignment possibly incorrect." )
     else:
       if verbose:
-        print "Post-Alignmend Phase shift (should be < %.2e): %.2e" %\
-         (phase_tolerance, np.abs(ph_shift))
-      print "Alignment in phasing correct.. (within tol %.2e)" % phase_tolerance
+        print("Post-Alignmend Phase shift (should be < %.2e): %.2e" %\
+         (phase_tolerance, np.abs(ph_shift)))
+      print("Alignment in phasing correct.. (within tol %.2e)" % phase_tolerance)
     #
 
   #############################################################################
@@ -614,20 +614,20 @@ def align_waveforms_suboptimally(hplus1, hcross1, hplus2, hcross2,
   ph_shift = np.angle(snr[max_id]) -0.24850315030-0.0465881735639
   #
   if verbose:
-    print "max_id = %d, id_shift = %d" % (max_id, int(t_shift / snr.delta_t))
-    print "t_shift = %f,\n ph_shift = %f" % (t_shift, ph_shift)
+    print("max_id = %d, id_shift = %d" % (max_id, int(t_shift / snr.delta_t)))
+    print("t_shift = %f,\n ph_shift = %f" % (t_shift, ph_shift))
   #
   # print OVERLAPS
   if verbose:
-    print "Overlap BEFORE ALIGNMENT:", \
+    print("Overlap BEFORE ALIGNMENT:", \
         overlap_cplx(h_plus1, h_plus2, psd=psd,
                     low_frequency_cutoff=low_frequency_cutoff,
                     high_frequency_cutoff=high_frequency_cutoff,
-                    normalized=True)
-    print "Match BEFORE ALIGNMENT:", \
+                    normalized=True))
+    print("Match BEFORE ALIGNMENT:", \
         match(h_plus1, h_plus2, psd=psd,
                     low_frequency_cutoff=low_frequency_cutoff,
-                    high_frequency_cutoff=high_frequency_cutoff)
+                    high_frequency_cutoff=high_frequency_cutoff))
 
   # Shift whichever needs to be shifted to future time.
   # Shifting back in time is tricky.
@@ -650,39 +650,39 @@ def align_waveforms_suboptimally(hplus1, hcross1, hplus2, hcross2,
   if verbose:
     htilde = make_frequency_series(h_plus1)
     psd = from_string(psd_name, len(htilde), htilde.delta_f, low_frequency_cutoff)
-    print "Overlap AFTER ALIGNMENT:", \
+    print("Overlap AFTER ALIGNMENT:", \
         overlap_cplx(h_plus1, hp2, psd=psd,
                     low_frequency_cutoff=low_frequency_cutoff,
                     high_frequency_cutoff=high_frequency_cutoff,
-                    normalized=True)
-    print "Match AFTER ALIGNMENT:", \
+                    normalized=True))
+    print("Match AFTER ALIGNMENT:", \
         match(h_plus1, hp2, psd=psd,
                     low_frequency_cutoff=low_frequency_cutoff,
-                    high_frequency_cutoff=high_frequency_cutoff)
+                    high_frequency_cutoff=high_frequency_cutoff))
   if verify:
     #
-    print "Verifying time alignment..."
+    print("Verifying time alignment...")
     # Determine the phase and time shifts for optimal match
     snr, corr, snr_norm = \
       matched_filter_core( #htilde, stilde,
                         h_plus1, hp2,
                         psd, low_frequency_cutoff, high_frequency_cutoff, None)
     max_snr, max_id = snr.abs_max_loc()
-    print "Post-Alignment Index of MAX SNR (should be 0 or 1 or %d): %d" %\
-                (len(snr)-1, max_id)
-    print "Length of whole SNR time-series: ", len(snr)
+    print("Post-Alignment Index of MAX SNR (should be 0 or 1 or %d): %d" %\
+                (len(snr)-1, max_id))
+    print("Length of whole SNR time-series: ", len(snr))
     if max_id !=0 and max_id !=1 and max_id != (len(snr)-1) and max_id != (len(snr)-2):
       #raise RuntimeError( "Warning: ALIGNMENT NOT CORRECT (see above)" )
-      print "Warning: ALIGNMENT NOT CORRECT (see above)"
+      print("Warning: ALIGNMENT NOT CORRECT (see above)")
     else:
-      print "Alignment in time correct.."
+      print("Alignment in time correct..")
     #
-    print "Verifying phase alignment..."
+    print("Verifying phase alignment...")
     ph_shift = np.angle(snr[max_id])
     if ph_shift != 0:
-      print "Warning: Phasing alignment possibly incorrect."
-      print "dphi, dphi+pi, dphi-pi: ", ph_shift, ph_shift + np.pi, ph_shift - np.pi
-      print "dphi/pi, dphi*pi: ", ph_shift / np.pi, ph_shift * np.pi
+      print("Warning: Phasing alignment possibly incorrect.")
+      print("dphi, dphi+pi, dphi-pi: ", ph_shift, ph_shift + np.pi, ph_shift - np.pi)
+      print("dphi/pi, dphi*pi: ", ph_shift / np.pi, ph_shift * np.pi)
     #
 
   #

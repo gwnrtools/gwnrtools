@@ -6,7 +6,7 @@
 import os, sys
 from collections import Mapping, Container
 from sys import getsizeof
-import glob, commands as cmd
+import glob, subprocess as cmd
 from numbers import Number
 from collections import Set, Mapping, deque
 
@@ -36,7 +36,7 @@ def MemoryUsage(o):
     """
     #{{{
     try: # Python 2
-        zero_depth_bases = (basestring, Number, xrange, bytearray)
+        zero_depth_bases = (str, Number, xrange, bytearray)
         iteritems = 'iteritems'
     except NameError: # Python 3
         zero_depth_bases = (str, bytes, Number, range, bytearray)
@@ -80,7 +80,7 @@ of arbitrary objects, and prints their total size
     mem = 0.0
     for obj in objs: mem += MemoryUsage(obj)
 
-    print("Memory used: %.3f %s" % (mem * prefac, prefac_name))
+    print(("Memory used: %.3f %s" % (mem * prefac, prefac_name)))
 
     sys.stdout.flush()
     return

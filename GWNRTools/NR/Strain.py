@@ -25,7 +25,7 @@ import os
 import sys
 import h5py
 
-import commands as cmd
+import subprocess as cmd
 import string
 from numpy import *
 import numpy as np
@@ -249,7 +249,7 @@ The following do NOT change OR care about the state:
             if filename is not None and not os.path.exists(filename):
                 raise IOError("Please provide data file!")
             if self.verbose > 0:
-                print "Init nr_wave: Reading From Filename=%s" % filename
+                print("Init nr_wave: Reading From Filename=%s" % filename)
         ##################################################################
         # 1. Store various things
         ##################################################################
@@ -267,8 +267,8 @@ The following do NOT change OR care about the state:
         self.phi = phi
         self.distance = distance
         if self.verbose > 2:
-            print "\t\tInput mass, inc, phi, dist = ", totalmass,\
-                                self.inclination, self.phi, self.distance
+            print("\t\tInput mass, inc, phi, dist = ", totalmass,\
+                                self.inclination, self.phi, self.distance)
 
         # Data analysis parameters
         self.sample_rate = sample_rate
@@ -278,14 +278,14 @@ The following do NOT change OR care about the state:
         self.df = 1./self.time_length
         self.n = int(self.sample_rate * self.time_length)
         if self.verbose > 1:
-            print "self.sample-rate & time_len = ", self.sample_rate, self.time_length
-            print "self.n = ", self.n
+            print("self.sample-rate & time_len = ", self.sample_rate, self.time_length)
+            print("self.n = ", self.n)
 
         ##################################################################
         #   2. Read the data from the file. Read all modes.
         ##################################################################
         if self.verbose > 1:
-            print "Init nr_wave: Reading data...."
+            print("Init nr_wave: Reading data....")
         self.data = nr_data(filename, filetype=filetype, wavetype=wavetype,
                             ex_order=ex_order, group_name=group_name,
                             modeLmin = self.modeLmin, modeLmax = self.modeLmax,
@@ -295,15 +295,15 @@ The following do NOT change OR care about the state:
         self.which_modes_to_read()
         self.rescaled_hp, self.rescaled_hc = None, None
         if self.verbose > 1:
-            print "Init nr_wave: Data reading successful."
-            if self.verbose > 2: print "\t\t Read in modes: ", self.which_modes
+            print("Init nr_wave: Data reading successful.")
+            if self.verbose > 2: print("\t\t Read in modes: ", self.which_modes)
         ##################################################################
         #   3. Preprocessing
         ##################################################################
         ## self.rescale_modes()
         if self.totalmass > 1.0: self.rescale_to_totalmass(self.totalmass)
         if self.verbose > 1:
-            print "Init nr_wave: Successful."
+            print("Init nr_wave: Successful.")
         return
     ##
     def which_modes_to_read(self):
@@ -448,7 +448,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
             """.format(t, freq.sample_times[0], freq.sample_times[-1], dimless))
 
         if self.verbose > 1:
-            print "\tget_frequency_t: t = {}, freq = {}".format(t, fvalue)
+            print("\tget_frequency_t: t = {}, freq = {}".format(t, fvalue))
         
         if dimless:
             if not f_is_dimless:
@@ -552,12 +552,12 @@ t_start is dimensionless IFF dimless = True, else its in seconds
             f_lower /= (totalmass * lal.MTSUN_SI)
 
         if self.verbose > 1:
-            print "\t orbit_freq found: {}, f_lower = {}".format(orbit_freq, f_lower)
+            print("\t orbit_freq found: {}, f_lower = {}".format(orbit_freq, f_lower))
 
         if UNDO_SCALING:
             self.make_modes_dimensionless()
             if self.verbose > 3:
-                print "WARNING: Waveform were rescaled to M={}, Now UNSCALED.".format(totalmass)
+                print("WARNING: Waveform were rescaled to M={}, Now UNSCALED.".format(totalmass))
         ##
         return (orbit_freq / f_lower) * totalmass
         ##}}}
@@ -594,7 +594,7 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         else: self.distance = distance
 
         if self.verbose > 1:
-            print "\tRescaling modes to: delta_t={}, M={}, dist={}".format(delta_t, M, distance)
+            print("\tRescaling modes to: delta_t={}, M={}, dist={}".format(delta_t, M, distance))
 
         if delta_t is None or M is None or distance is None:
             raise IOError("One of delta_t={}, M={}, dist={} is None.\
@@ -602,7 +602,7 @@ t_start is dimensionless IFF dimless = True, else its in seconds
 
         which_modes = self.which_modes_to_read()
         if self.verbose > 2:
-            print "\t\tWill use modes: ", which_modes
+            print("\t\tWill use modes: ", which_modes)
 
         for (modeL, modeM) in which_modes:
             self.data.modes[modeL][modeM].resample_to_Hz(delta_t,
@@ -651,8 +651,8 @@ Return plus and cross polarizations.
                                                                             inclination,
                                                                             phi))
         if self.verbose > 1:
-            print "\tComputing polarizations for: delta_t={}, M={}, dist={}, incl={}, phi={}".format(\
-                        delta_t, M, distance, inclination, phi)
+            print("\tComputing polarizations for: delta_t={}, M={}, dist={}, incl={}, phi={}".format(\
+                        delta_t, M, distance, inclination, phi))
         #########################################################
         #### RESCALE AND RESAMPLE INDIVIDUAL MODES
         #########################################################
@@ -665,7 +665,7 @@ Return plus and cross polarizations.
         # Orbital phase at the time of merger (time of amplitude peak for (2,2) mode)
         aPeak, iPeak = self.get_amplitude_peak_h22()
         if self.verbose > 3:
-            print "\t\t\tFound peak of amplitude of h22 at (index, ampl): {}, {}".format(iPeak, aPeak)
+            print("\t\t\tFound peak of amplitude of h22 at (index, ampl): {}, {}".format(iPeak, aPeak))
         phase22 = self.get_mode_phase(2, 2)
         #phiOrbMerger = phase22[iPeak] / 2.
         phiOrbMerger = np.angle(self.data.modes[2][2].data()[iPeak])/-2
@@ -699,20 +699,20 @@ Return plus and cross polarizations.
             ## FIXME DELME
             if self.verbose > 2:
                 null_ylm = np.exp(1 * (phiOrbMerger - 0*np.pi/4. - phi) * modeM * 1.0j)
-                print "\t\t\tPhaseRemovalTerm: ", null_ylm
-                print "\t\t\tUSENR mode at peak: {}, after removing phase: {} ({})".format(
+                print("\t\t\tPhaseRemovalTerm: ", null_ylm)
+                print("\t\t\tUSENR mode at peak: {}, after removing phase: {} ({})".format(
                                                           tmp_hlm[iPeak],
                                                           null_ylm * tmp_hlm[iPeak],
-                                                          np.angle(null_ylm * tmp_hlm[iPeak]) )
+                                                          np.angle(null_ylm * tmp_hlm[iPeak]) ))
 
             curr_hlm = TimeSeries(tmp_hlm * curr_ylm,
                                   epoch=curr_h22._epoch,
                                   dtype=hpols.dtype,
                                   copy=True)
             if self.verbose > 1:
-                print "\tShifted ({},{}) in time by {} units ({} samples)".format(
+                print("\tShifted ({},{}) in time by {} units ({} samples)".format(
                     modeL, modeM, float(curr_hlm._epoch - tmp_hlm._epoch),
-                    float(curr_hlm._epoch - tmp_hlm._epoch)/curr_hlm.delta_t)
+                    float(curr_hlm._epoch - tmp_hlm._epoch)/curr_hlm.delta_t))
             hpols[:len(curr_hlm)] += curr_hlm
         # h+ - \ii hx = \Sum Ylm * hlm
         self.rescaled_hp = TimeSeries(   hpols.real(), delta_t=hpols.delta_t, epoch=hpols._epoch)
@@ -835,7 +835,7 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         ## Check if npad can be inserted at the start of the polarization TimeSeries.
         ## If there is no space ignore the pad completely
         if abs(len(hp) - N) < npad:
-            print "WARNING: Cannot pad {} zeros at the end. len(hp)={} & N={}".format(npad,len(hp),N)
+            print("WARNING: Cannot pad {} zeros at the end. len(hp)={} & N={}".format(npad,len(hp),N))
             npad = 0
         else:
             # Prepend some zeros to the waveform (assuming there are ''npad'' zeros at the end)
@@ -901,8 +901,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         time_array = hp.sample_times.data - np.float(hp._epoch)
 
         if self.verbose > 2:
-            print "ntapers = ", ntapers
-            print "ttapers = ", ttapers
+            print("ntapers = ", ntapers)
+            print("ttapers = ", ttapers)
         #
         # Windowing function time-series
         #
@@ -918,8 +918,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
             t1, t2, t3, t4 = ttapers
             i1, i2, i3, i4 = ntapers
             if self.verbose > 2:
-                print "\t\twindow times = ", t1, t2, t3, t4
-                print "\t\tidxs = ", i1, i2, i3, i4
+                print("\t\twindow times = ", t1, t2, t3, t4)
+                print("\t\tidxs = ", i1, i2, i3, i4)
             #
             for i in range(len(region2)):
                 if i == 0:
@@ -1075,7 +1075,7 @@ Compute dE/dt = \Sum_{l,m} ||h_lm||^2
         for (modeL, modeM) in self.which_modes_to_read():
             if self.skipM0 and modeM==0: continue
             if self.verbose > 1:
-                print "Adding contribution to dEdt from mode ({},{})".format(modeL,modeM)
+                print("Adding contribution to dEdt from mode ({},{})".format(modeL,modeM))
             dEdt += modeM * modeM * self.amplitudes[modeL][modeM].data * self.amplitudes[modeL][modeM].data
         dEdt *= momega.data * momega.data / 8. / np.pi
         dEdt = TimeSeries(-1 * dEdt, delta_t = momega.delta_t,
@@ -1197,7 +1197,7 @@ class strain():
     for ll in range(self.modeLmin, self.modeLmax+1):
       self.modes[ll], self.rawmodes[ll] = {}, {}
       for mm in range( -1*ll, ll+1 ):
-        if self.verbose: print >>sys.stdout, "Reading mode (%d,%d)" % (ll,mm)
+        if self.verbose: print("Reading mode (%d,%d)" % (ll,mm), file=sys.stdout)
         self.modes[ll][mm] = nr_waveform( filename=self.filename,\
                               filetype=self.filetype,\
                               nogroup=self.nogroup, modeL=ll, modeM=mm,\

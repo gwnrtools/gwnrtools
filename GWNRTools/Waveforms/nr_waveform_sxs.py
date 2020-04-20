@@ -25,7 +25,7 @@
 #
 
 import os, sys, time
-import commands as cmd
+import subprocess as cmd
 import h5py
 from numpy import where, ceil, log2
 import numpy as np
@@ -96,7 +96,7 @@ Judge if the given template 'p' matches the given catalog row 'c' for the param
     val2 = getattr(c, param)
   else: raise IOError("This type %s not supported by does_this_map" % str(type(c)))
 
-  if param in EPS_Params.keys(): eps  = EPS_Params[param]
+  if param in list(EPS_Params.keys()): eps  = EPS_Params[param]
   else: eps = EPS_Default
 
   num_err = np.abs(val1-val2)
@@ -106,7 +106,7 @@ Judge if the given template 'p' matches the given catalog row 'c' for the param
   else: frac_err = num_err / den_err
 
   if verbose:
-    print "Param error for %s: %.2e, Threshold: %.2e" % (param, frac_err, eps)
+    print("Param error for %s: %.2e, Threshold: %.2e" % (param, frac_err, eps))
 
   if frac_err <= eps:
     if return_err: return True, frac_err
@@ -194,13 +194,13 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
 
 ################################################################################
 \n"""
-    if verbose: print "\n @INPUTS: ", p
+    if verbose: print("\n @INPUTS: ", p)
     #################################################################
     # O: Check INPUTs for one of ["numrel_data", "event_id"]
     #################################################################
-    pkeys = [str(kk) for kk in p.keys()]
+    pkeys = [str(kk) for kk in list(p.keys())]
     if 'numrel_data' in pkeys:
-      if verbose: print " Found numrel_data column : %s" % p['numrel_data']
+      if verbose: print(" Found numrel_data column : %s" % p['numrel_data'])
       return str(p['numrel_data'])
 
     if 'catalog_var' in pkeys: catalog_var = p['catalog_var']
@@ -223,7 +223,7 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
         break
     if not found_flag: raise RuntimeError(error_msg)
 
-    if verbose: print "Mapping/Catalog file located. Reading : %s " % fp
+    if verbose: print("Mapping/Catalog file located. Reading : %s " % fp)
 
     #################################################################
     # 2. UPDATE method for mapping template to NR data
@@ -256,15 +256,15 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
       # Now get the event_id field of the template and use it to get NR data's
       # location from template bank mapping file
       tmplt_tag = str(p['event_id'])
-      catalog_tags = [str(kk) for kk in gin.keys()]
+      catalog_tags = [str(kk) for kk in list(gin.keys())]
       if tmplt_tag not in catalog_tags:
         raise IOError(\
             "Template %s not found in %s. Is this the correct catalog?" %\
             (tmplt_tag, fp))
       #
       if verbose:
-        print "Template event_id found : %s " % tmplt_tag
-        print "Location of NR data     : %s " % str(gin[tmplt_tag].value)
+        print("Template event_id found : %s " % tmplt_tag)
+        print("Location of NR data     : %s " % str(gin[tmplt_tag].value))
       #
       ################################################################
       # 4. Return the LOCATION of template's NR DATA
@@ -286,7 +286,7 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
       #    difference thresholds are defined at the top of this script.
       errs, mflower, rows = [], [], []
       for idx, row in enumerate(fin):
-        if verbose: print "\n .. checking row %d in catalog" % idx
+        if verbose: print("\n .. checking row %d in catalog" % idx)
         tmp_errs = []
         for param in params_tested:
           is_map    = True
@@ -314,8 +314,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
           rows.append( row )
           #
           if verbose:
-            print >>sys.stdout, "Template found in catalog: %s " % fp
-            print >>sys.stdout, "Location of NR data     : %s " % getattr(row, 'numrel_data')
+            print("Template found in catalog: %s " % fp, file=sys.stdout)
+            print("Location of NR data     : %s " % getattr(row, 'numrel_data'), file=sys.stdout)
           #
           # Get out of the loop over the catalog if the 'longest' simulation is
           # not required
@@ -323,7 +323,7 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
 
       if len(mflower) > 0 and len(rows) > 0:
         if verbose:
-          print >>sys.stderr, " .. template matches %s simulations" % len(rows)
+          print(" .. template matches %s simulations" % len(rows), file=sys.stderr)
         is_map = True
 
       #################################################################
@@ -333,8 +333,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
         # and we print out the location of each here
         if use_longest_simulation:
           if verbose:
-            print >>sys.stderr, "Found the following simulations with same parameters as the template:\n"
-            for rr in rows: print >>sys.stderr, "\t", str(rr.numrel_data)
+            print("Found the following simulations with same parameters as the template:\n", file=sys.stderr)
+            for rr in rows: print("\t", str(rr.numrel_data), file=sys.stderr)
 
         #################################################################
         # 4.2.1 Find the longest of all found matching simulations
@@ -347,9 +347,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
         # print out the maximum difference between the template's and catalog's
         # parameters
         if verbose:
-          print >>sys.stdout,\
-          " .. template does not match any sim in the NR catalog table.\nParameters: ", p
-        print "MIN ERROR for rejection..: %e\n" % np.array(errs).min()
+          print(" .. template does not match any sim in the NR catalog table.\nParameters: ", p, file=sys.stdout)
+        print("MIN ERROR for rejection..: %e\n" % np.array(errs).min())
         raise RuntimeError("NR data not found")
 
     #################################################################
@@ -368,7 +367,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
                               junk_duration=600,\
                               taper=True, verbose=False, debug=False):
     if verbose:
-        print >>sys.stdout, " \n\n\nIn get_hplus_hcross_from_sxs.."
+        print(" \n\n\nIn get_hplus_hcross_from_sxs..", file=sys.stdout)
         sys.stdout.flush()
     #
     def get_param(value):
@@ -397,29 +396,28 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     except: pass
 
     if debug:
-        print >> sys.stdout, "mass = {}, theta = {}, phi = {}, distance = {}, end_time = {}".format(\
-                          total_mass, theta, phi, distance, end_time)
+        print("mass = {}, theta = {}, phi = {}, distance = {}, end_time = {}".format(\
+                          total_mass, theta, phi, distance, end_time), file=sys.stdout)
         try:
-            print >>sys.stdout, \
-                "end_time = 0 (could be %f)" % template_params['end_time']
+            print("end_time = 0 (could be %f)" % template_params['end_time'], file=sys.stdout)
         except: pass
     #
     # Figure out how much memory to allocate
     #
     estimated_length_pow2 = nextpow2(MAX_NR_LENGTH * total_mass * lal.MTSUN_SI)
     if debug:
-      print "estimated length = ", estimated_length_pow2
+      print("estimated length = ", estimated_length_pow2)
 
     ###########################################################################
     # Read in the waveform from file & rescale it
     ###########################################################################
     if type(hdf5_file_name) != str:
-        if verbose: print "\tUsing nr_wave datastructure. Rescaling to {}Msun".format(total_mass)
+        if verbose: print("\tUsing nr_wave datastructure. Rescaling to {}Msun".format(total_mass))
         nrwav = hdf5_file_name
         nrwav.get_polarizations(M=total_mass, distance=distance, inclination=theta, phi=phi)
-        if verbose: print "\tRescaled to {} Msun".format(nrwav.totalmass)
+        if verbose: print("\tRescaled to {} Msun".format(nrwav.totalmass))
     else:
-        if verbose: print "\tReading in waveform from {}..".format(hdf5_file_name)
+        if verbose: print("\tReading in waveform from {}..".format(hdf5_file_name))
         idx = 0
         max_num_length_tries = 10
         num_length_tries = max_num_length_tries
@@ -429,8 +427,8 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
             # till the whole NR waveform fits in it (in powers of 2)
             try:
                 if debug:
-                    print "\n \t>>try %d at reading waveform" % (idx + 1)
-                    print "\t[More than ONE try is required if estimated NR length is too short]"
+                    print("\n \t>>try %d at reading waveform" % (idx + 1))
+                    print("\t[More than ONE try is required if estimated NR length is too short]")
                 idx += 1
                 group_name = get_param("group_name") # GROUP NAME
                 nrwav = UseNRinDA.nr_wave(filename=hdf5_file_name,
@@ -446,14 +444,14 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
                 num_length_tries -= 1
                 if num_length_tries == 0:
                     if verbose:
-                        print "......................................................................"
-                        print "Max number of length retries exceeded: {}. Final length tried: {}".format(\
-                              max_num_length_tries, estimated_length_pow2/2)
-                        print "Final ERROR: {}".format(ve)
-                        print "......................................................................"
+                        print("......................................................................")
+                        print("Max number of length retries exceeded: {}. Final length tried: {}".format(\
+                              max_num_length_tries, estimated_length_pow2/2))
+                        print("Final ERROR: {}".format(ve))
+                        print("......................................................................")
                     break
     if debug and type(hdf5_file_name)==str:
-        print >> sys.stdout, "\t Waveform read from %s" % hdf5_file_name
+        print("\t Waveform read from %s" % hdf5_file_name, file=sys.stdout)
         sys.stdout.flush()
 
     ###########################################################################
@@ -467,7 +465,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     ## If conditioning is done, returned waveform starts at the start of taper
     ##  window, which ends at f_lower
     ###########################################################################
-    if verbose: print "Pre-conditioning waveform.."
+    if verbose: print("Pre-conditioning waveform..")
 
     # Conditioning settings from Chu et al (2015)
     upwin_t_width = 1000
@@ -485,8 +483,8 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
                             (m_lower, f_lower, total_mass))
     else:
         if verbose:
-            print "Can comfortably rescale to %f Msun starting at %fHz" % (\
-                total_mass, f_lower)
+            print("Can comfortably rescale to %f Msun starting at %fHz" % (\
+                total_mass, f_lower))
     # >> At this point, we know that f_lower is attained at t_filter or LATER
 
     # 2) Get the starting point of the waveform, given f_lower
@@ -496,9 +494,9 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     t_start_index     = int( np.round(t_start_secs / delta_t) )
 
     if debug:
-      print "t_start_secs = %.2f" % t_start_secs
-      print "t_start_M    = %.2f" % t_start_M
-      print "t_start_index= %d" % t_start_index
+      print("t_start_secs = %.2f" % t_start_secs)
+      print("t_start_M    = %.2f" % t_start_M)
+      print("t_start_index= %d" % t_start_index)
 
     #
     # 3) Taper the waveform polarizations
@@ -507,12 +505,12 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
         upwin_t_start = np.maximum(0., t_start_M - upwin_t_width)
         if upwin_t_width + upwin_t_start < junk_duration:
             if verbose > 0:
-                print "Tapering window was not covering junk radiation. Changing it to [0,{}}]".format(junk_duration)
+                print("Tapering window was not covering junk radiation. Changing it to [0,{}}]".format(junk_duration))
             upwin_t_start = 0.0
             upwin_t_width = junk_duration
         #
         if verbose:
-            print "Length of waveform: ", (len(nrwav.rescaled_hp) * nrwav.delta_t / total_mass / lal.MTSUN_SI)
+            print("Length of waveform: ", (len(nrwav.rescaled_hp) * nrwav.delta_t / total_mass / lal.MTSUN_SI))
         hp, hc = nrwav.taper_filter_waveform(ttaper1=upwin_t_start,\
                                             ttaper2=upwin_t_width,\
                                             ftaper3=downwin_amp_frac,\
@@ -521,14 +519,14 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
         # Upgrade the index before which we trim the wave
         t_start_index = int(np.round(upwin_t_start / (hp.delta_t/total_mass/lal.MTSUN_SI)))
         if debug:
-            print "Tapering window [start1-2], [end-amplfraction - t-width]: [%.1f - %.1f], [%.5f - %.1f]" %\
-                (upwin_t_start, upwin_t_width+upwin_t_start, downwin_amp_frac, downwin_t_width)
+            print("Tapering window [start1-2], [end-amplfraction - t-width]: [%.1f - %.1f], [%.5f - %.1f]" %\
+                (upwin_t_start, upwin_t_width+upwin_t_start, downwin_amp_frac, downwin_t_width))
     else:
         hp, hc = [nrwav.rescaled_hp, nrwav.rescaled_hc]
 
     if debug:
-        print "Length of wave = %d" % len(hp), type(hp), type(hc)
-        print "t_start_index= %d" % t_start_index
+        print("Length of wave = %d" % len(hp), type(hp), type(hc))
+        print("t_start_index= %d" % t_start_index)
 
     # 4) Remove the part before f_lower / before start of tapering window
     hp = hp[t_start_index:]
@@ -537,7 +535,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     #
     # 5) Chop off trailing zeros in the waveform. These include zeros at the
     #    END of the waveform ONLY. The START does NOT change.
-    if verbose: print "Post-process waveform vector.."
+    if verbose: print("Post-process waveform vector..")
 
     #i_filter = int(np.ceil( t_filter * total_mass * lal.MTSUN_SI / nrwav.delta_t ))
     #hpExtraIdx = where(hp.data[i_filter:] == 0)[0]
@@ -554,7 +552,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     hc = trim_trailing_zeros(hc) #hc[:idx]
 
     if debug:
-      print "\t Length of waveform AFTER removing zeros = %d, %d" % (len(hp),len(hc))
+      print("\t Length of waveform AFTER removing zeros = %d, %d" % (len(hp),len(hc)))
     #
     # 6) Find the time at which the (2,2) mode's amplitude peaks, and use it to
     # set the epoch of the waveform being returned. Because trailing zeros have
@@ -564,7 +562,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
     time_start_s = -1 * nrwav.get_amplitude_peak_h22(amplitude_from_polarizations(hp, hc))[-1] * nrwav.delta_t
 
     if debug:
-      print >>sys.stdout, " \t time_start_s = %f" % time_start_s
+      print(" \t time_start_s = %f" % time_start_s, file=sys.stdout)
       sys.stdout.flush()
 
     #
@@ -580,13 +578,12 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,\
         if hp[idx] != 0 and hc[idx] != 0:
           break
       try:
-        print >>sys.stdout, \
-                "  Length of rescaled waveform = %f.." % idx*hp.delta_t
-        print >>sys.stdout, " hp.epoch = ", hp._epoch
+        print("  Length of rescaled waveform = %f.." % idx*hp.delta_t, file=sys.stdout)
+        print(" hp.epoch = ", hp._epoch, file=sys.stdout)
         sys.stdout.flush()
-      except: print type(idx), type(hp)
+      except: print(type(idx), type(hp))
     #
-    if debug: print "Returning hp, hc"
+    if debug: print("Returning hp, hc")
     #
     return hp, hc, nrwav
 
@@ -602,7 +599,7 @@ def get_hplus_hcross_from_get_td_waveform(**p):
     p['end_time'] = 0.
 
     # Re-direct to sxs-format strain reading code
-    if 'verbose' in p.keys(): verbose = p['verbose']
+    if 'verbose' in list(p.keys()): verbose = p['verbose']
     else: verbose = False
     nr_data_location = get_nr_data_location(p,\
                               map_var='TemplateBankToNRMappings',\
@@ -625,7 +622,7 @@ def get_hplus_hcross_from_get_td_waveform(**p):
     mass2 = p['mass2']
     total_mass = mass1 + mass2
     p['f_ref'] = Mflower / (total_mass)
-    print "The reference frequency has been set to %1.5f" %p['f_ref']
+    print("The reference frequency has been set to %1.5f" %p['f_ref'])
 
     hp, hc = get_hplus_hcross_from_directory(p['numrel_data'], p, delta_t)
     return hp, hc

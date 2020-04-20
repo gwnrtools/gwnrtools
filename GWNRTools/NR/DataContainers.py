@@ -16,7 +16,7 @@ from scipy.misc import derivative
 from scipy.optimize import bisect, brentq, minimize_scalar
 from scipy.integrate import simps, cumtrapz
 
-import commands as cmd
+import subprocess as cmd
 import string
 from numpy import *
 import numpy as np
@@ -133,7 +133,7 @@ class nr_data():
         ##{{{
         if 'regex' in self.wavetype:
             if self.verbose > 0:
-                print "Reading NR data in ASCII from {}".format(self.filename)
+                print("Reading NR data in ASCII from {}".format(self.filename))
             ####
             ## Read modes
             MAXLEN, MINLEN = -1, 1e100
@@ -148,10 +148,10 @@ class nr_data():
                     try:
                         mdata = np.loadtxt(self.filename % (modeL, modeM))
                         if self.verbose > 2:
-                            print "\t\t\tShape of data read is ", np.shape(mdata)
+                            print("\t\t\tShape of data read is ", np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print "WARNING: Ignoring mode ({},{})".format(modeL, modeM)
+                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,
@@ -174,7 +174,7 @@ class nr_data():
         ##{{{
         if 'dict' in self.wavetype:
             if self.verbose > 0:
-                print "Reading NR data in ASCII from {}".format(self.filename)
+                print("Reading NR data in ASCII from {}".format(self.filename))
             ## filename is NOT really filename, its a DICTIONARY
             dataset = self.filename
             ## Read Modes
@@ -191,10 +191,10 @@ class nr_data():
                     try:
                         mdata = dataset[modeL][modeM]
                         if self.verbose > 2:
-                            print "\t\t\tShape of data read is ", np.shape(mdata)
+                            print("\t\t\tShape of data read is ", np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print "WARNING: Ignoring mode ({},{})".format(modeL, modeM)
+                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,
@@ -224,7 +224,7 @@ class nr_data():
             elif 'Cce' in fname: _wavetype = 'CCE'
             elif 'FiniteRad' in fname: _wavetype = 'FiniteRadius'
             elif 'HDF' in self.filetype:
-                fgrps = [str(grptmp) for grptmp in self.fin.keys()]
+                fgrps = [str(grptmp) for grptmp in list(self.fin.keys())]
                 if 'Y_l2_m2.dat' in fgrps: _wavetype = 'NoGroup'
         else: raise IOError("Could not figure out wavetype")
         self.wavetype = _wavetype
@@ -237,7 +237,7 @@ class nr_data():
         self.get_nr_data_hdf5_wavetype()
         f = self.fin
         if self.wavetype == 'CCE':
-            grp='CceR%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in f.keys()])
+            grp='CceR%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
             self.group_name = grp
             return self
         elif self.wavetype == 'Extrapolated':
@@ -249,7 +249,7 @@ class nr_data():
                     try: n = int(k.split('.dir')[0][-1])
                     except:
                         if self.verbose > 1:
-                            print "\t\t.. tested (wavetype is extrapolated) groupname: {}".format(k)
+                            print("\t\t.. tested (wavetype is extrapolated) groupname: {}".format(k))
                         raise IOError("Could not find the group for extrapolated waveforms")
                 if self.ex_order == n:
                     self.group_name = k
@@ -257,7 +257,7 @@ class nr_data():
             self.group_name = last_k
             return self
         elif self.wavetype == 'FiniteRadius':
-            grp='R%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in f.keys()])
+            grp='R%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
             self.group_name = grp
             return self
         ## If all fails ...
@@ -270,10 +270,10 @@ class nr_data():
         group_name = self.get_nr_data_hdf5_groupname().group_name
         ##
         if self.verbose > 1:
-                print "Reading NR data in HDF5 from {}".format(self.filename)
+                print("Reading NR data in HDF5 from {}".format(self.filename))
         if wavetype != 'NoGroup':
             if self.verbose > 1:
-                print "\tReading from {} out of ".format(group_name), self.fin.keys()
+                print("\tReading from {} out of ".format(group_name), list(self.fin.keys()))
             wavedata = self.fin[group_name]
         else:
             wavedata = self.fin
@@ -295,13 +295,13 @@ class nr_data():
                     ## Get dataset for this mode
                     try:
                         if self.verbose > 2:
-                            print "\t\tTrying to read: %d,%d mode" % (modeL, modeM)
+                            print("\t\tTrying to read: %d,%d mode" % (modeL, modeM))
                         mdata = wavedata['Y_l{}_m{}.dat'.format(modeL, modeM)].value
                         if self.verbose > 2:
-                            print "\t\tShape of data read is ", np.shape(mdata)
+                            print("\t\tShape of data read is ", np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print "WARNING: Ignoring mode ({},{})".format(modeL, modeM)
+                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,

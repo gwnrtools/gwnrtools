@@ -15,6 +15,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+def play_movie(m):
+    import subprocess
+    subprocess.call(['mpv', os.path.join(base_dir, m)])
+
+def embed_video(fname, mimetype):
+    from IPython.display import HTML
+    from codecs import encode
+    video_encoded = encode(open(fname, "rb").read(), "base64")
+    video_tag = '<video controls alt="test" src="data:video/{0};base64,{1}">'.format(mimetype, video_encoded)
+    return HTML(data=video_tag)
 
 class HandleSpectreReductionDatum(object):
     def __init__(self, reduction_data_file='', name=''):

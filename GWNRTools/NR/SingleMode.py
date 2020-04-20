@@ -25,7 +25,7 @@ import os
 import sys
 import h5py
 
-import commands as cmd
+import subprocess as cmd
 import string
 from numpy import *
 import numpy as np
@@ -92,7 +92,7 @@ Returns mode frequency as a numpy.FLOAT64 array
         r, c = np.shape(mode_data)
         if c > r:
             if verbose > 1:
-                print "Transposing input mode array, r={}, c={} before.".format(r, c)
+                print("Transposing input mode array, r={}, c={} before.".format(r, c))
             mode_data = np.transpose(mode_data)
 
         # Store time & mode samples
@@ -126,7 +126,7 @@ Takes in the new sampling time step, in units of total mass M
         """
         if delta_t != self.delta_t or not hasattr(self, "mode_array"):
             if verbose > 0:
-                print "Resampling mode data to sample rate: {} (1/M)".format(1./delta_t)
+                print("Resampling mode data to sample rate: {} (1/M)".format(1./delta_t))
             self.delta_t = delta_t
             t_array = np.arange(np.min(self.t_samples),
                                 np.max(self.t_samples), delta_t)
@@ -138,7 +138,7 @@ Takes in the new sampling time step, in units of total mass M
             max_idx = find_max_start + \
                 self.mode_array[find_max_start:].abs_max_loc()[-1]
             if self.verbose > 1:
-                print "\t\tMax of mode found at index: {}".format(max_idx)
+                print("\t\tMax of mode found at index: {}".format(max_idx))
             # Set epoch of mode to place amplitude peak at t=0
             self.mode_array = TimeSeries(self.mode_array,
                                          epoch=lal.LIGOTimeGPS(
@@ -174,10 +174,10 @@ Takes in the total mass M (in units of solar masses)
             self.delta_t = delta_t
         else:
             if self.verbose > 1:
-                print "\tNo need to resample, as delta_t, total_mass and distance are same as before."
+                print("\tNo need to resample, as delta_t, total_mass and distance are same as before.")
         self.dimLess = False
         if self.verbose > 2:
-            print "WARNING: After resampling to Hz, make sure to resample before using dimensionless units"
+            print("WARNING: After resampling to Hz, make sure to resample before using dimensionless units")
         return self
     ##
     def data(self): return self.mode_array
