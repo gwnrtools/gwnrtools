@@ -1,0 +1,54 @@
+# Distributed under the MIT License.
+# See LICENSE.txt for details.
+
+# Executable: EvolveRegularSphericalWave3D
+# Check: parse;execute
+
+AnalyticSolution:
+  RegularSphericalWave:
+    Profile:
+      Gaussian:
+        Amplitude: 1.0
+        Width: 1.0
+        Center: 0.0
+
+Evolution:
+  InitialTime: 0.0
+  InitialTimeStep: 0.001
+  InitialSlabSize: 0.01
+  TimeStepper:
+    AdamsBashforthN:
+      Order: 3
+  StepController: BinaryFraction
+  StepChoosers:
+    - Constant: 0.05
+    - Increase:
+        Factor: 2
+    - Cfl:
+        SafetyFactor: 0.2
+
+DomainCreator:
+  Sphere:
+    InnerRadius: 1.9
+    OuterRadius: 2.3
+    InitialRefinement: 0
+    InitialGridPoints: [5, 5]
+    UseEquiangularMap: true
+
+# If filtering is enabled in the executable the filter can be controlled using:
+# Filtering:
+#   ExpFilter0:
+#     Alpha: 12
+#     HalfPower: 32
+
+NumericalFlux:
+  Upwind:
+
+EventsAndTriggers:
+  ? SpecifiedSlabs:
+      Slabs: [5]
+  : - Completion
+
+Observers:
+  VolumeFileName: "SphericalWave3DPeriodicVolume"
+  ReductionFileName: "SphericalWave3DPeriodicReductions"
