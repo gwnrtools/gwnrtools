@@ -189,7 +189,8 @@ class HandleSpectreVolumeDatum(object):
                "Requested dt = {0:.4e} is not possible (MIN: {1:.4e})".format(
                    dt, current_dt))
         downsample_ratio = int(np.round(dt / current_dt))
-        if downsample_ratio == 1:
+        logging.info("Downsample by {}x".format(downsample_ratio))
+        if downsample_ratio <= 1:
             return times, fields_data
         sel_times = [times[i] for i in range(0, len(times), downsample_ratio)]
         # Get data at sel_times
