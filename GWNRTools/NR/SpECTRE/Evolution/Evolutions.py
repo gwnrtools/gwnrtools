@@ -19,6 +19,8 @@ import os
 import logging
 import subprocess
 import numpy
+from .Configurations import (cluster_submission_files,
+                            cluster_submission_files_formatting)
 
 
 class BatchEvolutions(object):
@@ -140,10 +142,15 @@ Setup a single test run:
 
         # Write appropriate submission file if needed
         if cluster != 'local':
+            assert(cluster in list(cluster_submission_files.keys()),
+                   "Cluster {} not setup. Allowed are: {}".format(
+                       cluster, list(cluster_submission_files.keys())))
+
             sub_file_name = self.cluster_submission_file(test, cluster)
             fmts = cluster_submission_files_formatting[cluster]
-            opts = []
+
             with open(sub_file_name, 'w') as fout:
+                opts = []
                 for fmt in fmts:
                     if 'EXE' in fmt:
                         opts.append(os.path.split(exe_dest)[-1])
@@ -155,8 +162,8 @@ Setup a single test run:
                         opts.append(os.path.split(input_file)[-1])
                         continue
                     if 'OUTPUT_PREFIX' in fmt:
-                        opts.append(self.output_files['volume'])
-                fout.write(cluster_submission_files[cluster].format(*fmts))
+                        opts.append(self.output_files['volume'].strip('0.h5'))
+                fout.write(cluster_submission_files[cluster].format(*opts))
         else:
             pass
         return exe_dest, run_dir
@@ -164,6 +171,8 @@ Setup a single test run:
     def submit_to_cluster(self, test, cluster):
         '''
 Function to submit a prepared test
+
+WARNING: To be run on the cluster only!
         '''
         # Move to run directory
         os.chdir(self.run_dir(test))

@@ -163,7 +163,7 @@ class HandleSpectreVolumeDatum(object):
         return self.data
 
     def available_fields(self):
-        return list(self.data.keys())
+        return list(self.data[list(self.data.keys())[0]].keys())
 
     def get_data(self, fields=['Psi']):
         vol_dataset = self.data
