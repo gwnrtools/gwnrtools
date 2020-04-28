@@ -23,7 +23,7 @@ with open('_version.py', 'w') as f:
 
 
 if __name__ == "__main__":
-    from distutils.core import setup
+    from setuptools import setup
     setup(name='GWNRTools',
           version=version,
           description='Manipulating GW data in the form of time-dependent functions of spin-weighted spherical harmonics from NR simulations',
