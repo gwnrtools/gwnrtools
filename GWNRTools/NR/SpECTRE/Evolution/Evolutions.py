@@ -67,11 +67,12 @@ Returns True if they do for all tests.
             tests = self.tests
         for test in tests:
             config_name, test_name = test.split('/')
-            assert(config_name in self.exes.keys() and
-                   os.path.exists(self.exes[config_name]) and
-                   os.path.getsize(self.exes[config_name]) > 0,
-                   "Exec for test {0} not found...".format(config_name))
-            logging.info("Exec for test {0:s}: Found".format(config_name))
+            if config_name in self.exes.keys() and \
+                   os.path.exists(self.exes[config_name]) and \
+                   os.path.getsize(self.exes[config_name]) > 0:
+                logging.info("Exec for test {0:s}: Found".format(config_name))
+            else:
+                logging.info("Exec for test {0:s}: Not Found".format(config_name))
 
     def exe(self, config_name):
         '''
