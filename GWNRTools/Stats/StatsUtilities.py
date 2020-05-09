@@ -28,7 +28,7 @@ from matplotlib import use
 import os, sys, time
 
 import copy as cp
-import commands as cmd
+
 import numpy as np
 import matplotlib
 from matplotlib import mlab, cm, use

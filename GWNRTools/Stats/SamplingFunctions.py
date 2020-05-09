@@ -24,7 +24,6 @@
 #
 import os, sys, time
 import copy as cp
-import commands as cmd
 import numpy as np
 import h5py
 

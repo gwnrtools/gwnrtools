@@ -12,7 +12,7 @@ from __future__ import print_function
 import sys, os
 import h5py
 import glob
-import commands as cmd
+
 from numpy import *
 import numpy as np
 import scipy as sp

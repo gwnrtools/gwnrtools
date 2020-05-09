@@ -26,7 +26,7 @@ import sys
 import os
 import h5py
 import glob
-import commands as cmd
+
 from numpy import *
 import numpy as np
 import scipy as sp
