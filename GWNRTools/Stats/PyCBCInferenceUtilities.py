@@ -237,14 +237,14 @@ pad-data = 8
             elif '170817' in event_name:
                 self.configs['data'][event_name] = """\
 [data]
-instruments = H1 L1 V1 G1
+instruments = H1 L1 V1
 trigger-time = {gpstime}
 analysis-start-time = -6
 analysis-end-time = 2
 {psd_options}
 ; The frame files must be downloaded from GWOSC before running.
-frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file} G1:{G1_frame_file}
-channel-name = {H1_channel} {L1_channel} {V1_channel} {G1_channel}
+frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file} 
+channel-name = {H1_channel} {L1_channel} {V1_channel} 
 ; this will cause the data to be resampled to 2048 Hz:
 sample-rate = {sample_rate}
 ; We'll use a high-pass filter so as not to get numerical errors from the large
