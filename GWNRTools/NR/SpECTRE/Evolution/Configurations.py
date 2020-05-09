@@ -165,14 +165,39 @@ Observers:
   ReductionFileName: "{1:s}"
 '''.format(volume_data_file_name, reduction_data_file_name)
 
-cluster_submission_files = {}
-cluster_submission_files['Wheeler_clang'] = '''#!/bin/bash -
+
+#
+# Sample submission files for solvers with spectre
+# These are totally derived from:
+# https://github.com/sxs-collaboration/spectre/tree/develop/support/SubmitScripts
+#
+# We start with a list of available clusters, and another
+# of the compilers we want to use. While we expect the first
+# list to change / grow, not so much for the second.
+__available_clusters__ = [
+    'Wheeler'
+]
+
+__available_compilers__ = [
+    'gcc', 'clang'
+]
+
+# We initialize subnmission file hash tables to None
+__cluster_submission_files__ = {}
+__cluster_submission_files_formatting__ = {}
+for c in __available_clusters__:
+    __cluster_submission_files__[c] = None
+    __cluster_submission_files_formatting__[c] = []
+
+# We populate explicitly
+for c in ['Wheeler']:
+    __cluster_submission_files__[c] = '''#!/bin/bash -
 #SBATCH -o spectre.out
 #SBATCH -e spectre.out
 #SBATCH --ntasks-per-node 24
 #SBATCH -A sxs
 #SBATCH --no-requeue
-#SBATCH -J csw_exe_3d
+#SBATCH -J {tag}
 #SBATCH --nodes 1
 #SBATCH -t 23:59:00
                                                                                 
@@ -195,94 +220,57 @@ cluster_submission_files['Wheeler_clang'] = '''#!/bin/bash -
 #   sbatch Wheeler.sh                                                           
 ############################################################################    
 # Set paths
-export RUN_DIR={0}
+export RUN_DIR={run_dir}
 #
-export SPECTRE_BUILD_DIR=/home/prayush/prayush/src/spectre/spectre_csw_exe_2/   
+export SPECTRE_ROOT={spectre_root}
 #
-export SPECTRE_EXECUTABLE=./{1}
-export SPECTRE_INPUT_FILE={2}
+export SPECTRE_EXECUTABLE={exe}
+export SPECTRE_INPUT_FILE={input_file}
 
 
 ############################################################################    
 # Set desired permissions for files created with this script                    
 umask 0022
 
-source $SPECTRE_BUILD_DIR/support/Environments/wheeler_clang.sh
+source $SPECTRE_ROOT/support/Environments/wheeler_{compiler}.sh
 spectre_load_modules && module load jemalloc && module swap blaze/3.6
 
 cd $RUN_DIR
 
 # The 23 is there because Charm++ uses one thread per node for communication
-srun -n $SLURM_JOB_NUM_NODES -c 24 \
+srun -n $SLURM_JOB_NUM_NODES -c 24 \\
      $SPECTRE_EXECUTABLE ++ppn 23 --input-file $SPECTRE_INPUT_FILE
 
 module swap python/3.6.5
-python3 $SPECTRE_BUILD_DIR/src/Visualization/Python/GenerateXdmf.py \
-  --file-prefix {3}\
-  --output {3}
+python3 $SPECTRE_ROOT/src/Visualization/Python/GenerateXdmf.py \\
+  --file-prefix EvolutionVolume \\
+  --output EvolutionVolume
 '''
-
-cluster_submission_files['Wheeler_gcc'] = '''#!/bin/bash -
-#SBATCH -o spectre.out
-#SBATCH -e spectre.out
-#SBATCH --ntasks-per-node 24
-#SBATCH -A sxs
-#SBATCH --no-requeue
-#SBATCH -J csw_exe_3d
-#SBATCH --nodes 1
-#SBATCH -t 23:59:00
-                                                                                
-# Distributed under the MIT License.                                            
-# See LICENSE.txt for details.                                                  
-                                                                                
-# To run a job on Wheeler:                                                      
-# - Set the -J, --nodes, and -t options above, which correspond to job name,    
-#   number of nodes, and wall time limit in HH:MM:SS, respectively.             
-# - Set the build directory, run directory, executable name,                    
-#   and input file below. The input file path is relative to $RUN_DIR.        
-#                                                                               
-# NOTE: The executable will not be copied from the build directory, so if you   
-#       update your build directory this file will use the updated executable.  
-#                                                                               
-# Optionally, if you need more control over how SpECTRE is launched on          
-# Wheeler you can edit the launch command at the end of this file directly.     
-#                                                                               
-# To submit the script to the queue run:                                        
-#   sbatch Wheeler.sh                                                           
-############################################################################    
-# Set paths
-export RUN_DIR={0}
-#
-export SPECTRE_BUILD_DIR=/home/prayush/prayush/src/spectre/spectre_csw_exe_2/   
-#
-export SPECTRE_EXECUTABLE=./{1}
-export SPECTRE_INPUT_FILE={2}
+    __cluster_submission_files_formatting__[c] = [
+        'tag', 'run_dir', 'spectre_root', 'exe', 'input_file', 'compiler'
+    ]
 
 
-############################################################################    
-# Set desired permissions for files created with this script                    
-umask 0022
+def cluster_submission_file(cluster, **args):
+    '''
+    Input:
+    ------
 
-source $SPECTRE_BUILD_DIR/support/Environments/wheeler_gcc.sh
-spectre_load_modules && module load jemalloc && module swap blaze/3.6
+    Allowed keyword arguments that are needed to populated related
+    fiels in the submission file are:
 
-cd $RUN_DIR
+    {0}
+    '''.format(__cluster_submission_files_formatting__[cluster])
+    assert(cluster in __available_clusters__,
+           "Cluster {0} not set up yet.".format(cluster))
+    assert(cluster in __cluster_submission_files__ and
+           cluster in __cluster_submission_files_formatting__,
+           "Error in finding info for {0}".format(cluster))
+    for fmt in __cluster_submission_files_formatting__[cluster]:
+        assert(fmt in args, "Misnamed input. Allowed keyword arguments: {0}".format(
+            __cluster_submission_files_formatting__[cluster]))
+    if 'compiler' in args:
+        assert(args['compiler'] in __available_compilers__,
+               "Compiler {0} not supported.".format(args['compiler']))
 
-# The 23 is there because Charm++ uses one thread per node for communication
-srun -n $SLURM_JOB_NUM_NODES -c 24 \
-     $SPECTRE_EXECUTABLE ++ppn 23 --input-file $SPECTRE_INPUT_FILE
-
-module swap python/3.6.5
-python3 $SPECTRE_BUILD_DIR/src/Visualization/Python/GenerateXdmf.py \
-  --file-prefix {3}\
-  --output {3}
-'''
-
-
-cluster_submission_files_formatting = {}
-cluster_submission_files_formatting['Wheeler_clang'] = [
-    'RUN_DIR', 'EXE', 'INPUT', 'OUTPUT_PREFIX'
-]
-cluster_submission_files_formatting['Wheeler_gcc'] = [
-    'RUN_DIR', 'EXE', 'INPUT', 'OUTPUT_PREFIX'
-]
+    return __cluster_submission_files__[cluster].format(**args)

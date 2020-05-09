@@ -19,8 +19,7 @@ import os
 import logging
 import subprocess
 import numpy
-from .Configurations import (cluster_submission_files,
-                            cluster_submission_files_formatting)
+from .Configurations import cluster_submission_file
 
 
 class BatchEvolutions(object):
@@ -68,11 +67,12 @@ Returns True if they do for all tests.
         for test in tests:
             config_name, test_name = test.split('/')
             if config_name in self.exes.keys() and \
-                   os.path.exists(self.exes[config_name]) and \
-                   os.path.getsize(self.exes[config_name]) > 0:
+                    os.path.exists(self.exes[config_name]) and \
+                    os.path.getsize(self.exes[config_name]) > 0:
                 logging.info("Exec for test {0:s}: Found".format(config_name))
             else:
-                logging.info("Exec for test {0:s}: Not Found".format(config_name))
+                logging.info(
+                    "Exec for test {0:s}: Not Found".format(config_name))
 
     def exe(self, config_name):
         '''
@@ -82,6 +82,12 @@ Full path to executable file for a given test
                "Config name {0} not defined above...".format(config_name))
         return self.exes[config_name]
 
+    def exe_name(self, config_name):
+        '''
+Full path to executable file for a given test
+        '''
+        return self.exe(config_name).split('/')[-1]
+
     def run_dir(self, test):
         '''
 Full path to cluster directory to run the given test
@@ -89,6 +95,12 @@ Full path to cluster directory to run the given test
         assert(test in list(self.test_dirs.keys()),
                "Test name {0} not defined above...".format(test))
         return self.test_dirs[test]
+
+    def input_file_name(self, test):
+        '''
+Name oft input file for a given test
+        '''
+        return "TestInput.yaml"
 
     def input_file(self, test):
         '''
@@ -102,13 +114,17 @@ Full path to cluster submission file for a given test
         '''
         return os.path.join(self.run_dir(test), "{0:s}.sh".format(cluster))
 
-    def setup_run(self, test, cluster='local', symlink_exe=True):
+    def setup_run(self, test,
+                  cluster='local',
+                  compiler='gcc',
+                  spectre_root=None,
+                  symlink_exe=True):
         '''
 Setup a single test run:
 
  - Setup on either a computing cluster or locally;
  - If on computing cluster, additional inputs are required;
- - TODO: Add option to symlink exec instead of copying it over;
+
         '''
         self.check_exes([test])
         config_name, test_name = test.split('/')
@@ -143,28 +159,18 @@ Setup a single test run:
 
         # Write appropriate submission file if needed
         if cluster != 'local':
-            assert(cluster in list(cluster_submission_files.keys()),
-                   "Cluster {} not setup. Allowed are: {}".format(
-                       cluster, list(cluster_submission_files.keys())))
-
-            sub_file_name = self.cluster_submission_file(test, cluster)
-            fmts = cluster_submission_files_formatting[cluster]
-
-            with open(sub_file_name, 'w') as fout:
-                opts = []
-                for fmt in fmts:
-                    if 'EXE' in fmt:
-                        opts.append(os.path.split(exe_dest)[-1])
-                        continue
-                    if 'RUN_DIR' in fmt:
-                        opts.append(run_dir)
-                        continue
-                    if 'INPUT' in fmt:
-                        opts.append(os.path.split(input_file)[-1])
-                        continue
-                    if 'OUTPUT_PREFIX' in fmt:
-                        opts.append(self.output_files['volume'].strip('0.h5'))
-                fout.write(cluster_submission_files[cluster].format(*opts))
+            with open(self.cluster_submission_file(test, cluster), 'w') as fout:
+                fout.write(
+                    cluster_submission_file(
+                        cluster=cluster,
+                        spectre_root=spectre_root,
+                        compiler=compiler,
+                        run_dir=run_dir,
+                        input_file=self.input_file_name(test),
+                        exe=self.exe_name(config_name),
+                        tag=test
+                    )
+                )
         else:
             pass
         return exe_dest, run_dir
