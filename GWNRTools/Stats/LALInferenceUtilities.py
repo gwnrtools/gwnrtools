@@ -7,6 +7,8 @@
 #
 # =============================================================================
 #
+from __future__ import print_function
+
 import sys, os
 import h5py
 import glob
@@ -32,7 +34,7 @@ try:
   class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
     pass
 except:
-  print "Could not import ligolw in %s, LIGO XML tables wont be read" % __file__
+  print("Could not import ligolw in %s, LIGO XML tables wont be read" % __file__)
 
 from pycbc.pnutils import nearest_larger_binary_number
 from pycbc.detector import *
@@ -76,7 +78,7 @@ def get_header_data_from_posterior_samples_file(filename, no_of_samples=-1):
         data = np.array(np.float64(np.array(data)) )
         if no_of_samples > 0 and no_of_samples <= np.shape(data)[0]:
             if verbose:
-                print "Keeping only the first %d samples" % no_of_samples
+                print("Keeping only the first %d samples" % no_of_samples)
             data = data[:no_of_samples]
     return [header, data]
 
@@ -183,7 +185,7 @@ Input:
         ht_1 = extend_waveform_FrequencySeries(ht_1, filter_n)
     elif delta_t is not None:
         if 'NRSur7dq2' in approx:
-            print "Doubling FLOw"
+            print("Doubling FLOw")
             flow = flow * 2
         try:
             hp_1, hc_1 = get_td_waveform(approximant = approx,
@@ -195,18 +197,18 @@ Input:
                                 distance = dist,
                                 f_lower = flow, f_ref = flow,
                                 delta_t = delta_t)
-            print "Length of raw %s waveform: %d" % (approx, len(hp_1))
+            print("Length of raw %s waveform: %d" % (approx, len(hp_1)))
         except RuntimeError as re:
-            print "WAVEFORM GENERATION FAILED WITH MESSAGE:\n ", re, "\n..."
+            print("WAVEFORM GENERATION FAILED WITH MESSAGE:\n ", re, "\n...")
             if debug:
-                print """
+                print("""
             Try this command to reproduce failure:
             get_td_waveform(approximant='%s', mass1=%f, mass2=%f,
                           spin1x=%f, spin1y=%f, spin1z=%f,
                           spin2x=%f, spin2y=%f, spin2z=%f,
                           inclination=%f, distance=%f,
                           f_lower=%f, delta_t=%f)
-                """ % (approx, m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, incl, dist, flow, delta_t)
+                """ % (approx, m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, incl, dist, flow, delta_t))
             return None
         # Convert to detector frame
         ht_1 = Fp * hp_1 + Fc * hc_1

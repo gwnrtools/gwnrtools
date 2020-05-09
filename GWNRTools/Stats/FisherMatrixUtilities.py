@@ -174,7 +174,7 @@ h(t) = A(t - tc) * Exp(-i * Phi(t - tc) ), where tc \equiv 0 is the time of merg
     derivatives = {}
     for idx, deriv_param in enumerate(deriv_params):
         if verbose:
-            print "Computing derivative w.r.t. %s (%d / %d)" % (deriv_param, idx+1, len(deriv_params))
+            print("Computing derivative w.r.t. %s (%d / %d)" % (deriv_param, idx+1, len(deriv_params)))
         param_list['deriv_param'] = deriv_param
         deriv_param_value = param_list[deriv_param]
         dx = 1e-4 * deriv_param_value
@@ -287,7 +287,7 @@ def get_correlation_fisher_matrices(approximant='SEOBNRv2',
         fisher_matrix = np.linalg.inv(correlation_matrix)
     except:
         fisher_matrix = None
-        print "Warning: Could not invert correlation matrix, Fisher matrix uncomputable."
+        print("Warning: Could not invert correlation matrix, Fisher matrix uncomputable.")
 
     #
     # 5) RETURN
