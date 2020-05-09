@@ -41,7 +41,7 @@ from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
 
-sys.path.append(cmd.getoutput('pwd -P'))
+sys.path.append(cmd.check_output(['pwd', '-P']))
 import GWNRTools.NR as UseNRinDA
 from GWNRTools.Utils.SupportFunctions import *
 
