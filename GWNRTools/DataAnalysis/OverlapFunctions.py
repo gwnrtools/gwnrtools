@@ -20,11 +20,6 @@ import scipy as sp
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize_scalar
 
-try:
-    from pyswarm import pso
-except:
-    pass
-
 from pycbc.types import TimeSeries, FrequencySeries
 from pycbc.psd import from_string
 from pycbc.filter import match, make_frequency_series

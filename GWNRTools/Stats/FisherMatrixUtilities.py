@@ -34,7 +34,6 @@ import string
 import time
 import copy as cp
 
-from pyswarm import pso
 
 from scipy.interpolate import InterpolatedUnivariateSpline, UnivariateSpline
 from scipy.optimize import minimize_scalar

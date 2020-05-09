@@ -14,7 +14,10 @@ import h5py
 import numpy as np
 from numpy import loadtxt,complex64,float32, any, isnan, isinf
 
-from pyswarm import pso
+try: 
+  from pyswarm import pso
+except ImportError: 
+  pass
 from scipy.interpolate import UnivariateSpline
 from scipy.optimize import minimize, minimize_scalar
 from scipy.interpolate import interp1d
