@@ -29,12 +29,8 @@ import pycbc.waveform as pywf
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.pnutils import nearest_larger_binary_number
 
-from glue import gpstime, git_version
-from glue.ligolw import ligolw
 from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
-import lalsimulation as ls
+from glue.ligolw import ligolw
 import lal
 
 
