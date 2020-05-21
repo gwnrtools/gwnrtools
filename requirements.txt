@@ -14,6 +14,5 @@ romspline==1.1.6
 scikit-learn==0.20.4
 seaborn==0.9.1
 utils==0.9.0
-logging
 numexpr
 pytest
