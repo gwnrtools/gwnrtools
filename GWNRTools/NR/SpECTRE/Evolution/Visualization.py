@@ -45,11 +45,12 @@ def embed_video(fname, mimetype):
 
 
 class HandleSpectreReductionDatum(object):
-    def __init__(self, reduction_data_file='', name=''):
+    def __init__(self, reduction_data_file='', name='', hdf_path='element_data.dat'):
         assert(os.path.exists(reduction_data_file),
                "Cannot find data file: {0:s}".format(reduction_data_file))
         self.name = name
         self.reduction_data_file = reduction_data_file
+        self.hdf_path = hdf_path
         self.read_data()
         self.plotting_funcs = {'linlin': 'plot',
                                'loglin': 'semilogx',
@@ -61,7 +62,7 @@ class HandleSpectreReductionDatum(object):
     def read_data(self):
         logging.info("Reading in: {0:s}".format(self.reduction_data_file))
         self.data = h5py.File(self.reduction_data_file, 'r')[
-            'element_data.dat'][()]
+            self.hdf_path][()]
         logging.info(".. read in a dataset with shape: {}".format(
             np.shape(self.data)))
 
@@ -110,7 +111,7 @@ class HandleSpectreReductionDatum(object):
 
 
 class HandleSpectreReductionData(object):
-    def __init__(self, reduction_data_files=[]):
+    def __init__(self, reduction_data_files=[], **args):
         assert(len(reduction_data_files) > 0,
                "Please provide at least one reduction data file!")
         for f in reduction_data_files:
@@ -118,7 +119,7 @@ class HandleSpectreReductionData(object):
                    "Data file: {0:s} not found / is empty!".format(f))
         self.handler = {}
         for f in reduction_data_files:
-            self.handler[f] = HandleSpectreReductionDatum(f)
+            self.handler[f] = HandleSpectreReductionDatum(f, **args)
 
     def handlers(self):
         return self.handler
