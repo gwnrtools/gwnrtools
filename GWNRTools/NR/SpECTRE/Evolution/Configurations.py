@@ -192,14 +192,75 @@ for c in __available_clusters__:
 # We populate explicitly
 for c in ['Wheeler']:
     __cluster_submission_files__[c] = '''#!/bin/bash -
+#SBATCH -J {tag}
 #SBATCH -o spectre.out
 #SBATCH -e spectre.out
+#SBATCH --nodes 1
 #SBATCH --ntasks-per-node 24
+#SBATCH -t 23:59:00
 #SBATCH -A sxs
 #SBATCH --no-requeue
+                                                                                
+# Distributed under the MIT License.                                            
+# See LICENSE.txt for details.                                                  
+                                                                                
+# To run a job on Wheeler:                                                      
+# - Set the -J, --nodes, and -t options above, which correspond to job name,    
+#   number of nodes, and wall time limit in HH:MM:SS, respectively.             
+# - Set the build directory, run directory, executable name,                    
+#   and input file below. The input file path is relative to $RUN_DIR.        
+#                                                                               
+# NOTE: The executable will not be copied from the build directory, so if you   
+#       update your build directory this file will use the updated executable.  
+#                                                                               
+# Optionally, if you need more control over how SpECTRE is launched on          
+# Wheeler you can edit the launch command at the end of this file directly.     
+#                                                                               
+# To submit the script to the queue run:                                        
+#   sbatch Wheeler.sh                                                           
+############################################################################    
+# Set paths
+export RUN_DIR={run_dir}
+#
+export SPECTRE_ROOT={spectre_root}
+#
+export SPECTRE_EXECUTABLE={exe}
+export SPECTRE_INPUT_FILE={input_file}
+
+
+############################################################################    
+# Set desired permissions for files created with this script                    
+umask 0022
+
+source $SPECTRE_ROOT/support/Environments/wheeler_{compiler}.sh
+spectre_load_modules && module load jemalloc && module swap blaze/3.6
+
+cd $RUN_DIR
+
+# The 23 is there because Charm++ uses one thread per node for communication
+srun -n $SLURM_JOB_NUM_NODES -c 24 \\
+     $SPECTRE_EXECUTABLE ++ppn 23 --input-file $SPECTRE_INPUT_FILE
+
+module swap python/3.6.5
+python3 $SPECTRE_ROOT/src/Visualization/Python/GenerateXdmf.py \\
+  --file-prefix EvolutionVolume \\
+  --output EvolutionVolume
+'''
+    __cluster_submission_files_formatting__[c] = [
+        'tag', 'run_dir', 'spectre_root', 'exe', 'input_file', 'compiler'
+    ]
+
+for c in ['Wheeler_unlimited']:
+    __cluster_submission_files__[c] = '''#!/bin/bash -
 #SBATCH -J {tag}
+#SBATCH -o spectre.out
+#SBATCH -e spectre.out
 #SBATCH --nodes 1
+#SBATCH --ntasks-per-node 24
 #SBATCH -t 23:59:00
+#SBATCH -p unlimitedtimeQ
+#SBATCH -A sxs
+#SBATCH --no-requeue
                                                                                 
 # Distributed under the MIT License.                                            
 # See LICENSE.txt for details.                                                  
