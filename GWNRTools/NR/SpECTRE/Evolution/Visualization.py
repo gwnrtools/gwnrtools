@@ -28,6 +28,7 @@ try:
 except ImportError:
     pass
 
+
 def play_movie(m):
     import subprocess
     subprocess.call(['mpv', os.path.join(base_dir, m)])
@@ -73,12 +74,28 @@ class HandleSpectreReductionDatum(object):
              column_of_vars={2: '$\Pi$', 3: '$\Phi_i$', 4: '$\Psi$'},
              ax=None,
              xy_scales='linlog',
+             lw_a=2.5,
+             lw_delta=-0.2,
+             linewidths=None,
+             linestyles=None,
+             linecolors=None,
              xlabel='Code time',
              ylabel='L${}^2$ error norms vs analytic soln',
              title=None,
              grid=False,
              legend=True,
-             legend_ncol=2):
+             legend_ncol=2,
+             legend_frameon=False):
+        '''
+        With `idx` being the index_of_data_column, this function uses:
+
+        - linewidth = lw_a + idx * lw_delta
+        - linecolor = list[idx] (if list of colors provided)
+                    = str (if single color is provided)
+        - linestyle = list[idx] (if list of colors provided)
+                    = str (if single color is provided)
+        - label     = column_of_vars[idx]
+        '''
         assert(len(column_of_vars) > 0, "Nothing asked to plot!")
 
         if ax is None:
@@ -92,10 +109,32 @@ class HandleSpectreReductionDatum(object):
             "Plotting {0} of {1} columns".format(len(column_of_vars),
                                                  np.shape(d)[-1]))
         for i, idx in enumerate(column_of_vars):
+            # formatting
+            try:
+                linewidth = linewidths[i]
+            except:
+                if type(linewidths) is float:
+                    linewidth = linewidths
+                else:
+                    linewidth = lw_a + i * lw_delta
+            try:
+                linestyle = linestyles[i]
+            except:
+                if type(linestyles) is str:
+                    linestyle = linestyles
+                else:
+                    linestyle = self.linestyles[i % len(self.linestyles)]
+            try:
+                linecolor = linecolors[i]
+            except:
+                if type(linecolors) is str:
+                    linecolor = linecolors
+                else:
+                    linecolor = self.linecolors[i % len(self.linecolors)]
+
             logging.info("Plotting {0}".format(column_of_vars[idx]))
-            plotting_func(d[:, 0], d[:, idx], lw=2.5 - i * 0.2,
-                          ls=self.linestyles[i % len(self.linestyles)],
-                          c=self.linecolors[i % len(self.linecolors)],
+            plotting_func(d[:, 0], d[:, idx],
+                          lw=linewidth, ls=linestyle, c=linecolor,
                           label=column_of_vars[idx] + " ({0:s})".format(self.name))
         if grid:
             plt.grid(True)
@@ -106,7 +145,7 @@ class HandleSpectreReductionDatum(object):
         if title:
             ax.set_title(title)
         if legend:
-            ax.legend(loc='best', ncol=legend_ncol)
+            ax.legend(loc='best', ncol=legend_ncol, frameon=legend_frameon)
         return ax
 
 
