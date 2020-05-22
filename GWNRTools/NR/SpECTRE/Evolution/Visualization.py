@@ -21,9 +21,12 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
-import celluloid
 import h5py
 
+try:
+    import celluloid
+except ImportError:
+    pass
 
 def play_movie(m):
     import subprocess
