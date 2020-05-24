@@ -31,6 +31,7 @@ class BatchEvolutions(object):
 Input:
 ------
 exes     : dict, executables for all executable configs
+inputs   : dict, text data for all input files
 tests    : list, analysis tags for all test configs
 test_dir : str, Base directory within which to run all tests
 
@@ -72,7 +73,8 @@ Returns True if they do for all tests.
                 logging.info("Exec for test {0:s}: Found".format(config_name))
             else:
                 logging.info(
-                    "Exec for test {0:s}: Not Found".format(config_name))
+                    "Exec for test {0:s}: Not Found at {1}".format(
+                        config_name, self.exes[config_name]))
 
     def exe(self, config_name):
         '''
