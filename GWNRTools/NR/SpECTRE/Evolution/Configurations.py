@@ -257,7 +257,7 @@ for c in ['Wheeler_unlimited']:
 #SBATCH -e spectre.out
 #SBATCH --nodes 1
 #SBATCH --ntasks-per-node 24
-#SBATCH -t 23:59:00
+#SBATCH -t 503:59:00
 #SBATCH -p unlimitedtimeQ
 #SBATCH -A sxs
 #SBATCH --no-requeue

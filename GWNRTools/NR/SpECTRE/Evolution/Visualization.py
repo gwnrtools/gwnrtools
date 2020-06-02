@@ -79,13 +79,13 @@ class HandleSpectreReductionDatum(object):
              linewidths=None,
              linestyles=None,
              linecolors=None,
+             plot_kwargs={},
              xlabel='Code time',
              ylabel='L${}^2$ error norms vs analytic soln',
              title=None,
              grid=False,
              legend=True,
-             legend_ncol=2,
-             legend_frameon=False):
+             legend_kwargs={'ncol': 3, 'fontsize': 14, 'frameon': False}):
         '''
         With `idx` being the index_of_data_column, this function uses:
 
@@ -117,25 +117,32 @@ class HandleSpectreReductionDatum(object):
                     linewidth = linewidths
                 else:
                     linewidth = lw_a + i * lw_delta
-            try:
-                linestyle = linestyles[i]
-            except:
-                if type(linestyles) is str:
-                    linestyle = linestyles
-                else:
+
+            if type(linestyles) is str:
+                linestyle = linestyles
+            else:
+                try:
+                    linestyle = linestyles[i]
+                except:
                     linestyle = self.linestyles[i % len(self.linestyles)]
-            try:
-                linecolor = linecolors[i]
-            except:
-                if type(linecolors) is str:
-                    linecolor = linecolors
-                else:
+
+            if type(linecolors) is str:
+                linecolor = linecolors
+            else:
+                try:
+                    linecolor = linecolors[i]
+                except:
                     linecolor = self.linecolors[i % len(self.linecolors)]
 
+            label = column_of_vars[idx]
+            if self.name:
+                label = label + " ({0:s})".format(self.name)
+
             logging.info("Plotting {0}".format(column_of_vars[idx]))
-            plotting_func(d[:, 0], d[:, idx],
+            plotting_func(d[:, 0], d[:, idx], label=label,
                           lw=linewidth, ls=linestyle, c=linecolor,
-                          label=column_of_vars[idx] + " ({0:s})".format(self.name))
+                          **plot_kwargs)
+
         if grid:
             plt.grid(True)
         if xlabel:
@@ -145,7 +152,7 @@ class HandleSpectreReductionDatum(object):
         if title:
             ax.set_title(title)
         if legend:
-            ax.legend(loc='best', ncol=legend_ncol, frameon=legend_frameon)
+            ax.legend(**legend_kwargs)
         return ax
 
 
