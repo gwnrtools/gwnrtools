@@ -47,7 +47,7 @@ __itime__ = time.time()
 ######################################################################
 ######################################################################
 #
-#      OVERLAP CALCULATIONS
+#      Overlap and Fitting Factor
 #
 ######################################################################
 ######################################################################
@@ -89,8 +89,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 1) GENERATE FILTERING META-PARAMETERS
     filter_N = signal_duration * sample_rate
     filter_n = filter_N / 2 + 1
-    delta_t = 1./sample_rate
-    delta_f = 1./signal_duration
+    delta_t = 1. / sample_rate
+    delta_f = 1. / signal_duration
     # LIGO Noise PSD
     psd = from_string(psd_string, filter_n, delta_f, f_lower)
 
@@ -122,7 +122,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                 " ERROR:...OOPS. Waveform file %s empty!!" % signal_file)
         try:
             _ = np.loadtxt(signal_file)
-        except:
+        except BaseException:
             raise RuntimeError(
                 " WARNING: FAILURE READING DATA FROM %s.." % signal_file)
 
@@ -212,7 +212,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                 " ERROR:...OOPS. Waveform file %s empty!!" % tmplt_file)
         try:
             _ = np.loadtxt(tmplt_file)
-        except:
+        except BaseException:
             raise RuntimeError(
                 " WARNING: FAILURE READING DATA FROM %s.." % tmplt_file)
 
@@ -234,7 +234,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                                                  -1, -1, -1,
                                                  waveform_params,
                                                  f_lower,
-                                                 1./delta_t,
+                                                 1. / delta_t,
                                                  filter_N,
                                                  datafile=tmplt_file)
             print(".. generated signal waveform ")
@@ -368,8 +368,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     sample_rate = int(sample_rate)
     filter_N = signal_duration * sample_rate
     filter_n = filter_N / 2 + 1
-    delta_t = 1./sample_rate
-    delta_f = 1./signal_duration
+    delta_t = 1. / sample_rate
+    delta_f = 1. / signal_duration
     if verbose:
         print("signal_duration = %d, sample_rate = %d, filter_N = %d, filter_n = %d" % (
             signal_duration, sample_rate, filter_N, filter_n))
@@ -405,7 +405,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                 " ERROR:...OOPS. Waveform file %s empty!!" % signal_file)
         try:
             _ = np.loadtxt(signal_file)
-        except:
+        except BaseException:
             raise RuntimeError(
                 " WARNING: FAILURE READING DATA FROM %s.." % signal_file)
 
@@ -468,7 +468,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 3) INITIALIZE THE WAVEFORM GENERATOR FOR TEMPLATES
     # We allow all intrinsic parameters to vary, and fix them to the signal
     # values, in case only masses or only mass+aligned-spin components are
-    # requested to be varied. This fixing is done inside the objective function.
+    # requested to be varied. This fixing is done inside the objective
+    # function.
     if tmplt_approx in pywf.fd_approximants():
         generator_tmplt = pywfg.FDomainDetFrameGenerator(pywfg.FDomainCBCGenerator, 0,
                                                          variable_args=['mass1', 'mass2',
@@ -528,7 +529,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                 "No of vars %d not supported (should be 2 or 4 or 8)" % len(x))
 
         # 2) CHECK FOR CONSISTENCY
-        if (_s1x**2 + _s1y**2 + _s1z**2) > s_max or (_s2x**2 + _s2y**2 + _s2z**2) > s_max:
+        if (_s1x**2 + _s1y**2 + _s1z**2) > s_max or (_s2x **
+                                                     2 + _s2y**2 + _s2z**2) > s_max:
             return 1e99
 
         # 2) ASSUME THAT
@@ -538,7 +540,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
         tmplt_h = make_frequency_series(tmplt['H1'])
 
         if debug:
-            print("IN FF Objective-> for parameters:",  m1,
+            print("IN FF Objective-> for parameters:", m1,
                   m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z)
         if debug:
             print("IN FF Objective-> Length(tmplt) = %d, making it %d" %
@@ -609,8 +611,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     et_min = 10. / 121.  # Lets say we trust waveform models up to q = 10
     m1_max, _ = pnutils.mchirp_eta_to_mass1_mass2(mc_max, et_min)
     m1_min, _ = pnutils.mchirp_eta_to_mass1_mass2(mc_min, et_max)
-    _,      m2_max = pnutils.mchirp_eta_to_mass1_mass2(mc_max, et_max)
-    _,      m2_min = pnutils.mchirp_eta_to_mass1_mass2(mc_min, et_min)
+    _, m2_max = pnutils.mchirp_eta_to_mass1_mass2(mc_max, et_max)
+    _, m2_min = pnutils.mchirp_eta_to_mass1_mass2(mc_min, et_min)
     s_min = -0.99
     s_max = +0.99
     s_eff = (s1z * m1 + s2z * m2) / (m1 + m2)
@@ -712,9 +714,9 @@ def overlap_between_waveforms(wav1, wav2, psd=None, f_lower=15.):
     # Return overlap between two TimeSEries with psd needed as a FrequencySeries
     # {{{
     try:
-        if psd == None:
+        if psd is None:
             psd = self.psd
-    except:
+    except BaseException:
         raise IOError("Please compute and store PSD")
     #
     len1, len2, lenp = len(wav1), len(wav2), len(psd)
@@ -723,7 +725,7 @@ def overlap_between_waveforms(wav1, wav2, psd=None, f_lower=15.):
             "Length of waveforms not equal: %d,%d" % (len1, len2))
     if wav1.delta_t != wav2.delta_t:
         raise IOError("Mismatched wave sample rate")
-    if len1 != 2*lenp-2:
+    if len1 != 2 * lenp - 2:
         raise IOError("PSD length inconsistent with waveforms")
     #
     return match(wav1, wav2, psd=psd, low_frequency_cutoff=f_lower)[0]
@@ -785,7 +787,7 @@ def calculate_mismatch_between_levs_hdf5(self,
                                          m_upper=100., m_delta=5.):
     # {{{
     cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
-    fout = h5py.File(self.outdir+'/'+outdir + '/' + outputfile, "a")
+    fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
     #
     # Get the waveforms for different levs
     self.read_waveforms_from_hdf5_files(wavefilename=wavefilename)
@@ -829,3 +831,34 @@ def calculate_mismatch_between_levs_hdf5(self,
     return
     # }}}
     #
+
+
+######################################################################
+######################################################################
+#
+#      SNR CALCULATIONS
+#
+######################################################################
+######################################################################
+def compute_snr_vs_time(wave, psd, time_step=1e-2, f_lower=15.0):
+    # wave should be longer than dt
+    assert(time_step < len(wave) * wave.delta_t)
+
+    from numpy import round, arange
+    from pycbc.types import TimeSeries
+
+    integration_stop_times = arange(
+        time_step, len(wave) * wave.delta_t, time_step)
+
+    def truncate_wave_at_time(wave, end_time):
+        wave_c = TimeSeries(wave, delta_t=wave.delta_t, copy=True)
+        idx = int(round(float(end_time) / wave.delta_t))
+        wave_c[idx:] = 0
+        return wave_c
+
+    wave_snr = []
+    for integration_stop_time in integration_stop_times:
+        wave_copy = truncate_wave_at_time(wave, integration_stop_time)
+        wave_snr.append(sigma(wave_copy, psd, low_frequency_cutoff=f_lower))
+
+    return TimeSeries(wave_snr, delta_t=time_step)
