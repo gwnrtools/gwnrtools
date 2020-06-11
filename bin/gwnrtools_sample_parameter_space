@@ -82,6 +82,15 @@ parser.add_argument('--total-mass-max',
                     default=100.0,
                     type=float)
 
+parser.add_argument('--fix-mass1',
+                    help="Fixed value allowed for component mass of bigger BH",
+                    default=0,
+                    type=float)
+parser.add_argument('--fix-mass2',
+                    help="Fixed value allowed for component mass of smaller BH",
+                    default=0,
+                    type=float)
+
 parser.add_argument('--spin-mag-min',
                     help="Minimum value allowed for component spin magnitudes",
                     default=0.0,
@@ -177,13 +186,15 @@ parser.add_argument('--polarization-max',
 parser.add_argument('-w', '--mchirp-window', metavar='MC_WIN',
                     dest="mchirp_window",
                     help="""Fractional window on mchirp parameter. If waveform
-parameters differ by more than this window, the overlap is set to 0.""",
-                    default=0.01,
+parameters differ by more than this window, they are rejected. (disabled by
+default)""",
+                    default=-1.0,
                     type=float)
 parser.add_argument('-e', '--eccentricity-window', metavar='E0_WIN',
                     dest="ecc_window",
-                    help="""Absolute window on eccentricity.""",
-                    default=0.0,
+                    help="""Absolute window on eccentricity. (disabled by
+                    default)""",
+                    default=-1.0,
                     type=float)
 
 # Others
@@ -338,7 +349,10 @@ def get_new_sample_point():
   p = lsctables.SimInspiral()
 
   # Masses
-  if True:
+  if options.fix_mass1 and options.fix_mass2:
+    p.mass1, p.mass2 = options.fix_mass1, options.fix_mass2
+    p.mchirp, p.eta = mass1_mass2_to_mchirp_eta(p.mass1, p.mass2)
+  elif True:
     masses = sample_mass(2)
     p.mass1 = max(masses)
     p.mass2 = min(masses)
@@ -482,12 +496,13 @@ new_points_doc.childNodes[0].appendChild(new_points_table)
 
 #{{{
 num_new_points = np.int(options.num_new_points)
+freq_output = num_new_points / 50 if num_new_points > 50 else 1
 
 break_now = False
 cnt = 0
 while cnt < num_new_points:
   if options.verbose:
-    if cnt % (num_new_points / 50) == 0:
+    if cnt % freq_output == 0:
       logging.info("%d points chosen" % cnt)
   if cnt == 0:
     new_point = get_new_sample_point()
@@ -506,7 +521,7 @@ while cnt < num_new_points:
                                 old_points_table,\
                                 options.mchirp_window,\
                                 options.ecc_window)):
-    if options.verbose and k % (num_new_points / 50) == 0:
+    if options.verbose and k % freq_output == 0:
       logging.info("\t\t ...rejecting sample %d" % k)
       sys.stdout.flush()
     k += 1
