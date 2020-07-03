@@ -83,10 +83,8 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
     return chip
 
 
-def q_from_eta(eta):
-    import numpy as np
-    return ((1. - 2.*eta + np.sqrt(1. - 4.*eta))/(2.*eta))
-
+def q_to_eta(q):
+    return q / (1. + q)**2
 
 def eta_to_q(eta):
     a = c = 1.
