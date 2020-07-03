@@ -2,24 +2,14 @@
 #########################################################################
 ##############          IMPORTS          ################################
 #########################################################################
-from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
-from pycbc import DYN_RANGE_FAC
-from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as, Array
-from pycbc.filter import make_frequency_series,match, sigmasq, resample_to_delta_t
-from pycbc.fft import fft
-import pycbc.psd
 
 import numpy as np
-from numpy import sqrt, pi,cos, sin,loadtxt, float32,float64, floor, complex128
-from scipy.interpolate import interp1d
-import gc
 
 import sys
 import os, logging
 logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
                      level=logging.INFO, stream=sys.stdout)
 import time
-import commands
 
 import argparse
 
@@ -27,7 +17,6 @@ import GWNRTools.Stats as SU
 import GWNRTools.DataAnalysis as DA
 
 from pycbc.pnutils import *
-import lal
 from glue import gpstime
 
 from glue.ligolw import ligolw

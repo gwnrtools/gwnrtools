@@ -1,18 +1,10 @@
 #! /usr/bin/env python
 
-from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
-from pycbc import DYN_RANGE_FAC
-from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as, Array
-from pycbc.filter import make_frequency_series,match, sigmasq,resample_to_delta_t
-from pycbc.fft import fft
-import pycbc.psd
+from pycbc.filter import match
 
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from numpy import sqrt, pi,cos, sin,loadtxt, float32,float64
-from scipy.interpolate import interp1d
-import gc
 
 import sys
 import os
@@ -21,12 +13,7 @@ import commands
 
 from optparse import OptionParser
 
-import qm
-from qm import mchirp_eta_to_m1_m2
 
-from glue import lal
-from glue import segments
-from glue import segmentsUtils
 from glue import gpstime
 
 from glue.ligolw import ligolw
@@ -34,7 +21,6 @@ from glue.ligolw import table
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
-from glue import pidfile as pidfile
 from glue import git_version
 
 

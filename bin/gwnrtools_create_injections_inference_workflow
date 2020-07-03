@@ -21,9 +21,7 @@ custom set of simulated signals"""
 import os
 import argparse
 import logging
-import shutil
 import subprocess
-import glob
 import tempfile
 import numpy
 
@@ -36,7 +34,7 @@ from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
                                                      InferenceConfigs)
 from GWNRTools.Workflow.InferenceUtilities import (InjectionInferenceAnalysis,
                                                    InferenceOnInjectionBatch)
-from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
+from GWNRTools.Workflow.CondorUtilities import InferenceJob
 from GWNRTools import __version__
 
 

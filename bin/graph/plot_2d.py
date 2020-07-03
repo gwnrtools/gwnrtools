@@ -18,28 +18,19 @@ matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 
-from matplotlib.ticker import FixedLocator, Formatter
-from matplotlib.projections import PolarAxes
-from matplotlib.transforms import Affine2D
-from matplotlib.patches import Wedge
+from matplotlib.ticker import Formatter
 from matplotlib import patheffects as PathEffects
-from matplotlib.collections import PatchCollection
 
-from mpl_toolkits.axisartist.grid_finder import MaxNLocator
-import mpl_toolkits.axisartist.floating_axes as floating_axes
-import mpl_toolkits.axisartist.angle_helper as angle_helper
 
 from scipy.spatial import Delaunay
 
 #import seaborn as sns
 import seaborn.apionly as sns
-from six import string_types
 
 sns.set_style('ticks')
 sns.set_context('talk')
 #sns.set_style({'font.family':'Times New Roman'})
 
-from bounded_2d_kde import Bounded_2d_kde
 
 rc_params = {'backend': 'ps',
              'axes.labelsize': 15,

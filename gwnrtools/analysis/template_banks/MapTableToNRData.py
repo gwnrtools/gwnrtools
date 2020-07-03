@@ -6,15 +6,12 @@ import sys
  
 from optparse import OptionParser
 
-import lal
-from glue import gpstime, git_version
+from glue import git_version
 from glue.ligolw import ligolw
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
 
 import h5py
-import glob
 import numpy as np
 
 @lsctables.use_in

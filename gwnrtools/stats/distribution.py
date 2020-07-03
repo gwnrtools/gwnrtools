@@ -20,18 +20,17 @@
 #
 # =============================================================================
 #
-from gwnrtools.stats.lal_inference_utils import ParamLatexLabels
+from gwnrtools.graph import ParamLatexLabels
 from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import UnivariateSpline
 import scipy.integrate as si
 import scipy.optimize as so
 try:
-  from statsmodels.nonparametric.kde import KDEUnivariate
-  from statsmodels.nonparametric.kernel_density import KDEMultivariate
-except: pass
+    from statsmodels.nonparametric.kde import KDEUnivariate
+    from statsmodels.nonparametric.kernel_density import KDEMultivariate
+except:
+    pass
 import os
-import sys
-import time
 
 import copy as cp
 import numpy as np
@@ -43,10 +42,6 @@ plt.rcParams.update({'text.usetex': True})
 
 ######################################################
 # Constants
-######################################################
-verbose = True
-vverbose = True
-debug = True
 
 quantiles_68 = [0.16, 0.5, 0.84]  # 1-sigma
 quantiles_95 = [0.0228, 0.5, 0.9772]  # 2-sigma ~ 95.4%
@@ -55,11 +50,9 @@ percentiles_95 = 100*np.array(quantiles_95)
 perc_int_95 = [2.28, 97.72]
 perc_int_99_7 = [0.13, 99.87]  # 3 sigma
 
-CILevels = [90.0, 68.26895, 95.44997, 99.73002]
-
 ######################################################
 # Function to make parameter bias plots
-######################################################
+
 linestyles = ['-', '--', '-.', '-x', '--o']
 linecolors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 plotdir = 'plots/'
@@ -70,33 +63,11 @@ ppi = 72.0
 aspect = (5.**0.5 - 1) * 0.5
 size = 4.0 * 2  # was 6
 figsize = (size, aspect*size)
-# plt.rcParams.update({\
-# 'legend.fontsize':16, \
-# 'text.fontsize':16,\
-# 'axes.labelsize':16,\
-# 'font.family':'serif',\
-# 'font.size':16,\
-# 'xtick.labelsize':16,\
-# 'ytick.labelsize':16,\
-# 'figure.subplot.bottom':0.2,\
-# 'figure.figsize':figsize, \
-# 'savefig.dpi': 500.0, \
-# 'figure.autolayout': True})
-
-_itime = time.time()
-######################################################################
-__author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
-PROGRAM_NAME = os.path.abspath(sys.argv[0])
-verbose = True
 
 
 ######################################################################
-######################################################################
-#
 #     UTILITIES FOR 1D / ND DISTRIBUTIONS
-#
-######################################################################
-######################################################################
+
 def KDEMeanOverRange(kde_func, x_range):
     total_area = si.quad(kde_func, low, high)
     low = np.min(x_range)
@@ -130,7 +101,6 @@ data - 1-D iterable type (list, array)
 data_kde - if provided, must be a KDE estimator class with a member
             function called "evaluate". E.g. use KDEUnivariate class from
             [] from statsmodels.nonparametric.kde import KDEUnivariate
-
     '''
 
     def __init__(self, data, data_kde=None,

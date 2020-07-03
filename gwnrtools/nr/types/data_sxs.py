@@ -10,19 +10,10 @@
 from __future__ import absolute_import
 
 import os
-import sys
 import h5py
 
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
-from scipy.misc import derivative
-from scipy.optimize import bisect, brentq, minimize_scalar
-from scipy.integrate import simps, cumtrapz
 
-import subprocess as cmd
-import string
-from numpy import *
 import numpy as np
-from numpy.random import random
 
 from .single_mode import nr_mode
 ######################################################################

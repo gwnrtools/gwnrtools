@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# $Id: tmplt_bank.py,v 1.6 2006/07/03 23:26:06 duncan Exp $
 
 import time
 import os
@@ -7,7 +6,6 @@ import sys
  
 from optparse import OptionParser
 
-from glue import lal
 from glue import gpstime
 
 from glue.ligolw import ligolw
@@ -22,17 +20,9 @@ lsctables.use_in(mycontenthandler)
 
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
-from glue import pidfile as pidfile
 from glue import git_version
-from scipy.interpolate import interp1d
 import pylab
-from pylab import arange,pi,sin,cos,sqrt
-from numpy import loadtxt
  
-__author__  = "Duncan Brown <dabrown@physics.syr.edu>"
-
-PROGRAM_NAME = os.path.abspath(sys.argv[0])
-
 params =  {'text.usetex': True }
 pylab.rcParams.update(params)
  

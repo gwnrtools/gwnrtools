@@ -21,9 +21,6 @@ custom set of public gravitational-wave events using open data"""
 import os
 import argparse
 import logging
-import shutil
-import subprocess
-import glob
 import tempfile
 import numpy
 
@@ -32,9 +29,8 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from GWNRTools.Stats.PyCBCInferenceUtilities import InferenceConfigs
 from GWNRTools.Workflow.InferenceUtilities import InferenceOnEventBatch
-from GWNRTools.Workflow.CondorUtilities import BaseJob, InferenceJob
+from GWNRTools.Workflow.CondorUtilities import InferenceJob
 from GWNRTools.Utils.SupportFunctions import (mkdir, rmdir)
 from GWNRTools import __version__
 

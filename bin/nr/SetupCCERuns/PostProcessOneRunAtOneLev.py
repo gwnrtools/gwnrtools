@@ -33,7 +33,6 @@ try:
   sys.path.append(os.path.join(head_dir, 'scripts/setupCCEruns/'))
 except:
   print "addint path to UseNRinDA using git rev-parse failed.. :("
-  pass
 
 import ccerun as CC
 reload(CC)

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import numpy as np
-import os, sys
 import matplotlib.pyplot as plt
 plt.rcParams.update({'text.usetex':True})
 
-from matplotlib import gridspec
 
 from pycbc.filter import *
 from pycbc.types import *
@@ -13,10 +11,8 @@ from pycbc.waveform import *
 from pycbc.waveform.utils import *
 
 from pycbc.psd import *
-from pycbc.pnutils import mchirp_eta_to_mass1_mass2,eta_mass1_to_mass2
+from pycbc.pnutils import mchirp_eta_to_mass1_mass2
 
-from scipy.interpolate import interp1d, UnivariateSpline
-from scipy.optimize import bisect, brentq, minimize_scalar
 from pycbc.waveform import amplitude_from_polarizations,phase_from_polarizations
 
 import UseNRinDA

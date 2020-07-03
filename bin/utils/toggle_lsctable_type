@@ -4,10 +4,8 @@ import time
 import os
 import sys
 
-import numpy as np
 import argparse
 
-import lal
 from glue import gpstime
 from glue.ligolw import ligolw
 from glue.ligolw import table
@@ -15,11 +13,9 @@ from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
 from glue.ligolw import ilwd
-from glue import git_version
 
 from pycbc.waveform import parameters as default_parameters
 
-import GWNRTools.Stats as SU
 import GWNRTools.DataAnalysis as DA
 
 __author__ = "Prayush Kumar <prayush.kumar@gmail.com>"

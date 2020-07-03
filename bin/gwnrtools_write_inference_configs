@@ -18,7 +18,6 @@
 """Get and write configuration files for generating a workflow to perform
 Bayesian parameter estimation runs on a custom set of simulated signals"""
 
-import os
 import sys
 import logging
 import argparse

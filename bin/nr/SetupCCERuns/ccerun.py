@@ -47,13 +47,11 @@ try:
   from DataAnalysis import *
 except:
   print "Error importing Psi4->h integration modules"
-  pass
 
 try:
   import UseNRinDA
   import lal
-  from glue.ligolw import utils as ligolw_utils
-  from glue.ligolw import ligolw, table, lsctables
+  from glue.ligolw import ligolw, lsctables
   @lsctables.use_in
   class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
     pass
@@ -63,7 +61,6 @@ try:
   from pycbc.types import *
 except: 
   print "Error importing LAL/PyCBC modules"
-  pass
 
 #########################################################################
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
@@ -190,7 +187,6 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     if iB <= max_a_index:
       raise RuntimeError("Couldnt find amplitude threshold time iB")
       # this doesn't happen yet
-      pass
     print "NEW: iA = %d, iB = %d, vA = %e, vB = %e" % (iA, iB, vA, vB)
     t = [ [ t_opt[0]*mm,500*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm], # Prayush's E
           [ t_opt[0]*mm,t_opt[1]*mm,hp0.sample_times.data[iA]/mtsun,hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm ],

@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-import time
 import os
 import sys
 import commands as cmd
-import string
 from optparse import OptionParser
 
-from glue import gpstime, git_version
+from glue import git_version
 from glue.ligolw import ligolw
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
 
 @lsctables.use_in
 class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):

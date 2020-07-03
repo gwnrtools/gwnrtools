@@ -20,11 +20,8 @@ from glue.ligolw import table
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
-from glue import pidfile as pidfile
 from glue import git_version
 
-from scipy.interpolate import interp1d
-import gc
 
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])

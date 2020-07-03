@@ -25,27 +25,19 @@ from __future__ import print_function
 
 import os
 import sys
-import h5py
 
-import subprocess as cmd
-import string
 from numpy import *
 import numpy as np
-from numpy.random import random
 
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
-from scipy.misc import derivative
-from scipy.optimize import bisect, brentq, minimize_scalar
-from scipy.integrate import simps, cumtrapz
+from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy.integrate import cumtrapz
 
 import lal
 from pycbc.waveform import *
 from pycbc.types import *
 from pycbc.filter import *
-from pycbc.psd import from_string
 
 from gwnrtools.nr.types import nr_data
-from gwnrtools.nr.types import nr_mode
 from gwnrtools.utils import zero_pad_beginning
 from gwnrtools.waveform.utils import get_time_at_frequency
 ######################################################################

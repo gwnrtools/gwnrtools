@@ -14,6 +14,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+"""WAVEFORM DERIVATIVES & FISHER MATRIX CALCULATIONS"""
 
 #
 # =============================================================================
@@ -28,9 +29,6 @@ import numpy as np
 import scipy as sp
 import time
 
-
-
-
 from pycbc.detector import *
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.types import FrequencySeries, TimeSeries
@@ -38,14 +36,6 @@ from pycbc.types import FrequencySeries, TimeSeries
 _itime = time.time()
 verbose = True
 
-
-######################################################################
-######################################################################
-#
-#      WAVEFORM DERIVATIVES & FISHER MATRIX CALCULATIONS
-#
-######################################################################
-######################################################################
 
 #############################
 # Function to compute derivatives dh/dth

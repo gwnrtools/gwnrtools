@@ -16,6 +16,7 @@
 
 from matplotlib import cm
 from gwnrtools.stats.distribution import MultiDDistribution
+from gwnrtools.graph import ParamLatexLabels
 
 
 class CornerPlot(MultiDDistribution):

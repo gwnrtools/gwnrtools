@@ -2,25 +2,14 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import time
 import os
-import sys
 from optparse import OptionParser
-from glue import lal
-from glue import segments
-from glue import segmentsUtils
-from glue import gpstime
-from glue.ligolw import ligolw
 from glue.ligolw import table
 from glue.ligolw import lsctables
 from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
-from glue.segmentdb import segmentdb_utils
-from glue import pidfile as pidfile
-from glue import git_version
 from numpy import loadtxt
 import pylab
-from pylab import arange,pi,sin,cos,sqrt
+from pylab import sqrt
 import qm
 from os.path import isfile
 import numpy

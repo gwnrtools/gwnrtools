@@ -31,27 +31,13 @@ import sys
  
 from argparse import ArgumentParser
 
-from glue import lal
-from glue import segments
-from glue import segmentsUtils
-from glue import gpstime
 
 
-from glue import git_version
-from scipy.interpolate import interp1d
 import pylab
-from pylab import arange,pi,sin,cos,sqrt
-from numpy import loadtxt
  
-from pycbc.pnutils import mass1_mass2_to_mchirp_eta, f_SchwarzISCO
-from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
-from pycbc.waveform.utils import taper_timeseries
-from pycbc import DYN_RANGE_FAC
-from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as
-from pycbc.filter import match, sigmasq, resample_to_delta_t
-from math import ceil, log
+from pycbc.waveform import fd_approximants, td_approximants
+from pycbc.filter import match
 import pycbc.psd
-from pycbc.detector import overhead_antenna_pattern as generate_fplus_fcross
 
 from SupportFunctions import *
 from UseNRinDA import *

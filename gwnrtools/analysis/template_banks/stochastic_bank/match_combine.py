@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # Alex Nitz
 
-import time
-import os
 from os.path import isfile
-import sys
 
 from optparse import OptionParser
 

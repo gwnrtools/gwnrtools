@@ -14,6 +14,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
+"""UTILITIES FOR CREATING 1D / ND DISTRIBUTIONS"""
+
 # =============================================================================
 #
 #                                   Preamble
@@ -22,41 +24,27 @@
 #
 import numpy as np
 
-######################################################
-# Constants
-######################################################
-verbose = True
-vverbose = True
-debug = True
-
-quantiles_68 = [0.16, 0.5, 0.84]  # 1-sigma
-quantiles_95 = [0.0228, 0.5, 0.9772]  # 2-sigma ~ 95.4%
-percentiles_68 = 100*np.array(quantiles_68)
-percentiles_95 = 100*np.array(quantiles_95)
-perc_int_95 = [2.28, 97.72]
-perc_int_99_7 = [0.13, 99.87]  # 3 sigma
-
-CILevels = [90.0, 68.26895, 95.44997, 99.73002]
-
-verbose = True
-
-
-######################################################################
-######################################################################
-#
-#     UTILITIES FOR CREATING 1D / ND DISTRIBUTIONS
-#
-######################################################################
-######################################################################
 uniform_bound = np.random.uniform
 
 
-def uniform_CompactObject_massratio(N, q_min, q_max):
+def uniform_massratio(N, q_min, q_max):
     return uniform_bound(q_min, q_max, N)
 
 
-def uniform_CompactObject_mass(N, comp_min, comp_max):
+def uniform_mass(N, comp_min, comp_max):
     return uniform_bound(comp_min, comp_max, N)
+
+
+def uniform_in_totalmass_massratio_masses(N,
+                                          mtotal_min, mtotal_max,
+                                          q_min, q_max):
+    from pycbc.pnutils import mtotal_eta_to_mass1_mass2
+    from gwnrtools.waveform.parameters import q_to_eta
+
+    mtotal_samples = uniform_bound(mtotal_min, mtotal_max, N)
+    q_samples = uniform_bound(q_min, q_max, N)
+
+    return mtotal_eta_to_mass1_mass2(mtotal_samples, q_to_eta(q_samples))
 
 
 def zero_distribution(N):
@@ -67,7 +55,7 @@ def uniform_spin_magnitude(N, a_min, a_max):
     return uniform_bound(a_min, a_max, N)
 
 
-def coalescence_time(N, t_min=1170720018., t_max=1170806417.):
+def uniform_coalescence_time(N, t_min=1170720018., t_max=1170806417.):
     return uniform_bound(t_min, t_max, N)
 
 

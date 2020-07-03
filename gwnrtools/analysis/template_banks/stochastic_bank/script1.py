@@ -1,22 +1,17 @@
 #! /usr/bin/env python
-from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
-from pycbc import DYN_RANGE_FAC
-from pycbc.types import FrequencySeries, TimeSeries, zeros, real_same_precision_as, complex_same_precision_as, Array
-from pycbc.filter import make_frequency_series,match, sigmasq, resample_to_delta_t
-from pycbc.fft import fft
+from pycbc.waveform import get_fd_waveform
+from pycbc.types import FrequencySeries, zeros
+from pycbc.filter import match
 import pycbc.psd
 
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
-from numpy import sqrt, pi,cos, sin,loadtxt, float32,float64, floor, complex128
-from scipy.interpolate import interp1d
-import gc
+from numpy import complex128, cos, float64, floor, loadtxt, sin
 
 import sys
 import os
 import time
-import commands
 
 from optparse import OptionParser
 

@@ -13,7 +13,13 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+#
+# =============================================================================
+#
+#                                   Preamble
+#
+# =============================================================================
+#
 from __future__ import (absolute_import, print_function)
 
 import numpy as np
@@ -85,6 +91,7 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
 
 def q_to_eta(q):
     return q / (1. + q)**2
+
 
 def eta_to_q(eta):
     a = c = 1.

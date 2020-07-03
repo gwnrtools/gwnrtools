@@ -2,9 +2,6 @@
 
 import matplotlib
 matplotlib.use('Agg')
-import numpy as np
-import sys
-import commands
 
 NUM_OUTER_ITER=100
 NUM_TEST_BANKS=200

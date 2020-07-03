@@ -23,23 +23,16 @@
 #
 import os
 import sys
-import h5py
 
-import subprocess as cmd
-import string
 from numpy import *
 import numpy as np
-from numpy.random import random
 
-from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
-from scipy.misc import derivative
-from scipy.optimize import bisect, brentq, minimize_scalar
-from scipy.integrate import simps, cumtrapz
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 import lal
 from pycbc.types import *
 #from pycbc.types import TimeSeries
-from pycbc.waveform import phase_from_polarizations, frequency_from_polarizations
+from pycbc.waveform import phase_from_polarizations
 
 ######################################################################
 __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"

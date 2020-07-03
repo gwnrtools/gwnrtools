@@ -11,7 +11,7 @@ import os
 import numpy as np
 import cPickle as pickle
 
-from common import events, sample_files, contour_dir, ms2q
+from common import contour_dir, events, sample_files
 from bounded_2d_kde import Bounded_2d_kde
 
 def estimate_2d_post(params, post, data2=None,

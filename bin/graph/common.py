@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-from matplotlib import pyplot as plt
 
 from matplotlib import patheffects
 from matplotlib.ticker import Formatter

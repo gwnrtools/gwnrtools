@@ -13,8 +13,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-
 #
 # =============================================================================
 #
@@ -478,12 +476,12 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
                 idx += 1
                 group_name = get_param("group_name")  # GROUP NAME
                 nrwav = gwnr.nr.nr_wave(filename=hdf5_file_name,
-                                sample_rate=1./delta_t, time_length=estimated_length_pow2,
-                                totalmass=total_mass, inclination=theta, phi=phi,
-                                modeLmin=modeLmin, modeLmax=modeLmax,
-                                distance=distance*1e6,
-                                group_name=group_name,
-                                verbose=debug)
+                                        sample_rate=1./delta_t, time_length=estimated_length_pow2,
+                                        totalmass=total_mass, inclination=theta, phi=phi,
+                                        modeLmin=modeLmin, modeLmax=modeLmax,
+                                        distance=distance*1e6,
+                                        group_name=group_name,
+                                        verbose=debug)
                 break
             except ValueError as ve:
                 estimated_length_pow2 *= 2

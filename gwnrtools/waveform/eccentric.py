@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 #
 # =============================================================================
 #
@@ -26,7 +25,6 @@ from __future__ import print_function
 import os
 import sys
 import glob
-import subprocess as cmd
 import subprocess
 import numpy as np
 from scipy.optimize import minimize
@@ -150,7 +148,7 @@ trajectory information as well as the GW polarizations.
     if verbose:
         print("Command being run: %s" % cmd_string, file=sys.stdout)
         sys.stdout.flush()
-    cmd_output = cmd.getoutput(cmd_string)
+    cmd_output = subprocess.getoutput(cmd_string)
     if verbose:
         print(cmd_output, file=sys.stdout)
         sys.stdout.flush()
@@ -185,7 +183,7 @@ trajectory information as well as the GW polarizations.
     dynamics['hc'] = wave_data[:, 2]
     ##
     cmd_string = 'rm -f %s %s' % (wave_filename, dynamics_filename)
-    cmd.getoutput(cmd_string)
+    subprocess.getoutput(cmd_string)
     return dynamics
     # }}}
 

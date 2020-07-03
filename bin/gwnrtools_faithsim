@@ -26,7 +26,7 @@
 from __future__ import print_function
 import sys
 import logging
-from numpy import loadtxt, complex64, float32, isinf
+from numpy import complex64, isinf
 import argparse
 from glue.ligolw import utils as ligolw_utils
 from glue.ligolw import table, lsctables, ligolw
@@ -34,7 +34,6 @@ from glue.ligolw import table, lsctables, ligolw
 import pycbc.version
 import pycbc.strain
 import pycbc.psd
-from pycbc.pnutils import mass1_mass2_to_mchirp_eta
 from pycbc.waveform import td_approximants, fd_approximants
 from pycbc.waveform import get_two_pol_waveform_filter
 from pycbc import DYN_RANGE_FAC
