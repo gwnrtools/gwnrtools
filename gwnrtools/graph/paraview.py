@@ -94,7 +94,7 @@ operation is irreversible and cumulative!
             if re.findall('timestep="\d+.\d+"', tl) != []:
                 t_curr = float(re.findall('"\d+.\d+"', tl)[0].strip('"'))
                 # print t_prev, t_curr
-                f not approx_equal(t_prev, t_curr, eps=1.e-9):
+                if not approx_equal(t_prev, t_curr, eps=1.e-9):
                     cnt += 1
                 # print cnt % downsample_factor
                 if cnt % downsample_factor == 0:
@@ -104,8 +104,6 @@ operation is irreversible and cumulative!
                 newpvdlines.append(tl)
         self.pvdlines = newpvdlines
         self.RetrieveUniqueTimeSteps()
-        return
-    #
 
     def RemoveTimeSteps(self, remove_low_lim, remove_high_lim):
         """
@@ -122,8 +120,6 @@ and cumulative!
                 newpvdlines.append(tl)
         self.pvdlines = newpvdlines
         self.RetrieveUniqueTimeSteps()
-        return
-    #
 
     def WriteFile(self, filename):
         """
@@ -132,5 +128,4 @@ Writes out a new PVD file (presumably after processing).
         with open(filename, "w") as fout:
             for pl in self.pvdlines:
                 fout.write(pl)
-        return
     # }}}
