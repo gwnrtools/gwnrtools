@@ -20,6 +20,8 @@
 #
 # =============================================================================
 #
+from __future__ import print_function
+
 from gwnrtools.nr.analysis.types import (
     Overlaps, SimulationErrors, EffectualnessAndBias)
 import glob
@@ -30,8 +32,10 @@ import os
 import sys
 import commands as cmd
 import matplotlib as mp
-# try: mp.use('Agg')
-# except: pass
+try:
+    mp.use('Agg')
+except:
+    pass
 mp.rc('text', usetex=True)
 plt.rcParams.update({'text.usetex': True})
 
@@ -80,9 +84,7 @@ class plot_mismatches_sim():
         const_addtn = [[], [], [str(self.data.cceradii[0])],
                        [str(self.data.cceradii[1])]]
         for idx in range(4):
-            print "idx = ", idx
             additional_constraint = const_addtn[idx]
-            print "additional constraing = ", additional_constraint
             ax = plt.subplot(nsubplotrows, nsubplotcols, idx + 1)  # <<
             l_taper = self.taperlabels
             l_lev = []
@@ -92,7 +94,6 @@ class plot_mismatches_sim():
             # self.data.cceradii): #<<
             for lidx, lev in enumerate(const_list[idx]):
                 lev = str(lev)
-                print "lev = ", lev
                 l_lev.append(lev)
                 const_key = lev
                 # For each tapering: x6
@@ -100,20 +101,15 @@ class plot_mismatches_sim():
                 if idx >= 4:
                     overlaps = {}
                     for l2 in const_keys[idx]:
-                        print "l2, lev = ", l2, lev
                         overlaps[l2] = const_func[idx](
                             key=[l2]+[lev], noduplicate=True)
                 else:
                     overlaps = const_func[idx](key=additional_constraint+[lev],
                                                noduplicate=True)
-                print overlaps
                 # self.data.ccelev(key=lev,noduplicate=True)#.values()[0] <<
                 for i in range(overlaps.values()[0].nWindows):
                     for n in range(len(overlaps.keys())):
-                        print "i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
-                                                        n, len(overlaps.keys()))
                         var_key = str(overlaps.keys()[n])
-                        print "var_key = ", var_key
                         olap = overlaps[var_key]
                         mass = olap.X()
                         mismatch = 1. - olap.Y(i)
@@ -128,8 +124,6 @@ class plot_mismatches_sim():
                         plot_lines[i].append(pl,)
                 plot_lines_all.append(plot_lines)
                 plot_lines_levs.append(plot_lines[0])
-            #
-            print "l_taper,lev,ccer = ", l_taper, l_lev, l_ccer
             #
             ax.set_yscale('log')
             ax.grid(b=True, which='major')
@@ -183,9 +177,7 @@ class plot_mismatches_sim():
         const_addtn = [[], [], [str(self.data.cceradii[0])],
                        [str(self.data.cceradii[1])]]
         for idx in range(2):
-            print "idx = ", idx
             additional_constraint = const_addtn[idx]
-            print "additional constraing = ", additional_constraint
             ax = plt.subplot(nsubplotrows, nsubplotcols, idx + 1)  # <<
             l_taper = self.taperlabels
             l_lev = []
@@ -195,7 +187,7 @@ class plot_mismatches_sim():
             # self.data.cceradii): #<<
             for lidx, lev in enumerate(const_list[idx]):
                 lev = str(lev)
-                print "lev = ", lev
+                print("lev = ", lev)
                 l_lev.append(lev)
                 const_key = lev
                 # For each tapering: x6
@@ -203,20 +195,20 @@ class plot_mismatches_sim():
                 if idx >= 4:
                     overlaps = {}
                     for l2 in const_keys[idx]:
-                        print "l2, lev = ", l2, lev
+                        print("l2, lev = ", l2, lev)
                         overlaps[l2] = const_func[idx](
                             key=[l2]+[lev], noduplicate=True)
                 else:
                     overlaps = const_func[idx](key=additional_constraint+[lev],
                                                noduplicate=True)
-                print overlaps
+                print(overlaps)
                 # self.data.ccelev(key=lev,noduplicate=True)#.values()[0] <<
                 for i in range(overlaps.values()[0].nWindows):
                     for n in range(len(overlaps.keys())):
-                        print "i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
-                                                        n, len(overlaps.keys()))
+                        print("i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
+                                                        n, len(overlaps.keys())))
                         var_key = str(overlaps.keys()[n])
-                        print "var_key = ", var_key
+                        print("var_key = ", var_key)
                         olap = overlaps[var_key]
                         mass = olap.X()
                         mismatch = 1. - olap.Y(i)
@@ -232,7 +224,7 @@ class plot_mismatches_sim():
                 plot_lines_all.append(plot_lines)
                 plot_lines_levs.append(plot_lines[0])
             #
-            print "l_taper,lev,ccer = ", l_taper, l_lev, l_ccer
+            print("l_taper,lev,ccer = ", l_taper, l_lev, l_ccer)
             #
             ax.set_yscale('log')
             ax.grid(b=True, which='major')
@@ -282,7 +274,7 @@ class plot_mismatches_sim():
         for i in range(len(self.data.ccelevs)):
             const_list.append([str(self.data.ccelevs[i])])
         const_list = const_list + const_list
-        print const_list
+        print(const_list)
         # const_list = self.data.ccelevs + self.data.ccelevs # One plot for each lev
         const_func = [self.data.cceextrapolated, self.data.cceextrapolated,
                       self.data.cceextrapolated, self.data.cceextrapolated,
@@ -294,9 +286,9 @@ class plot_mismatches_sim():
             [str(self.data.cceradii[1])], [str(self.data.cceradii[1])]]
         # subplot each for a unique Lev+CCER combination
         for idx in range(6):
-            print "idx = ", idx
+            print("idx = ", idx)
             additional_constraint = const_addtn[idx]
-            print "additional constraing = ", additional_constraint
+            print("additional constraing = ", additional_constraint)
             ax = plt.subplot(nsubplotrows, nsubplotcols, idx + 1)  # <<
             l_taper = self.taperlabels
             l_lev = []
@@ -306,21 +298,21 @@ class plot_mismatches_sim():
             # self.data.cceradii): #<<
             for lidx, lev in enumerate(const_list[idx]):
                 lev = str(lev)
-                print "lev = ", lev
+                print("lev = ", lev)
                 l_lev.append(lev)
                 const_key = lev
                 # For each tapering: x6
                 plot_lines = [[], [], [], [], [], []]
                 overlaps = const_func[idx](key=additional_constraint+[lev],
                                            noduplicate=True)
-                print overlaps
+                print(overlaps)
                 # self.data.ccelev(key=lev,noduplicate=True)#.values()[0] <<
                 for i in range(overlaps.values()[0].nWindows):
                     for n in range(len(overlaps.keys())):
-                        print "i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
-                                                        n, len(overlaps.keys()))
+                        print("i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
+                                                        n, len(overlaps.keys())))
                         var_key = str(overlaps.keys()[n])
-                        print "var_key = ", var_key
+                        print("var_key = ", var_key)
                         olap = overlaps[var_key]
                         mass = olap.X()
                         mismatch = 1. - olap.Y(i)
@@ -336,7 +328,7 @@ class plot_mismatches_sim():
                 plot_lines_all.append(plot_lines)
                 plot_lines_levs.append(plot_lines[0])
             #
-            print "l_taper,lev,ccer = ", l_taper, l_lev, l_ccer
+            print("l_taper,lev,ccer = ", l_taper, l_lev, l_ccer)
             #
             ax.set_yscale('log')
             ax.grid(b=True, which='major')
@@ -487,9 +479,9 @@ class plot_mismatches_sims():
         const_addtn = [[], [], [str(self.data.cceradii[0])],
                        [str(self.data.cceradii[1])]]
         for idx in range(4):
-            print "idx = ", idx
+            print("idx = ", idx)
             additional_constraint = const_addtn[idx]
-            print "additional constraing = ", additional_constraint
+            print("additional constraing = ", additional_constraint)
             ax = plt.subplot(nsubplotrows, nsubplotcols, idx + 1)  # <<
             l_taper = self.taperlabels
             l_lev = []
@@ -499,7 +491,7 @@ class plot_mismatches_sims():
             # self.data.cceradii): #<<
             for lidx, lev in enumerate(const_list[idx]):
                 lev = str(lev)
-                print "lev = ", lev
+                print("lev = ", lev)
                 l_lev.append(lev)
                 const_key = lev
                 # For each tapering: x6
@@ -507,20 +499,20 @@ class plot_mismatches_sims():
                 if idx >= 4:
                     overlaps = {}
                     for l2 in const_keys[idx]:
-                        print "l2, lev = ", l2, lev
+                        print("l2, lev = ", l2, lev)
                         overlaps[l2] = const_func[idx](
                             key=[l2]+[lev], noduplicate=True)
                 else:
                     overlaps = const_func[idx](key=additional_constraint+[lev],
                                                noduplicate=True)
-                print overlaps
+                print(overlaps)
                 # self.data.ccelev(key=lev,noduplicate=True)#.values()[0] <<
                 for i in range(overlaps.values()[0].nWindows):
                     for n in range(len(overlaps.keys())):
-                        print "i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
-                                                        n, len(overlaps.keys()))
+                        print("i = %d/%d, n = %d/%d" % (i, overlaps.values()[0].nWindows,
+                                                        n, len(overlaps.keys())))
                         var_key = str(overlaps.keys()[n])
-                        print "var_key = ", var_key
+                        print("var_key = ", var_key)
                         olap = overlaps[var_key]
                         mass = olap.X()
                         mismatch = 1. - olap.Y(i)
@@ -536,7 +528,7 @@ class plot_mismatches_sims():
                 plot_lines_all.append(plot_lines)
                 plot_lines_levs.append(plot_lines[0])
             #
-            print "l_taper,lev,ccer = ", l_taper, l_lev, l_ccer
+            print("l_taper,lev,ccer = ", l_taper, l_lev, l_ccer)
             #
             if idx+1 >= nsubplotcols*(nsubplotrows-1):
                 ax.set_xlabel('mass (solar mass)')
@@ -597,7 +589,7 @@ class plot_effectualness_vs_totalmass():
         os.chdir(self.outdir)
         self.data = EffectualnessAndBias(outdir=self.outdir)
         if self.verbose:
-            print >>sys.stderr, "reading from >> ", filename
+            print("reading from >> ", filename, file=sys.stderr)
         self.data.read_data_from_combined_file(
             simtags=simtags, filename=filename)
         os.chdir(pwd)
@@ -622,7 +614,7 @@ class plot_effectualness_vs_totalmass():
         # print "USING ONLY 10 DATA FILES -- FIXME!"
         # infiles = infiles[:10] # FIXME
         if self.verbose:
-            print >>sys.stderr, "reading from >> ", infiles
+            print("reading from >> ", infiles, file=sys.stderr)
         for f in infiles:
             self.data.read_data_from_file(filename=f, simtags=simtags)
         os.chdir(pwd)
@@ -698,28 +690,28 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
+                print("Making M-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin1z, nr_ff,
                               xlabel='Total Mass', ylabel='Spin of Bigger BH',
                               zlabel='Fitting Factor', title=app[:-4],
                               savefig=self.plotdir+'/FF_TotalMass_Spin1z_%s.%s' % (app[:-4], figtype))
             # Mass - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S2 plot for ", app
+                print("Making M-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin2z, nr_ff,
                               xlabel='Total Mass', ylabel='Spin of Smaller BH',
                               zlabel='Fitting Factor', title=app[:-4],
                               savefig=self.plotdir+'/FF_TotalMass_Spin2z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin1
             if self.verbose:
-                print >>sys.stderr, "Making Q-S1 plot for ", app
+                print("Making Q-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin1z, nr_ff,
                               xlabel='Mass Ratio', ylabel='Spin of Bigger BH',
                               zlabel='Fitting Factor', title=app[:-4],
                               savefig=self.plotdir+'/FF_MassRatio_Spin1z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin2
             if self.verbose:
-                print >>sys.stderr, "Making Q-S2 plot for ", app
+                print("Making Q-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin2z, nr_ff,
                               xlabel='Mass Ratio', ylabel='Spin of Smaller BH',
                               zlabel='Fitting Factor', title=app[:-4],
@@ -759,7 +751,7 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
+                print("Making M-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin1z, mchirp_diff,
                               xlabel='Total Mass', ylabel='Spin of Bigger BH',
                               zlabel='Chirp Mass Fractional Bias', title=app[:-4], logz=False,
@@ -767,7 +759,7 @@ class plot_effectualness_vs_totalmass():
                               '/ChirpMassBias_TotalMass_Spin1z_%s.%s' % (app[:-4], figtype))
             # Mass - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S2 plot for ", app
+                print("Making M-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin2z, mchirp_diff,
                               xlabel='Total Mass', ylabel='Spin of Smaller BH',
                               zlabel='Chirp Mass Fractional Bias', title=app[:-4], logz=False,
@@ -775,7 +767,7 @@ class plot_effectualness_vs_totalmass():
                               '/ChirpMassBias_TotalMass_Spin2z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin1
             if self.verbose:
-                print >>sys.stderr, "Making Q-S1 plot for ", app
+                print("Making Q-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin1z, mchirp_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Bigger BH',
                               zlabel='Chirp Mass Fractional Bias', title=app[:-4], logz=False,
@@ -783,7 +775,7 @@ class plot_effectualness_vs_totalmass():
                               '/ChirpMassBias_MassRatio_Spin1z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin2
             if self.verbose:
-                print >>sys.stderr, "Making Q-S2 plot for ", app
+                print("Making Q-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin2z, mchirp_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Smaller BH',
                               zlabel='Chirp Mass Fractional Bias', title=app[:-4], logz=False,
@@ -824,7 +816,7 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
+                print("Making M-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin1z, eta_diff,
                               xlabel='Total Mass', ylabel='Spin of Bigger BH',
                               zlabel='Eta Fractional Bias', title=app[:-4], logz=False,
@@ -832,7 +824,7 @@ class plot_effectualness_vs_totalmass():
                               '/EtaBias_TotalMass_Spin1z_%s.%s' % (app[:-4], figtype))
             # Mass - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S2 plot for ", app
+                print("Making M-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin2z, eta_diff,
                               xlabel='Total Mass', ylabel='Spin of Smaller BH',
                               zlabel='Eta Fractional Bias', title=app[:-4], logz=False,
@@ -840,7 +832,7 @@ class plot_effectualness_vs_totalmass():
                               '/EtaBias_TotalMass_Spin2z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin1
             if self.verbose:
-                print >>sys.stderr, "Making Q-S1 plot for ", app
+                print("Making Q-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin1z, eta_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Bigger BH',
                               zlabel='Eta Fractional Bias', title=app[:-4], logz=False,
@@ -848,7 +840,7 @@ class plot_effectualness_vs_totalmass():
                               '/EtaBias_MassRatio_Spin1z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin2
             if self.verbose:
-                print >>sys.stderr, "Making Q-S2 plot for ", app
+                print("Making Q-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin2z, eta_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Smaller BH',
                               zlabel='Eta Fractional Bias', title=app[:-4], logz=False,
@@ -889,7 +881,7 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
+                print("Making M-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin1z, spin1z_diff,
                               xlabel='Total Mass', ylabel='Spin of Bigger BH',
                               zlabel='Spin1 Fractional Bias', title=app[:-4], logz=False,
@@ -897,7 +889,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin1Bias_TotalMass_Spin1z_%s.%s' % (app[:-4], figtype))
             # Mass - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S2 plot for ", app
+                print("Making M-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin2z, spin1z_diff,
                               xlabel='Total Mass', ylabel='Spin of Smaller BH',
                               zlabel='Spin1 Fractional Bias', title=app[:-4], logz=False,
@@ -905,7 +897,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin1Bias_TotalMass_Spin2z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin1
             if self.verbose:
-                print >>sys.stderr, "Making Q-S1 plot for ", app
+                print("Making Q-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin1z, spin1z_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Bigger BH',
                               zlabel='Spin1 Fractional Bias', title=app[:-4], logz=False,
@@ -913,7 +905,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin1Bias_MassRatio_Spin1z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin2
             if self.verbose:
-                print >>sys.stderr, "Making Q-S2 plot for ", app
+                print("Making Q-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin2z, spin1z_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Smaller BH',
                               zlabel='Spin1 Fractional Bias', title=app[:-4], logz=False,
@@ -954,7 +946,7 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
+                print("Making M-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin1z, spin2z_diff,
                               xlabel='Total Mass', ylabel='Spin of Bigger BH',
                               zlabel='Spin2 Fractional Bias', title=app[:-4], logz=False,
@@ -962,7 +954,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin2Bias_TotalMass_Spin1z_%s.%s' % (app[:-4], figtype))
             # Mass - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S2 plot for ", app
+                print("Making M-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_masses, nr_spin2z, spin2z_diff,
                               xlabel='Total Mass', ylabel='Spin of Smaller BH',
                               zlabel='Spin2 Fractional Bias', title=app[:-4], logz=False,
@@ -970,7 +962,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin2Bias_TotalMass_Spin2z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin1
             if self.verbose:
-                print >>sys.stderr, "Making Q-S1 plot for ", app
+                print("Making Q-S1 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin1z, spin2z_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Bigger BH',
                               zlabel='Spin2 Fractional Bias', title=app[:-4], logz=False,
@@ -978,7 +970,7 @@ class plot_effectualness_vs_totalmass():
                               '/Spin2Bias_MassRatio_Spin1z_%s.%s' % (app[:-4], figtype))
             # MassRatio - spin2
             if self.verbose:
-                print >>sys.stderr, "Making Q-S2 plot for ", app
+                print("Making Q-S2 plot for ", app, file=sys.stderr)
             make_scatter_plot(nr_massratios, nr_spin2z, spin2z_diff,
                               xlabel='Mass Ratio', ylabel='Spin of Smaller BH',
                               zlabel='Spin2 Fractional Bias', title=app[:-4], logz=False,
@@ -1014,8 +1006,8 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
-            print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
+                print("Making M-S1 plot for ", app, file=sys.stderr)
+            print("With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff)
             make_scatter_plot3D(nr_spin1z, nr_spin2z, nr_masses, nr_ff,
                                 elevation=elevation, azimuthal=azimuthal, alpha=alpha, label=inkey,
                                 xlabel='Spin of Bigger BH', ylabel='Spin of Smaller BH',
@@ -1114,8 +1106,8 @@ class plot_effectualness_vs_totalmass():
                 nr_masses, nr_ff
             #
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
-            print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
+                print("Making M-S1 plot for ", app, file=sys.stderr)
+            print("With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff)
             if 'SEOBNRv2' in app:
                 bounds = np.log10([0.0001, 0.005, 0.01, 0.02, 0.03, 0.05])
             elif 'SEOBNRv1' in app:
@@ -1216,7 +1208,7 @@ class plot_effectualness_vs_totalmass():
             else:
                 if 'Taylor' not in app:
                     continue
-            print "\n\n Adding %s for plotting" % app
+            print("\n\n Adding %s for plotting" % app)
             # q = 1
             inkey = 'q1'
             nr_masses, nr_massratios, nr_spin1z, nr_spin2z, nr_ff = np.array([]),\
@@ -1285,7 +1277,7 @@ class plot_effectualness_vs_totalmass():
         # print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 #bounds = np.array([-0.05,-0.03,-0.01,-0.005,0.005,0.01,0.03,0.05])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, Cs,
                                     elevation=elevation, azimuthal=azimuthal, alpha=alpha,
@@ -1336,7 +1328,7 @@ class plot_effectualness_vs_totalmass():
             else:
                 if 'Taylor' not in app:
                     continue
-            print "\n\n Adding %s for plotting" % app
+            print("\n\n Adding %s for plotting" % app)
             # q = 1
             inkey = 'q1'
             nr_masses, nr_massratios, nr_spin1z, nr_spin2z, nr_ff = np.array([]),\
@@ -1441,10 +1433,10 @@ class plot_effectualness_vs_totalmass():
             for rowi in range(nrows):
                 for coli in range(ncols):
                     Cs[rowi][coli] = 1. - (1.-Cs[rowi][coli])**3.
-        print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
+        print("With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff)
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 #bounds = np.array([-0.05,-0.03,-0.01,-0.005,0.005,0.01,0.03,0.05])
         #
         if xlabel == '':
@@ -1553,11 +1545,11 @@ class plot_effectualness_vs_totalmass():
             #
             # Mass - spin1
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
-            print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
+                print("Making M-S1 plot for ", app, file=sys.stderr)
+            print("With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff)
             if type(bounds) != np.ndarray and type(bounds) != list:
                 if bounds:
-                    print "SHOULD NOT HAPPEN"
+                    print("SHOULD NOT HAPPEN")
                     bounds = np.array(
                         [-0.05, -0.03, -0.01, -0.005, 0.005, 0.01, 0.03, 0.05])
             make_scatter_plot3D_mult(
@@ -1760,10 +1752,10 @@ class plot_effectualness_vs_totalmass():
         # print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.11, -0.05, -0.03, -0.01, 0.01, 0.03, 0.05, 0.11])
-        print "bounds before calling plotting function  = ", bounds
+        print("bounds before calling plotting function  = ", bounds)
         if total_mass:
             make_scatter_plot3D_multrow(Xs, Ys, Zs, mcCs,
                                         elevation=elevation, azimuthal=azimuthal, alpha=alpha,
@@ -1791,7 +1783,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array([-0.23, -0.15, -0.10, -0.05, -0.02, 0.02, 0.05, 0.10,
                                    0.15, 0.25, 0.33])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, etCs,
@@ -1808,7 +1800,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
                 if chieff:
@@ -1840,7 +1832,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, s2Cs,
@@ -1924,8 +1916,8 @@ class plot_effectualness_vs_totalmass():
             #
             # spin1 - spin2
             if self.verbose:
-                print >>sys.stderr, "Making M-S1 plot for ", app
-            print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
+                print("Making M-S1 plot for ", app, file=sys.stderr)
+            print("With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff)
             make_contourf_mult(nr_spin1zq1, nr_spin2zq1, nr_ffq1,
                                nr_spin1zq2, nr_spin2zq2, nr_ffq2,
                                nr_spin1zq3, nr_spin2zq3, nr_ffq3,
@@ -1944,7 +1936,7 @@ class plot_effectualness_vs_totalmass():
         try:
             from pycbc.pnutils import mtotal_eta_to_mass1_mass2
         except:
-            print "error import PyCBC modules / matplotlib. Cant make this plot."
+            print("error import PyCBC modules / matplotlib. Cant make this plot.")
             return
         if self.data == None:
             self.read_data_from_all_files()
@@ -2134,7 +2126,7 @@ class plot_effectualness_vs_totalmass():
                 xlabel = '$\chi_\mathrm{eff}/(1-\\frac{76}{113}\eta)$'
             else:
                 xlabel = '$\chi_\mathrm{eff}$'
-            print ymin, ymax, ylabel, logy, legendplacement, nameprefix
+            print(ymin, ymax, ylabel, logy, legendplacement, nameprefix)
             make_2Dplot_errorbars(Xrow, Yrow, Xerrs=Xerror, Yerrs=Yerror,
                                   xlabel=xlabel, ylabel=ylabel, title=app[:-4],
                                   logy=logy, ymin=ymin, ymax=ymax, labels=[
@@ -2151,11 +2143,11 @@ class plot_effectualness_vs_totalmass():
                                                ylims=[],
                                                onlyimr=True, bounds=None, azimuthal=30, alpha=0.8, figtype='pdf'):
         # {{{
-        print "trying to make pb vs p plot"
+        print("trying to make pb vs p plot")
         try:
             from pycbc.pnutils import mtotal_eta_to_mass1_mass2
         except:
-            print "error import PyCBC modules / matplotlib"
+            print("error import PyCBC modules / matplotlib")
             return
         #
         # which approximants to plot ?
@@ -2194,7 +2186,7 @@ class plot_effectualness_vs_totalmass():
             else:
                 if 'Taylor' not in app:
                     continue
-            print "making pb vs p plot for %s" % app
+            print("making pb vs p plot for %s" % app)
             #################################################
             # q = 1
             inkey = 'q1'
@@ -2275,7 +2267,7 @@ class plot_effectualness_vs_totalmass():
                 #
                 idx['high'] = np.where(ff == ff.max())[0][0]
                 idx['low'] = np.where(ff == ff.min())[0][0]
-                print "PK: masses = ", masses
+                print("PK: masses = ", masses)
                 if massmid > 0:
                     idx['mid'] = np.where(masses == massmid)[0][0]
                 else:
@@ -2386,7 +2378,7 @@ class plot_effectualness_vs_totalmass():
                 xlabel = '$\chi_\mathrm{eff}/(1-\\frac{76}{113}\eta)$'
             else:
                 xlabel = '$\chi_\mathrm{eff}$'
-            print ymin, ymax, ylabel, logy, legendplacement, nameprefix
+            print(ymin, ymax, ylabel, logy, legendplacement, nameprefix)
             make_2Dplot_errorbars(Xrow, Yrow, Xerrs=Xerror, Yerrs=Yerror,
                                   xlabel=xlabel, ylabel=ylabel, title=app[:-4],
                                   logy=logy,
@@ -2407,7 +2399,7 @@ class plot_effectualness_vs_totalmass():
         try:
             from pycbc.pnutils import mtotal_eta_to_mass1_mass2
         except:
-            print "error import PyCBC modules / matplotlib"
+            print("error import PyCBC modules / matplotlib")
             return
         #
         # which approximants to plot ?
@@ -2526,7 +2518,7 @@ class plot_effectualness_vs_totalmass():
                 #
                 idx['high'] = np.where(ff == ff.max())[0][0]
                 idx['low'] = np.where(ff == ff.min())[0][0]
-                print "PK: masses = ", masses
+                print("PK: masses = ", masses)
                 if massmid > 0:
                     idx['mid'] = np.where(masses == massmid)[0][0]
                 else:
@@ -2640,7 +2632,7 @@ class plot_effectualness_vs_totalmass():
                 xlabel = '$\chi_\mathrm{eff}/(1-\\frac{76}{113}\eta)$'
             else:
                 xlabel = '$\chi_\mathrm{eff}$'
-            print ymin, ymax, ylabel, logy, legendplacement, nameprefix
+            print(ymin, ymax, ylabel, logy, legendplacement, nameprefix)
             make_2Dplot_errorbars(Xrow, Yrow, Xerrs=Xerror, Yerrs=Yerror,
                                   xlabel=xlabel, ylabel=ylabel, title=app[:-4],
                                   logy=logy,
@@ -2812,10 +2804,10 @@ class plot_effectualness_vs_totalmass():
         # print "With ", nr_spin1z, nr_spin2z, nr_masses, nr_ff
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.05, -0.03, -0.01, -0.005, 0.005, 0.01, 0.03, 0.05])
-        print "bounds before calling plotting function  = ", bounds
+        print("bounds before calling plotting function  = ", bounds)
         make_scatter_plot3D_multrow(Xs, Ys, Zs, mcCs,
                                     elevation=elevation, azimuthal=azimuthal, alpha=alpha,
                                     xlabel='$\chi_1$', ylabel='$\chi_2$',
@@ -2829,7 +2821,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, etCs,
@@ -2845,7 +2837,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, qCs,
@@ -2861,7 +2853,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
         if chieff:
@@ -2886,7 +2878,7 @@ class plot_effectualness_vs_totalmass():
         #
         if type(bounds) != np.ndarray and type(bounds) != list:
             if bounds:
-                print "SHOULD NOT HAPPEN"
+                print("SHOULD NOT HAPPEN")
                 bounds = np.array(
                     [-0.5, -0.2, -0.1, -0.05, -0.02, 0.02, 0.05, 0.1, 0.2, 0.5])
         make_scatter_plot3D_multrow(Xs, Ys, Zs, s2Cs,

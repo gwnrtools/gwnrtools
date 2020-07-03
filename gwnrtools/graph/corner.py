@@ -13,6 +13,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+# =============================================================================
+#
+#                                   Preamble
+#
+# =============================================================================
+#
+from __future__ import print_function
 
 from matplotlib import cm
 from gwnrtools.stats.distribution import MultiDDistribution
@@ -237,7 +245,8 @@ Input:
 
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
-                    print "Making plot (%d,%d,%d)" % (no_of_rows, no_of_cols, (nr*no_of_cols) + nc)
+                    print("Making plot (%d,%d,%d)" %
+                          (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
 
                 # Get plot for this panel
                 # ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
@@ -267,7 +276,8 @@ Input:
                     p2label = get_param_label(p2)
                     cblabel = get_param_label(param_color)
                     if verbose:
-                        print "Scatter plot w color: %s vs %s vs %s" % (p1, p2, param_color)
+                        print("Scatter plot w color: %s vs %s vs %s" %
+                              (p1, p2, param_color))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
                                     alpha=scatter_alpha,
@@ -300,7 +310,7 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print "Scatter plot: %s vs %s" % (p1, p2)
+                        print("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=rand_color,
                                     alpha=scatter_alpha,
@@ -325,13 +335,13 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print "Contour plot: %s vs %s" % (p1, p2)
+                        print("Contour plot: %s vs %s" % (p1, p2))
                     # Get data
                     d1 = self.sliced(p1).data()
                     d2 = self.sliced(p2).data()
                     dd = np.column_stack([d1, d2])
                     if verbose:
-                        print np.shape(d1), np.shape(d2), np.shape(dd)
+                        print(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
                     zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
@@ -353,7 +363,7 @@ Input:
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
-                            print "Computing area inside contours."
+                            print("Computing area inside contours.")
                         contour_areas[p1+p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
@@ -363,10 +373,12 @@ Input:
                                 np.sum([area_inside_contour(vs.vertices)
                                         for vs in contour.get_paths()]))
                             if verbose:
-                                print "Total area = %.9f, %.9f" % (contour_areas[p1+p2][-1])
+                                print("Total area = %.9f, %.9f" %
+                                      (contour_areas[p1+p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    print "sub-area %d: %.8e" % (_i, area_inside_contour(vs.vertices))
+                                    print("sub-area %d: %.8e" %
+                                          (_i, area_inside_contour(vs.vertices)))
                         contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
 
                     ####
@@ -422,10 +434,10 @@ Input:
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
                 if nc != 0:
-                    print "removing Yticklabels for (%d, %d)" % (nr, nc)
+                    print("removing Yticklabels for (%d, %d)" % (nr, nc))
                     ax.set_yticklabels([])
                 if nr != (no_of_rows - 1):
-                    print "removing Xticklabels for (%d, %d)" % (nr, nc)
+                    print("removing Xticklabels for (%d, %d)" % (nr, nc))
                     ax.set_xticklabels([])
         ##
         for nc in range(1, no_of_cols):

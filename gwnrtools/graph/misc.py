@@ -20,6 +20,8 @@
 #
 # =============================================================================
 #
+from __future__ import print_function
+
 from gwnrtools.utils.support import insert_min_max_into_array
 from gwnrtools.nr.analysis.types import (
     Overlaps, SimulationErrors, EffectualnessAndBias)
@@ -43,7 +45,8 @@ def make_2Dplot_errorbars(Xs, Ys, Xerrs=None, Yerrs=None,
         raise IOError("Length of lists to be plotted not the same")
     nrows, ncols = 1, 1  # np.shape(Xs)
     ncurves = len(Xs)
-    print "No of rows = %d, columns = %d, curves = %d" % (nrows, ncols, ncurves)
+    print("No of rows = %d, columns = %d, curves = %d" %
+          (nrows, ncols, ncurves))
     if labels == None:
         labels = range(ncurves)
         for idx in range(len(labels)):
@@ -57,7 +60,7 @@ def make_2Dplot_errorbars(Xs, Ys, Xerrs=None, Yerrs=None,
     #
     pcolor = ['b', 'r', 'k']
     for curveid in range(3):
-        print "Adding curve {}".format(curveid)
+        print("Adding curve {}".format(curveid))
         X, Y, Xerr, Yerr = Xs[curveid], Ys[curveid], None, None
         if Xerrs is not None:
             Xerr = Xerrs[curveid]
@@ -104,7 +107,7 @@ def make_scatter_plot3D_mult(X1, Y1, Z1, C1, X2, Y2, Z2, C2, X3, Y3, Z3, C3,
     # {{{
     S = 30  # 50*Z
     if logC:
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         C1 = np.log10(np.abs(C1))
         C2 = np.log10(np.abs(C2))
         C3 = np.log10(np.abs(C3))
@@ -116,7 +119,7 @@ def make_scatter_plot3D_mult(X1, Y1, Z1, C1, X2, Y2, Z2, C2, X3, Y3, Z3, C3,
         clabel = clabel + ' (Log)'
         # Insert logic here to ensure cmin and cmax are the limits on bounds
     else:
-        print >>sys.stderr, "NOT using logscale on Z"
+        print("NOT using logscale on Z", file=sys.stderr)
         if 'FF' in clabel:
             cmin = 10**-2.3
         else:
@@ -131,7 +134,7 @@ def make_scatter_plot3D_mult(X1, Y1, Z1, C1, X2, Y2, Z2, C2, X3, Y3, Z3, C3,
         if 'FF' in clabel or 'mathcal{M}' in clabel:
             bounds = np.log10([0.0001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 1])
         elif '\mathcal{M}_c' in clabel:
-            print "CHIRP MASS PLOT"
+            print("CHIRP MASS PLOT")
             bounds = np.log10([0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2])
         elif '\Delta' in clabel:
             bounds = np.log10([0.005, 0.01, 0.03, 0.05, 0.1, 0.2, 0.5, 1.])
@@ -154,7 +157,7 @@ def make_scatter_plot3D_mult(X1, Y1, Z1, C1, X2, Y2, Z2, C2, X3, Y3, Z3, C3,
     #cmaplist = [cmap(i) for i in range(cmap.N)]
     #cmap = cmap.from_list('Custom map', cmaplist, cmap.N)
     # cmap.set_under('gray')
-    print "bounds = ", bounds
+    print("bounds = ", bounds)
     if type(bounds) == np.ndarray or type(bounds) == list:
         norm = mp.colors.BoundaryNorm(bounds, cmap.N)
     else:
@@ -250,12 +253,12 @@ def make_scatter_plot3D_mult(X1, Y1, Z1, C1, X2, Y2, Z2, C2, X3, Y3, Z3, C3,
     cb.set_label(clabel, labelpad=-0.3, y=0)
     #if max(C) < cmax and min(C) > cmin: cb.set_clim([cmin,cmax])
     fig.tight_layout()
-    print savefig
+    print(savefig)
     if '.png' in savefig:
         savefig = savefig.split('.png')[0]+'_q123.png'
     elif '.pdf' in savefig:
         savefig = savefig.split('.pdf')[0]+'_q123.pdf'
-    print savefig
+    print(savefig)
     fig.savefig(savefig)
     return
     # }}}
@@ -274,13 +277,13 @@ def make_scatter_plot3D_multrow(Xs, Ys, Zs, Cs,
         raise IOError("Length of lists to be plotted not the same")
     # Known failure mode: when all arrays in Xrows are of the same length
     nrows, ncols = np.shape(Xs)
-    print "No of rows = %d, columns = %d" % (nrows, ncols)
+    print("No of rows = %d, columns = %d" % (nrows, ncols))
     #
     gmean = (5.**0.5-1)*0.5
     S = 30  # 50*Z
     if logC:
         bounds = np.log10(bounds)
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         for ridx, C in enumerate(Cs):
             for cidx, R in enumerate(C):
                 Cs[ridx][cidx] = np.log10(R)
@@ -288,30 +291,30 @@ def make_scatter_plot3D_multrow(Xs, Ys, Zs, Cs,
             cmin = -2.3
         else:
             Cs = np.array(Cs)
-            print "Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs)
+            print("Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs))
             cmin = np.inf
             for tmpr in Cs:
                 for tmpc in tmpr:
-                    print np.shape(tmpc), np.shape(tmpr)
+                    print(np.shape(tmpc), np.shape(tmpr))
                     if cmin > np.min(tmpc):
                         cmin = np.min(tmpc)
-            print "Min = ", cmin
+            print("Min = ", cmin)
             cmin = np.round(cmin, decimals=3)
         #clabel = clabel + ' (Log)'
     else:
-        print >>sys.stderr, "NOT using logscale on Z"
+        print("NOT using logscale on Z", file=sys.stderr)
         if 'FF' in clabel:
             cmin = 10**-2.3
         else:
             Cs = np.array(Cs)
-            print "Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs)
+            print("Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs))
             cmin = np.inf
             for tmpr in Cs:
                 for tmpc in tmpr:
-                    print np.shape(tmpc), np.shape(tmpr)
+                    print(np.shape(tmpc), np.shape(tmpr))
                     if cmin > np.min(tmpc):
                         cmin = np.min(tmpc)
-            print "Min = ", cmin
+            print("Min = ", cmin)
             cmin = np.round(cmin, decimals=3)
     cmax = -np.inf
     for tmpr in Cs:
@@ -326,16 +329,16 @@ def make_scatter_plot3D_multrow(Xs, Ys, Zs, Cs,
         cmax = colormax
     #
     if bounds != None and (type(bounds) == np.ndarray or type(bounds) == list):
-        print "bounds before insert  : ", bounds
+        print("bounds before insert  : ", bounds)
         bounds = insert_min_max_into_array(bounds, cmin, cmax)
-        print "bounds after insert  : ", bounds
+        print("bounds after insert  : ", bounds)
     #
     # Insert default values of bounds
     if bounds is None and logC:
         if 'FF' in clabel or 'mathcal{M}' in clabel:
             bounds = np.log10([0.0001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 1])
         elif '\mathcal{M}_c' in clabel:
-            print "CHIRP MASS PLOT"
+            print("CHIRP MASS PLOT")
             bounds = np.log10([0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2])
         elif '\Delta' in clabel:
             bounds = np.log10([0.005, 0.01, 0.03, 0.05, 0.1, 0.2, 0.5, 1.])
@@ -358,7 +361,7 @@ def make_scatter_plot3D_multrow(Xs, Ys, Zs, Cs,
     #cmaplist = [cmap(i) for i in range(cmap.N)]
     #cmap = cmap.from_list('Custom map', cmaplist, cmap.N)
     # cmap.set_under('gray')
-    print "bounds = ", bounds
+    print("bounds = ", bounds)
     if type(bounds) == np.ndarray or type(bounds) == list:
         norm = mp.colors.BoundaryNorm(bounds, cmap.N)
     else:
@@ -449,12 +452,12 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
         raise IOError("Length of lists to be plotted not the same")
     # Known failure mode: when all arrays in Xrows are of the same length
     nrows, ncols = np.shape(Xs)
-    print "No of rows = %d, columns = %d" % (nrows, ncols)
+    print("No of rows = %d, columns = %d" % (nrows, ncols))
     #
     gmean = (5.**0.5-1)*0.5
     if logC:
         bounds = np.log10(bounds)
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         for ridx, C in enumerate(Cs):
             for cidx, R in enumerate(C):
                 Cs[ridx][cidx] = np.log10(R)
@@ -462,28 +465,28 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
             cmin = -2.3
         else:
             Cs = np.array(Cs)
-            print "Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs)
+            print("Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs))
             cmin = np.inf
             for tmpr in Cs:
                 for tmpc in tmpr:
-                    print np.shape(tmpc), np.shape(tmpr)
+                    print(np.shape(tmpc), np.shape(tmpr))
                     if cmin > np.min(tmpc):
                         cmin = np.min(tmpc)
-            print "Min = ", cmin
+            print("Min = ", cmin)
             cmin = np.round(cmin, decimals=3)
         #clabel = clabel + ' (Log)'
     else:
-        print >>sys.stderr, "NOT using logscale on Z"
+        print("NOT using logscale on Z", file=sys.stderr)
         if 'FF' in clabel:
             cmin = 10**-2.3
         else:
             Cs = np.array(Cs)
-            print "Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs)
+            print("Shape of C = ", np.shape(Cs), "dtype of C = ", type(Cs))
             cmin = np.inf
             for tmpr in Cs:
                 for tmpc in tmpr:
                     cmin = min(cmin, np.min(tmpc))
-            print "Min = ", cmin
+            print("Min = ", cmin)
             cmin = np.round(cmin, decimals=3)
     cmax = -np.inf
     for tmpr in Cs:
@@ -492,16 +495,16 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
     cmax = np.round(cmax, decimals=3)
     #
     if bounds != None and (type(bounds) == np.ndarray or type(bounds) == list):
-        print "bounds before insert  : ", bounds
+        print("bounds before insert  : ", bounds)
         bounds = insert_min_max_into_array(bounds, cmin, cmax)
-        print "bounds after insert  : ", bounds
+        print("bounds after insert  : ", bounds)
     #
     # Insert default values of bounds
     if bounds is None and logC:
         if 'FF' in clabel or 'mathcal{M}' in clabel:
             bounds = np.log10([0.0001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 1])
         elif '\mathcal{M}_c' in clabel:
-            print "CHIRP MASS PLOT"
+            print("CHIRP MASS PLOT")
             bounds = np.log10([0.005, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2])
         elif '\Delta' in clabel:
             bounds = np.log10([0.005, 0.01, 0.03, 0.05, 0.1, 0.2, 0.5, 1.])
@@ -520,7 +523,7 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
     #cmaplist = [cmap(i) for i in range(cmap.N)]
     #cmap = cmap.from_list('Custom map', cmaplist, cmap.N)
     # cmap.set_under('gray')
-    print "bounds = ", bounds
+    print("bounds = ", bounds)
     if type(bounds) == np.ndarray or type(bounds) == list:
         norm = mp.colors.BoundaryNorm(bounds, cmap.N)
     else:
@@ -537,7 +540,7 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
             allaxes.append(ax)
             #
             X, Y, C = Xs[rowid][colid], Ys[rowid][colid], Cs[rowid][colid]
-            print np.shape(X), np.shape(Y), np.shape(C)
+            print(np.shape(X), np.shape(Y), np.shape(C))
             # Add points in the bottom plane marking spins
             if equal_mass == colid+1:
                 tmpX, tmpY = X, Y
@@ -550,7 +553,7 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
             #Xrange = np.linspace( -1, 1, 100 )
             #Yrange = np.linspace( -1, 1, 100)
             Xmap, Ymap = np.meshgrid(Xrange, Yrange)
-            print np.shape(X), np.shape(Y), np.shape(C)
+            print(np.shape(X), np.shape(Y), np.shape(C))
             colormap = plt.mlab.griddata(X, Y, C, Xmap, Ymap, interp='linear')
             #
             import scipy.interpolate as si
@@ -564,8 +567,8 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
             #Xmap = xyzData[:,0]
             #Ymap = xyzData[:,1]
             #colormap = xyzData[:,2]
-            print "Shape pof Xmap, Ymap, colormap = ", \
-                np.shape(Xmap), np.shape(Ymap), np.shape(colormap)
+            print("Shape pof Xmap, Ymap, colormap = ",
+                  np.shape(Xmap), np.shape(Ymap), np.shape(colormap))
             #Xmap = scipy.ndimage.zoom(Xmap, 3)
             #Ymap = scipy.ndimage.zoom(Ymap, 3)
             #colormap = scipy.ndimage.zoom(colormap, 3)
@@ -591,7 +594,7 @@ def make_contour_plot_multrow(Xs, Ys, Cs,
             ax.set_ylim([-1, 1])
             # ax.zaxis.set_rotate_label(False)
             #ax.set_zlabel(zlabel, rotation=90)
-            print "Len(titles) = %d, NCOLS = %d" % (len(titles), ncols)
+            print("Len(titles) = %d, NCOLS = %d" % (len(titles), ncols))
             if len(titles) == ncols:
                 ax.set_title(titles[colid], verticalalignment='bottom')
             elif colid == ncols/2:
@@ -645,7 +648,7 @@ def make_scatter_plot(X, Y, Z, xlabel='', ylabel='', zlabel='', title='',
     # {{{
     S = 30  # 50*Z
     if logz:
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         Z = np.log10(1. - Z)
         cmin, cmax = -2.75, max(Z)
         zlabel = 'Log[Mismatch]'
@@ -674,7 +677,7 @@ def make_scatter_plot3D(X, Y, Z, C, elevation=30, azimuthal=30, alpha=0.8,
     # {{{
     S = 30  # 50*Z
     if logC:
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         C = np.log10(1. - C)
         cmin, cmax = -2.75, np.round(max(C) * 100)/100.
         clabel = 'Log[Mismatch]'
@@ -711,7 +714,7 @@ def make_scatter_plot3D(X, Y, Z, C, elevation=30, azimuthal=30, alpha=0.8,
     ax.set_title(title)
     ax.grid()
     fig.tight_layout()
-    print savefig
+    print(savefig)
     if label is not None:
         savefig = savefig.strip('png')[:-1]+('_%s.png' % label)
     fig.savefig(savefig)
@@ -728,7 +731,7 @@ def make_contourf_mult(X1, Y1, C1, X2, Y2, C2, X3, Y3, C3,
     # {{{
     S = 30  # 50*Z
     if logC:
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         C1 = np.log10(1. - C1)
         C2 = np.log10(1. - C2)
         C3 = np.log10(1. - C3)
@@ -799,7 +802,7 @@ def make_contourf_mult(X1, Y1, C1, X2, Y2, C2, X3, Y3, C3,
     cb.set_title(clabel)
     #if max(C) < cmax and min(C) > cmin: cb.set_clim([cmin,cmax])
     fig.tight_layout()
-    print savefig
+    print(savefig)
     savefig = savefig.strip('png')[:-1]+'_q123.png'
     fig.savefig(savefig)
     return
@@ -812,7 +815,7 @@ def make_parameters_plot(X, Y, Z, elevation=30, azimuthal=30,
     # {{{
     S = 30  # 50*Z
     if logC:
-        print >>sys.stderr, "Using logscale on Z"
+        print("Using logscale on Z", file=sys.stderr)
         C = np.log10(1. - C)
         cmin, cmax = -2.75, np.round(max(C) * 100)/100.
         clabel = 'Log[Mismatch]'
@@ -849,7 +852,7 @@ def make_parameters_plot(X, Y, Z, elevation=30, azimuthal=30,
     ax.set_title(title)
     ax.grid()
     fig.tight_layout()
-    print savefig
+    print(savefig)
     if label is not None:
         savefig = savefig.strip('png')[:-1]+('_%s.png' % label)
     fig.savefig(savefig)
