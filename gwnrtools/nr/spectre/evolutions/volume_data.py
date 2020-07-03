@@ -33,8 +33,8 @@ except ImportError:
 class HandleSpectreVolumeDatum(object):
     def __init__(self, volume_data_file='', name='', dt=0.5,
                  read_fields=['Psi'], xdmf_converter=None, verbose=True):
-        assert(os.path.exists(volume_data_file),
-               "Cannot find data file: {0:s}".format(volume_data_file))
+        assert os.path.exists(volume_data_file),\
+            "Cannot find data file: {0:s}".format(volume_data_file)
         self.verbose = verbose
         self.name = name
         self.volume_data_file = volume_data_file
@@ -89,9 +89,9 @@ class HandleSpectreVolumeDatum(object):
         # Select times in sel_times from times
         dt_vals = self.get_dt(self.times)
         current_dt = np.median(dt_vals)
-        assert(dt >= current_dt,
-               "Requested dt = {0:.4e} is not possible (MIN: {1:.4e})".format(
-                   dt, current_dt))
+        assert dt >= current_dt,\
+            "Requested dt = {0:.4e} is not possible (MIN: {1:.4e})".format(
+                dt, current_dt)
         downsample_ratio = int(np.round(dt / current_dt))
         logging.info("Downsample by {}x".format(downsample_ratio))
         if downsample_ratio <= 1:
@@ -158,8 +158,8 @@ result : list, set of arrays of all spatial coords as a function of
             exe = conversion_bin
         else:
             exe = self.xdmf_converter
-        assert(os.path.exists(exe) and os.path.getsize(exe) > 0,
-               "Xdmf converter utility {} not found!".format(exe))
+        assert os.path.exists(exe) and os.path.getsize(exe) > 0,\
+            "Xdmf converter utility {} not found!".format(exe)
 
         os.chdir(os.path.dirname(self.volume_data_file))
         o = subprocess.getoutput('python3 {} --file-prefix {} --output {}'.format(
@@ -248,11 +248,11 @@ result : tuple, (camera object, animation object) that can be used to
 
 class HandleSpectreVolumeData(object):
     def __init__(self, reduction_data_files=[]):
-        assert(len(reduction_data_files) > 0,
-               "Please provide at least one reduction data file!")
+        assert len(reduction_data_files) > 0,\
+            "Please provide at least one reduction data file!"
         for f in reduction_data_files:
-            assert(os.path.exists(f) and os.path.getsize(f) > 0,
-                   "Data file: {0:s} not found / is empty!".format(f))
+            assert os.path.exists(f) and os.path.getsize(f) > 0,\
+                "Data file: {0:s} not found / is empty!".format(f)
         self.handler = {}
         for f in reduction_data_files:
             self.handler[f] = HandleSpectreVolumeDatum(f)

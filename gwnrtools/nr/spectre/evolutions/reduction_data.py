@@ -36,8 +36,8 @@ except ImportError:
 
 class HandleSpectreReductionDatum(object):
     def __init__(self, reduction_data_file='', name='', hdf_path='element_data.dat'):
-        assert(os.path.exists(reduction_data_file),
-               "Cannot find data file: {0:s}".format(reduction_data_file))
+        assert os.path.exists(reduction_data_file),\
+            "Cannot find data file: {0:s}".format(reduction_data_file)
         self.name = name
         self.reduction_data_file = reduction_data_file
         self.hdf_path = hdf_path
@@ -85,7 +85,7 @@ class HandleSpectreReductionDatum(object):
                     = str (if single color is provided)
         - label     = column_of_vars[idx]
         '''
-        assert(len(column_of_vars) > 0, "Nothing asked to plot!")
+        assert len(column_of_vars) > 0, "Nothing asked to plot!"
 
         if ax is None:
             fig = plt.figure()
@@ -147,11 +147,11 @@ class HandleSpectreReductionDatum(object):
 
 class HandleSpectreReductionData(object):
     def __init__(self, reduction_data_files=[], **args):
-        assert(len(reduction_data_files) > 0,
-               "Please provide at least one reduction data file!")
+        assert len(reduction_data_files) > 0,\
+            "Please provide at least one reduction data file!"
         for f in reduction_data_files:
-            assert(os.path.exists(f) and os.path.getsize(f) > 0,
-                   "Data file: {0:s} not found / is empty!".format(f))
+            assert (os.path.exists(f) and os.path.getsize(f) > 0),\
+                "Data file: {0:s} not found / is empty!".format(f)
         self.handler = {}
         for f in reduction_data_files:
             self.handler[f] = HandleSpectreReductionDatum(f, **args)

@@ -88,8 +88,8 @@ Returns True if they do for all tests.
         '''
 Full path to executable file for a given test
         '''
-        assert(config_name in self.exes.keys(),
-               "Config name {0} not defined above...".format(config_name))
+        assert config_name in self.exes.keys(),\
+            "Config name {0} not defined above...".format(config_name)
         return self.exes[config_name]
 
     def exe_name(self, config_name):
@@ -102,8 +102,8 @@ Full path to executable file for a given test
         '''
 Full path to cluster directory to run the given test
         '''
-        assert(test in list(self.test_dirs.keys()),
-               "Test name {0} not defined above...".format(test))
+        assert test in list(self.test_dirs.keys()),\
+            "Test name {0} not defined above...".format(test)
         return self.test_dirs[test]
 
     def input_file_name(self, test):
@@ -138,8 +138,9 @@ Setup a single test run:
         '''
         self.check_exes([test])
         config_name, test_name = test.split('/')
-        assert(test_name in self.input_files,
-               "Input file for test {} not found in {}".format(test_name, self.input_files.keys()))
+        assert test_name in self.input_files,\
+            "Input file for test {} not found in {}".format(
+                test_name, self.input_files.keys())
         input_file = self.input_file(test)
         exe = self.exe(config_name)
         run_dir = self.run_dir(test)
@@ -285,8 +286,8 @@ H5Py File pointer to reduction or volume observer output
             exe = conversion_bin
         else:
             exe = self.xdmf_converter
-        assert(os.path.exists(exe) and os.path.getsize(exe) > 0,
-               "Xdmf converter utility {} not found!".format(exe))
+        assert os.path.exists(exe) and os.path.getsize(exe) > 0,\
+            "Xdmf converter utility {} not found!".format(exe)
 
         from gwnrtools.nr.spectre.evolutions import HandleSpectreVolumeDatum
         out_file = self.output_file(test, which='volume')

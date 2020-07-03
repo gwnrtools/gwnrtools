@@ -322,16 +322,16 @@ def cluster_submission_file(cluster, **args):
 
     {0}
     '''.format(__cluster_submission_files_formatting__[cluster])
-    assert(cluster in __available_clusters__,
-           "Cluster {0} not set up yet.".format(cluster))
-    assert(cluster in __cluster_submission_files__ and
-           cluster in __cluster_submission_files_formatting__,
-           "Error in finding info for {0}".format(cluster))
+    assert cluster in __available_clusters__,\
+        "Cluster {0} not set up yet.".format(cluster)
+    assert (cluster in __cluster_submission_files__ and
+            cluster in __cluster_submission_files_formatting__),\
+        "Error in finding info for {0}".format(cluster)
     for fmt in __cluster_submission_files_formatting__[cluster]:
-        assert(fmt in args, "Misnamed input. Allowed keyword arguments: {0}".format(
-            __cluster_submission_files_formatting__[cluster]))
+        assert fmt in args, "Misnamed input. Allowed keyword arguments: {0}".format(
+            __cluster_submission_files_formatting__[cluster])
     if 'compiler' in args:
-        assert(args['compiler'] in __available_compilers__,
-               "Compiler {0} not supported.".format(args['compiler']))
+        assert args['compiler'] in __available_compilers__,\
+            "Compiler {0} not supported.".format(args['compiler'])
 
     return __cluster_submission_files__[cluster].format(**args)

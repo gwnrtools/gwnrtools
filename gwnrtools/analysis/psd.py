@@ -48,10 +48,10 @@ def resample_and_extrapolate_psd(freq_vals, psd_vals, delta_f, f_max,
         psd: pycbc.types.FrequencySeries
             Resampled PSD.
     """
-    assert(len(freq_vals) == len(psd_vals),
-           "Length of frequency and PSD arrays provided are different: {0} and {1}".format(
+    assert len(freq_vals) == len(psd_vals),\
+        "Length of frequency and PSD arrays provided are different: {0} and {1}".format(
         len(freq_vals), len(psd_vals)
-    ))
+    )
 
     psd_interp = interpolation_func(freq_vals, psd_vals)
 
