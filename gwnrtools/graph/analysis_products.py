@@ -32,10 +32,6 @@ import os
 import sys
 import subprocess
 import matplotlib as mp
-try:
-    mp.use('Agg')
-except:
-    pass
 mp.rc('text', usetex=True)
 plt.rcParams.update({'text.usetex': True})
 

@@ -3,6 +3,8 @@
 # Copyright (c) 2018, Prayush Kumar
 # See LICENSE file for details: <https://github.com/prayush/gwnrtools/blob/master/LICENSE>
 
+from __future__ import print_function
+
 from os import environ, path
 import subprocess
 from pathlib import Path
@@ -50,9 +52,14 @@ def write_version_file(version):
         )
         print("parsed git version info as: {!r}".format(git_version))
 
-    with open(version_file, "w") as f:
-        print(git_version, file=f)
-        print("created {}".format(version_file))
+    try:
+        with open(version_file, "w") as f:
+            print(git_version, file=f)
+            print("created {}".format(version_file))
+    except:
+        with open(str(version_file), "w") as f:
+            print(git_version, file=f)
+            print("created {}".format(version_file))
 
     return version_file.name
 
@@ -100,7 +107,7 @@ if __name__ == "__main__":
               'h5py>=2.10.0',
               'lalsuite>=6.63',
               'lscsoft_glue==2.0.0',
-              'matplotlib==3.1.2',
+              'matplotlib>=3.0',
               'numexpr',
               'numpy==1.16.5',
               'pandas==0.24.2',
@@ -109,7 +116,7 @@ if __name__ == "__main__":
               'pytest',
               'romspline==1.1.6',
               'scikit-learn==0.20.4',
-              'scipy==1.4.1',
+              'scipy>=1.2.3',
               'seaborn==0.9.1',
               'six==1.10.0',
               'statsmodels>=0.10.2',
