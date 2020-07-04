@@ -134,8 +134,8 @@ for index in range(0,len(matches)) :
     m1.append(injected[index].mass2)
     m2.append(injected[index].mass1)
 
-print len(inj_eta)
-print len(matches)
+print(len(inj_eta))
+print(len(matches))
 
 rec_eta=numpy.array(rec_eta)
 inj_eta=numpy.array(inj_eta)

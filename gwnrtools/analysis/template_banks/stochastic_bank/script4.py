@@ -9,7 +9,7 @@ import numpy as np
 import sys
 import os
 import time
-import commands
+import subprocess
 
 from optparse import OptionParser
 
@@ -60,7 +60,7 @@ else:
   idx += 1
   name2 = "testpoints/test_%d.xml" % idx
   while os.path.exists(name2):
-    print name1,name2
+    print(name1,name2)
     idx += 1
     name1 = name2
     name2 = "testpoints/test_%d.xml" % idx
@@ -68,10 +68,10 @@ else:
   iid = idx - 1
 
 if not os.path.exists(prop_file_name):
-  print "The prop file does not seem to exist or is named incorrectly"
+  print("The prop file does not seem to exist or is named incorrectly")
   raise ValueError("The prop-file %s does not exist. The value of iid passed was %d" % (prop_file_name,iid))
 
-print "iid = %d" % iid
+print("iid = %d" % iid)
 
 in_prop_doc = ligolw_utils.load_filename(prop_file_name, options.verbose)
 try :
@@ -85,7 +85,7 @@ except ValueError:
 ##############################################################################
 ########################### proposals match files ############################
 ##############################################################################
-print "Opening proposals files"
+print("Opening proposals files")
 matches = np.zeros(len(in_prop_table))
 NUM_NEW_POINTS = 0
 
@@ -100,12 +100,12 @@ else:
 
   num_sub_banks = idx
 
-print "Total %d sub-bank match files" % num_sub_banks
+print("Total %d sub-bank match files" % num_sub_banks)
 sys.stdout.flush()
 
 for idx in range(num_sub_banks):
   filename = "matches/match_%d_part_%d.dat" % (iid, idx)
-  print "Reading file %s" % filename
+  print("Reading file %s" % filename)
   #sys.stdout.flush()
   matfile = open(filename, "r")
   data = np.loadtxt(matfile)
@@ -116,7 +116,7 @@ for idx in range(num_sub_banks):
 
 matfile_name = "matches/match_%d.dat" % iid
 matfile = open(matfile_name,"w")
-print "MM = %f" % options.MM
+print("MM = %f" % options.MM)
 sys.stdout.flush()
 for match in matches:
   matfile.write("%12.18f\n" % match)
@@ -132,10 +132,10 @@ old_bank_filename = "banks/bank_%d.xml" % iid
 new_bank_filename = "banks/bank_%d.xml" % (iid+1)
 
 if NUM_NEW_POINTS == 0:
-  print "No New Points. Copying the old bank file to the new name"
-  commands.getoutput("cp %s %s" % (old_bank_filename, new_bank_filename))
+  print("No New Points. Copying the old bank file to the new name")
+  subprocess.getoutput("cp %s %s" % (old_bank_filename, new_bank_filename))
 else:
-  print "%d New points to be added in the new file" % NUM_NEW_POINTS
+  print("%d New points to be added in the new file" % NUM_NEW_POINTS)
   # Open the Old bank file
   old_bank_doc = ligolw_utils.load_filename(old_bank_filename, options.verbose)
   try:

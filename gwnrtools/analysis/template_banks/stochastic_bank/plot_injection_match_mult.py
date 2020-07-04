@@ -92,11 +92,11 @@ for template in sngl_inspiral_table:
   ttau0.append(t0)
   ttau3.append(t3)
      
-print len(sngl_inspiral_table)
-print len(matches), min(matches)
-print len(mass1)
-print len(mass2)
-print 'MM=%f' % min(matches)
+print(len(sngl_inspiral_table))
+print(len(matches), min(matches))
+print(len(mass1))
+print(len(mass2))
+print('MM=%f' % min(matches))
 
 finetachifile = open('../run01/FinalEtaChi.dat','r')
 finetachi = loadtxt(finetachifile)
@@ -256,7 +256,7 @@ pylab.ylabel('$\\tau_3$ (s)')
 pylab.savefig("smallTAU0TAU3"+options.out_file)
 pylab.savefig("TAU0TAU3"+options.out_file,dpi=1000)
 
-print "MAKING eta chi1 GRAPH"
+print("MAKING eta chi1 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -272,7 +272,7 @@ pylab.title(title_str)
 pylab.savefig("smalletachi1"+options.out_file)
 pylab.savefig("etachi1"+options.out_file,dpi=1000)
 
-print "MAKING eta chi2 GRAPH"
+print("MAKING eta chi2 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -281,7 +281,7 @@ pylab.ylim([-1.05,1.05])
 pylab.xlim([0.,max(eta) + .1])
 pylab.colorbar()
 
-print "MAKING q chi1 GRAPH"
+print("MAKING q chi1 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -297,7 +297,7 @@ pylab.title(title_str)
 pylab.savefig("smallqchi1"+options.out_file)
 pylab.savefig("qchi1"+options.out_file,dpi=1000)
 
-print "MAKING q chi2 GRAPH"
+print("MAKING q chi2 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -313,7 +313,7 @@ pylab.title(title_str)
 pylab.savefig("smallqchi2"+options.out_file)
 pylab.savefig("qchi2"+options.out_file,dpi=1000)
 
-print "MAKING MCHIRP/ETA GRAPH"
+print("MAKING MCHIRP/ETA GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.135,0.125,0.95-0.125,0.95-0.2])
@@ -330,7 +330,7 @@ pylab.ylabel('$\eta$')
 pylab.savefig("smallmchirpeta"+options.out_file)
 pylab.savefig("mchirpeta"+options.out_file,dpi=1000)
 
-print "MAKING MCHIRP/MTOTAL GRAPH"
+print("MAKING MCHIRP/MTOTAL GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -344,7 +344,7 @@ pylab.title(title_str)
 pylab.savefig("smallmchirpmtotal"+options.out_file)
 pylab.savefig("mchirpmtotal"+options.out_file,dpi=1000)
 
-print "MAKING mtotal eta GRAPH"
+print("MAKING mtotal eta GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -358,7 +358,7 @@ pylab.title(title_str)
 pylab.savefig("smallmtotaleta"+options.out_file)
 pylab.savefig("mtotaleta"+options.out_file,dpi=1000)
 
-print "MAKING mtotal chi1 GRAPH"
+print("MAKING mtotal chi1 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])
@@ -387,7 +387,7 @@ pylab.title(title_str)
 pylab.savefig("smallcutmtotalchi1"+options.out_file)
 pylab.savefig("cutmtotalchi1"+options.out_file,dpi=1000)
 
-print "MAKING mtotal chi2 GRAPH"
+print("MAKING mtotal chi2 GRAPH")
 pylab.figure(pltid)
 pltid += 1
 pylab.axes([0.125,0.125,0.95-0.125,0.95-0.2])

@@ -67,7 +67,7 @@ if options.output_bank_file is None:
 else:
   out_bank_file = options.output_bank_file
 
-print "Writing output file %s" % out_bank_file
+print("Writing output file %s" % out_bank_file)
 
 out_bank_doc = ligolw.Document()
 out_bank_doc.appendChild(ligolw.LIGO_LW())

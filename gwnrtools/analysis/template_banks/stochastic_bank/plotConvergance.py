@@ -3,7 +3,7 @@ import matplotlib
 matplotlib.use('Agg')
 
 import os
-import commands
+import subprocess
 
 import time
 from time import gmtime, strftime
@@ -48,23 +48,23 @@ NUMNEWPOINTS=80
 n = []
 idx = []
 
-print "Getting information about the banks\n\n"
+print("Getting information about the banks\n\n")
 
 i = 0
 fname =  'banks/bank_%d.xml' % i
 if not os.path.exists( fname ):
   raise ValueError("Not even the 0th bank exists !")
 
-n.append( np.int( commands.getoutput('ligolw_print -c mass1 %s | wc -l' % fname) ) )
+n.append( np.int( subprocess.getoutput('ligolw_print -c mass1 %s | wc -l' % fname) ) )
 idx.append( i )
 
-print 'new N = %d, new idx = %d' % (max(n), max(idx))
+print('new N = %d, new idx = %d' % (max(n), max(idx)))
 
 FMT = '%H:%M:%S'
 i += 1
 fname =  'banks/bank_%d.xml' % i
 while os.path.exists( fname ):
-  n.append( np.int( commands.getoutput('ligolw_print -c mass1 %s | wc -l' % fname) ) )
+  n.append( np.int( subprocess.getoutput('ligolw_print -c mass1 %s | wc -l' % fname) ) )
   idx.append( i )
 
   fname1 = 'banks/bank_%d.xml' % (i-1)
@@ -72,8 +72,8 @@ while os.path.exists( fname ):
   fname2 = 'banks/bank_%d.xml' % i
   s2 = string.split( time.ctime(os.path.getmtime(fname2)) )[3]
   tdelta = datetime.strptime(s2, FMT) - datetime.strptime(s1, FMT)
-  print "\nTime taken to get the following bank was ", tdelta
-  print 'new N = %d, new idx = %d' % (max(n), max(idx))
+  print("\nTime taken to get the following bank was ", tdelta)
+  print('new N = %d, new idx = %d' % (max(n), max(idx)))
 
   i += 1
   fname =  'banks/bank_%d.xml' % i
@@ -82,9 +82,9 @@ NUMBANKSMADE = i
 
 s3 = string.split(strftime("%Y-%m-%d %H:%M:%S", gmtime()))[1]
 tdelta = datetime.strptime(s3, FMT) - datetime.strptime(s2, FMT)
-print "\nTime elapsed since the last bank was made = ", tdelta
+print("\nTime elapsed since the last bank was made = ", tdelta)
 
-print "\nPlotting the NUBER OF POINTS vs NUMBER OF BANKS MADE\n\n"
+print("\nPlotting the NUBER OF POINTS vs NUMBER OF BANKS MADE\n\n")
 
 pi = 0
 pb.figure(pi)
@@ -94,7 +94,7 @@ pb.xlabel('Number of banks made')
 pb.ylabel('Number of points in the bank')
 pb.savefig("plots/NumPointsNumBanks.png", dpi=300, format='png')
 
-print "Calculating CONVERGENCE\n\n"
+print("Calculating CONVERGENCE\n\n")
 cvg = []
 ncvg = []
 
@@ -102,9 +102,9 @@ for i in range( max(idx) ):
   if i != max(idx):
     cvg.append( (n[i+1] - n[i])/np.float64(NUMNEWPOINTS) )
     ncvg.append( i+1 )
-    print ('Acceptance while making bank %d is %f' % (ncvg[i], 100. * cvg[i])) + ' %'
+    print(('Acceptance while making bank %d is %f' % (ncvg[i], 100. * cvg[i])) + ' %')
 
-print "\nPlotting the ACCEPTANCE RATIO vs THE BANK BEING MADE\n\n"
+print("\nPlotting the ACCEPTANCE RATIO vs THE BANK BEING MADE\n\n")
 
 pb.figure(pi)
 pi += 1
@@ -113,11 +113,11 @@ pb.xlabel('Index of the bank being made')
 pb.ylabel('Acceptance Ratio (per $%d$ steps)' % NUMNEWPOINTS)
 pb.savefig('plots/ConVsNumBank.png', dpi=300, format='png' )
 
-print "\nPlotting the banks themselves\n\n"
+print("\nPlotting the banks themselves\n\n")
 
 for idx in range(NUMBANKSMADE):
   fname = 'banks/bank_%d.xml' % idx
-  print "Reading bank %s" % fname
+  print("Reading bank %s" % fname)
 
   bdoc = ligolw_utils.load_filename(fname)
   btab = table.get_table(bdoc, lsctables.SimInspiralTable.tableName)
@@ -138,7 +138,7 @@ for idx in range(NUMBANKSMADE):
     s1z.append( p.spin1z )
     s2z.append( p.spin2z )
   
-  print "Plotting bank %s" % fname
+  print("Plotting bank %s" % fname)
   pb.figure(pi)
   pi += 1
   pb.plot( m1, m2, 'x' )

@@ -88,14 +88,14 @@ parser.add_option("-C", "--comment", metavar="STRING", help="add the optional ST
 
 options, argv_frame_files = parser.parse_args()
 
-print options.mass1, options.mass2
-print options.min_q, options.max_q
-print options.spin1x, options.spin1y, options.spin1z
-print options.spin2x, options.spin2y, options.spin2z
-print options.inclination, options.polarization
-print options.npoints
+print(options.mass1, options.mass2)
+print(options.min_q, options.max_q)
+print(options.spin1x, options.spin1y, options.spin1z)
+print(options.spin2x, options.spin2y, options.spin2z)
+print(options.inclination, options.polarization)
+print(options.npoints)
 if not options.npoints:
-  print "You must provide the number of sample points needed"
+  print("You must provide the number of sample points needed")
 else:
   npoints = np.int(options.npoints)
 

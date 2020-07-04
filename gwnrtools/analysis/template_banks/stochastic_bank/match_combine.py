@@ -36,11 +36,11 @@ for index in range(0,len(found_index)):
           fout.write(line)  
     index+=1
 
-print found
-print maxmatch
+print(found)
+print(maxmatch)
 savetxt(options.out_file,maxmatch,fmt='%5.5f')
 
-print "Max over "+str(index)+" files"
+print("Max over "+str(index)+" files")
 options, argv_frame_files = parser.parse_args()
 
 

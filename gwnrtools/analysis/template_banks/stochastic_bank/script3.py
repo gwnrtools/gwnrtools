@@ -24,7 +24,7 @@ from glue.ligolw import utils as ligolw_utils
 from glue import git_version
 
 
-print "STARTING THE MATCHING"
+print("STARTING THE MATCHING")
 #ctx = CUDAScheme()
 
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
@@ -132,18 +132,18 @@ def get_waveform(wav, f_min, dt, N):
 #################### Opening input/output files/tables ####################
 #########################################################################
 
-print "OPENING SUB-BANK/PROPOSAL FILE AND TABLES"
+print("OPENING SUB-BANK/PROPOSAL FILE AND TABLES")
 # Open the input sub-bank file and get the table
 #{{{
 if not options.subbank_file_name:
-  print "No sub-bank file-name given!"
+  print("No sub-bank file-name given!")
   raise ValueError("No sub-bank file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.subbank_file_name):
-  print "This sub-bank file does not exist !"
+  print("This sub-bank file does not exist !")
   raise IOError("The sub-bank file %s does not exist" % options.subbank_file_name)
 
-print "Opening sub-bank file %s" % options.subbank_file_name
+print("Opening sub-bank file %s" % options.subbank_file_name)
 subbank_doc = ligolw_utils.load_filename(options.subbank_file_name, options.verbose)
 
 try:
@@ -158,14 +158,14 @@ sys.stdout.flush()
 # Open the input proposals file and get the table
 #{{{
 if not options.prop_file_name:
-  print "No proposal points file-name given!"
+  print("No proposal points file-name given!")
   raise ValueError("No proposal points file-name given to %s" % PROGRAM_NAME)
 
 if not os.path.exists(options.prop_file_name):
-  print "This proposal point file does not exist !"
+  print("This proposal point file does not exist !")
   raise IOError("The proposal point file %s does not exist !" % options.prop_file_name)
 
-print "Opening proposals file %s" % options.prop_file_name
+print("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name, options.verbose)
 
 try:
@@ -187,7 +187,7 @@ sample_rate = options.sample_rate
 
 dt = 1./np.float64(sample_rate)
 N = signal_length * sample_rate
-print "f_min=%f, sig_len=%d, sample_rate=%d, dt=%f, N=%d" % (f_min,signal_length,sample_rate,dt,N)
+print("f_min=%f, sig_len=%d, sample_rate=%d, dt=%f, N=%d" % (f_min,signal_length,sample_rate,dt,N))
 
 # get the ZDHP psd
 psd = pycbc.psd.from_asd_txt("/home/prayush/advLIGO_PSDs/ZERO_DET_high_P.txt",
@@ -209,7 +209,7 @@ for prop_point in prop_table:
   prop_point_matches.append(([],prop_point))
 
 idx = 0
-print "subbank_batch_size = %d, Num of batches = %d" % (subbank_batch_size,len(subbank_batches))
+print("subbank_batch_size = %d, Num of batches = %d" % (subbank_batch_size,len(subbank_batches)))
 sys.stdout.flush()
 for subbank_batch in subbank_batches:
   subbank_sims = []
@@ -220,11 +220,11 @@ for subbank_batch in subbank_batches:
     stilde = get_waveform(subbank_point, f_min, dt, N)
     subbank_sims.append((stilde,subbank_point))
     ind += 1
-  print "Processing sub-bank batch %d (%d points)" % (idx,len(subbank_sims))
+  print("Processing sub-bank batch %d (%d points)" % (idx,len(subbank_sims)))
   j = 0
   for prop_matches,prop_point in prop_point_matches:
     htilde = None
-    print "\tsub-bank with point %d" % j
+    print("\tsub-bank with point %d" % j)
     #sys.stdout.flush()
     k = 0
     for stilde,subbank_point in subbank_sims:
@@ -245,11 +245,11 @@ for subbank_batch in subbank_batches:
   idx += 1
       
 
-print "Opening results file %s" % options.match_file_name
+print("Opening results file %s" % options.match_file_name)
 if options.match_file_name:
   outfile = open(options.match_file_name,"w")
 else:
-  print "No Match file-name given to write the output in !"
+  print("No Match file-name given to write the output in !")
   raise ValueError("No Match file-name given to write the output for %s" % PROGRAM_NAME)
 
 sys.stdout.flush()

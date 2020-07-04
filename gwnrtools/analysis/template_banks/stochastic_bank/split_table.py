@@ -37,10 +37,10 @@ parser.add_option("-V", "--verbose", action="store_true", help="print extra debu
 parser.add_option("-e", "--named",  help="Starting string in the names of final XMLs" )
 
 options, argv_frame_files = parser.parse_args()
-print options.named
+print(options.named)
 
 
-print options.named
+print(options.named)
 indoc = ligolw_utils.load_filename(options.tmplt_bank, options.verbose)
 
 try:
@@ -84,5 +84,5 @@ for num in range(num_files):
     outname = options.named + str(num) + '.xml'
     ligolw_utils.write_filename(outdoc, outname)
 
-print num_files    
+print(num_files)    
 sys.exit(int(num_files))

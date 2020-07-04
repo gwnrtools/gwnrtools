@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
-import commands as cmd
+import subprocess
 import matplotlib as mp
 try:
     mp.use('Agg')
@@ -145,7 +145,7 @@ class plot_mismatches_sim():
             ax.add_artist(legend_3)
             ax.set_ylim([1.e-5, 0.01])
         #
-        cmd.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
+        subprocess.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
         savedir = self.simdir+'/'+savedir
         if savefig is not None:
             plt.savefig(savedir+'/'+savefig, dpi=500)
@@ -246,7 +246,7 @@ class plot_mismatches_sim():
             ax.add_artist(legend_3)
             ax.set_ylim([1.e-5, 0.01])
         #
-        cmd.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
+        subprocess.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
         savedir = self.simdir+'/'+savedir
         if savefig is not None:
             plt.savefig(savedir+'/'+savefig, dpi=400)
@@ -350,7 +350,7 @@ class plot_mismatches_sim():
             ax.add_artist(legend_3)
             ax.set_ylim([1.e-5, 0.01])
         #
-        cmd.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
+        subprocess.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
         savedir = self.simdir+'/'+savedir
         if savefig is not None:
             plt.savefig(savedir+'/'+savefig, dpi=500)
@@ -548,7 +548,7 @@ class plot_mismatches_sims():
             ax.add_artist(legend_3)
             ax.set_ylim([1.e-5, 0.01])
         #
-        cmd.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
+        subprocess.getoutput('mkdir -p %s' % self.simdir+'/'+savedir)
         savedir = self.simdir+'/'+savedir
         if savefig is not None:
             plt.savefig(savedir+'/'+savefig, dpi=500)
@@ -585,7 +585,7 @@ class plot_effectualness_vs_totalmass():
         # {{{
         if not os.path.exists(filename) or os.path.getsize(filename) == 0:
             raise IOError("%s not found" % filename)
-        pwd = cmd.getoutput('pwd')
+        pwd = subprocess.getoutput('pwd')
         os.chdir(self.outdir)
         self.data = EffectualnessAndBias(outdir=self.outdir)
         if self.verbose:
@@ -599,7 +599,7 @@ class plot_effectualness_vs_totalmass():
 
     def read_data_from_all_files(self, tags=['./matches/*.h5'], simtags=[]):
         # {{{
-        pwd = cmd.getoutput('pwd')
+        pwd = subprocess.getoutput('pwd')
         os.chdir(self.outdir)
         self.data = EffectualnessAndBias(outdir=self.outdir)
         if len(tags) > 0:

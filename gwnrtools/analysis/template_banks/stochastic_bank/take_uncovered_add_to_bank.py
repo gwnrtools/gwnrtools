@@ -104,7 +104,7 @@ for eta,chi in etas_dat:
     allchis.append( chi )
 
 if options.first_chi:
-  allrest = zip( allchis, alletas )
+  allrest = list(zip( allchis, alletas ))
   allsorted = sorted( allrest )
   allchis = [point[0] for point in allsorted]
   alletas = [point[1] for point in allsorted]
@@ -141,7 +141,7 @@ if options.first_chi:
         break
       ## For all mts that are within the mchirp window, include only the average
       thismt = allmts[i][j]
-      print "thismt = ",thismt
+      print("thismt = ",thismt)
       thesemts = [thismt]
       for k in range( j+1, len(allmts[i]) ):
         if k >= len(allmts[i]):
@@ -150,9 +150,9 @@ if options.first_chi:
           thesemts.append( allmts[i][k] )
           allmts[i].pop(k)
       allmts[i][j] = sum( thesemts )/ len(thesemts)
-      print "avg mt = ",allmts[i][j]
+      print("avg mt = ",allmts[i][j])
 elif options.first_eta:
-  allrest = zip( alletas, allchis )
+  allrest = list(zip( alletas, allchis ))
   allsorted = sorted( allrest )
   allchis = [point[1] for point in allsorted]
   alletas = [point[0] for point in allsorted]
@@ -189,7 +189,7 @@ elif options.first_eta:
         break
       ## For all mts that are within the mchirp window, include only the average
       thismt = allmts[i][j]
-      print "thismt = ",thismt
+      print("thismt = ",thismt)
       thesemts = [thismt]
       for k in range( j+1, len(allmts[i]) ):
         if k >= len(allmts[i]):
@@ -198,7 +198,7 @@ elif options.first_eta:
           thesemts.append( allmts[i][k] )
           allmts[i].pop(k)
       allmts[i][j] = sum( thesemts )/ len(thesemts)
-      print "avg mt = ",allmts[i][j]
+      print("avg mt = ",allmts[i][j])
 else:
   raise IOError("must supply which of eta or chi is the one to be used to choose the new point to be added")
 
@@ -210,7 +210,7 @@ if options.output_bank_file is None:
 else:
   out_bank_file = options.output_bank_file
 
-print "Writing output file %s" % out_bank_file
+print("Writing output file %s" % out_bank_file)
 
 out_bank_doc = ligolw.Document()
 out_bank_doc.appendChild(ligolw.LIGO_LW())
@@ -229,7 +229,7 @@ for bank_point in in_bank_table:
 for i in range( len(alletas) ):
   chi = allchis[i]
   eta = alletas[i]
-  print "Adding %d points for chi = %f" % (len(allmts[i]),chi)
+  print("Adding %d points for chi = %f" % (len(allmts[i]),chi))
   for j in range( len(allmts[i]) ):
     mt = allmts[i][j]
     mc = mt * eta**0.6

@@ -60,7 +60,7 @@ else:
   idx += 1
   name2 = "banks/bank_%d.xml" % idx
   while os.path.exists(name2):
-    print name1,name2
+    print(name1,name2)
     idx += 1
     name1 = name2
     name2 = "banks/bank_%d.xml" % idx
@@ -68,10 +68,10 @@ else:
   iid = idx - 1
   
 if not os.path.exists(bank_file_name):
-  print "The bank file does not seem to exist or is named incorrectly"
+  print("The bank file does not seem to exist or is named incorrectly")
   raise ValueError("The bank file %s does not exist. The iid passed in was %d" % (bank_file_name,iid))
 
-print "iid = %d" % iid
+print("iid = %d" % iid)
 #sys.stdout.flush()
 
 in_bank_doc = ligolw_utils.load_filename(bank_file_name, options.verbose)
@@ -92,17 +92,17 @@ if not options.bank_batch_size and not options.num_sub_banks:
 
 if options.bank_batch_size:
   bank_batch_size = options.bank_batch_size
-  print "Going to split the bank in batches of %d points each" % bank_batch_size
+  print("Going to split the bank in batches of %d points each" % bank_batch_size)
   #sys.stdout.flush()
   
   bank_batches = [in_bank_table[i:i+bank_batch_size] for i in range(0, len(in_bank_table), bank_batch_size)]
   ######### Write each sub-part of the bank to bank_iid_part_pid.xml #######
   #{{{
-  print "Writing the sub-parts to files"
+  print("Writing the sub-parts to files")
   idx = 0
   for batch in bank_batches:
     subfile_name = "sub-banks/bank_%d_part_%d.xml" % (iid, idx)
-    print "Writing sub-bank file %s" % subfile_name
+    print("Writing sub-bank file %s" % subfile_name)
     out_subbank_doc = ligolw.Document()
     out_subbank_doc.appendChild(ligolw.LIGO_LW())
     out_proc_id = ligolw_process.register_to_xmldoc(out_subbank_doc,
@@ -128,7 +128,7 @@ else:
   # banks with k points, and remaining with k+1 points.
   k = np.int(len(in_bank_table)/NUM_SUB_BANKS)
   kplusOne = k + 1
-  print "bank_batch_sizeS = %d,%d" % (k,kplusOne)
+  print("bank_batch_sizeS = %d,%d" % (k,kplusOne))
   # Compute the number of sub-banks which will have k, and those that will have
   # k+1 points in each.
   NBkplusOne = len(in_bank_table) % NUM_SUB_BANKS
@@ -144,11 +144,11 @@ else:
     raise ArithmeticError("Something wrong with determination of sub-bank lengths.\nNsub=%d,k=%d,kplusOne=%d,NBk=%d,NBkplusOne=%d,N=%d" % (NUM_SUB_BANKS, k, kplusOne, NBk, NBkplusOne, len(in_bank_table)))
   ######### Write each sub-part of the bank to bank_iid_part_pid.xml #######
   #{{{
-  print "Writing the sub-parts to files"
+  print("Writing the sub-parts to files")
   idx = 0
   for batch in bank_batches_k:
     subfile_name = "sub-banks/bank_%d_part_%d.xml" % (iid, idx)
-    print "Writing sub-bank file %s" % subfile_name
+    print("Writing sub-bank file %s" % subfile_name)
     out_subbank_doc = ligolw.Document()
     out_subbank_doc.appendChild(ligolw.LIGO_LW())
     out_proc_id = ligolw_process.register_to_xmldoc(out_subbank_doc,
@@ -168,7 +168,7 @@ else:
 
   for batch in bank_batches_kplusOne:
     subfile_name = "sub-banks/bank_%d_part_%d.xml" % (iid, idx)
-    print "Writing sub-bank file %s" % subfile_name
+    print("Writing sub-bank file %s" % subfile_name)
     out_subbank_doc = ligolw.Document()
     out_subbank_doc.appendChild(ligolw.LIGO_LW())
     out_proc_id = ligolw_process.register_to_xmldoc(out_subbank_doc,

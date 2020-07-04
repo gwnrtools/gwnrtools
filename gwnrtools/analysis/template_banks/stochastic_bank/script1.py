@@ -51,7 +51,7 @@ parser.add_option("-V", "--verbose", action="store_true", help="print extra debu
 
 (options, args) = parser.parse_args()
 #}}}
-print "MM = %f, mchirp-window = %f" % (options.minimal_match, options.mchirp_window)
+print("MM = %f, mchirp-window = %f" % (options.minimal_match, options.mchirp_window))
 #ctx = CUDAScheme()
 
 #########################################################################
@@ -69,14 +69,14 @@ else:
   idx += 1
   name2 = "testpoints/test_%d.xml" % idx
   while os.path.exists(name2):
-    print name1,name2
+    print(name1,name2)
     idx += 1
     name1 = name2
     name2 = "testpoints/test_%d.xml" % idx
   new_file_name = name1
   iid = idx - 1
 
-print "Storing the new sample points in %s" % new_file_name
+print("Storing the new sample points in %s" % new_file_name)
 sys.stdout.flush()
 
 new_points_doc = ligolw.Document()
@@ -95,10 +95,10 @@ new_points_doc.childNodes[0].appendChild(new_points_table)
 #{{{
 
 ## Open the file containing allowed values of eta
-print "Opening the file containing the allowed set of eta values"
+print("Opening the file containing the allowed set of eta values")
 consfile = open('FinalEtaChi.dat','r')
 consvalues = loadtxt(consfile)
-print "Allowed set is", consvalues
+print("Allowed set is", consvalues)
 sys.stdout.flush()
 
 etavalues = []
@@ -368,14 +368,14 @@ psd = pycbc.psd.from_asd_txt("/home/prayush/advLIGO_PSDs/ZERO_DET_high_P.txt",
 psd = FrequencySeries(psd,delta_f=psd.delta_f,dtype=float64)
 #print "PSD generated. First few points are %f, %f, %f..." % (psd[0],psd[1],psd[2])
 
-print "Trying to choose points with overlap < %f" % MM
-print "f_min=%f, sig_len=%d, sample_rate=%d, dt=%f, N=%d" % (f_min,signal_length,sample_rate,dt,N)
+print("Trying to choose points with overlap < %f" % MM)
+print("f_min=%f, sig_len=%d, sample_rate=%d, dt=%f, N=%d" % (f_min,signal_length,sample_rate,dt,N))
 #sys.stdout.flush()
 
 
 cnt = 0
 while cnt < num_new_points:
-  print "%d points chosen" % cnt
+  print("%d points chosen" % cnt)
   #sys.stdout.flush()
   if cnt == 0:
     new_point = get_new_sample_point()
@@ -388,7 +388,7 @@ while cnt < num_new_points:
   k = 0
   new_point = get_new_sample_point()
   while reject_new_sample_point(new_point,new_points_table,MM,psd,f_min, dt, N, options.mchirp_window):
-    print "Rejecting sample %d" % k
+    print("Rejecting sample %d" % k)
     k += 1
     new_point = get_new_sample_point()
   
@@ -399,7 +399,7 @@ while cnt < num_new_points:
 
 #}}}
 ############## Write the new sample points to XML #############
-print "Writing %d new points to %s" % (len(new_points_table),new_file_name)
+print("Writing %d new points to %s" % (len(new_points_table),new_file_name))
 sys.stdout.flush()
 
 new_points_proctable = table.get_table(new_points_doc, lsctables.ProcessTable.tableName)

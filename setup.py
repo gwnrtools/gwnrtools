@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2018, Prayush Kumar
-# See LICENSE file for details: <https://github.com/prayush/GWNRTools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/prayush/gwnrtools/blob/master/LICENSE>
 
 # Construct the version number from the date and time this python version was created.
 from os import environ
@@ -25,16 +25,36 @@ with open('_version.py', 'w') as f:
 
 if __name__ == "__main__":
     from setuptools import setup, find_packages
-    setup(name='GWNRTools',
+    setup(name='gwnrtools',
           version=version,
           description='Manipulating GW data in the form of time-dependent functions of spin-weighted spherical harmonics from NR simulations',
           license="GPL",
-          url='https://github.com/prayush/GWNRTools',
+          url='https://github.com/prayush/gwnrtools',
           author='Prayush Kumar',
           author_email='prayush.kumar@gmail.com',
-          package_dir={'GWNRTools': 'GWNRTools'},
+          package_dir={'gwnrtools': 'gwnrtools'},
           packages=find_packages(),
-          requires=['numpy', 'scipy', 'pycbc', 'lal', 'matplotlib'],
+          install_requires=[
+              'astropy>=4.0',
+              'celluloid>=0.2.0',
+              'h5py>=2.10.0',
+              'lalsuite>=6.63',
+              'lscsoft_glue==2.0.0',
+              'matplotlib==3.1.2',
+              'numexpr',
+              'numpy==1.16.5',
+              'pandas==0.24.2',
+              'pycbc>=1.15.4',
+              'pyswarm==0.6',
+              'pytest',
+              'romspline==1.1.6',
+              'scikit-learn==0.20.4',
+              'scipy==1.4.1',
+              'seaborn==0.9.1',
+              'six==1.10.0',
+              'statsmodels>=0.10.2',
+              'utils==0.9.0'
+          ],
           scripts=['bin/utils/makepdf',
                    'bin/banksim_generic.py',
                    'bin/choose_testpoints.py',

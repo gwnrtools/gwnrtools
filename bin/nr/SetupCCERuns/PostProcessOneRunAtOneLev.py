@@ -23,23 +23,25 @@
 # =============================================================================
 #
 
-import sys, os
-import commands as cmd
+import ccerun as CC
+import sys
+import os
+import subprocess as cmd
+import imp
 sys.path.append('/home/prayush/src/UseNRinDA/scripts/setupCCEruns/')
 sys.path.append('/home/p/pfeiffer/prayush/src/UseNRinDA/scripts/setupCCEruns/')
 try:
-  cmd.getoutput('module load git')
-  head_dir = cmd.getoutput('git rev-parse --show-toplevel')
-  sys.path.append(os.path.join(head_dir, 'scripts/setupCCEruns/'))
-except:
-  print "addint path to UseNRinDA using git rev-parse failed.. :("
+    cmd.getoutput('module load git')
+    head_dir = cmd.getoutput('git rev-parse --show-toplevel')
+    sys.path.append(os.path.join(head_dir, 'scripts/setupCCEruns/'))
+except BaseException:
+    print("addint path to UseNRinDA using git rev-parse failed.. :(")
 
-import ccerun as CC
-reload(CC)
+imp.reload(CC)
 
 
 if sys.argv[1] == '-h':
-  print """\
+    print("""\
 ######################################################
 ######################################################
 **PostProcessOneRunRunAtOneLev.py
@@ -52,8 +54,8 @@ if sys.argv[1] == '-h':
      subdirectories with names Lev?
 
 #3- Lev name, i.e. Lev3 Lev4 Lev5 etc
-"""
-  exit()
+""")
+    exit()
 
 
 #datadir = '/prayush/NR/CCE_2/SKS_d16.6-q3-sA_0_0_-0.6_sB_0_0_-0.4/'
@@ -61,55 +63,55 @@ if sys.argv[1] == '-h':
 levdirs = ['Lev5']
 
 datadir = sys.argv[1]
-outdir  = sys.argv[2]
+outdir = sys.argv[2]
 levdirs = sys.argv[3:]
-if type(levdirs) != list: levdirs = [levdirs]
+if not isinstance(levdirs, list):
+    levdirs = [levdirs]
 
-## Initialize container class for each Lev of the simulation
+# Initialize container class for each Lev of the simulation
 crun = {}
 for ld in levdirs:
-    ld_datadir = os.path.join(datadir,ld)
-    ld_outdir  = os.path.join(outdir, ld)
+    ld_datadir = os.path.join(datadir, ld)
+    ld_outdir = os.path.join(outdir, ld)
     datafile = cmd.getoutput('/bin/ls %s/ | grep .h5 | grep CceR' % ld_outdir)
     #
-    print ld_datadir, "\n", ld_outdir, "\n", datafile
-    crun[ld] = CC.cce_run(datafile=datafile, datadir=ld_datadir,\
-                    pittnull = os.path.join(ld_datadir,datafile),\
-                    outdir=ld_outdir,\
-                    post_process_only=True, verbose=True)
+    print(ld_datadir, "\n", ld_outdir, "\n", datafile)
+    crun[ld] = CC.cce_run(datafile=datafile, datadir=ld_datadir,
+                          pittnull=os.path.join(ld_datadir, datafile),
+                          outdir=ld_outdir,
+                          post_process_only=True, verbose=True)
 
 
-## Combine different segments of CCE
+# Combine different segments of CCE
 for ld in levdirs:
     crun[ld].combine_output()
 
 
-
-
-## Integrate Psi4 to Hlm, and Write to HDF5
+# Integrate Psi4 to Hlm, and Write to HDF5
 for ld in levdirs:
-    crun[ld].integrate_psi4_to_hlm(resample=True,\
-                                  lmax=8,\
-                                  m0_time_domain=True,\
-                                  outputtype='HDF')
+    crun[ld].integrate_psi4_to_hlm(resample=True,
+                                   lmax=8,
+                                   m0_time_domain=True,
+                                   outputtype='HDF')
 
 
-
-## Write Psi4 to HDF5
+# Write Psi4 to HDF5
 for ld in levdirs:
-    ld_outdir    = os.path.join(outdir, ld)
-    ld_joineddir = os.path.join(outdir, ld, crun[ld].datafile.replace('h5','joined'))
+    ld_outdir = os.path.join(outdir, ld)
+    ld_joineddir = os.path.join(
+        outdir, ld, crun[ld].datafile.replace(
+            'h5', 'joined'))
     crun[ld].write_to_hdf5(prefix='Psi4_scri', postfix='_uform.asc',
                            outdir=ld_outdir, joineddir=ld_joineddir,
-                          filename='rPsi4_CcePITT_Asymptotic_GeometricUnits.h5')
+                           filename='rPsi4_CcePITT_Asymptotic_GeometricUnits.h5')
 
 
-
-## Write News to HDF5
+# Write News to HDF5
 for ld in levdirs:
-    ld_outdir    = os.path.join(outdir, ld)
-    ld_joineddir = os.path.join(outdir, ld, crun[ld].datafile.replace('h5','joined'))
+    ld_outdir = os.path.join(outdir, ld)
+    ld_joineddir = os.path.join(
+        outdir, ld, crun[ld].datafile.replace(
+            'h5', 'joined'))
     crun[ld].write_to_hdf5(prefix='NewsB_scri', postfix='_uform.asc',
                            outdir=ld_outdir, joineddir=ld_joineddir,
-                          filename='rNewsB_CcePITT_Asymptotic_GeometricUnits.h5')
-
+                           filename='rNewsB_CcePITT_Asymptotic_GeometricUnits.h5')
