@@ -14,7 +14,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """
-GWNRTools contains a toolkit for gravitational-wave physics
+gwnrtools is a toolkit for gravitational-wave physics
 """
 from __future__ import absolute_import
 
@@ -25,4 +25,17 @@ except:
     pass
 from gwnrtools.utils import *
 
-__version__ = '0.0.1'
+
+def get_version_information():
+    import os
+    version_file = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "gwnrtools/.version"
+    )
+    try:
+        with open(version_file, "r") as f:
+            return f.readline().rstrip()
+    except EnvironmentError:
+        print("No version information file '.version' found")
+
+
+__version__ = get_version_information()
