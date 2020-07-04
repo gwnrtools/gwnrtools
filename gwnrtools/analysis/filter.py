@@ -736,6 +736,7 @@ def compute_snr_vs_time(wave, psd, time_step=1e-2, f_lower=15.0):
     assert(time_step < len(wave) * wave.delta_t)
 
     from numpy import round, arange
+    from pycbc.filter import sigma
     from pycbc.types import TimeSeries
 
     integration_stop_times = arange(
