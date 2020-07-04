@@ -27,7 +27,7 @@ if __name__ == "__main__":
     from setuptools import setup, find_packages
     setup(name='gwnrtools',
           version=version,
-          description='Manipulating GW data in the form of time-dependent functions of spin-weighted spherical harmonics from NR simulations',
+          description='A collection of tools for academic research in gravitational-wave astronomy & astrophysics',
           license="GPL",
           url='https://github.com/prayush/gwnrtools',
           author='Prayush Kumar',
