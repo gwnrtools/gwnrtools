@@ -175,7 +175,7 @@ Observers:
 # of the compilers we want to use. While we expect the first
 # list to change / grow, not so much for the second.
 __available_clusters__ = [
-    'Wheeler'
+    'Wheeler', 'Wheeler_unlimited'
 ]
 
 __available_compilers__ = [
