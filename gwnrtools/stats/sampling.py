@@ -67,7 +67,7 @@ def uniform_in_angle(N, theta_min=0., theta_max=2.*np.pi, offset=0.):
     return uniform_bound(theta_min, theta_max, N) + offset
 
 
-def CubeToUniformOnS2(u, v):
+def cube_to_uniform_on_S2(u, v):
     """
     Taking in 2 random numbers drawn from U[0,1], and returns 2 that
     are uniformly distributed over the surface of a unit 2-sphere
@@ -77,5 +77,30 @@ def CubeToUniformOnS2(u, v):
     return [2.*np.pi*u, np.arccos(2.*v - 1.)]
 
 
+def uniform_on_S2(N):
+    return cube_to_uniform_on_S2(uniform_bound(0, 1, N),
+                                 uniform_bound(0, 1, N))
+
+
 def uniform_in_volume_distance(N, d_min, d_max):
     return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1./3.)
+
+
+####
+# **`OneDRandom`**:
+# Metaclass holding a dictionary of methods to draw random numbers
+
+class OneDRandom:
+    '''
+DESCRIPTION: Random number generation meta-class
+    '''
+
+    def __init__(self):
+        self.draw = {}
+        self.draw['uniform'] = np.random.uniform
+        self.draw['zero'] = np.zeros
+        self.draw['uniform_cos'] = uniform_in_cos_angle
+        self.draw['uniform_S2'] = uniform_on_S2
+
+    def available_distributions():
+        return list(self.draw.keys())

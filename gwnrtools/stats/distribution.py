@@ -85,7 +85,7 @@ def KDEMedianOverRange(kde_func, x_range):
 
 #######################################################
 # CONTAINER and CALCULATION CLASSES
-#######################################################
+
 class OneDDistribution:
     '''
 DESCRIPTION:
