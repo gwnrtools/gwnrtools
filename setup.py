@@ -100,7 +100,11 @@ if __name__ == "__main__":
           author_email='prayush.kumar@gmail.com',
           packages=find_packages(),
           package_dir={NAME: NAME},
-          package_data={NAME: [write_version_file(VERSION)]},
+          package_data={
+              # version info
+              NAME: [write_version_file(VERSION)],
+              'gwnrtools.data': ['gw_noise_curves/*.txt', 'gw_noise_curves/*.dat']
+          },
           install_requires=[
               'astropy==2.0.16',
               'h5py>=2.10.0',

@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Prayush Kumar
+# Copyright (C) 2020 Prayush Kumar
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 3 of the License, or (at your
@@ -12,30 +12,24 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-"""
-gwnrtools is a toolkit for gravitational-wave physics
-"""
+#
 from __future__ import absolute_import
 
-from . import (analysis, cosmo, data, graph, nr, utils, waveform, workflow)
-try:
-    from . import stats
-except:
-    pass
-from gwnrtools.utils import *
+import os
+import glob
 
 
-def get_version_information():
-    import os
-    version_file = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "gwnrtools/.version"
-    )
-    try:
-        with open(version_file, "r") as f:
-            return f.readline().rstrip()
-    except EnvironmentError:
-        print("No version information file '.version' found")
+def gw_noise_curve_file(filename):
+    """ Return path to ASCII file containing noise power spectral
+    density estimates for various GW detectors, as a function of
+    frequency.
+    """
+    return os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                        'gw_noise_curves', filename))
 
 
-__version__ = get_version_information()
+def available_gw_noise_curves():
+    """Returns a list of noise curves whose data is available.
+    """
+    return [f.split('/')[-1]
+            for f in glob.glob(os.path.dirname(__file__) + '/gw_noise_curves/*')]
