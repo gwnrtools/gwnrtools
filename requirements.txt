@@ -1,9 +1,9 @@
-astropy>=4.0
+astropy>=2.0.16
 celluloid>=0.2.0
 h5py>=2.10.0
 lalsuite>=6.63
 lscsoft_glue==2.0.0
-matplotlib==3.1.2
+matplotlib==2.1
 numexpr
 numpy==1.16.5
 pandas==0.24.2

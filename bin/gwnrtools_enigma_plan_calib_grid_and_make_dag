@@ -18,17 +18,16 @@
 """Setup workflow to perform calibration of ENIGMA model using another BBH model """
 import time
 __itime__ = time.time()
-import h5py
-import numpy as np
 import os
+import sys
+import itertools
 import shutil
 import argparse
 import logging
+import h5py
+import numpy as np
 
-if True:
-    import sys
-    sys.path.append(os.path.join(os.environ['HOME'], 'src/GWNRTools'))
-    from GWNRTools import __version__
+from gwnrtools import __version__
 
 
 ############################################################
@@ -64,6 +63,10 @@ parser.add_argument("--max-omega-attach", type=float, default=0.1,
                     help="Upper limit for dimless attachment freq.")
 
 # Discrete parameter choices
+parser.add_argument("--params-to-grid-over", type=str, required=False,
+                    default='f_lower,psd',
+                    help="Comma-separated list of parameters that are fixed during MCMC")
+
 parser.add_argument("--choices-pn-order", type=str, required=False,
                     default='6,7,8,9,10,11,12',
                     help="Comma-separated list of PN orders to try")
@@ -83,7 +86,7 @@ parser.add_argument("--signal-approx", type=str, required=False,
 # MCMC and filtering options
 parser.add_argument("--num-samplers", type=int, default=32,
                     help="No of MCMC walkers")
-parser.add_argument("--num-mcmc-steps", type=int, default=100,
+parser.add_argument("--num-mcmc-steps", type=int, default=1000,
                     help="No of MCMC steps per walker")
 parser.add_argument("--sample-rate", type=int, default=4096,
                     help="Sampling rate for wave gen and matches")
@@ -100,7 +103,7 @@ parser.add_argument("--output-prefix", type=str, required=False,
 
 
 # parallelization options
-parser.add_argument("--num-calcs-per-job", type=int, default=100,
+parser.add_argument("--num-calcs-per-job", type=int, default=1,
                     help="Number of calculations per job ")
 
 
@@ -118,15 +121,25 @@ range_of_q = np.array([opts.min_q, opts.max_q])
 spacing_mass1 = opts.grid_spacing_mass1
 spacing_mass2 = opts.grid_spacing_mass2
 
+parameter_choices = {}
+
+parameter_choices['mass1'] = np.arange(range_of_mass1[0],
+                                       range_of_mass1[1],
+                                       spacing_mass1)
+parameter_choices['mass2'] = np.arange(range_of_mass2[0],
+                                       range_of_mass2[1],
+                                       spacing_mass2)
 choices_f_ = []
 for c in opts.choices_f_lower.split(","):
     try:
         choices_f_.append(float(c))
     except:
         pass
-choices_f_lower = np.array(choices_f_)
+parameter_choices['f_lower'] = np.array(choices_f_)
+parameter_choices['psd'] = opts.choices_psd.split(",")
 
-choices_psd = opts.choices_psd.split(",")
+parameters_to_grid_over = opts.params_to_grid_over.split(",")
+
 num_unique_mcmc_per_job = opts.num_calcs_per_job
 run_directory = opts.run_dir
 
@@ -142,8 +155,8 @@ if opts.verbose:
         spacing_mass1, spacing_mass2))
 
     logging.info(
-        "Will sample lower freq cutoff from: {}".format(choices_f_lower))
-    logging.info("Will sample PSD from: {}".format(choices_psd))
+        "Will sample lower freq cutoff from: {}".format(opts.choices_f_lower))
+    logging.info("Will sample PSD from: {}".format(opts.choices_psd))
 
     logging.info("Will setup {0} calculations per job".format(
         num_unique_mcmc_per_job))
@@ -231,39 +244,43 @@ logging.info(".. directories made.")
 
 ############################################################
 # Make the grid
+grid_choices = list(itertools.product(
+    *[parameter_choices[p] for p in parameters_to_grid_over]))
+
 jobs = {}
 
 num_mcmc_in_job = 1e9
 job_num = 0
 job_params = None
 
-for m1 in np.arange(range_of_mass1[0], range_of_mass1[-1], spacing_mass1):
-    for m2 in np.arange(range_of_mass2[0], range_of_mass2[-1], spacing_mass2):
-        q = m1 / m2
-        if q < range_of_q[0] or q > range_of_q[-1]:
-            continue
+for p_vector in grid_choices:
+    curr_p = {}
 
-        for f_lower in choices_f_lower:
-            for psd_name in choices_psd:
-                # prepare the job
-                if num_mcmc_in_job < num_unique_mcmc_per_job:
-                    # add to current job
-                    job_params.append([m1, m2, f_lower, psd_name])
+    for i, p in enumerate(parameters_to_grid_over):
+        curr_p[p] = p_vector[i]
 
-                    num_mcmc_in_job += 1
-                    job_num += 1
+    if num_mcmc_in_job < num_unique_mcmc_per_job:
+        # add to current job
+        job_params.append(curr_p)
 
-                else:
-                    # close current job
-                    if job_params:
-                        jobs[curr_job_id] = job_params
+        num_mcmc_in_job += 1
+        job_num += 1
+    else:
+        # close current job
+        if job_params:
+            jobs[curr_job_id] = job_params
 
-                    # start new job
-                    curr_job_id = job_id(job_num)
-                    job_params = [[m1, m2, f_lower, psd_name]]
+        # start new job
+        curr_job_id = job_id(job_num)
+        job_params = [curr_p]
 
-                    num_mcmc_in_job = 1
-                    job_num += 1
+        num_mcmc_in_job = 1
+        job_num += 1
+
+# Leftover jobs
+if job_params:
+    jobs[curr_job_id] = job_params
+    job_params = None
 
 logging.info(" .. parameter grid constructed.")
 ############################################################
@@ -275,24 +292,15 @@ logging.info(" .. condor submission file written.")
 ############################################################
 # Design DAG
 # Iterate over the grid, and add a job for each!
-for job_id in jobs:
-    job_params = jobs[job_id]
+for _job_id in jobs:
+    job_params = jobs[_job_id]
 
-    # m1, m2, f_lower, psd
-    job_p0_vals = [p[0] for p in job_params]
-    job_p1_vals = [p[1] for p in job_params]
-    job_p2_vals = [p[2] for p in job_params]
-    job_p3_vals = [p[3] for p in job_params]
+    job_params_dict = {}
+    for p in parameters_to_grid_over:
+        job_params_dict[p] = [jp[p] for jp in job_params]
 
-    job_params_dict = {
-        'mass1': job_p0_vals,
-        'mass2': job_p1_vals,
-        'f_lower': job_p2_vals,
-        'psd': job_p3_vals
-    }
-
-    parameter_file_name = write_parameter_file(job_id, job_params_dict)
-    write_job_to_dag(job_id, parameter_file_name)
+    parameter_file_name = write_parameter_file(_job_id, job_params_dict)
+    write_job_to_dag(_job_id, parameter_file_name)
 
 logging.info(" .. DAG written.")
 logging.info("All Done in {0} seconds".format(time.time() - __itime__))
