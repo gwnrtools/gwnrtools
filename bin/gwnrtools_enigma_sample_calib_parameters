@@ -383,28 +383,32 @@ for idx in range(num_mcmc):
             old_f_lower = f_lower
 
         # RUN THE SAMPLER
-        logging.info("Initializing the MCMC sampler and burning-in")
+        logging.info("... Initializing the MCMC sampler and burning-in")
+        hdf_backend = output_file(inputs['output_prefix'][0],
+                                  inputs['job_id'][0],
+                                  idx).replace('.dat', '.h5')
         samplers[idx] = get_emcee_ensemble_sampler(log_prob,
                                                    sampling_params[sampling_params['sampler_params'].range],
                                                    [inputs.iloc[0],
                                                        f_lower, sampling_params, psd],
+                                                   backend_hdf=hdf_backend,
                                                    nwalkers=inputs.num_samplers[0],
                                                    pool=__my_pool__)
 
         logging.info(
-            "Running the MCMC sampler for {0} steps".format(inputs.num_steps[0]))
+            "... Running the MCMC sampler for {0} steps".format(inputs.num_steps[0]))
         s, state = samplers[idx]
-        s.run_mcmc(state, inputs.num_steps[0])
+        s.run_mcmc(None, inputs.num_steps[0])
 
         # WRite output from the sampler
-        logging.info("Writing output now..")
+        logging.info("... Writing output now..")
         write_output_from_emcee_sampler(output_file(inputs['output_prefix'][0],
-                                                    job_id,
+                                                    inputs['job_id'][0],
                                                     idx),
                                         s,
                                         sampling_params[sampling_params['sampler_params'].range])
 
-        logging.info("Written output")
+        logging.info("... Written output!")
         # Early stop
         if idx >= 1e9:
             break

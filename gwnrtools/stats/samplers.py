@@ -21,6 +21,8 @@ def get_emcee_ensemble_sampler(log_probability,
                                params_to_sample,
                                myarglist,
                                nwalkers=32,
+                               burn_in=100,
+                               backend_hdf=None,
                                pool=None):
     """
 Initializes and burns-in MCMC sampler
@@ -53,12 +55,19 @@ state           : current state of sampler
     # Setup hyper-parameters for the sampler
     ndim = params_to_sample.shape[-1]
 
+    # Arguments for ensembleSampler
+    kws = {'pool': pool, 'args': myarglist}
+
+    # HDF5 backend to save progress
+    if int(emcee.__version__.split('.')[0]) >= 3 and \
+            backend_hdf is not None and \
+            (backend_hdf.endswith('.h5') or backend_hdf.endswith('.hdf')):
+        backend = emcee.backends.HDFBackend(backend_hdf)
+        backend.reset(nwalkers, ndim)
+        kws['backend'] = backend
+
     # Initialize emsemble sampler
-    sampler = emcee.EnsembleSampler(nwalkers,
-                                    ndim,
-                                    log_probability,
-                                    pool=pool,
-                                    args=myarglist)
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, **kws)
 
     # Run the sampler for a few steps to burn-in,
     # ie erase memory of the starting locations
@@ -74,7 +83,7 @@ state           : current state of sampler
         initial_param_values.append(param_values)
     p0 = np.hstack(initial_param_values)
 
-    state = sampler.run_mcmc(p0, 100)
+    state = sampler.run_mcmc(p0, burn_in)
     sampler.reset()
     return sampler, state
 
