@@ -29,10 +29,10 @@ import pandas as pd
 
 from gwnrtools import __version__
 from gwnrtools.utils import make_padded_frequency_series
-from gwnrtools.waveform.eccentric import FitMOmegaIMRAttachmentNonSpinning
 from gwnrtools.stats.samplers import (
     get_emcee_ensemble_sampler, write_output_from_emcee_sampler)
 
+import pycbc.pnutils as pnu
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
 from pycbc.filter import match
@@ -93,7 +93,7 @@ inputs = {}
 inputs['job_id'] = opts.job_id
 inputs['param_file'] = opts.param_file
 inputs['signal_approx'] = opts.signal_approx
-inputs['output_prefix'] = opts.output_prefix + '{0}'.format(signal_approx)
+inputs['output_prefix'] = opts.output_prefix + '{0}'.format(opts.signal_approx)
 
 # MCMC params
 inputs['num_samplers'] = opts.num_samplers
@@ -114,6 +114,8 @@ with h5py.File(inputs['param_file'], 'r') as fin:
     inputs['fixed_params'] = (list(fin.keys()),)
     for k in fin:
         inputs[k] = fin[k][()]
+        if type(inputs[k][0]) is not list:
+            inputs[k] = [[inputs[k][0]], ]
 
 inputs = pd.DataFrame.from_dict(inputs)
 logging.info(".. input parameters read.")
@@ -148,8 +150,8 @@ if opts.verbose:
         inputs.signal_approx[0]))
     logging.info("Will sample omega_att: [{0}, {1}]".format(
         *sampling_params.omega_attach.range))
-    logging.info("Will sample PN order from: {0:s}".format(
-        *sampling_params.PNO.range))
+    logging.info("Will sample PN order from: {}".format(
+        sampling_params.PNO.range))
     logging.info("Will take {} MCMC steps per sampler".format(
         inputs.num_steps[0]))
     logging.info("Will use {} samplers".format(inputs.num_samplers[0]))
@@ -354,7 +356,11 @@ samplers = {}
 old_f_lower = -1
 
 # Loop over all unique MCMC jobs
-for idx in range(len(inputs[inputs.fixed_params[0][0]][0])):
+try:
+    num_mcmc = len(inputs[inputs.fixed_params[0][0]][0])
+except:
+    num_mcmc = 1
+for idx in range(num_mcmc):
     try:
         f_lower = inputs['f_lower'][0][idx]
         df = inputs['delta_f'][0]
@@ -363,14 +369,12 @@ for idx in range(len(inputs[inputs.fixed_params[0][0]][0])):
         N = int(1. / dt / df)
         n = N / 2 + 1
 
-        f_lower = inputs['f_lower'][idx]
         if opts.verbose:
-            logging.info("\n\n ... starting MCMC for setting {0}/{1}: m1={2:.2f}, m2={3:.2f}, f_low={4:.0f}".format(idx,
-                                                                                                                    len(inputs[inputs.keys()[
-                                                                                                                        0]]),
-                                                                                                                    mass1,
-                                                                                                                    mass2,
-                                                                                                                    f_lower))
+            logging.info(
+                "\n\n ... starting MCMC for setting {0}/{1}: f_low={2:.0f}".format(idx,
+                                                                                   len(inputs[inputs.keys()[
+                                                                                       0]]),
+                                                                                   f_lower))
 
         if f_lower != old_f_lower:
             # from global settings
@@ -405,10 +409,8 @@ for idx in range(len(inputs[inputs.fixed_params[0][0]][0])):
         if idx >= 1e9:
             break
     except:
-        logging.error("Error in parameter set[{0}]: m1={1:.3f}, m2={2:.3f}, f_low={3:.0f}".format(idx,
-                                                                                                  mass1,
-                                                                                                  mass2,
-                                                                                                  f_lower))
+        logging.error("Error in parameter set[{0}]: f_low={1:.0f}".format(idx,
+                                                                          f_lower))
         raise
 __my_pool__.close()
 __my_pool__.terminate()
