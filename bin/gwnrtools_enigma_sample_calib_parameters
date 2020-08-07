@@ -16,8 +16,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 """Perform calibration runs for ENIGMA model using another BBH model """
+
 import time
 __itime__ = time.time()
+
 import os
 import sys
 import h5py
@@ -31,11 +33,11 @@ from gwnrtools import __version__
 from gwnrtools.utils import make_padded_frequency_series
 from gwnrtools.stats.samplers import (
     get_emcee_ensemble_sampler, write_output_from_emcee_sampler)
+from gwnrtools.stats.enigma_utils import (
+    log_prior_enigma, log_likelihood_enigma, log_prob_enigma,
+    __order_of_sampled_params__)
 
-import pycbc.pnutils as pnu
-from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
-from pycbc.filter import match
 
 ############################################################
 # command line usage
@@ -72,6 +74,9 @@ parser.add_argument("--sample-rate", type=int, default=4096,
 parser.add_argument("--time-length", type=int, default=32,
                     help="Expected max duration of waves")
 
+parser.add_argument("--use-dilation-map-match",
+                    action="store_true", default=False,
+                    help="use a nonlinear dilating map for match")
 # parallelization options
 parser.add_argument("--num-processes", type=int, default=2,
                     help="No of Multiprocessing processes")
@@ -94,6 +99,7 @@ inputs['job_id'] = opts.job_id
 inputs['param_file'] = opts.param_file
 inputs['signal_approx'] = opts.signal_approx
 inputs['output_prefix'] = opts.output_prefix + '{0}'.format(opts.signal_approx)
+inputs['use_dilation_map_match'] = opts.use_dilation_map_match
 
 # MCMC params
 inputs['num_samplers'] = opts.num_samplers
@@ -159,189 +165,15 @@ if opts.verbose:
         inputs.output_prefix[0]))
     logging.info("Will filter at {0}Hz with maxT = {1}secs".format(
         inputs.sample_rate[0], inputs.time_length[0]))
+
+
 ############################################################
 # Functions and classes
-
-
-class FitMOmegaIMRAttachmentNonSpinning():
-    def __init__(self):
-        return
-
-    @staticmethod
-    def fit_quadratic_poly(eta, coeffs):
-        assert (len(coeffs) == 3), "{} coeffs passed!".format(len(coeffs))
-        a1, a2, a3 = coeffs
-        return a1 + a2 * eta + a3 * eta * eta
-
-    @staticmethod
-    def fit_cubic_poly(eta, coeffs):
-        assert (len(coeffs) == 4), "{} coeffs passed!".format(len(coeffs))
-        a1, a2, a3, a4 = coeffs
-        return a1 + a2 * eta + a3 * eta * eta + a4 * eta * eta * eta
-
-    @staticmethod
-    def fit_ratio_poly_44(eta, coeffs):
-        assert (len(coeffs) == 7), "{} coeffs passed!".format(len(coeffs))
-        a1, a2, a3, a4, b2, b3, b4 = coeffs
-        return (a1 + a2 * eta + a3 * eta * eta + a4 * eta * eta * eta) / (1. + b2 * eta + b3 * eta * eta + b4 * eta * eta * eta)
-
-    @staticmethod
-    def fit_ratio_poly_43(eta, coeffs):
-        assert (len(coeffs) == 6), "{} coeffs passed!".format(len(coeffs))
-        a1, a2, a3, a4, b2, b3 = coeffs
-        return (a1 + a2 * eta + a3 * eta * eta + a4 * eta * eta * eta) / (1. + b2 * eta + b3 * eta * eta)
-
-    @staticmethod
-    def fit_ratio_poly_34(eta, coeffs):
-        assert (len(coeffs) == 6), "{} coeffs passed!".format(len(coeffs))
-        a1, a2, a3, b2, b3, b4 = coeffs
-        return (a1 + a2 * eta + a3 * eta * eta) / (1. + b2 * eta + b3 * eta * eta + b4 * eta * eta * eta)
-
-
 def output_file(prefix, job_id, idx):
     return prefix + '{0}_{1:06d}.dat'.format(job_id, idx)
 
 
-# Likelihood functions specific to this RUN
-def log_prior_enigma(q, total_mass, PNO, coeffs, omega_attach,
-                     sp_info,
-                     omega_attach_lims=[0.01, 0.1]):
-    '''
-Priors:
--------
-
-omega_attach : [0.01, 0.1]
-PNO : [6, 7, 8, 9, 10, 11, 12]
-    '''
-    PNO = int(np.round(PNO))
-
-    if np.any(coeffs < -1.) or np.any(coeffs > 1.):
-        logging.info(
-            "Rejecting coeffs={} from prior for coeffs".format(coeffs))
-        return -np.inf
-
-    if PNO not in sp_info.PNO.range:
-        logging.info("Rejecting PNO={} from prior on PNO".format(PNO))
-        return -np.inf
-
-    if omega_attach < sp_info.omega_attach.range[0] or \
-            omega_attach > sp_info.omega_attach.range[-1]:
-        logging.info(
-            "Rejecting MOmg={} from prior on omega_attach".format(omega_attach))
-        return -np.inf
-
-    if q < sp_info.q.range[0] or q > sp_info.q.range[1]:
-        logging.info("Rejecting q={} from prior on q".format(q))
-        return -np.inf
-
-    if total_mass < sp_info.total_mass.range[0] or total_mass > sp_info.total_mass.range[1]:
-        logging.info(
-            "Rejecting M={} from prior on total_mass".format(total_mass))
-        return -np.inf
-
-    return 0.0
-
-
-def log_likelihood_enigma(mass1, mass2, omega_attach, PNO, f_lower, sample_rate, psd):
-    '''
-This function takes in all parameters, including:
-- masses
-- omega_attach
-- PN order
-
-and computes the inner product between the sampled ENIGMA
-waveform and an equivalent EOB waveform m = <h_1|h_2>.
-
-Finally returns L = exp(-0.5 x m x m)
-    '''
-    # extract MCMC parameters
-    PNO = int(np.round(PNO))
-
-    # Use BASH MAGIC TO PASS MCMC parameters TO ENIGMA
-    os.environ['OMEGA_ATTACH'] = '{0:.12f}'.format(omega_attach)
-    os.environ['PN_ORDER'] = '{0:d}'.format(PNO)
-
-    dt = 1. / sample_rate
-    df = psd.delta_f
-    N = int(sample_rate / psd.delta_f)
-
-    # Generate ENIGMA wave
-    try:
-        h1p, h1c = get_td_waveform(approximant='ENIGMA',
-                                   mass1=mass1,
-                                   mass2=mass2,
-                                   f_lower=f_lower,
-                                   delta_t=dt)
-    except:
-        print("Could not generate ENIGMA wave..m1={},m2={},omg={},PNO={}".format(
-            mass1, mass2, omega_attach, PNO))
-        return -np.inf
-    h1p = make_padded_frequency_series(h1p, N, df)
-    #h1c = make_padded_frequency_series(h1c, N, df)
-
-    # Generate EOB wave
-    try:
-        h2p, h2c = get_fd_waveform(approximant='SEOBNRv4_ROM',
-                                   mass1=mass1,
-                                   mass2=mass2,
-                                   f_lower=f_lower,
-                                   delta_f=df)
-    except:
-        print("Could not generate EOB wave..")
-        return -np.inf
-    h2p = make_padded_frequency_series(h2p, N, df)
-    #h2c = make_padded_frequency_series(h2c, N, df)
-
-    # Undo BASH MAGIC TO PASS MCMC parameters TO ENIGMA
-    os.environ['OMEGA_ATTACH'] = ''
-    os.environ['PN_ORDER'] = ''
-
-    # Compute inner prodcut
-    log_like, _ = match(h1p, h2p, psd=psd, low_frequency_cutoff=f_lower)
-    return log_like
-
-
-def log_prob(theta, inputs, f_lower, sampling_params, psd):
-    '''
-    Inputs:
-    -------
-
-    theta: (11) mass1, mass2, PNO, a1, a2, a3, a4, b1, b2, b3, b4
-           (11)     q, mtotal,PNO, a1, a2, a3, a4, b1, b2, b3, b4
-           (11)   eta, mtotal,PNO, a1, a2, a3, a4, b1, b2, b3, b4
-    inputs: pandas.core.series.Series
-            Attributes should include ('f_lower', 'sample_rate')
-    psd: pycbc.FrequencySeries
-
-    '''
-    # Ordering is enforced here
-    q, total_mass, PNO = theta[:3]
-    coeffs = theta[3:]
-
-    eta = q / (1. + q)**2
-    mass1, mass2 = pnu.mtotal_eta_to_mass1_mass2(total_mass, eta)
-
-    # Evaluate attachment freq from coefficients a1-a4 and b2-b4
-    fit = FitMOmegaIMRAttachmentNonSpinning()
-    m_omega_attach = fit.fit_ratio_poly_44(eta, coeffs)
-
-    # prior probability
-    log_prior = log_prior_enigma(
-        q, total_mass, PNO, coeffs, m_omega_attach, sampling_params)
-    if not np.isfinite(log_prior):
-        return log_prior
-
-    # posterior = likelihood x prior
-    return log_likelihood_enigma(mass1, mass2, m_omega_attach, PNO,
-                                 f_lower,
-                                 inputs.sample_rate, psd) + log_prior
-
-
 ############################################################
-# Ordering of sampled parameters enforced here
-__order_of_sampled_params__ = ['q', 'total_mass',
-                               'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
-
 sampling_params['sampler_params'] = ('discrete', __order_of_sampled_params__)
 inputs['sampler_params'] = (__order_of_sampled_params__,)
 
@@ -387,18 +219,24 @@ for idx in range(num_mcmc):
         hdf_backend = output_file(inputs['output_prefix'][0],
                                   inputs['job_id'][0],
                                   idx).replace('.dat', '.h5')
-        samplers[idx] = get_emcee_ensemble_sampler(log_prob,
-                                                   sampling_params[sampling_params['sampler_params'].range],
-                                                   [inputs.iloc[0],
-                                                       f_lower, sampling_params, psd],
-                                                   backend_hdf=hdf_backend,
-                                                   nwalkers=inputs.num_samplers[0],
-                                                   pool=__my_pool__)
+        samplers[idx] = \
+            get_emcee_ensemble_sampler(log_prob,
+                                       sampling_params[sampling_params['sampler_params'].range],
+                                       [inputs.iloc[0],
+                                        f_lower, sampling_params, psd],
+                                       kwargs={
+                                           'dilation_map_match': inputs['use_dilation_map_match'][0]},
+                                       backend_hdf=hdf_backend,
+                                       nwalkers=inputs.num_samplers[0],
+                                       pool=__my_pool__)
 
         logging.info(
             "... Running the MCMC sampler for {0} steps".format(inputs.num_steps[0]))
-        s, state = samplers[idx]
-        s.run_mcmc(None, inputs.num_steps[0])
+        s, state, p0 = samplers[idx]
+        try:
+            s.run_mcmc(None, inputs.num_steps[0])
+        except ValueError:
+            s.run_mcmc(p0, inputs.num_steps[0])
 
         # WRite output from the sampler
         logging.info("... Writing output now..")

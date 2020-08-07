@@ -20,6 +20,7 @@ import numpy as np
 def get_emcee_ensemble_sampler(log_probability,
                                params_to_sample,
                                myarglist,
+                               kwargs=None,
                                nwalkers=32,
                                burn_in=100,
                                backend_hdf=None,
@@ -56,7 +57,7 @@ state           : current state of sampler
     ndim = params_to_sample.shape[-1]
 
     # Arguments for ensembleSampler
-    kws = {'pool': pool, 'args': myarglist}
+    kws = {'pool': pool, 'args': myarglist, 'kwargs': kwargs}
 
     # HDF5 backend to save progress
     if int(emcee.__version__.split('.')[0]) >= 3 and \
@@ -85,7 +86,7 @@ state           : current state of sampler
 
     state = sampler.run_mcmc(p0, burn_in)
     sampler.reset()
-    return sampler, state
+    return sampler, state, p0
 
 
 # Single-point entry to above methods
@@ -141,7 +142,7 @@ params_to_sample : pandas.DataFrame
     # Prepare header and samples
     out_header = ''
     out_array = []
-    for idx, p in enumerate(params_to_sample.columns + ['log_prob']):
+    for idx, p in enumerate(list(params_to_sample.columns) + ['log_prob']):
         out_header = out_header + '[{0}] {1}\n'.format(idx, p)
         out_array.append(all_samples[p])
     out_array = np.array(out_array)
