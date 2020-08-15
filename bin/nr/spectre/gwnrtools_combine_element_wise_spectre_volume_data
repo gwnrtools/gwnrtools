@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import h5py
+import os
+import sys
+import numpy as np
+import logging
+
+__author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
+PROGRAM_NAME = os.path.abspath(sys.argv[0])
+
+logging.getLogger().setLevel(logging.INFO)
+
+def add_tensor_component_to_spectre_group(hdf_group, tensors,
+                                          order_on='connectivity'):
+    """This function takes in a pointer to an open HDF5 file group, within
+    which data is to be stored. It also takes in a dictionary of tensor
+    components. The argument `order_on` ensures that the components are 
+    populated in the right order contiguously.
+    """
+    if order_on is not None:
+        assert order_on in hdf_group, "{0} not present in the HDF group provided".format(
+            order_on)
+        assert order_on in tensors, "{0} not present in the tensors provided".format(
+            order_on)
+        o1 = hdf_group[order_on][()]
+        o2 = tensors[order_on]
+
+    for t in tensors:
+        if t in hdf_group:
+            continue
+        hdf_group.create_dataset(t, data=tensors[t])
+    return hdf_group
+
+
+def combine_element_wise_spectre_data(hdf_group,
+                                      include='all', exclude=[],
+                                      combined_tensors={},
+                                      verbose=True):
+    """This function takes in a pointer to an open HDF5 file group, within
+    which is data stored in spectre's ExtentsAndTensorVolumeData format, i.e.
+    in subgroups for each element, there are all tensor components stored
+    for the same. The optional inputs `include` and `exclude` are lists of
+    tensors to collate (or not).
+    """
+    # Use the first element to get a list of tensors and elements
+    elements = list(hdf_group.keys())
+    first_elem = elements[0]
+    all_tensors = list(hdf_group[first_elem].keys())
+    # Include only those tensors that the user specifies in include
+    if type(include) is list:
+        all_tensors = list(set(all_tensors).intersection(set(include)))
+        if len(all_tensors) == 0:
+            raise IOError("Did you want to include any tensors..?")
+    elif include == 'all':
+        pass
+    else:
+        raise IOError(
+            "Either provide a list of tensor components as `include` OR just 'all'")
+    # Exclude tensors the user requests for
+    assert type(exclude) is list, "Provide an empty of filled list as exclude"
+    all_tensors = list(set(all_tensors).difference(set(exclude)))
+    # Collate and populate tensors
+    for t in all_tensors:
+        if verbose:
+            print("... combining data for {}".format(t))
+        if t not in combined_tensors:
+            combined_tensors[t] = []
+        for sd in elements:
+            combined_tensors[t] = np.append(
+                combined_tensors[t], hdf_group[sd][t][()])
+    return combined_tensors
+
+
+if __name__ == "__main__":
+    help = """Takes a volume-data HDF5 file that contains
+    SpacetimeMetric, Pi, and Phi, H, D4H, stored seperately
+    for each element, and collates it for all elements to
+    conform with the current spectre-volume-data format.
+    """
+    parser = argparse.ArgumentParser(description=help)
+    parser.add_argument('--input-volume-data-file', required=True,
+                        help="""Name of HDF5 file""")
+    parser.add_argument('--spectre-points-file', required=True,
+                        help="""Name of HDF5 file""")
+    parser.add_argument('--output-file', required=True,
+                        help="""Name of HDF5 file""")
+    args = parser.parse_args()
+
+    base = 'element_data.vol'
+    batch_size = 5
+
+    with h5py.File(args.input_volume_data_file, 'r') as f:
+        observation_id = list(f[base].keys())[0]
+        h = f[base][observation_id]
+        all_tensors = list(h[list(h.keys())[0]].keys())
+
+    logging.info("Making a copy of {0} to {1}".format(
+        args.spectre_points_file, args.output_file))
+    os.system(
+        "cp -r {0} {1}".format(args.spectre_points_file, args.output_file))
+
+    with h5py.File(args.input_volume_data_file, 'r') as f:
+        observation_id = list(f[base].keys())[0]
+        h = f[base][observation_id]
+        all_tensors = list(h[list(h.keys())[0]].keys())
+
+        for i in range(0, len(all_tensors), batch_size):
+            tensor_batch = all_tensors[i:i+batch_size]
+            ct = combine_element_wise_spectre_data(h, include=tensor_batch)
+            logging.info("Populating {} with {}".format(
+                args.output_file, tensor_batch))
+            with h5py.File(args.output_file, "a") as f_out:
+                observation_id_out = list(f_out[base].keys())[0]
+                h_out = f_out[base][observation_id_out]
+                add_tensor_component_to_spectre_group(h_out, ct, order_on=None)
+    
+    logging.info("All done.")
