@@ -15,37 +15,35 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import time
 import h5py
 import os
 import sys
 import numpy as np
+import pandas as pd
 import logging
+import argparse
 
 __author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 
 logging.getLogger().setLevel(logging.INFO)
 
-def add_tensor_component_to_spectre_group(hdf_group, tensors,
-                                          order_on='connectivity'):
+__itime__ = time.time()
+
+
+def add_dataframe_to_hdf5_group(hdf_group, df):
     """This function takes in a pointer to an open HDF5 file group, within
     which data is to be stored. It also takes in a dictionary of tensor
     components. The argument `order_on` ensures that the components are 
     populated in the right order contiguously.
     """
-    if order_on is not None:
-        assert order_on in hdf_group, "{0} not present in the HDF group provided".format(
-            order_on)
-        assert order_on in tensors, "{0} not present in the tensors provided".format(
-            order_on)
-        o1 = hdf_group[order_on][()]
-        o2 = tensors[order_on]
-
-    for t in tensors:
+    for t in df.columns:
         if t in hdf_group:
+            logging.info("Skipping tensor {}".format(t))
             continue
-        hdf_group.create_dataset(t, data=tensors[t])
-    return hdf_group
+        hdf_group.create_dataset(t, data=df[t].to_numpy())
+        logging.info("Added tensor {}".format(t))
 
 
 def combine_element_wise_spectre_data(hdf_group,
@@ -78,13 +76,16 @@ def combine_element_wise_spectre_data(hdf_group,
     # Collate and populate tensors
     for t in all_tensors:
         if verbose:
-            print("... combining data for {}".format(t))
+            logging.info("... combining data for {}".format(t))
         if t not in combined_tensors:
             combined_tensors[t] = []
         for sd in elements:
             combined_tensors[t] = np.append(
                 combined_tensors[t], hdf_group[sd][t][()])
     return combined_tensors
+
+
+precision_decimals = 10
 
 
 if __name__ == "__main__":
@@ -103,31 +104,76 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     base = 'element_data.vol'
-    batch_size = 5
-
-    with h5py.File(args.input_volume_data_file, 'r') as f:
-        observation_id = list(f[base].keys())[0]
-        h = f[base][observation_id]
-        all_tensors = list(h[list(h.keys())[0]].keys())
 
     logging.info("Making a copy of {0} to {1}".format(
         args.spectre_points_file, args.output_file))
     os.system(
         "cp -r {0} {1}".format(args.spectre_points_file, args.output_file))
 
+    ct = {}
     with h5py.File(args.input_volume_data_file, 'r') as f:
-        observation_id = list(f[base].keys())[0]
+        base = 'element_data.vol'
+        observation_id = list(f[base].keys())[0]  # use first observation
         h = f[base][observation_id]
-        all_tensors = list(h[list(h.keys())[0]].keys())
+        for t in list(h[list(h.keys())[0]].keys()):
+            if 'Gauge' not in t and \
+                'Spacetime' not in t and \
+                'Pi' not in t and \
+                'Phi' not in t and \
+                    'Coordinates' not in t:
+                continue
+            ct = combine_element_wise_spectre_data(h, include=[t],
+                                                   combined_tensors=ct)
+    df_gl_id = pd.DataFrame.from_dict(ct)
+    df_gl_id['InertialCoordinates'] =\
+        [(_x, _y, _z) for (_x, _y, _z) in zip(
+            np.around(df_gl_id['InertialCoordinates_x'].to_numpy(),
+                      decimals=precision_decimals),
+            np.around(df_gl_id['InertialCoordinates_y'].to_numpy(),
+                      decimals=precision_decimals),
+            np.around(df_gl_id['InertialCoordinates_z'].to_numpy(),
+                      decimals=precision_decimals))]
+    dest_ct = {}
+    with h5py.File(args.spectre_points_file, 'r') as f:
+        base = 'element_data.vol'
+        observation_id = list(f[base].keys())[0]  # use first observation
+        h = f[base][observation_id]
+        logging.info(dict(h).keys())
+        for kk in h:
+            dest_ct[kk] = h[kk][()]
+    # Remove columns that we do not need for merging with GL's ID
+    dest_ct.pop('connectivity')
+    dest_ct.pop('grid_names')
+    dest_ct.pop('total_extents')
+    df_dest_id = pd.DataFrame.from_dict(dest_ct)
+    df_dest_id['InertialCoordinates'] =\
+        [(_x, _y, _z) for (_x, _y, _z) in zip(
+            np.around(df_dest_id['InertialCoordinates_x'].to_numpy(),
+                      decimals=precision_decimals),
+            np.around(df_dest_id['InertialCoordinates_y'].to_numpy(),
+                      decimals=precision_decimals),
+            np.around(df_dest_id['InertialCoordinates_z'].to_numpy(),
+                      decimals=precision_decimals))]
+    df_dest_id_for_merge = df_dest_id  # alias only
+    df_dest_id_for_merge.drop(
+        labels=['InertialCoordinates_x'], axis='columns', inplace=True)
+    df_dest_id_for_merge.drop(
+        labels=['InertialCoordinates_y'], axis='columns', inplace=True)
+    df_dest_id_for_merge.drop(
+        labels=['InertialCoordinates_z'], axis='columns', inplace=True)
 
-        for i in range(0, len(all_tensors), batch_size):
-            tensor_batch = all_tensors[i:i+batch_size]
-            ct = combine_element_wise_spectre_data(h, include=tensor_batch)
-            logging.info("Populating {} with {}".format(
-                args.output_file, tensor_batch))
-            with h5py.File(args.output_file, "a") as f_out:
-                observation_id_out = list(f_out[base].keys())[0]
-                h_out = f_out[base][observation_id_out]
-                add_tensor_component_to_spectre_group(h_out, ct, order_on=None)
-    
-    logging.info("All done.")
+    df_joined_id = df_dest_id.merge(df_gl_id.drop_duplicates(['InertialCoordinates']),
+                                    how='left',
+                                    on='InertialCoordinates')
+    copy_df_joined_id = df_joined_id.copy()
+    copy_df_joined_id.pop('InertialCoordinates')
+    with h5py.File(args.output_file, "a") as f:
+        base = 'element_data.vol'
+        for observation_id in f[base]:
+            if f[base][observation_id].attrs['observation_value'] == 0.0:
+                break
+        h = f[base][observation_id]
+        add_dataframe_to_hdf5_group(h, copy_df_joined_id)
+        logging.info("Written data to disk.")
+
+    logging.info("All done in {} secs.".format(time.time() - __itime__))
