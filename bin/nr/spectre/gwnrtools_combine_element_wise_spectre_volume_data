@@ -34,9 +34,8 @@ __itime__ = time.time()
 
 def add_dataframe_to_hdf5_group(hdf_group, df):
     """This function takes in a pointer to an open HDF5 file group, within
-    which data is to be stored. It also takes in a dictionary of tensor
-    components. The argument `order_on` ensures that the components are 
-    populated in the right order contiguously.
+    which data is to be stored. It also takes in a pandas.DataFrame of tensor
+    components. It stores the columns in latter as datasets in the former.
     """
     for t in df.columns:
         if t in hdf_group:
@@ -99,6 +98,9 @@ if __name__ == "__main__":
                         help="""Name of HDF5 file""")
     parser.add_argument('--spectre-points-file', required=True,
                         help="""Name of HDF5 file""")
+    parser.add_argument('--insert-at-time', required=False, type=float,
+                        default=0.0,
+                        help="""Value of time at which to add data""")
     parser.add_argument('--output-file', required=True,
                         help="""Name of HDF5 file""")
     args = parser.parse_args()
@@ -169,9 +171,14 @@ if __name__ == "__main__":
     copy_df_joined_id.pop('InertialCoordinates')
     with h5py.File(args.output_file, "a") as f:
         base = 'element_data.vol'
+        time_found = False
         for observation_id in f[base]:
-            if f[base][observation_id].attrs['observation_value'] == 0.0:
+            if f[base][observation_id].attrs['observation_value'] == args.insert_at_time:
+                time_found = True
                 break
+        if not time_found:
+            raise IOError("Data insertion time {} not present in points file".format(
+                args.insert_at_time))
         h = f[base][observation_id]
         add_dataframe_to_hdf5_group(h, copy_df_joined_id)
         logging.info("Written data to disk.")
