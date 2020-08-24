@@ -28,7 +28,7 @@ import h5py
 import numpy as np
 
 from gwnrtools import __version__
-
+from gwnrtools.stats.priors import default_bbh_params
 
 ############################################################
 # command line usage
@@ -63,6 +63,10 @@ parser.add_argument("--max-omega-attach", type=float, default=0.1,
                     help="Upper limit for dimless attachment freq.")
 
 # Discrete parameter choices
+parser.add_argument("--params-to-mcmc-over", type=str, required=False,
+                    default='a1,a2,a3,a4,b2,b3,b4',
+                    help="Comma-separated list of parameters that we MCMC over")
+
 parser.add_argument("--params-to-grid-over", type=str, required=False,
                     default='f_lower,psd',
                     help="Comma-separated list of parameters that are fixed during MCMC")
@@ -117,18 +121,17 @@ logging.getLogger().setLevel(logging.INFO)
 range_of_mass1 = np.array([opts.min_mass1, opts.max_mass1])
 range_of_mass2 = np.array([opts.min_mass2, opts.max_mass2])
 range_of_q = np.array([opts.min_q, opts.max_q])
+range_of_total_mass = np.array([opts.min_mass1 + opts.min_mass2,
+                                opts.max_mass1 + opts.max_mass2])
 
-spacing_mass1 = opts.grid_spacing_mass1
-spacing_mass2 = opts.grid_spacing_mass2
-
+# Dict of parameters that we allow gridding over
 parameter_choices = {}
-
 parameter_choices['mass1'] = np.arange(range_of_mass1[0],
                                        range_of_mass1[1],
-                                       spacing_mass1)
+                                       opts.grid_spacing_mass1)
 parameter_choices['mass2'] = np.arange(range_of_mass2[0],
                                        range_of_mass2[1],
-                                       spacing_mass2)
+                                       opts.grid_spacing_mass2)
 choices_f_ = []
 for c in opts.choices_f_lower.split(","):
     try:
@@ -138,7 +141,11 @@ for c in opts.choices_f_lower.split(","):
 parameter_choices['f_lower'] = np.array(choices_f_)
 parameter_choices['psd'] = opts.choices_psd.split(",")
 
+# User input list of parameter names to grid over
 parameters_to_grid_over = opts.params_to_grid_over.split(",")
+assert np.all([p in parameter_choices for p in parameters_to_grid_over]),\
+    "All parameters to grid over not recognized: {}".format(
+        parameters_to_grid_over)
 
 num_unique_mcmc_per_job = opts.num_calcs_per_job
 run_directory = opts.run_dir
@@ -152,7 +159,7 @@ if opts.verbose:
     logging.info("Mass-ratio $\in$ [{0}, {1}]Msun".format(
         range_of_q[0], range_of_q[1]))
     logging.info("... with spacing: {0}, {1}".format(
-        spacing_mass1, spacing_mass2))
+        opts.grid_spacing_mass1, opts.grid_spacing_mass2))
 
     logging.info(
         "Will sample lower freq cutoff from: {}".format(opts.choices_f_lower))
@@ -198,18 +205,34 @@ def job_id(job_num):
     return '{:06d}'.format(job_num)
 
 
+def dag_file():
+    return 'retune_enigma.dag'
+
+
+def parameter_file(job_id):
+    return os.path.join('input/parameters_{0}.hdf'.format(job_id))
+
+
+def group_name(i):
+    return '{0:06d}'.format(i)
+
+
 def write_parameter_file(job_id, params):
+    '''Outdated'''
     file_name = os.path.join('input/parameters_{0}.hdf'.format(job_id))
     if os.path.exists(file_name):
         return file_name
-    with h5py.File(file_name) as fout:
+    with h5py.File(file_name, 'a') as fout:
         for param_name in params:
-            fout.create_dataset(param_name, data=params[param_name])
+            fout.create_dataset(param_name, data=list(
+                np.array(params[param_name])))
     return file_name
 
 
-def dag_file():
-    return 'retune_enigma.dag'
+def write_parameters_to_group(fout, group_name, params):
+    gout = fout.create_group(group_name)
+    for param_name in params:
+        gout.create_dataset(param_name, data=list(params[param_name]))
 
 
 def write_job_to_dag(job_id, param_file):
@@ -240,7 +263,7 @@ sampling_prog = os.popen('which {0}'.format(__script_name__)).read().strip()
 shutil.copy(sampling_prog, 'scripts/{0}'.format(__script_name__))
 os.chmod('scripts/{0}'.format(__script_name__), 0o0777)
 
-logging.info(".. directories made.")
+logging.info(".. run directories setup.")
 
 ############################################################
 # Make the grid
@@ -254,11 +277,28 @@ job_num = 0
 job_params = None
 
 for p_vector in grid_choices:
-    curr_p = {}
+    # Choose parameters for this MCMC exploration
+    # 1. Use parameters from the current grid choice
+    curr_p = {p: [p_vector[i]] for i, p in enumerate(parameters_to_grid_over)}
+    # 2. Use parameters that are user input here
+    # If any of the parameters below are to be gridded over
+    # they should not be populated below
+    if 'mass1' not in curr_p:
+        curr_p['mass1'] = list(range_of_mass1)
+    if 'mass2' not in curr_p:
+        curr_p['mass2'] = list(range_of_mass2)
+    if 'q' not in curr_p:
+        curr_p['q'] = list(range_of_q)
+    if 'total_mass' not in curr_p:
+        curr_p['total_mass'] = list(range_of_total_mass)
+    # 3. Set remaining parameters to their default BBH values
+    for p in default_bbh_params.columns:
+        if str(p) not in curr_p:
+            curr_p[p] = default_bbh_params[p]['range']
 
-    for i, p in enumerate(parameters_to_grid_over):
-        curr_p[p] = p_vector[i]
+    logging.info("Using parameters: {}".format(curr_p))
 
+    # Set job info for DAG formation
     if num_mcmc_in_job < num_unique_mcmc_per_job:
         # add to current job
         job_params.append(curr_p)
@@ -282,6 +322,10 @@ if job_params:
     jobs[curr_job_id] = job_params
     job_params = None
 
+for k in jobs:
+    for curr_k in jobs[k]:
+        print("\n JOB {}: {}\n".format(k, curr_k))
+
 logging.info(" .. parameter grid constructed.")
 ############################################################
 # Write submit file
@@ -290,16 +334,22 @@ with open(__submit_file_name__, "w") as fout:
 
 logging.info(" .. condor submission file written.")
 ############################################################
+
+
 # Design DAG
 # Iterate over the grid, and add a job for each!
 for _job_id in jobs:
     job_params = jobs[_job_id]
 
-    job_params_dict = {}
-    for p in parameters_to_grid_over:
-        job_params_dict[p] = [jp[p] for jp in job_params]
+    parameter_file_name = parameter_file(_job_id)
+    with h5py.File(parameter_file_name, 'a') as fout:
+        # Iterate over unique MCMC jobs
+        for i, jp in enumerate(job_params):
+            job_params_dict = {}
+            for p in set(parameters_to_grid_over).union(set(default_bbh_params.columns)):
+                job_params_dict[p] = jp[p]
+            write_parameters_to_group(fout, group_name(i), job_params_dict)
 
-    parameter_file_name = write_parameter_file(_job_id, job_params_dict)
     write_job_to_dag(_job_id, parameter_file_name)
 
 logging.info(" .. DAG written.")

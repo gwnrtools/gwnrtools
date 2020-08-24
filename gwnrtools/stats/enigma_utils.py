@@ -29,8 +29,11 @@ from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
 from pycbc.filter import match
 
+from gwnrtools.utils import make_padded_frequency_series
 
 # Likelihood functions specific to this RUN
+
+
 def log_prior_enigma(q, total_mass, PNO, coeffs, omega_attach, sp_info):
     '''
 Priors:
@@ -137,7 +140,6 @@ Finally returns L = exp(-0.5 x m x m)
     return -(1. - log_like)
 
 
-
 class FitMOmegaIMRAttachmentNonSpinning():
     def __init__(self):
         return
@@ -173,11 +175,9 @@ class FitMOmegaIMRAttachmentNonSpinning():
         return (a1 + a2 * eta + a3 * eta * eta) / (1. + b2 * eta + b3 * eta * eta + b4 * eta * eta * eta)
 
 
-__order_of_sampled_params__ = ['q', 'total_mass',
-                               'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
-
 def log_prob_enigma(theta, inputs, f_lower, sampling_params, psd,
- dilation_map_match=False):
+                    dilation_map_match=False,
+                    ignore_samples_for=[]):
     '''
     Inputs:
     -------
@@ -197,6 +197,12 @@ def log_prob_enigma(theta, inputs, f_lower, sampling_params, psd,
     eta = q / (1. + q)**2
     mass1, mass2 = pnu.mtotal_eta_to_mass1_mass2(total_mass, eta)
 
+    # Ignore sampling of certain parameters
+    # mass1, mass2 = prior.sample(['mass1', 'mass2'])
+    # if len(ignore_samples_for) > 0:
+    #    for p in ignore_samples_for:
+    #        p = prior.sample(p)
+
     # Evaluate attachment freq from coefficients a1-a4 and b2-b4
     fit = FitMOmegaIMRAttachmentNonSpinning()
     m_omega_attach = fit.fit_ratio_poly_44(eta, coeffs)
@@ -211,3 +217,12 @@ def log_prob_enigma(theta, inputs, f_lower, sampling_params, psd,
     return log_likelihood_enigma(mass1, mass2, m_omega_attach, PNO,
                                  f_lower, inputs.sample_rate, psd,
                                  dilation_map_match=dilation_map_match) + log_prior
+
+
+__log_prob_funcs__ = {}
+__log_prob_funcs__['fit1'] = log_prob_enigma
+
+
+__order_of_sampled_params__ = {}
+__order_of_sampled_params__['fit1'] = ['q', 'total_mass',
+                                       'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']

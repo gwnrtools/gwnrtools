@@ -15,6 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import emcee
 import numpy as np
+from gwnrtools.stats import OneDRandom
 
 
 def get_emcee_ensemble_sampler(log_probability,
@@ -52,6 +53,7 @@ Outputs:
 --------
 sampler         : emcee.EnsembleSampler object
 state           : current state of sampler
+p0              : 
     """
     # Setup hyper-parameters for the sampler
     ndim = params_to_sample.shape[-1]
@@ -72,20 +74,18 @@ state           : current state of sampler
 
     # Run the sampler for a few steps to burn-in,
     # ie erase memory of the starting locations
-    initial_param_values = []
-    for param in params_to_sample.columns:
-        if params_to_sample[param]['vartype'] == 'continuous':
-            param_values = np.random.uniform(params_to_sample[param]['range'][0],
-                                             params_to_sample[param]['range'][-1],
-                                             (nwalkers, 1))
-        elif params_to_sample[param]['vartype'] == 'discrete':
-            param_values = np.random.choice(params_to_sample[param]['range'],
-                                            (nwalkers, 1))
-        initial_param_values.append(param_values)
-    p0 = np.hstack(initial_param_values)
+    if burn_in > 0:
+        dist_sampler = OneDRandom(params_to_sample)
 
-    state = sampler.run_mcmc(p0, burn_in)
-    sampler.reset()
+        initial_param_values = []
+        for param in params_to_sample.columns:
+            param_values = dist_sampler.sample(param, size=(nwalkers, 1))
+            initial_param_values.append(param_values)
+        p0 = np.hstack(initial_param_values)
+        print(p0)
+        print("DEBUGPK: ndim = {} and shape(p0) = {}".format(ndim, p0.shape))
+        state = sampler.run_mcmc(p0, burn_in)
+        sampler.reset()
     return sampler, state, p0
 
 

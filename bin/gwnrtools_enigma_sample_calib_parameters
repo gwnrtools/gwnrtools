@@ -31,6 +31,7 @@ import pandas as pd
 
 from gwnrtools import __version__
 from gwnrtools.utils import make_padded_frequency_series
+from gwnrtools.stats.priors import (__all_cbc_parameters__, default_bbh_params)
 from gwnrtools.stats.samplers import (
     get_emcee_ensemble_sampler, write_output_from_emcee_sampler)
 from gwnrtools.stats.enigma_utils import (
@@ -52,6 +53,8 @@ parser.add_argument("--verbose", action="store_true", default=False,
 parser.add_argument("--job-id", type=str, required=True)
 parser.add_argument("--param-file", type=str, required=True,
                     help="Input parameter file")
+parser.add_argument("--enigma-tag", type=str, required=True,
+                    help="TAG that uniquely identifies the fit to be used.")
 parser.add_argument("--min-omega-attach", type=float, default=0.01,
                     help="Lower limit for dimless attachment freq.")
 parser.add_argument("--max-omega-attach", type=float, default=0.1,
@@ -93,62 +96,86 @@ logging.getLogger().setLevel(logging.INFO)
 
 ############################################################
 # inputs
-inputs = {}
+user_inputs = {}
 
-inputs['job_id'] = opts.job_id
-inputs['param_file'] = opts.param_file
-inputs['signal_approx'] = opts.signal_approx
-inputs['output_prefix'] = opts.output_prefix + '{0}'.format(opts.signal_approx)
-inputs['use_dilation_map_match'] = opts.use_dilation_map_match
+user_inputs['job_id'] = opts.job_id
+user_inputs['param_file'] = opts.param_file
+user_inputs['signal_approx'] = opts.signal_approx
+user_inputs['output_prefix'] = opts.output_prefix + \
+    '{0}'.format(opts.signal_approx)
+# user_inputs['use_dilation_map_match'] = opts.use_dilation_map_match
 
 # MCMC params
-inputs['num_samplers'] = opts.num_samplers
-inputs['num_steps'] = opts.num_mcmc_steps
+user_inputs['num_samplers'] = opts.num_samplers
+user_inputs['num_steps'] = opts.num_mcmc_steps
 
 # Filtering params
-inputs['sample_rate'] = opts.sample_rate
-inputs['time_length'] = opts.time_length
+user_inputs['sample_rate'] = opts.sample_rate
+user_inputs['time_length'] = opts.time_length
 
-inputs['delta_t'] = 1. / inputs['sample_rate']
-inputs['delta_f'] = 1. / inputs['time_length']
-N = inputs['sample_rate'] * inputs['time_length']
+user_inputs['delta_t'] = 1. / user_inputs['sample_rate']
+user_inputs['delta_f'] = 1. / user_inputs['time_length']
+N = user_inputs['sample_rate'] * user_inputs['time_length']
 n = N / 2 + 1
 
+user_inputs = pd.DataFrame.from_dict(
+    {i: (user_inputs[i],) for i in user_inputs})
 ############################################################
 # Setup
-with h5py.File(inputs['param_file'], 'r') as fin:
-    inputs['fixed_params'] = (list(fin.keys()),)
-    for k in fin:
-        inputs[k] = fin[k][()]
-        if type(inputs[k][0]) is not list:
-            inputs[k] = [[inputs[k][0]], ]
+# Note: the dataframe populated below is meant to provide sampling
+# details for any and all parameters that we might want to sample.
+# This does **not** provide an eshaustive list of sampled parameters.
+# That is to be provided by the version of ENIGMA fit, and is defined
+# in `gwnrtools.stats.enigma_utils`.
+all_sampling_params = {}
+all_inputs = {}
+with h5py.File('/home/prayush/src/TESTME/test1/input/parameters_000000.hdf', 'r') as fin:
+    for j_id in fin:
+        if opts.verbose:
+            logging.info("Preparing calc: {}".format(j_id))
 
-inputs = pd.DataFrame.from_dict(inputs)
+        sampling_params = default_bbh_params.copy()
+        inputs = user_inputs.copy()
+        # Insert (a1-b4) calibration parameters as columns here
+        sampling_params['omega_attach'] = ('dependent', [0.01, 0.1])
+        sampling_params['PNO'] = ('choices', [6, 7, 8, 9, 10, 11, 12])
+        sampling_params['a1'] = ('uniform', [-1., 1.])
+        sampling_params['a2'] = ('uniform', [-1., 1.])
+        sampling_params['a3'] = ('uniform', [-1., 1.])
+        sampling_params['a4'] = ('uniform', [-1., 1.])
+        #
+        sampling_params['b2'] = ('uniform', [-1., 1.])
+        sampling_params['b3'] = ('uniform', [-1., 1.])
+        sampling_params['b4'] = ('uniform', [-1., 1.])
+        #
+        for p in fin[j_id]:
+            if p in __all_cbc_parameters__:
+                d = fin[j_id][p][()]
+
+                if len(d) == 1:
+                    sampling_params[p] = ('fixed', np.array([d]).flatten())
+                elif len(d) == 2:
+                    sampling_params[p] = ('uniform', np.array(d).flatten())
+                elif len(d) > 2:
+                    sampling_params[p] = ('choices', np.array(d).flatten())
+            else:
+                inputs[p] = fin[j_id][p][()]
+        #
+        sampling_params['sampler_params'] = (
+            'fixed', __order_of_sampled_params__[opts.enigma_tag])
+        inputs['sampler_params'] = (
+            __order_of_sampled_params__[opts.enigma_tag],)
+        all_sampling_params[j_id] = sampling_params
+        all_inputs[j_id] = inputs
+        for c in inputs:
+            print(inputs[c])
+# FIXME: pandas.Panel is deprecated. Replace with MultiIndex.
+sampling_panel = pd.Panel(all_sampling_params)
+sampling_inputs = pd.Panel(all_inputs)
+
 logging.info(".. input parameters read.")
 
-# Parameters to sample in (and dependent ones to specify priors on)
-sampling_params = {}
-
-sampling_params['q'] = ('continuous', [1., 4.])
-sampling_params['total_mass'] = ('continuous', [10., 100.])
-# calibration params
-sampling_params['omega_attach'] = (
-    'continuous', [opts.min_omega_attach, opts.max_omega_attach])
-sampling_params['PNO'] = ('discrete', [int(pno_)
-                                       for pno_ in opts.choices_pn_order.split(",")])
-sampling_params['a1'] = ('continuous', [-1., 1.])
-sampling_params['a2'] = ('continuous', [-1., 1.])
-sampling_params['a3'] = ('continuous', [-1., 1.])
-sampling_params['a4'] = ('continuous', [-1., 1.])
-
-sampling_params['b2'] = ('continuous', [-1., 1.])
-sampling_params['b3'] = ('continuous', [-1., 1.])
-sampling_params['b4'] = ('continuous', [-1., 1.])
-
-sampling_params = pd.DataFrame.from_dict(sampling_params)
-sampling_params = sampling_params.set_index(pd.Index(['vartype', 'range']))
-
-
+############################################################
 if opts.verbose:
     logging.info("Starting job: {}".format(inputs.job_id[0]))
     logging.info("Will read from: {}".format(inputs.param_file[0]))
@@ -173,9 +200,9 @@ def output_file(prefix, job_id, idx):
     return prefix + '{0}_{1:06d}.dat'.format(job_id, idx)
 
 
-############################################################
-sampling_params['sampler_params'] = ('discrete', __order_of_sampled_params__)
-inputs['sampler_params'] = (__order_of_sampled_params__,)
+def hdf_backend_file(out_file):
+    return out_file.replace('.dat', '.ckpt.hdf')
+
 
 ############################################################
 # Create and run samplers, store output
@@ -188,13 +215,13 @@ samplers = {}
 old_f_lower = -1
 
 # Loop over all unique MCMC jobs
-try:
-    num_mcmc = len(inputs[inputs.fixed_params[0][0]][0])
-except:
-    num_mcmc = 1
-for idx in range(num_mcmc):
+num_mcmc = len(sampling_panel)
+print(num_mcmc)
+for idx, j_id in enumerate(sampling_panel):
+    sampling_params = sampling_panel[j_id]
+    inputs = sampling_inputs[j_id]
     try:
-        f_lower = inputs['f_lower'][0][idx]
+        f_lower = float(inputs['f_lower'][0])
         df = inputs['delta_f'][0]
         dt = inputs['delta_t'][0]
         sample_rate = 1. / dt
@@ -210,29 +237,35 @@ for idx in range(num_mcmc):
 
         if f_lower != old_f_lower:
             # from global settings
-            psd = from_string(inputs['psd'][0][idx], n, df, f_lower)
+            psd = from_string(inputs['psd'][0], n, df, f_lower)
             psd = make_padded_frequency_series(psd, N, df)
             old_f_lower = f_lower
 
         # RUN THE SAMPLER
+        hdf_backend = hdf_backend_file(output_file(inputs['output_prefix'][0],
+                                                   inputs['job_id'][0],
+                                                   idx))
+        logging.info(
+            "... Will checkpoint the MCMC sampler to {}".format(hdf_backend))
         logging.info("... Initializing the MCMC sampler and burning-in")
-        hdf_backend = output_file(inputs['output_prefix'][0],
-                                  inputs['job_id'][0],
-                                  idx).replace('.dat', '.h5')
-        samplers[idx] = \
-            get_emcee_ensemble_sampler(log_prob,
-                                       sampling_params[sampling_params['sampler_params'].range],
+        print("DEBUGPK: {}".format(list(inputs['sampler_params'][0])))
+        print("DEBUGPK: {}".format(sampling_params.columns))
+        print("DEBUGPK: {}".format(
+            sampling_params[list(inputs['sampler_params'][0])]))
+        samplers[j_id] = \
+            get_emcee_ensemble_sampler(log_prob_enigma,
+                                       sampling_params[list(
+                                           inputs['sampler_params'][0])],
                                        [inputs.iloc[0],
                                         f_lower, sampling_params, psd],
-                                       kwargs={
-                                           'dilation_map_match': inputs['use_dilation_map_match'][0]},
+                                       kwargs={},
                                        backend_hdf=hdf_backend,
                                        nwalkers=inputs.num_samplers[0],
                                        pool=__my_pool__)
 
         logging.info(
             "... Running the MCMC sampler for {0} steps".format(inputs.num_steps[0]))
-        s, state, p0 = samplers[idx]
+        s, state, p0 = samplers[j_id]
         try:
             s.run_mcmc(None, inputs.num_steps[0])
         except ValueError:
@@ -251,7 +284,7 @@ for idx in range(num_mcmc):
         if idx >= 1e9:
             break
     except:
-        logging.error("Error in parameter set[{0}]: f_low={1:.0f}".format(idx,
+        logging.error("Error in parameter set[{0}]: f_low={1:.0f}".format(j_id,
                                                                           f_lower))
         raise
 __my_pool__.close()

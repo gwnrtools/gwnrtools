@@ -23,6 +23,10 @@
 # =============================================================================
 #
 import numpy as np
+import logging
+
+logging.getLogger().setLevel(logging.INFO)
+
 
 uniform_bound = np.random.uniform
 
@@ -86,21 +90,73 @@ def uniform_in_volume_distance(N, d_min, d_max):
     return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1./3.)
 
 
+def uniform_in_choices(N, choices):
+    return np.array(choices)[tuple([np.random.randint(1, len(choices), N)])]
+
+
+def idempotence(N, x):
+    return np.repeat(float(x), N)
 ####
 # **`OneDRandom`**:
 # Metaclass holding a dictionary of methods to draw random numbers
+
 
 class OneDRandom:
     '''
 DESCRIPTION: Random number generation meta-class
     '''
 
-    def __init__(self):
+    def __init__(self, sampling_vars=None):
         self.draw = {}
         self.draw['uniform'] = np.random.uniform
         self.draw['zero'] = np.zeros
         self.draw['uniform_cos'] = uniform_in_cos_angle
         self.draw['uniform_S2'] = uniform_on_S2
+        self.draw['fixed'] = idempotence
+        self.draw['choices'] = uniform_in_choices
 
-    def available_distributions():
+        self.params = sampling_vars
+        for p in list(self.params.columns):
+            if self.params[p].dist not in self.draw:
+                logging.info("Distribution {} for {} not available!".format(
+                    self.params[p].dist, p))
+
+    def available_parameters(self):
+        return list(self.params.columns)
+
+    def available_distributions(self):
         return list(self.draw.keys())
+
+    def sample(self, name, size=1, dist=None):
+        assert (self.params is not None),\
+            "Provide a DataFrame of sampling parameter info at initialization"
+        assert (name in self.params), "Cannot find info on {}".format(name)
+
+        if dist is not None:
+            assert (dist in self.available_distributions()),\
+                "Distribution {} not supported. See `available_distributions`.".format(
+                dist)
+        else:
+            dist = self.params[name].dist
+        sampling_func = self.draw[dist]
+        sampling_lims = self.params[name].range
+
+        if dist is 'uniform':
+            return sampling_func(*sampling_lims, size=size)
+        if dist is 'zero':
+            return sampling_func(size)
+        if dist is 'uniform_cos':
+            return sampling_func(size, *sampling_lims)
+        if dist is 'uniform_S2':
+            return sampling_func(size)
+        if dist is 'fixed':
+            assert len(sampling_lims) == 1 or \
+                len(set(np.array(sampling_lims).flatten())) == 1,\
+                "Range of {}: {} does not support a fixed distribution".format(
+                name, sampling_lims)
+            return sampling_func(size, np.unique(sampling_lims)[0])
+        if dist is 'choices':
+            return sampling_func(size, sampling_lims)
+
+        raise IOError(
+            "Failed to generate sample for {}, dist = {}.".format(name, dist))
