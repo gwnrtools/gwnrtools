@@ -88,6 +88,8 @@ parser.add_argument("--signal-approx", type=str, required=False,
                     help="Signal approximant to test against (FD)")
 
 # MCMC and filtering options
+parser.add_argument("--enigma-tag", type=str, required=True,
+                    help="TAG that uniquely identifies the fit to be used.")
 parser.add_argument("--num-samplers", type=int, default=32,
                     help="No of MCMC walkers")
 parser.add_argument("--num-mcmc-steps", type=int, default=1000,
@@ -176,9 +178,9 @@ __submit_file_name__ = 'sampler.submit'
 
 __submit_text__ = '''\
 universe = vanilla
-initialdir = {10}
-executable = scripts/{9}
-arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8} --verbose"
+initialdir = {11}
+executable = scripts/{10}
+arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8} --enigma-tag {9}"
 accounting_group = ligo.dev.o3.cbc.explore.test
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
@@ -196,6 +198,7 @@ queue 1
     opts.sample_rate,
     opts.time_length,
     opts.output_prefix,
+    opts.enigma_tag,
     __script_name__,
     os.path.abspath(run_directory)
 )
@@ -280,6 +283,10 @@ for p_vector in grid_choices:
     # Choose parameters for this MCMC exploration
     # 1. Use parameters from the current grid choice
     curr_p = {p: [p_vector[i]] for i, p in enumerate(parameters_to_grid_over)}
+    if 'mass1' in curr_p and 'mass2' in curr_p:
+        a, b = curr_p['mass1'][0], curr_p['mass2'][0]
+        curr_p['mass1'] = [max(a, b)]
+        curr_p['mass2'] = [min(a, b)]
     # 2. Use parameters that are user input here
     # If any of the parameters below are to be gridded over
     # they should not be populated below
@@ -288,9 +295,29 @@ for p_vector in grid_choices:
     if 'mass2' not in curr_p:
         curr_p['mass2'] = list(range_of_mass2)
     if 'q' not in curr_p:
-        curr_p['q'] = list(range_of_q)
+        if 'mass1' in parameters_to_grid_over and 'mass2' in parameters_to_grid_over:
+            print("CHOOSING q 1: {}, {}, {}".format(
+                curr_p['mass1'][0], curr_p['mass2'][0], curr_p['mass1'][0] / curr_p['mass2'][0]))
+            curr_p['q'] = [curr_p['mass1'][0] / curr_p['mass2'][0]]
+        elif 'mass1' in curr_p and 'mass2' in curr_p:
+            print("CHOOSING q 2")
+            curr_p['q'] = list([np.minimum(curr_p['mass1'][0])/np.maximum(curr_p['mass2'][0]),
+                                np.maximum(curr_p['mass1'][0])/np.minimum(curr_p['mass2'][0])])
+        else:
+            print("CHOOSING q 3")
+            curr_p['q'] = list(range_of_q)
     if 'total_mass' not in curr_p:
-        curr_p['total_mass'] = list(range_of_total_mass)
+        if 'mass1' in parameters_to_grid_over and 'mass2' in parameters_to_grid_over:
+            print("CHOOSING M 1: {}, {}, {}".format(
+                curr_p['mass1'][0], curr_p['mass2'][0], curr_p['mass1'][0] + curr_p['mass2'][0]))
+            curr_p['total_mass'] = [curr_p['mass1'][0] + curr_p['mass2'][0]]
+        elif 'mass1' in curr_p and 'mass2' in curr_p:
+            print("CHOOSING M 2")
+            curr_p['total_mass'] = list([np.minimum(curr_p['mass1'])+np.minimum(curr_p['mass2']),
+                                         np.maximum(curr_p['mass1'])+np.maximum(curr_p['mass2'])])
+        else:
+            print("CHOOSING M 3")
+            curr_p['total_mass'] = list(range_of_total_mass)
     # 3. Set remaining parameters to their default BBH values
     for p in default_bbh_params.columns:
         if str(p) not in curr_p:

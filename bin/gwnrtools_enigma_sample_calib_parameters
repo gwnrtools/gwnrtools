@@ -34,9 +34,11 @@ from gwnrtools.utils import make_padded_frequency_series
 from gwnrtools.stats.priors import (__all_cbc_parameters__, default_bbh_params)
 from gwnrtools.stats.samplers import (
     get_emcee_ensemble_sampler, write_output_from_emcee_sampler)
+from gwnrtools.stats.sampling import OneDRandom
 from gwnrtools.stats.enigma_utils import (
     log_prior_enigma, log_likelihood_enigma, log_prob_enigma,
-    __order_of_sampled_params__)
+    __log_prob_funcs__,
+    __order_of_sampled_params__, __ranges_of_sampled_params__)
 
 from pycbc.psd import from_string
 
@@ -48,6 +50,8 @@ parser.add_argument("--version", action="version", version=__version__,
                     help="Prints version information.")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Print logging messages.")
+parser.add_argument("--debug", action="store_true", default=False,
+                    help="Print debugging messages.")
 
 # workflow options
 parser.add_argument("--job-id", type=str, required=True)
@@ -94,6 +98,12 @@ opts = parser.parse_args()
 
 logging.getLogger().setLevel(logging.INFO)
 
+if opts.enigma_tag not in __ranges_of_sampled_params__:
+    raise IOError("FIT TAG: {} not recognized for ranges".format(opts.enigma_tag))
+if opts.enigma_tag not in __order_of_sampled_params__:
+    raise IOError("FIT TAG: {} not recognized for order".format(opts.enigma_tag))
+if opts.enigma_tag not in __log_prob_funcs__:
+    raise IOError("FIT TAG: {} not recognized for logprob funcs".format(opts.enigma_tag))
 ############################################################
 # inputs
 user_inputs = {}
@@ -129,7 +139,7 @@ user_inputs = pd.DataFrame.from_dict(
 # in `gwnrtools.stats.enigma_utils`.
 all_sampling_params = {}
 all_inputs = {}
-with h5py.File('/home/prayush/src/TESTME/test1/input/parameters_000000.hdf', 'r') as fin:
+with h5py.File(user_inputs['param_file'][0], 'r') as fin:
     for j_id in fin:
         if opts.verbose:
             logging.info("Preparing calc: {}".format(j_id))
@@ -137,21 +147,21 @@ with h5py.File('/home/prayush/src/TESTME/test1/input/parameters_000000.hdf', 'r'
         sampling_params = default_bbh_params.copy()
         inputs = user_inputs.copy()
         # Insert (a1-b4) calibration parameters as columns here
-        sampling_params['omega_attach'] = ('dependent', [0.01, 0.1])
-        sampling_params['PNO'] = ('choices', [6, 7, 8, 9, 10, 11, 12])
-        sampling_params['a1'] = ('uniform', [-1., 1.])
-        sampling_params['a2'] = ('uniform', [-1., 1.])
-        sampling_params['a3'] = ('uniform', [-1., 1.])
-        sampling_params['a4'] = ('uniform', [-1., 1.])
-        #
-        sampling_params['b2'] = ('uniform', [-1., 1.])
-        sampling_params['b3'] = ('uniform', [-1., 1.])
-        sampling_params['b4'] = ('uniform', [-1., 1.])
-        #
+        ranges_of_sampled_params_for_this_fit = __ranges_of_sampled_params__[opts.enigma_tag]
+        for p in ranges_of_sampled_params_for_this_fit:
+            if p in sampling_params:
+                continue
+            r = ranges_of_sampled_params_for_this_fit[p]
+            if len(r) == 2: # interpret this as an interval
+                sampling_params[p] = ('uniform', r)
+            elif len(r) > 2: # interpret this as discrete choices
+                sampling_params[p] = ('choices', r)
+        # Insert omega_attach as columns here
+        sampling_params['omega_attach'] = ('dependent', [opts.min_omega_attach, opts.max_omega_attach])
+        # Insert ranges for CBC parameters from input file
         for p in fin[j_id]:
             if p in __all_cbc_parameters__:
                 d = fin[j_id][p][()]
-
                 if len(d) == 1:
                     sampling_params[p] = ('fixed', np.array([d]).flatten())
                 elif len(d) == 2:
@@ -160,15 +170,16 @@ with h5py.File('/home/prayush/src/TESTME/test1/input/parameters_000000.hdf', 'r'
                     sampling_params[p] = ('choices', np.array(d).flatten())
             else:
                 inputs[p] = fin[j_id][p][()]
-        #
+        # Insert a list of sampled parameters
         sampling_params['sampler_params'] = (
             'fixed', __order_of_sampled_params__[opts.enigma_tag])
         inputs['sampler_params'] = (
             __order_of_sampled_params__[opts.enigma_tag],)
         all_sampling_params[j_id] = sampling_params
         all_inputs[j_id] = inputs
-        for c in inputs:
-            print(inputs[c])
+        if opts.debug:
+            for c in inputs:
+                print(inputs[c])
 # FIXME: pandas.Panel is deprecated. Replace with MultiIndex.
 sampling_panel = pd.Panel(all_sampling_params)
 sampling_inputs = pd.Panel(all_inputs)
@@ -216,9 +227,11 @@ old_f_lower = -1
 
 # Loop over all unique MCMC jobs
 num_mcmc = len(sampling_panel)
-print(num_mcmc)
+
 for idx, j_id in enumerate(sampling_panel):
     sampling_params = sampling_panel[j_id]
+    if opts.verbose:
+        logging.info("All params: {}".format(sampling_params.columns))
     inputs = sampling_inputs[j_id]
     try:
         f_lower = float(inputs['f_lower'][0])
@@ -246,22 +259,25 @@ for idx, j_id in enumerate(sampling_panel):
                                                    inputs['job_id'][0],
                                                    idx))
         logging.info(
-            "... Will checkpoint the MCMC sampler to {}".format(hdf_backend))
-        logging.info("... Initializing the MCMC sampler and burning-in")
-        print("DEBUGPK: {}".format(list(inputs['sampler_params'][0])))
-        print("DEBUGPK: {}".format(sampling_params.columns))
-        print("DEBUGPK: {}".format(
-            sampling_params[list(inputs['sampler_params'][0])]))
+            "... will checkpoint the MCMC sampler to {}".format(hdf_backend))
+
+        logging.info("... initializing the MCMC sampler and burning-in")
         samplers[j_id] = \
-            get_emcee_ensemble_sampler(log_prob_enigma,
+            get_emcee_ensemble_sampler(__log_prob_funcs__[opts.enigma_tag],
                                        sampling_params[list(
                                            inputs['sampler_params'][0])],
                                        [inputs.iloc[0],
-                                        f_lower, sampling_params, psd],
+                                        f_lower, sampling_params, psd,
+                                        opts.enigma_tag, # TAG for the fit to use
+                                        False,  # dilation_map
+                                        opts.verbose],
                                        kwargs={},
                                        backend_hdf=hdf_backend,
                                        nwalkers=inputs.num_samplers[0],
-                                       pool=__my_pool__)
+                                       burn_in=100,
+                                       pool=__my_pool__,
+                                       verbose=opts.verbose,
+                                       debug=opts.debug)
 
         logging.info(
             "... Running the MCMC sampler for {0} steps".format(inputs.num_steps[0]))

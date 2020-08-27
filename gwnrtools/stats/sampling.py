@@ -95,7 +95,7 @@ def uniform_in_choices(N, choices):
 
 
 def idempotence(N, x):
-    return np.repeat(float(x), N)
+    return np.repeat(float(x), np.prod(N)).reshape(N)
 ####
 # **`OneDRandom`**:
 # Metaclass holding a dictionary of methods to draw random numbers
@@ -116,10 +116,6 @@ DESCRIPTION: Random number generation meta-class
         self.draw['choices'] = uniform_in_choices
 
         self.params = sampling_vars
-        for p in list(self.params.columns):
-            if self.params[p].dist not in self.draw:
-                logging.info("Distribution {} for {} not available!".format(
-                    self.params[p].dist, p))
 
     def available_parameters(self):
         return list(self.params.columns)
@@ -133,29 +129,37 @@ DESCRIPTION: Random number generation meta-class
         assert (name in self.params), "Cannot find info on {}".format(name)
 
         if dist is not None:
-            assert (dist in self.available_distributions()),\
-                "Distribution {} not supported. See `available_distributions`.".format(
-                dist)
+            if dist not in self.available_distributions():
+                logging.info("Distribution {} not supported. See `available_distributions`.".format(
+                    dist))
+                dist = self.params[name].dist
         else:
             dist = self.params[name].dist
+
+        # Final check on requested distribution
+        if dist not in self.available_distributions():
+            logging.info("Distribution {} not supported. See `available_distributions`.".format(
+                dist))
+            return None
+
         sampling_func = self.draw[dist]
         sampling_lims = self.params[name].range
 
-        if dist is 'uniform':
+        if dist == 'uniform':
             return sampling_func(*sampling_lims, size=size)
-        if dist is 'zero':
+        if dist == 'zero':
             return sampling_func(size)
-        if dist is 'uniform_cos':
+        if dist == 'uniform_cos':
             return sampling_func(size, *sampling_lims)
-        if dist is 'uniform_S2':
+        if dist == 'uniform_S2':
             return sampling_func(size)
-        if dist is 'fixed':
+        if dist == 'fixed':
             assert len(sampling_lims) == 1 or \
                 len(set(np.array(sampling_lims).flatten())) == 1,\
                 "Range of {}: {} does not support a fixed distribution".format(
                 name, sampling_lims)
             return sampling_func(size, np.unique(sampling_lims)[0])
-        if dist is 'choices':
+        if dist == 'choices':
             return sampling_func(size, sampling_lims)
 
         raise IOError(

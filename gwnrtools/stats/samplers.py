@@ -16,6 +16,9 @@
 import emcee
 import numpy as np
 from gwnrtools.stats import OneDRandom
+import logging
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def get_emcee_ensemble_sampler(log_probability,
@@ -25,7 +28,9 @@ def get_emcee_ensemble_sampler(log_probability,
                                nwalkers=32,
                                burn_in=100,
                                backend_hdf=None,
-                               pool=None):
+                               pool=None,
+                               verbose=False,
+                               debug=False):
     """
 Initializes and burns-in MCMC sampler
 
@@ -45,6 +50,8 @@ params_to_sample: pandas.DataFrame
 myarglist       : list
                   Non-variable parameters that are passed as-is to
                   `log_probability`
+kwargs          : dict
+                  Keyword arguments to be passed to `log_probability`
 nwalkers        : int
                   Number of ensemble sampling walkers
 pool            : mulitprocessing.pool object
@@ -82,8 +89,10 @@ p0              :
             param_values = dist_sampler.sample(param, size=(nwalkers, 1))
             initial_param_values.append(param_values)
         p0 = np.hstack(initial_param_values)
-        print(p0)
-        print("DEBUGPK: ndim = {} and shape(p0) = {}".format(ndim, p0.shape))
+        if debug:
+            logging.info("DEBUG: will burn-in for {}".format(burn_in))
+            logging.info("DEBUG: initial point shape: {}".format(p0.shape))
+            logging.info("DEBUG: Initial point p0: {}".format(p0))
         state = sampler.run_mcmc(p0, burn_in)
         sampler.reset()
     return sampler, state, p0

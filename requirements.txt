@@ -1,5 +1,5 @@
 astropy>=2.0.16
-celluloid>=0.2.0
+celluloid>=0.2.0; python_version >= '3.5'
 h5py>=2.10.0
 lalsuite>=6.63
 lscsoft_glue==2.0.0
