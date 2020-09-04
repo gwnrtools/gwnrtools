@@ -123,7 +123,10 @@ all_samples       : dict
                     Dictionary containing samples for all parameters,
                     with param names as keys.
     """
-    _log_prob = sampler.get_log_prob().flatten()
+    try:
+        _log_prob = sampler.get_log_prob().flatten()
+    except AttributeError:
+        _log_prob = sampler.lnprobability.flatten()
     mask_not_failed = np.isfinite(_log_prob)
     all_samples = {str(c): sampler.chain[..., idx].T.flatten()[
         mask_not_failed] for idx, c in enumerate(params_to_sample.columns)}
