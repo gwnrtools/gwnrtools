@@ -24,11 +24,11 @@ import itertools
 import shutil
 import argparse
 import logging
+import pandas as pd
 import h5py
 import numpy as np
 
 from gwnrtools import __version__
-from gwnrtools.stats.priors import default_bbh_params
 
 ############################################################
 # command line usage
@@ -38,58 +38,59 @@ parser.add_argument("--version", action="version", version=__version__,
                     help="Prints version information.")
 parser.add_argument("--verbose", action="store_true", default=False,
                     help="Print logging messages.")
-# Parameter ranges
-parser.add_argument("--min-mass1", type=float, default=3.0,
-                    help="Lower limit for mass of bigger BH.")
-parser.add_argument("--max-mass1", type=float, default=100.0,
-                    help="Upper limit for mass of bigger BH.")
-parser.add_argument("--min-mass2", type=float, default=3.0,
-                    help="Lower limit for mass of smaller BH.")
-parser.add_argument("--max-mass2", type=float, default=100.0,
-                    help="Upper limit for mass of smaller BH.")
-parser.add_argument("--min-q", type=float, default=1.0,
-                    help="Lower limit for mass of smaller BH.")
-parser.add_argument("--max-q", type=float, default=10.0,
-                    help="Upper limit for mass of smaller BH.")
 
-parser.add_argument("--grid-spacing-mass1", type=float, default=1.0,
-                    help="Step size for sampling mass of bigger BH.")
-parser.add_argument("--grid-spacing-mass2", type=float, default=1.0,
-                    help="Step size for sampling mass of smaller BH.")
-
-parser.add_argument("--min-omega-attach", type=float, default=0.01,
-                    help="Lower limit for dimless attachment freq.")
-parser.add_argument("--max-omega-attach", type=float, default=0.1,
-                    help="Upper limit for dimless attachment freq.")
-
-# Discrete parameter choices
-parser.add_argument("--params-to-mcmc-over", type=str, required=False,
-                    default='a1,a2,a3,a4,b2,b3,b4',
-                    help="Comma-separated list of parameters that we MCMC over")
-
+# Parameter ranges for those we can grid calculations over
 parser.add_argument("--params-to-grid-over", type=str, required=False,
-                    default='f_lower,psd',
-                    help="Comma-separated list of parameters that are fixed during MCMC")
+                    default='f_lower,range,15.0,20.0,5.0;psd,choices,aLIGOZeroDetHighPower,flat_unity',
+                    help="""\
+Semi-colon separated list of parameter details that are
+to be gridded over (and held fixed during MCMC). Allowed
+types are either 'choices' or 'range'. E.g.
 
-parser.add_argument("--choices-pn-order", type=str, required=False,
-                    default='6,7,8,9,10,11,12',
-                    help="Comma-separated list of PN orders to try")
+--params-to-grid-over="param1,range,lower_limit,upper_limit,step_size;param2,choices,choice1,choice2"
+""")
 
-parser.add_argument("--choices-f-lower", type=str, required=False,
-                    default='15',
-                    help="Comma-separated list of f_lowers to try")
+# Parameters to sample during MCMC OR the fit tag OR both
+parser.add_argument("--params-to-mcmc-over", type=str, required=False,
+                    default='',
+                    help="""\
+Semi-colon separated list of parameter details that are
+to be sampled during MCMC. E.g.
 
-parser.add_argument("--choices-psd", type=str, required=False,
-                    default='aLIGOZeroDetHighPower',
-                    help="Comma-separated list of PSDs to try")
+--params-to-mcmc-over="param1,uniform,lower_limit,upper_limit;param2,choices,choice1,choice2"
+""")
+parser.add_argument("--enigma-fit-tag", type=str, required=True,
+                    help="TAG that uniquely identifies the fit to be used.")
 
+# Parameters that are secretly sampled during MCMC
+parser.add_argument("--hidden-params", type=str, required=False,
+                    default='',
+                    help="""\
+Semi-colon separated list of parameter details that are implicitly
+sampled during MCMC (i.e. they are sampled but the Markovian chains
+do not actively move in the direction of higher likelihood in the
+dimensions of these parameters). E.g.
+
+--hidden-params="param1,uniform,lower_limit,upper_limit;param2,choices,choice1,choice2"
+""")
+
+# Other (dependent) parameters
+parser.add_argument("--dependent-params", type=str, required=False,
+                    default='omega_attach,range,0.01,0.1',
+                    help="""\
+Parameters that are dependent on others, might not be sampled over
+but could be used for setting implicity priors etc. These parameters
+will be interpreted directly by the sampling script. E.g.
+
+--dependent-params="param1,uniform,lower_limit,upper_limit;param2,choices,choice1,choice2"
+""")
+
+# Global parameter choices
 parser.add_argument("--signal-approx", type=str, required=False,
                     default='SEOBNRv4_ROM',
                     help="Signal approximant to test against (FD)")
 
 # MCMC and filtering options
-parser.add_argument("--enigma-tag", type=str, required=True,
-                    help="TAG that uniquely identifies the fit to be used.")
 parser.add_argument("--num-samplers", type=int, default=32,
                     help="No of MCMC walkers")
 parser.add_argument("--num-mcmc-steps", type=int, default=1000,
@@ -102,7 +103,6 @@ parser.add_argument("--time-length", type=int, default=32,
 # output options
 parser.add_argument("--run-dir", type=str, required=False, default='.',
                     help="Run directory path.")
-# output options
 parser.add_argument("--output-prefix", type=str, required=False,
                     default='results/matches_vs_',
                     help="Input parameter file")
@@ -120,57 +120,62 @@ logging.getLogger().setLevel(logging.INFO)
 
 ############################################################
 # inputs
-range_of_mass1 = np.array([opts.min_mass1, opts.max_mass1])
-range_of_mass2 = np.array([opts.min_mass2, opts.max_mass2])
-range_of_q = np.array([opts.min_q, opts.max_q])
-range_of_total_mass = np.array([opts.min_mass1 + opts.min_mass2,
-                                opts.max_mass1 + opts.max_mass2])
 
-# Dict of parameters that we allow gridding over
-parameter_choices = {}
-parameter_choices['mass1'] = np.arange(range_of_mass1[0],
-                                       range_of_mass1[1],
-                                       opts.grid_spacing_mass1)
-parameter_choices['mass2'] = np.arange(range_of_mass2[0],
-                                       range_of_mass2[1],
-                                       opts.grid_spacing_mass2)
-choices_f_ = []
-for c in opts.choices_f_lower.split(","):
-    try:
-        choices_f_.append(float(c))
-    except:
-        pass
-parameter_choices['f_lower'] = np.array(choices_f_)
-parameter_choices['psd'] = opts.choices_psd.split(",")
 
-# User input list of parameter names to grid over
-parameters_to_grid_over = opts.params_to_grid_over.split(",")
-assert np.all([p in parameter_choices for p in parameters_to_grid_over]),\
-    "All parameters to grid over not recognized: {}".format(
-        parameters_to_grid_over)
+def parse_deterministic_params(input_opt):
+    """
+Parse semi-colon separated list of deterministic
+parameters. The required input format for each
+parameter's entry is
 
-num_unique_mcmc_per_job = opts.num_calcs_per_job
-run_directory = opts.run_dir
+1. param-name,range,param-lower-limit,param-upper-limit,param-stepsize
+2. param-name,choices,param-value1,param-value2,...
+    """
+    params = {}
+    for param_group in input_opt.split(";"):
+        if len(param_group) == 0:
+            continue
+        param_group_elems = param_group.split(',')
+        param_name = param_group_elems[0]
+        param_type = param_group_elems[1]
+        if param_type == 'choices':
+            params[param_name] = param_group_elems[2:]
+        elif param_type == 'range':
+            arange_str = ""
+            for p in param_group_elems[2:]:
+                arange_str = arange_str + "{},".format(p)
+            arange_str = arange_str[:-1]  # remove trailing comma
+            params[param_name] = eval("np.arange(" + arange_str + ")")
+        else:
+            raise IOError(
+                "Invalid format in gridded param {}".format(input_opt))
+    return params
 
-if opts.verbose:
-    logging.info("Going to setup run with:")
-    logging.info("Mass1 $\in$ [{0}, {1}]Msun".format(
-        range_of_mass1[0], range_of_mass1[1]))
-    logging.info("Mass2 $\in$ [{0}, {1}]Msun".format(
-        range_of_mass2[0], range_of_mass2[1]))
-    logging.info("Mass-ratio $\in$ [{0}, {1}]Msun".format(
-        range_of_q[0], range_of_q[1]))
-    logging.info("... with spacing: {0}, {1}".format(
-        opts.grid_spacing_mass1, opts.grid_spacing_mass2))
 
-    logging.info(
-        "Will sample lower freq cutoff from: {}".format(opts.choices_f_lower))
-    logging.info("Will sample PSD from: {}".format(opts.choices_psd))
+def parse_variable_params(input_opt):
+    """
+Parse semi-colon separated list of variable
+parameters. The required input format for each
+parameter's entry is
 
-    logging.info("Will setup {0} calculations per job".format(
-        num_unique_mcmc_per_job))
-    logging.info(
-        " Setting up the workflow in {0} now ...\n".format(run_directory))
+param-name,param-distribution,param-lower-limit,param-upper-limit
+
+where:
+
+- param-distribution can be uniform
+    """
+    params = {}
+    for param_group in input_opt.split(";"):
+        if len(param_group) == 0:
+            continue
+        param_group_elems = param_group.split(',')
+        param_name = param_group_elems[0]
+        param_dist = param_group_elems[1]
+        params[param_name] = (param_dist,
+                              np.float64(param_group_elems[2:]).flatten())
+    return params
+
+
 ############################################################
 # temporaries
 __script_name__ = 'gwnrtools_enigma_sample_calib_parameters'
@@ -178,9 +183,9 @@ __submit_file_name__ = 'sampler.submit'
 
 __submit_text__ = '''\
 universe = vanilla
-initialdir = {11}
-executable = scripts/{10}
-arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --min-omega-attach {0} --max-omega-attach {1} --choices-pn-order {2} --signal-approx {3} --num-samplers {4} --num-mcmc-steps {5} --sample-rate {6} --time-length {7} --output-prefix {8} --enigma-tag {9}"
+initialdir = {8}
+executable = scripts/{7}
+arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --signal-approx {0} --num-samplers {1} --num-mcmc-steps {2} --sample-rate {3} --time-length {4} --output-prefix {5} --enigma-tag {6}"
 accounting_group = ligo.dev.o3.cbc.explore.test
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
@@ -189,18 +194,15 @@ output = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).out
 notification = never
 queue 1
 '''.format(
-    opts.min_omega_attach,
-    opts.max_omega_attach,
-    opts.choices_pn_order,
     opts.signal_approx,
     opts.num_samplers,
     opts.num_mcmc_steps,
     opts.sample_rate,
     opts.time_length,
     opts.output_prefix,
-    opts.enigma_tag,
+    opts.enigma_fit_tag,
     __script_name__,
-    os.path.abspath(run_directory)
+    os.path.abspath(opts.run_dir)
 )
 
 
@@ -210,6 +212,10 @@ def job_id(job_num):
 
 def dag_file():
     return 'retune_enigma.dag'
+
+
+def calc_info_file(job_id, calc_id):
+    return os.path.join('input/parameters_{0}_{1}.json'.format(job_id, calc_id))
 
 
 def parameter_file(job_id):
@@ -238,6 +244,12 @@ def write_parameters_to_group(fout, group_name, params):
         gout.create_dataset(param_name, data=list(params[param_name]))
 
 
+def write_dataframe_to_group(fout, group_name, params):
+    gout = fout.create_group(group_name)
+    for param_name in params:
+        gout.create_dataset(param_name, data=list(params[param_name]))
+
+
 def write_job_to_dag(job_id, param_file):
     with open(dag_file(), 'a+') as fout:
         fout.write('''\
@@ -252,9 +264,9 @@ VARS TUNE{0} macroparamfile="{1}"
 # Setup
 
 # Move to run directory
-if not os.path.exists(run_directory):
-    os.makedirs(run_directory)
-os.chdir(run_directory)
+if not os.path.exists(opts.run_dir):
+    os.makedirs(opts.run_dir)
+os.chdir(opts.run_dir)
 
 # Make directories
 dirs_to_make = ['scripts', 'input', 'results', 'log']
@@ -269,9 +281,17 @@ os.chmod('scripts/{0}'.format(__script_name__), 0o0777)
 logging.info(".. run directories setup.")
 
 ############################################################
+# Parse inputs
+parameters_to_grid_over = parse_deterministic_params(opts.params_to_grid_over)
+parameters_to_mcmc_over = parse_variable_params(opts.params_to_mcmc_over)
+parameters_hidden = parse_variable_params(opts.hidden_params)
+parameters_dependent = parse_variable_params(opts.dependent_params)
+
 # Make the grid
 grid_choices = list(itertools.product(
-    *[parameter_choices[p] for p in parameters_to_grid_over]))
+    *[parameters_to_grid_over[p] for p in parameters_to_grid_over]))
+logging.info(" .. parameter grid constructed.")
+
 
 jobs = {}
 
@@ -280,53 +300,26 @@ job_num = 0
 job_params = None
 
 for p_vector in grid_choices:
+    curr_p = {}
     # Choose parameters for this MCMC exploration
     # 1. Use parameters from the current grid choice
-    curr_p = {p: [p_vector[i]] for i, p in enumerate(parameters_to_grid_over)}
-    if 'mass1' in curr_p and 'mass2' in curr_p:
-        a, b = curr_p['mass1'][0], curr_p['mass2'][0]
-        curr_p['mass1'] = [max(a, b)]
-        curr_p['mass2'] = [min(a, b)]
-    # 2. Use parameters that are user input here
-    # If any of the parameters below are to be gridded over
-    # they should not be populated below
-    if 'mass1' not in curr_p:
-        curr_p['mass1'] = list(range_of_mass1)
-    if 'mass2' not in curr_p:
-        curr_p['mass2'] = list(range_of_mass2)
-    if 'q' not in curr_p:
-        if 'mass1' in parameters_to_grid_over and 'mass2' in parameters_to_grid_over:
-            print("CHOOSING q 1: {}, {}, {}".format(
-                curr_p['mass1'][0], curr_p['mass2'][0], curr_p['mass1'][0] / curr_p['mass2'][0]))
-            curr_p['q'] = [curr_p['mass1'][0] / curr_p['mass2'][0]]
-        elif 'mass1' in curr_p and 'mass2' in curr_p:
-            print("CHOOSING q 2")
-            curr_p['q'] = list([np.minimum(curr_p['mass1'][0])/np.maximum(curr_p['mass2'][0]),
-                                np.maximum(curr_p['mass1'][0])/np.minimum(curr_p['mass2'][0])])
-        else:
-            print("CHOOSING q 3")
-            curr_p['q'] = list(range_of_q)
-    if 'total_mass' not in curr_p:
-        if 'mass1' in parameters_to_grid_over and 'mass2' in parameters_to_grid_over:
-            print("CHOOSING M 1: {}, {}, {}".format(
-                curr_p['mass1'][0], curr_p['mass2'][0], curr_p['mass1'][0] + curr_p['mass2'][0]))
-            curr_p['total_mass'] = [curr_p['mass1'][0] + curr_p['mass2'][0]]
-        elif 'mass1' in curr_p and 'mass2' in curr_p:
-            print("CHOOSING M 2")
-            curr_p['total_mass'] = list([np.minimum(curr_p['mass1'])+np.minimum(curr_p['mass2']),
-                                         np.maximum(curr_p['mass1'])+np.maximum(curr_p['mass2'])])
-        else:
-            print("CHOOSING M 3")
-            curr_p['total_mass'] = list(range_of_total_mass)
-    # 3. Set remaining parameters to their default BBH values
-    for p in default_bbh_params.columns:
-        if str(p) not in curr_p:
-            curr_p[p] = default_bbh_params[p]['range']
+    curr_p['fixed_params'] = pd.DataFrame.from_dict({p: ('fixed', [p_vector[i]])
+                                                     for i, p in enumerate(parameters_to_grid_over)})
+    # 2. Store sampling parameters
+    curr_p['sampling_params'] = pd.DataFrame.from_dict(parameters_to_mcmc_over)
+    # 3. Store hidden parameters
+    curr_p['hidden_params'] = pd.DataFrame.from_dict(parameters_hidden)
+    # 4. Store dependent parameters
+    curr_p['dependent_params'] = pd.DataFrame.from_dict(parameters_dependent)
 
-    logging.info("Using parameters: {}".format(curr_p))
+    for param_type in curr_p:
+        if len(curr_p[param_type]) != 2:
+            continue
+        curr_p[param_type] = curr_p[param_type].set_index(
+            pd.Index(['dist', 'range']))
 
     # Set job info for DAG formation
-    if num_mcmc_in_job < num_unique_mcmc_per_job:
+    if num_mcmc_in_job < opts.num_calcs_per_job:
         # add to current job
         job_params.append(curr_p)
 
@@ -349,11 +342,7 @@ if job_params:
     jobs[curr_job_id] = job_params
     job_params = None
 
-for k in jobs:
-    for curr_k in jobs[k]:
-        print("\n JOB {}: {}\n".format(k, curr_k))
-
-logging.info(" .. parameter grid constructed.")
+logging.info(" .. job details setup.")
 ############################################################
 # Write submit file
 with open(__submit_file_name__, "w") as fout:
@@ -368,14 +357,19 @@ logging.info(" .. condor submission file written.")
 for _job_id in jobs:
     job_params = jobs[_job_id]
 
+    calc_file_names = []
+    for i, jp in enumerate(job_params):
+        this_calc_file_name = calc_info_file(_job_id, i)
+        with open(this_calc_file_name, "a") as fout:
+            for param_type in jp:
+                fout.write(param_type + ";")
+                jp[param_type].to_json(fout)
+                fout.write("\n")
+        calc_file_names.append(this_calc_file_name)
+
     parameter_file_name = parameter_file(_job_id)
-    with h5py.File(parameter_file_name, 'a') as fout:
-        # Iterate over unique MCMC jobs
-        for i, jp in enumerate(job_params):
-            job_params_dict = {}
-            for p in set(parameters_to_grid_over).union(set(default_bbh_params.columns)):
-                job_params_dict[p] = jp[p]
-            write_parameters_to_group(fout, group_name(i), job_params_dict)
+    with h5py.File(parameter_file_name, "w") as fout:
+        fout.attrs['calc_info'] = calc_file_names
 
     write_job_to_dag(_job_id, parameter_file_name)
 
