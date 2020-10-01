@@ -20,7 +20,7 @@
 #
 # =============================================================================
 #
-from gwnrtools.graph import ParamLatexLabels
+from gwnrtools.graph.cbc import ParamLatexLabels
 from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import UnivariateSpline
 import scipy.integrate as si

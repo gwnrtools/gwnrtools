@@ -13,12 +13,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+import logging
+logging.getLogger().setLevel(logging.INFO)
+
 import emcee
 import numpy as np
-from gwnrtools.stats import OneDRandom
-import logging
 
-logging.getLogger().setLevel(logging.INFO)
+from gwnrtools.stats import OneDRandom
 
 
 def get_emcee_ensemble_sampler(log_probability,
@@ -69,12 +71,14 @@ p0              :
     kws = {'pool': pool, 'args': myarglist, 'kwargs': kwargs}
 
     # HDF5 backend to save progress
-    if int(emcee.__version__.split('.')[0]) >= 3 and \
-            backend_hdf is not None and \
-            (backend_hdf.endswith('.h5') or backend_hdf.endswith('.hdf')):
+    if int(emcee.__version__.split('.')[0]) >= 3 and backend_hdf != None:
+        logging.info("Initializing backend: {}".format(backend_hdf))
         backend = emcee.backends.HDFBackend(backend_hdf)
         backend.reset(nwalkers, ndim)
         kws['backend'] = backend
+    else:
+        logging.info("Ignoring backend because emcee major version: {} and backend provided: {}".format(
+            int(emcee.__version__.split('.')[0]), backend_hdf))
 
     # Initialize emsemble sampler
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, **kws)

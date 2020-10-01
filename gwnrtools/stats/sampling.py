@@ -104,6 +104,12 @@ def idempotence(N, x):
 class OneDRandom:
     '''
 DESCRIPTION: Random number generation meta-class
+
+Input:
+------
+sampling_vars : pandas.DataFrame. It should have a column:
+        - 'dist' that provides a distribution for it.
+        - 'range' that provides the allowed numerical range for it.
     '''
 
     def __init__(self, sampling_vars=None):

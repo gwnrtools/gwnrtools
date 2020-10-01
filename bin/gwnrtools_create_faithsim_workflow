@@ -24,7 +24,7 @@ import glob
 import tempfile
 from optparse import OptionParser
 from glue.pipeline import CondorDAGNode, CondorDAG
-from GWNRTools.Workflow.CondorUtilities import BaseJob, FaithsimNode
+from gwnrtools.workflow.condor import BaseJob, FaithsimNode
 
 
 def get_ini_opts(confs, section):

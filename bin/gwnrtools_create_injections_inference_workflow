@@ -30,12 +30,12 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
+from gwnrtools.stats.pycbc_inference_utils import (ConfigWriter,
                                                      InferenceConfigs)
-from GWNRTools.Workflow.InferenceUtilities import (InjectionInferenceAnalysis,
+from gwnrtools.workflow.inference import (InjectionInferenceAnalysis,
                                                    InferenceOnInjectionBatch)
-from GWNRTools.Workflow.CondorUtilities import InferenceJob
-from GWNRTools import __version__
+from gwnrtools.workflow.condor import InferenceJob
+from gwnrtools import __version__
 
 
 def mkdir(dir_name):

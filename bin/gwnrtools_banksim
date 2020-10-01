@@ -27,8 +27,8 @@ _itime = time.time()
 import argparse
 import numpy as np
 
-import GWNRTools.DataAnalysis as DA
-import GWNRTools.Waveforms as WF
+import gwnrtools.analysis as DA
+import gwnrtools.waveform as WF
 
 import lal
 from glue.ligolw import ligolw
