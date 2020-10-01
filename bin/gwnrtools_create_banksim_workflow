@@ -27,7 +27,7 @@ import glob
 import tempfile
 from optparse import OptionParser
 from glue.pipeline import CondorDAGNode, CondorDAG
-from GWNRTools.Workflow.CondorUtilities import (BaseJob, BanksimNode,
+from gwnrtools.workflow.condor import (BaseJob, BanksimNode,
                                                 BanksimCombineNode as CombineNode)
 
 

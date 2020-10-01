@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 
 NAME = 'gwnrtools'
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 
 
 def write_version_file(version):

@@ -24,9 +24,9 @@ import argparse
 
 import pycbc
 
-from GWNRTools.Stats.PyCBCInferenceUtilities import (ConfigWriter,
+from gwnrtools.stats.pycbc_inference_utils import (ConfigWriter,
                                                      InferenceConfigs)
-from GWNRTools import __version__
+from gwnrtools import __version__
 
 
 ############################################################

@@ -29,10 +29,10 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from GWNRTools.Workflow.InferenceUtilities import InferenceOnEventBatch
-from GWNRTools.Workflow.CondorUtilities import InferenceJob
-from GWNRTools.Utils.SupportFunctions import (mkdir, rmdir)
-from GWNRTools import __version__
+from gwnrtools.workflow.inference import InferenceOnEventBatch
+from gwnrtools.workflow.condor import InferenceJob
+from gwnrtools.utils.support import (mkdir, rmdir)
+from gwnrtools import __version__
 
 
 ############################################################

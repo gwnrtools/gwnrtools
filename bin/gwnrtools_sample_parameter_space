@@ -13,8 +13,8 @@ import time
 
 import argparse
 
-import GWNRTools.Stats as SU
-import GWNRTools.DataAnalysis as DA
+import gwnrtools.stats as SU
+import gwnrtools.analysis as DA
 
 from pycbc.pnutils import *
 from glue import gpstime
