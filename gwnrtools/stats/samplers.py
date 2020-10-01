@@ -77,8 +77,8 @@ p0              :
         backend.reset(nwalkers, ndim)
         kws['backend'] = backend
     else:
-        logging.info("Ignoring backend because emcee major version: {} and backend provided: {}".format(
-            int(emcee.__version__.split('.')[0]), backend_hdf))
+        logging.info("Ignoring backend because emcee major version: {} provided by: {}".format(
+            int(emcee.__version__.split('.')[0]), emcee.__file__))
 
     # Initialize emsemble sampler
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_probability, **kws)

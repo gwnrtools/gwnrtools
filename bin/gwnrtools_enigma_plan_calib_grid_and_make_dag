@@ -185,8 +185,9 @@ __submit_text__ = '''\
 universe = vanilla
 initialdir = {8}
 executable = scripts/{7}
-arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --signal-approx {0} --num-samplers {1} --num-mcmc-steps {2} --sample-rate {3} --time-length {4} --output-prefix {5} --enigma-tag {6}"
+arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --signal-approx {0} --num-samplers {1} --num-mcmc-steps {2} --sample-rate {3} --time-length {4} --output-prefix {5} --enigma-tag {6} --num-processes {9}"
 accounting_group = ligo.dev.o3.cbc.explore.test
+request_memory = 8G
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
 error = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).err
@@ -202,7 +203,8 @@ queue 1
     opts.output_prefix,
     opts.enigma_fit_tag,
     __script_name__,
-    os.path.abspath(opts.run_dir)
+    os.path.abspath(opts.run_dir),
+    20
 )
 
 
