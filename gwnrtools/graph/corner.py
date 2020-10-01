@@ -20,11 +20,39 @@
 #
 # =============================================================================
 #
+"""Utilities to make corner-plots with different data structures"""
+
 from __future__ import print_function
 
 from matplotlib import cm
 from gwnrtools.stats.distribution import MultiDDistribution
 from gwnrtools.graph import ParamLatexLabels
+
+
+def cornerplot_dataframe(df, cols=None):
+    '''
+Make a cornerplot using data input as a pandas.DataFrame
+
+Inputs:
+-------
+    - df   : pandas.DataFrame
+    - cols : list of columns to use. Defaults to all.
+    '''
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    def my_kdeplot(x, y, **kwargs):
+        sns.kdeplot(x, y, shade=True, n_levels=20, cmap=cm.autumn , **kwargs)
+    def my_hist(x, **kwargs):
+        #sns.kdeplot(x, **kwargs)
+        _ = plt.hist(x, bins=25, alpha=0.5, density=True, color='red')
+        #plt.gca().set_ylim(0, 1)
+    if cols is not None:
+        df = df[cols]
+    g = sns.PairGrid(df)
+    g.map_upper(my_kdeplot)
+    g.map_lower(my_kdeplot)
+    g.map_diag(my_hist, lw=3, legend=False);
+    return g
 
 
 class CornerPlot(MultiDDistribution):
