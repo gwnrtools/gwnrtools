@@ -340,12 +340,13 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta, inputs, f_lower,
 __available_fits__ = [
     'fit_quadratic_poly',
     'fit_cubic_poly',
-    'fit_ratio_poly_44_masses',
     'fit_ratio_poly_44',
     'fit_ratio_sqrt_poly_44',
     'fit_ratio_sqrt_hyb1_poly_44',
+    'fit_ratio_poly_43',
     'fit_ratio_sqrt_poly_43',
-    'fit_ratio_sqrt_hyb1_poly_43'
+    'fit_ratio_sqrt_hyb1_poly_43',
+    'fit_ratio_poly_34'
 ]
 
 # TAGGED list of log(probability) functions
@@ -380,68 +381,69 @@ __ranges_of_sampled_params__[tmp] = {
 for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
-# TAG : fit_ratio_poly_44_masses
-tmp = 'fit_ratio_poly_44_masses'
-__log_prob_funcs__[tmp] = log_prob_enigma
-__order_of_sampled_params__[tmp] = ['q', 'total_mass',
-                                    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
-__ranges_of_sampled_params__[tmp] = {
-    'q': [1., 4.],
-    'total_mass': [10., 100.],
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
-for p in __order_of_sampled_params__[tmp][3:]:  # exclude PNO
-    __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
-
-# TAG : fit_ratio_poly_44
 tmp = 'fit_ratio_poly_44'
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
+__log_prob_funcs__[tmp] = log_prob_enigma
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
 }
 for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
-# TAG : fit_ratio_sqrt_poly_44
 tmp = 'fit_ratio_sqrt_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
+    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
 }
 for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
-# TAG : fit_ratio_sqrt_hyb1_poly_44
 tmp = 'fit_ratio_sqrt_hyb1_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3', 'b4']
+    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
 }
 for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
-# TAG : fit_ratio_sqrt_poly_43
+tmp = 'fit_ratio_poly_43'
+__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__order_of_sampled_params__[tmp] = [
+    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {
+    'PNO': [6, 7, 8, 9, 10, 11, 12]
+}
+for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
+    __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
+
 tmp = 'fit_ratio_sqrt_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3']
+    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
 }
 for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
-# TAG : fit_ratio_sqrt_hyb1_poly_43
 tmp = 'fit_ratio_sqrt_hyb1_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'a4', 'b2', 'b3']
+    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {
+    'PNO': [6, 7, 8, 9, 10, 11, 12]
+}
+for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
+    __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
+
+tmp = 'fit_ratio_poly_34'
+__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__order_of_sampled_params__[tmp] = [
+    'PNO', 'a1', 'a2', 'b1', 'b2', 'b3']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
 }
