@@ -209,13 +209,14 @@ with h5py.File(job_inputs['param_file'][0], 'r') as fin:
             else:
                 raise RuntimeError("Range {} for param {} not valid!".format(
                     r, p))
-        # Insert a list of sampled parameters
+        # Insert an ordered list of sampled parameters
+        ordered_sampling_params = [c for c in __order_of_sampled_params__[
+            opts.enigma_tag] if calc_params[c].vartype == "sampling"]
         calc_params['sampler_params'] = pd.Series({"dist": "fixed",
-                                                   "range": __order_of_sampled_params__[opts.enigma_tag],
+                                                   "range": ordered_sampling_params,
                                                    "vartype": "fixed"},
                                                   name='sampler_params')
-        calc_inputs['sampler_params'] = (
-            __order_of_sampled_params__[opts.enigma_tag],)
+        calc_inputs['sampler_params'] = (ordered_sampling_params,)
         all_calc_params[j_id] = calc_params
         all_calc_inputs[j_id] = calc_inputs
 
@@ -317,8 +318,9 @@ for idx, j_id in enumerate(all_calc_params):
                 "... will checkpoint the MCMC sampler to {}".format(hdf_backend))
 
         # Initialize the sampler
-        sampling_params = calc_params[calc_params.loc['vartype']
-                                      [calc_params.loc['vartype'] == 'sampling'].index]
+        ordered_sampling_params = [c for c in __order_of_sampled_params__[
+            opts.enigma_tag] if calc_params[c].vartype == "sampling"]
+        sampling_params = calc_params[ordered_sampling_params]
         if opts.verbose:
             logging.info("... initializing the MCMC sampler for {}".format(
                 sampling_params.columns.get_values()))
