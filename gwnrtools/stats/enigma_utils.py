@@ -382,7 +382,7 @@ for p in __order_of_sampled_params__[tmp][1:]:  # exclude PNO
     __ranges_of_sampled_params__[tmp][p] = [-10., 10.]
 
 tmp = 'fit_ratio_poly_44'
-__log_prob_funcs__[tmp] = log_prob_enigma
+__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
 __ranges_of_sampled_params__[tmp] = {
     'PNO': [6, 7, 8, 9, 10, 11, 12]
