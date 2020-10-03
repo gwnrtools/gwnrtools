@@ -100,6 +100,10 @@ parser.add_argument("--sample-rate", type=int, default=4096,
 parser.add_argument("--time-length", type=int, default=32,
                     help="Expected max duration of waves")
 
+# parallelization options
+parser.add_argument("--num-processes", type=int, default=5,
+                    help="No of Multiprocessing processes")
+
 # output options
 parser.add_argument("--run-dir", type=str, required=False, default='.',
                     help="Run directory path.")
@@ -188,7 +192,8 @@ executable = scripts/{7}
 arguments = " --job-id $(macrojobid) --param-file $(macroparamfile) --signal-approx {0} --num-samplers {1} --num-mcmc-steps {2} --sample-rate {3} --time-length {4} --output-prefix {5} --enigma-tag {6} --num-processes {9}"
 accounting_group = ligo.dev.o3.cbc.explore.test
 accounting_group_user = prayush.kumar
-request_memory = 16G
+request_memory = {10}G
+request_cpus = {9}
 getenv = True
 log = /usr1/prayush.kumar/tmpc8uHuQ
 error = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).err
@@ -205,7 +210,8 @@ queue 1
     opts.enigma_fit_tag,
     __script_name__,
     os.path.abspath(opts.run_dir),
-    20
+    opts.num_processes,
+    2*opts.num_processes
 )
 
 

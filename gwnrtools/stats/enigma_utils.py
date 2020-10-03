@@ -26,6 +26,7 @@ from __future__ import absolute_import
 
 import os
 import logging
+import traceback
 import numpy as np
 
 import pycbc.pnutils as pnu
@@ -139,9 +140,11 @@ Finally returns L = exp(-0.5 x m x m)
                                    mass2=mass2,
                                    f_lower=f_lower,
                                    delta_t=dt)
-    except:
+    except Exception as e:
+        logging.error(traceback.format_exc())
         logging.warn("Could not generate ENIGMA wave..m1={},m2={},omg={},PNO={}".format(
             mass1, mass2, omega_attach, PNO))
+        logging.error("\n")
         return -np.inf
     h1p = make_padded_frequency_series(h1p, N, df)
     #h1c = make_padded_frequency_series(h1c, N, df)

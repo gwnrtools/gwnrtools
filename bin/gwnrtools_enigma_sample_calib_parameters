@@ -26,6 +26,7 @@ import h5py
 import numpy as np
 import argparse
 import logging
+import traceback
 from multiprocessing import Pool
 import pandas as pd
 
@@ -363,9 +364,11 @@ for idx, j_id in enumerate(all_calc_params):
         # Early stop
         if idx >= 1e9:
             break
-    except:
-        logging.error("Error in parameter set[{0}]: f_low={1:.0f}".format(j_id,
-                                                                          f_lower))
+    except Exception as e:
+        logging.error("\n")
+        logging.error(traceback.format_exc())
+        logging.error("Error in parameter set[{0}]: f_low={1:.0f}\n".format(j_id,
+                                                                            f_lower))
         raise
 
 __my_pool__.close()
