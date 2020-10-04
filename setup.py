@@ -108,7 +108,7 @@ if __name__ == "__main__":
           install_requires=[
               'astropy==2.0.16',
               'h5py>=2.10.0',
-              'lalsuite>=6.63',
+              # 'lalsuite>=6.63',
               'lscsoft_glue==2.0.0',
               'matplotlib==2.1',
               'numexpr',
