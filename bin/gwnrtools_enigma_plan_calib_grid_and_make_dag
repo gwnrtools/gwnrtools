@@ -195,6 +195,7 @@ accounting_group_user = prayush.kumar
 request_memory = {10}G
 request_cpus = {9}
 getenv = True
+max_retries = 10
 log = /usr1/prayush.kumar/tmpc8uHuQ
 error = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).err
 output = log/gwnrtools_enigma_sample_parameters-$(cluster)-$(process).out
@@ -265,6 +266,7 @@ def write_job_to_dag(job_id, param_file):
 JOB TUNE{0} {2}
 VARS TUNE{0} macrojobid="{0}"
 VARS TUNE{0} macroparamfile="{1}"
+RETRY TUNE{0} 10
 
 '''.format(job_id, param_file, __submit_file_name__))
 
