@@ -14,13 +14,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from gwnrtools.stats import OneDRandom
+import numpy as np
+import emcee
 import logging
 logging.getLogger().setLevel(logging.INFO)
-
-import emcee
-import numpy as np
-
-from gwnrtools.stats import OneDRandom
 
 
 def get_emcee_ensemble_sampler(log_probability,
@@ -107,7 +105,7 @@ get_sampler = {}
 get_sampler['emcee_ensemble'] = get_emcee_ensemble_sampler
 
 
-def emcee_samples_to_dict(sampler, params_to_sample):
+def emcee_samples_to_dict(sampler, params_to_sample, burnin=1000, thin=10):
     """
 Receives a sampler object and retrieves samples for all
 parameters from it. It returns a dictionary with all samples
@@ -128,7 +126,7 @@ all_samples       : dict
                     with param names as keys.
     """
     try:
-        _log_prob = sampler.get_log_prob().flatten()
+        _log_prob = sampler.get_log_prob(discard=burnin, thin=thin).flatten()
     except AttributeError:
         _log_prob = sampler.lnprobability.flatten()
     mask_not_failed = np.isfinite(_log_prob)
