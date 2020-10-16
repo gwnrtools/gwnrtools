@@ -440,7 +440,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
                  mulD_kernel='gau',
                  mulD_bw_method='normal_reference',
                  xlimits=None,
-                 verbose=True, debug=True):
+                 verbose=True, debug=False):
         # CHECK INPUTS
         self.verbose = verbose
         self.debug = debug
@@ -493,7 +493,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
     def structured_data(self):
         self.structured_data = cp.deepcopy(self.input_data)
-        if debug:
+        if self.debug:
             print("Shape of structured_data: ", np.shape(self.structured_data))
         if len(var_names) == np.shape(self.input_data)[-1]:
             self.structured_data = np.array(self.structured_data,
@@ -502,7 +502,9 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
     ###
 
     def index_of_name(self, name):
-        return np.where([n == name for n in self.var_names])[0][0]
+        if name in self.var_names:
+            return np.where([n == name for n in self.var_names])[0][0]
+        raise IOError("Could not find column variable named: {}".format(name))
     ###
 
     def sliced(self, i):
