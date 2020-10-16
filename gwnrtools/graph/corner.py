@@ -27,6 +27,11 @@ from __future__ import print_function
 from matplotlib import cm
 from gwnrtools.stats.distribution import MultiDDistribution
 from gwnrtools.graph import ParamLatexLabels
+from scipy.stats import gaussian_kde
+
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 def cornerplot_dataframe(df, cols=None):
@@ -39,9 +44,10 @@ Inputs:
     - cols : list of columns to use. Defaults to all.
     '''
     import seaborn as sns
-    import matplotlib.pyplot as plt
+
     def my_kdeplot(x, y, **kwargs):
-        sns.kdeplot(x, y, shade=True, n_levels=20, cmap=cm.autumn , **kwargs)
+        sns.kdeplot(x, y, shade=True, n_levels=20, cmap=cm.autumn, **kwargs)
+
     def my_hist(x, **kwargs):
         #sns.kdeplot(x, **kwargs)
         _ = plt.hist(x, bins=25, alpha=0.5, density=True, color='red')
@@ -51,7 +57,7 @@ Inputs:
     g = sns.PairGrid(df)
     g.map_upper(my_kdeplot)
     g.map_lower(my_kdeplot)
-    g.map_diag(my_hist, lw=3, legend=False);
+    g.map_diag(my_hist, lw=3, legend=False)
     return g
 
 
@@ -77,7 +83,10 @@ dimension
     '''
 
     def __init__(self, *args, **kwargs):
-        super(CornerPlot, self).__init__(*args, **kwargs)
+        try:
+            super(CornerPlot, self).__init__(*args, **kwargs)
+        except TypeError:
+            gwnrtools.stats.MultiDDistribution.__init__(self, *args, **kwargs)
 
     def draw(self, params_plot,
              params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
@@ -103,7 +112,8 @@ dimension
              color_min=None,
              cmap=cm.plasma_r,
              contour_levels=[90.0],
-             contour_lstyles=["solid", "dashed", "dashdot", "dotted"],
+             contour_lstyles=["solid", "dashed", "dashdot",
+                              "dotted", "solid", "dashed", "dashdot", "dotted"],
              label_contours=True,  # Whether or not to label individuals
              contour_labels_inline=True,
              contour_labels_loc="upper center",
@@ -113,6 +123,7 @@ dimension
              label_oned_loc='outside',
              show_oned_median=False,
              grid_oned_on=False,
+             figure_title='',
              debug=False, verbose=None
              ):
         """
@@ -129,7 +140,7 @@ When plotting data points, user can also add colors to it based on a 3rd paramet
 
 Input:
 (1) [REQUIRED] params_plot: list of parameters to plot. String names or Indices work.
-(2) [OPTIONAL] params_labels: list of parameter names to use in latex labels.
+(2) [OPTIONAL] params_labels: dict of parameter names to use in latex labels.
 (2a,b) [OPTIONAL] xlim_low/high: lists of parameter lower & upper limits
 (3) [REQUIRED] plot_type: Either "scatter" or "contour"
 (4) [OPTIONAL] contour_levels: credible interval levels for "contour" plots
@@ -168,7 +179,7 @@ Input:
         def get_param_label(pp):
             if params_labels is not None and pp in params_labels:
                 return params_labels[pp]
-            if pp in param_color and param_color_label is not None:
+            if param_color is not None and pp in param_color and param_color_label is not None:
                 return param_color_label
             return pp.replace('_', '-')
 
@@ -180,7 +191,6 @@ Input:
         no_of_cols = len(params_plot)
 
         if type(fig) != matplotlib.figure.Figure or axes_array is None:
-            #fig = plt.figure(figsize=(6*no_of_cols,4*no_of_rows))
             fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
                                            figsize=(6*no_of_cols,
                                                     4*no_of_rows),
@@ -189,13 +199,15 @@ Input:
         fig.hold(True)
 
         # Pre-choose color for 1D histograms (and scatter plots, if applicable)
-        rand_color = np.random.rand(3)
+        rand_color = np.random.rand(3,)
         if color != None:
             rand_color = color
 
         if return_areas_in_contours:
             contour_areas = {}
         contour_levels = sorted(contour_levels, reverse=True)
+
+        token_cb_ax = None
 
         # Start drawing panels
         for nr in range(no_of_rows):
@@ -312,9 +324,9 @@ Input:
                                     edgecolors=None, linewidths=0,
                                     vmin=color_min, vmax=color_max, cmap=cmap,
                                     label=label)
-                    cb = fig.colorbar(im, ax=ax)
-                    if nc == (no_of_cols-1):
-                        cb.set_label(cblabel)
+
+                    token_cb_ax = (im, ax)
+
                     if nr == (no_of_rows-1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
@@ -383,7 +395,7 @@ Input:
                     r1.shape = q.shape
                     # Draw contours
                     im = ax.contour(x11vals, x12vals, r1, zlevels,
-                                    colors=rand_color,
+                                    colors=[rand_color],
                                     linestyles=contour_lstyles[:len(
                                         contour_levels)],
                                     label=label)
@@ -457,7 +469,6 @@ Input:
                         ax.set_ylim(0.95 * np.min(d2), 1.05 * np.max(d2))
                     else:
                         pass
-                    #ax.legend(loc='best', fontsize=legend_fontsize)
                     ax.grid(True)
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
@@ -468,17 +479,24 @@ Input:
                     print("removing Xticklabels for (%d, %d)" % (nr, nc))
                     ax.set_xticklabels([])
         ##
+        if token_cb_ax is not None:
+            im, ax = token_cb_ax
+            fig.subplots_adjust(right=0.8)
+            cbar_ax = fig.add_axes([0.85, 0.35, 0.05, 0.7])
+            cb = fig.colorbar(im, cax=cbar_ax)
+            cb.set_label(cblabel)
+        ##
+        if len(figure_title) > 0:
+            fig.suptitle(figure_title)
         for nc in range(1, no_of_cols):
             ax = axes_array[no_of_rows - 1][nc]
             #new_xticklabels = [ll.get_text() for ll in ax.get_xticklabels()]
             new_xticklabels = ax.get_xticks().tolist()
             new_xticklabels[0] = ''
             ax.set_xticklabels(new_xticklabels)
-        #fig.subplots_adjust(wspace=0, hspace=0)
         if plot_type == 'contour' and return_areas_in_contours and debug:
             return fig, axes_array, contour_areas, contour.get_paths(), im
         elif plot_type == 'contour' and return_areas_in_contours:
             return fig, axes_array, contour_areas
         else:
             return fig, axes_array
-    ##
