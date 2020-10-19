@@ -20,24 +20,29 @@
 #
 # =============================================================================
 #
+import logging
 from gwnrtools.graph.cbc import ParamLatexLabels
 from scipy.stats.kde import gaussian_kde
 from scipy.interpolate import UnivariateSpline
+
 import scipy.integrate as si
 import scipy.optimize as so
+
 try:
     from statsmodels.nonparametric.kde import KDEUnivariate
     from statsmodels.nonparametric.kernel_density import KDEMultivariate
 except:
     pass
-import os
 
+import os
 import copy as cp
 import numpy as np
 import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
 plt.rcParams.update({'text.usetex': True})
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 ######################################################
@@ -110,7 +115,7 @@ data_kde - if provided, must be a KDE estimator class with a member
                  xlimits=None,
                  verbose=True, debug=False):
         if debug:
-            print("Initializing OneDDistribution object..")
+            logging.info("Initializing OneDDistribution object..")
         self.input_data = np.array(data)
         self.bw_method = bw_method
         self.kernel = kernel
@@ -121,9 +126,8 @@ data_kde - if provided, must be a KDE estimator class with a member
             self.xllimit, self.xulimit = min(
                 self.input_data), max(self.input_data)
         if data_kde != None:
-            print("GOING TO INSERT KDE IN SELF....")
             self.kde = data_kde
-            print("""WARNING: Be careful when providing a kernel density estimator directly.
+            logging.warn("""WARNING: Be careful when providing a kernel density estimator directly.
                               We assume, but not check, that it matches the input sample set..""")
         self.verbose = verbose
         self.debug = debug
@@ -142,7 +146,7 @@ data_kde - if provided, must be a KDE estimator class with a member
         if hasattr(self, "norm"):
             return self.norm
         if self.verbose:
-            print("NORMALIZING 1D KDE")
+            logging.info("NORMALIZING 1D KDE")
         input_kde_func = self.kde()
         if xllimit == None:
             xllimit, _ = self.xlimits()
@@ -183,7 +187,7 @@ data_kde - if provided, must be a KDE estimator class with a member
         if hasattr(self, "evaluate_kde"):
             return self.evaluate_kde
         if self.verbose:
-            print("INITALIZING 1D KDE")
+            logging.info("INITALIZING 1D KDE")
         kde = KDEUnivariate(self.input_data)
         try:
             kde.fit(kernel=self.kernel, bw=self.bw_method,
@@ -282,7 +286,7 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
                 id_cnt += 1
         for event_id in event_ids:
             if verbose:
-                print("REEADING POSTERIOR FOR EVENT ", event_id)
+                logging.info("Reading posterior for event ", event_id)
             event_id_pattern = tuple(np.ones(id_cnt) * event_id)
             res_file = os.path.join(datadir, result_tag % event_id_pattern)
             data[event_id] = np.loadtxt(res_file)
@@ -294,7 +298,7 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
             if id in self.event and not reprocess:
                 continue
             if self.verbose:
-                print("\n READING EVENT %d" % (id))
+                logging.info("\n READING EVENT %d" % (id))
 
             self.event[id] = MultiDDistribution(self.data[id], self.var_type,
                                                 oneD_kernel_cut=kernel_cut)
@@ -304,7 +308,7 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
 
     def combine_oned_slices(self, x_range, prior_func, event_ids=None):
         if len(self.event) == 0:
-            print("Please process oneD slices first")
+            logging.info("Please process oneD slices first")
             return
         ####
         if event_ids == None:
@@ -445,7 +449,8 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         self.verbose = verbose
         self.debug = debug
         if len(np.shape(np.array(data))) == 1:
-            print("WARNING: Returning OneDDistribution for 1-D distributions")
+            logging.info(
+                "WARNING: Returning OneDDistribution for 1-D distributions")
             return OneDDistribution(data, data_kde=data_kde,
                                     kernel=oneD_kernel,
                                     kernel_cut=oneD_kernel_cut,
@@ -454,10 +459,10 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         # ENSURE DATA SHAPE, EXTRACT DIMENSION
         if verbose:
-            print("Initializing MultiDDistribution object..")
+            logging.info("Initializing MultiDDistribution object..")
         data = np.array(data)
         # if np.shape(data)[0] < np.shape(data)[1]:
-        #    print "WARNING: FEWER ROWS than COLUMNS, assuming its a row-wise distribution"
+        #    logging.info "WARNING: FEWER ROWS than COLUMNS, assuming its a row-wise distribution"
         #    data = np.transpose(data)
         self.input_data = np.array(data)
         self.var_names = var_names
@@ -465,14 +470,14 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         # PROCESS 1-D SLICES (assuming independently sampled variables)
         if verbose:
-            print("PROCESSING 1-D SLICES ..")
+            logging.info("PROCESSING 1-D SLICES ..")
         self.slices = [OneDDistribution(self.sliced(i),
                                         kernel_cut=oneD_kernel_cut
                                         ) for i in range(self.dim)]
 
         # UPPER AND LOWER LIMITS IN 1-D SLICES
         if verbose:
-            print("COMPUTING /LOWER AND UPPER LIMITS IN EACH DIMENSION")
+            logging.info("COMPUTING /LOWER AND UPPER LIMITS IN EACH DIMENSION")
         if xlimits:
             self.xllimit, self.xulimit = xlimits
         else:
@@ -486,7 +491,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         if data_kde:
             self.kde = data_kde
-            print("""WARNING: Be careful when providing a kernel density estimator directly.
+            logging.info("""WARNING: Be careful when providing a kernel density estimator directly.
                               We assume, but not check, that it matches the input sample set..""")
         return
     ###
@@ -494,7 +499,8 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
     def structured_data(self):
         self.structured_data = cp.deepcopy(self.input_data)
         if self.debug:
-            print("Shape of structured_data: ", np.shape(self.structured_data))
+            logging.info("Shape of structured_data: ",
+                         np.shape(self.structured_data))
         if len(var_names) == np.shape(self.input_data)[-1]:
             self.structured_data = np.array(self.structured_data,
                                             dtype=[(h, '<f8') for h in var_names])
@@ -656,8 +662,8 @@ Input:
             if True:
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
-                    print("Making plot (%d,%d,%d)" %
-                          (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
+                    logging.info("Making plot (%d,%d,%d)" %
+                                 (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
 
                 # If user asks for scatter-point colors to be a 3rd dimension
                 if param_color in self.var_names:
@@ -669,8 +675,8 @@ Input:
                     p2label = get_param_label(p2)
                     cblabel = get_param_label(param_color)
                     if verbose:
-                        print("Scatter plot w color: %s vs %s vs %s" %
-                              (p1, p2, param_color))
+                        logging.info("Scatter plot w color: %s vs %s vs %s" %
+                                     (p1, p2, param_color))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
                                     alpha=scatter_alpha,
@@ -704,7 +710,7 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Scatter plot: %s vs %s" % (p1, p2))
+                        logging.info("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=rand_color,
                                     alpha=scatter_alpha,
@@ -730,13 +736,13 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Contour plot: %s vs %s" % (p1, p2))
+                        logging.info("Contour plot: %s vs %s" % (p1, p2))
                     # Get data
                     d1 = self.sliced(p1).data()
                     d2 = self.sliced(p2).data()
                     dd = np.column_stack([d1, d2])
                     if verbose:
-                        print(np.shape(d1), np.shape(d2), np.shape(dd))
+                        logging.info(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
                     zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
@@ -758,7 +764,7 @@ Input:
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
-                            print("Computing area inside contours.")
+                            logging.info("Computing area inside contours.")
                         contour_areas[p1+p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
@@ -768,12 +774,12 @@ Input:
                                 np.sum([area_inside_contour(vs.vertices)
                                         for vs in contour.get_paths()]))
                             if verbose:
-                                print("Total area = %.9f, %.9f" %
-                                      (contour_areas[p1+p2][-1]))
+                                logging.info("Total area = %.9f, %.9f" %
+                                             (contour_areas[p1+p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    print("sub-area %d: %.8e" %
-                                          (_i, area_inside_contour(vs.vertices)))
+                                    logging.info("sub-area %d: %.8e" %
+                                                 (_i, area_inside_contour(vs.vertices)))
                         contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
 
                     # BEAUTIFY contour labeling..!
@@ -1056,8 +1062,8 @@ Input:
 
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
-                    print("Making plot (%d,%d,%d)" %
-                          (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
+                    logging.info("Making plot (%d,%d,%d)" %
+                                 (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
 
                 # Get plot for this panel
                 # ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
@@ -1087,8 +1093,8 @@ Input:
                     p2label = get_param_label(p2)
                     cblabel = get_param_label(param_color)
                     if verbose:
-                        print("Scatter plot w color: %s vs %s vs %s" %
-                              (p1, p2, param_color))
+                        logging.info("Scatter plot w color: %s vs %s vs %s" %
+                                     (p1, p2, param_color))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
                                     alpha=scatter_alpha,
@@ -1121,7 +1127,7 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Scatter plot: %s vs %s" % (p1, p2))
+                        logging.info("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1, _d2, c=rand_color,
                                     alpha=scatter_alpha,
@@ -1146,13 +1152,13 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Contour plot: %s vs %s" % (p1, p2))
+                        logging.info("Contour plot: %s vs %s" % (p1, p2))
                     # Get data
                     d1 = self.sliced(p1).data()
                     d2 = self.sliced(p2).data()
                     dd = np.column_stack([d1, d2])
                     if verbose:
-                        print(np.shape(d1), np.shape(d2), np.shape(dd))
+                        logging.info(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
                     zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
@@ -1174,7 +1180,7 @@ Input:
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
-                            print("Computing area inside contours.")
+                            logging.info("Computing area inside contours.")
                         contour_areas[p1+p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
@@ -1184,12 +1190,12 @@ Input:
                                 np.sum([area_inside_contour(vs.vertices)
                                         for vs in contour.get_paths()]))
                             if verbose:
-                                print("Total area = %.9f, %.9f" %
-                                      (contour_areas[p1+p2][-1]))
+                                logging.info("Total area = %.9f, %.9f" %
+                                             (contour_areas[p1+p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    print("sub-area %d: %.8e" %
-                                          (_i, area_inside_contour(vs.vertices)))
+                                    logging.info("sub-area %d: %.8e" %
+                                                 (_i, area_inside_contour(vs.vertices)))
                         contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
 
                     ####
@@ -1245,10 +1251,12 @@ Input:
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
                 if nc != 0:
-                    print("removing Yticklabels for (%d, %d)" % (nr, nc))
+                    logging.info(
+                        "removing Yticklabels for (%d, %d)" % (nr, nc))
                     ax.set_yticklabels([])
                 if nr != (no_of_rows - 1):
-                    print("removing Xticklabels for (%d, %d)" % (nr, nc))
+                    logging.info(
+                        "removing Xticklabels for (%d, %d)" % (nr, nc))
                     ax.set_xticklabels([])
         ##
         for nc in range(1, no_of_cols):

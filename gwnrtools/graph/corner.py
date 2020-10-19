@@ -24,21 +24,24 @@
 
 from __future__ import print_function
 
-from matplotlib import cm
-from gwnrtools.stats.distribution import MultiDDistribution
-from gwnrtools.graph import ParamLatexLabels
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
 from scipy.stats import gaussian_kde
 
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
+from gwnrtools.graph import ParamLatexLabels
+from gwnrtools.stats.distribution import MultiDDistribution
+from matplotlib import cm
+
+import logging
+logging.getLogger().setLevel(logging.INFO)
 
 
 def cornerplot_dataframe(df, cols=None):
     '''
 Make a cornerplot using data input as a pandas.DataFrame
 
-Inputs:
+Inputs:q
 -------
     - df   : pandas.DataFrame
     - cols : list of columns to use. Defaults to all.
@@ -86,7 +89,7 @@ dimension
         try:
             super(CornerPlot, self).__init__(*args, **kwargs)
         except TypeError:
-            gwnrtools.stats.MultiDDistribution.__init__(self, *args, **kwargs)
+            MultiDDistribution.__init__(self, *args, **kwargs)
 
     def draw(self, params_plot,
              params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
