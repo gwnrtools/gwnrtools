@@ -114,6 +114,7 @@ if __name__ == "__main__":
               'numexpr',
               'numpy==1.16.5',
               'pandas==0.24.2',
+              'pathlib',
               # 'pycbc>=1.15.4',
               'pyswarm==0.6',
               'pytest',
