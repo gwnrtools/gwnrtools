@@ -29,8 +29,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 from scipy.stats import gaussian_kde
 
-from gwnrtools.graph import ParamLatexLabels
-from gwnrtools.stats.distribution import MultiDDistribution
+from gwnrtools.graph import make_filled_contour_plot, ParamLatexLabels
+from gwnrtools.stats import MultiDDistribution
 from matplotlib import cm
 
 import logging
@@ -55,6 +55,7 @@ Inputs:q
         #sns.kdeplot(x, **kwargs)
         _ = plt.hist(x, bins=25, alpha=0.5, density=True, color='red')
         #plt.gca().set_ylim(0, 1)
+
     if cols is not None:
         df = df[cols]
     g = sns.PairGrid(df)
@@ -84,51 +85,56 @@ dimension
                 "evaluate". E.g. use KDEUnivariate class from
                 `statsmodels.nonparametric.kde`
     '''
-
     def __init__(self, *args, **kwargs):
         try:
             super(CornerPlot, self).__init__(*args, **kwargs)
         except TypeError:
             MultiDDistribution.__init__(self, *args, **kwargs)
 
-    def draw(self, params_plot,
-             params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
-             params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
-             fig=None,  # CAN PLOT ON EXISTING FIGURE
-             axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
-             # Histogram type (bar / step / barstacked)
-             histogram_type='bar',
-             nhbins=30,  # NO OF BINS IN HISTOGRAMS
-             projection='rectilinear',
-             label='',  # LABEL THAT GOES ON EACH PANEL
-             params_labels=None,
-             plim_low=None, plim_high=None,
-             legend_fontsize=18,
-             plot_type='scatter',  # SCATTER OR CONTOUR
-             color=None,
-             hist_alpha=0.3,  # Transparency of histograms
-             scatter_alpha=0.2,  # Transparency of scatter points
-             npixels=50,
-             param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
-             param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
-             color_max=None,
-             color_min=None,
-             cmap=cm.plasma_r,
-             contour_levels=[90.0],
-             contour_lstyles=["solid", "dashed", "dashdot",
-                              "dotted", "solid", "dashed", "dashdot", "dotted"],
-             label_contours=True,  # Whether or not to label individuals
-             contour_labels_inline=True,
-             contour_labels_loc="upper center",
-             return_areas_in_contours=False,
-             label_oned_hists=-1,  # Which one-d histograms to label?
-             skip_oned_hists=False,
-             label_oned_loc='outside',
-             show_oned_median=False,
-             grid_oned_on=False,
-             figure_title='',
-             debug=False, verbose=None
-             ):
+    def draw(
+            self,
+            params_plot,
+            params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
+            params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
+            fig=None,  # CAN PLOT ON EXISTING FIGURE
+            axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
+            # Histogram type (bar / step / barstacked)
+        histogram_type='bar',
+            nhbins=30,  # NO OF BINS IN HISTOGRAMS
+            projection='rectilinear',
+            label='',  # LABEL THAT GOES ON EACH PANEL
+            params_labels=None,
+            plim_low=None,
+            plim_high=None,
+            legend_fontsize=18,
+            plot_type='scatter',  # SCATTER OR CONTOUR
+            color=None,
+            hist_alpha=0.3,  # Transparency of histograms
+            scatter_alpha=0.2,  # Transparency of scatter points
+            npixels=50,
+            param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
+            param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
+            color_max=None,
+            color_min=None,
+            cmap=cm.plasma_r,
+            contour_args={},
+            contour_levels=[90.0],
+            contour_lstyles=[
+                "solid", "dashed", "dashdot", "dotted", "solid", "dashed",
+                "dashdot", "dotted"
+            ],
+            label_contours=True,  # Whether or not to label individuals
+            contour_labels_inline=True,
+            contour_labels_loc="upper center",
+            return_areas_in_contours=False,
+            label_oned_hists=-1,  # Which one-d histograms to label?
+            skip_oned_hists=False,
+            label_oned_loc='outside',
+            show_oned_median=False,
+            grid_oned_on=False,
+            figure_title='',
+            debug=False,
+            verbose=None):
         """
 Generates a corner plot for given parameters. 2D panels can have data points
 directly or percentile contours, not both simultaneously yet.
@@ -167,10 +173,6 @@ Input:
                 raise IOError(
                     "Please provide as many linestyles as contour levels")
 
-        if param_color is not None and "scatter" not in plot_type:
-            raise IOError(
-                "Since you passed a 3rd dimension, only plot_type=scatter is allowed")
-
         # Local verbosity level takes precedence, else the class's is used
         if verbose == None:
             verbose = self.verbose
@@ -194,15 +196,19 @@ Input:
         no_of_cols = len(params_plot)
 
         if type(fig) != matplotlib.figure.Figure or axes_array is None:
-            fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
-                                           figsize=(6*no_of_cols,
-                                                    4*no_of_rows),
-                                           gridspec_kw={'wspace': 0, 'hspace': 0})
+            fig, axes_array = plt.subplots(no_of_rows,
+                                           no_of_cols,
+                                           figsize=(6 * no_of_cols,
+                                                    4 * no_of_rows),
+                                           gridspec_kw={
+                                               'wspace': 0,
+                                               'hspace': 0
+                                           })
 
         fig.hold(True)
 
         # Pre-choose color for 1D histograms (and scatter plots, if applicable)
-        rand_color = np.random.rand(3,)
+        rand_color = np.random.rand(3, )
         if color != None:
             rand_color = color
 
@@ -241,19 +247,49 @@ Input:
                         p_true_val = params_true_vals[nc]
                         if p_true_val != None:
                             ax.axvline(p_true_val,
-                                       lw=0.5, ls='solid', color=rand_color)
+                                       lw=0.5,
+                                       ls='solid',
+                                       color=rand_color)
                     # Plot one-d posterior
                     _data = self.sliced(p1).data()
-                    im = ax.hist(_data, bins=nhbins,
+                    im = ax.hist(_data,
+                                 bins=nhbins,
                                  histtype=histogram_type,
-                                 normed=True, alpha=hist_alpha,
-                                 color=rand_color, label=label)
-                    ax.axvline(np.percentile(_data, 5), lw=1,
-                               ls='dashed', color=rand_color, alpha=1)
-                    ax.axvline(np.percentile(_data, 95), lw=1,
-                               ls='dashed', color=rand_color, alpha=1)
+                                 normed=True,
+                                 alpha=hist_alpha,
+                                 color=rand_color,
+                                 label=label)
+                    # 5%ile
+                    percentile_5 = np.percentile(_data, 5)
+                    ax.axvline(percentile_5,
+                               lw=1,
+                               ls='dashed',
+                               color=rand_color,
+                               alpha=1)
+                    ax.text(percentile_5,
+                            ax.get_ylim()[-1],
+                            '{:0.02f}'.format(percentile_5),
+                            rotation=45,
+                            rotation_mode='anchor')
+                    # 95%ile
+                    percentile_95 = np.percentile(_data, 95)
+                    ax.axvline(percentile_95,
+                               lw=1,
+                               ls='dashed',
+                               color=rand_color,
+                               alpha=1)
+                    ax.text(percentile_95,
+                            ax.get_ylim()[-1],
+                            '{:0.02f}'.format(percentile_95),
+                            rotation=45,
+                            rotation_mode='anchor')
                     if show_oned_median:
                         ax.axvline(np.median(_data), ls='-', color=rand_color)
+                        ax.text(np.median(_data),
+                                ax.get_ylim()[-1],
+                                '{:0.02f}'.format(np.median(_data)),
+                                rotation=45,
+                                rotation_mode='anchor')
                     try:
                         if label_oned_hists == -1 or nc in label_oned_hists:
                             if label_oned_loc is not 'outside' and label_oned_loc is not '':
@@ -270,26 +306,28 @@ Input:
                             _prior_xrange = (plim_low[nc], plim_high[nc])
                         else:
                             _prior_xrange = None
-                        im = ax.hist(_data, bins=nhbins,
-                                     histtype="step", color='k',
-                                     range=_prior_xrange, normed=True
-                                     )
+                        im = ax.hist(_data,
+                                     bins=nhbins,
+                                     histtype="step",
+                                     color='k',
+                                     range=_prior_xrange,
+                                     normed=True)
                     if plim_low is not None and plim_high is not None:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
                     ax.grid(grid_oned_on)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0 and (no_of_cols > 1 or no_of_rows > 1):
                         ax.set_ylabel(p1label)
-                    if nr < (no_of_rows-1):
+                    if nr < (no_of_rows - 1):
                         ax.set_xticklabels([])
                     ax.set_yticklabels([])
                     continue
 
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
-                    print("Making plot (%d,%d,%d)" %
-                          (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
+                    print("Making plot (%d,%d,%d)" % (no_of_rows, no_of_cols,
+                                                      (nr * no_of_cols) + nc))
 
                 # Get plot for this panel
                 # ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
@@ -302,50 +340,96 @@ Input:
                     pr_true_val = params_true_vals[nr]
                     if pc_true_val != None:
                         ax.axvline(pc_true_val,
-                                   lw=0.5, ls='solid', color=rand_color)
+                                   lw=0.5,
+                                   ls='solid',
+                                   color=rand_color)
                     if pr_true_val != None:
                         ax.axhline(pr_true_val,
-                                   lw=0.5, ls='solid', color=rand_color)
+                                   lw=0.5,
+                                   ls='solid',
+                                   color=rand_color)
                     if pc_true_val != None and pr_true_val != None:
                         ax.plot([pc_true_val], [pr_true_val],
-                                's', color=rand_color)
+                                's',
+                                color=rand_color)
 
                 # Now plot what the user requested
                 # If user asks for scatter-point colors to be a 3rd dimension
                 if param_color in self.var_names:
-                    p1 = params_plot[nc]
-                    p2 = params_plot[nr]
-                    p1label = get_param_label(p1)
-                    p2label = get_param_label(p2)
-                    cblabel = get_param_label(param_color)
-                    if verbose:
-                        print("Scatter plot w color: %s vs %s vs %s" %
-                              (p1, p2, param_color))
-                    _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
-                                    alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
-                                    vmin=color_min, vmax=color_max, cmap=cmap,
-                                    label=label)
+                    if plot_type == 'scatter':
+                        p1 = params_plot[nc]
+                        p2 = params_plot[nr]
+                        p1label = get_param_label(p1)
+                        p2label = get_param_label(p2)
+                        cblabel = get_param_label(param_color)
+                        if verbose:
+                            print("Scatter plot w color: %s vs %s vs %s" %
+                                  (p1, p2, param_color))
+                        _d1, _d2 = self.sliced(p1).data(), self.sliced(
+                            p2).data()
+                        im = ax.scatter(_d1,
+                                        _d2,
+                                        c=self.sliced(param_color).data(),
+                                        alpha=scatter_alpha,
+                                        edgecolors=None,
+                                        linewidths=0,
+                                        vmin=color_min,
+                                        vmax=color_max,
+                                        cmap=cmap,
+                                        label=label)
 
-                    token_cb_ax = (im, ax)
+                        token_cb_ax = (im, ax)
 
-                    if nr == (no_of_rows-1):
-                        ax.set_xlabel(p1label)
-                    if nc == 0:
-                        ax.set_ylabel(p2label)
-                    # set X/Y axis limits
-                    if plim_low is not None and plim_high is not None:
-                        ax.set_xlim(plim_low[nc], plim_high[nc])
-                        ax.set_ylim(plim_low[nr], plim_high[nr])
-                    else:
-                        ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
-                        ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-                    ax.legend(loc='best', fontsize=legend_fontsize)
-                    ax.grid()
+                        if nr == (no_of_rows - 1):
+                            ax.set_xlabel(p1label)
+                        if nc == 0:
+                            ax.set_ylabel(p2label)
+                        # set X/Y axis limits
+                        if plim_low is not None and plim_high is not None:
+                            ax.set_xlim(plim_low[nc], plim_high[nc])
+                            ax.set_ylim(plim_low[nr], plim_high[nr])
+                        else:
+                            ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
+                            ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
+                        ax.legend(loc='best', fontsize=legend_fontsize)
+                        ax.grid()
+                    elif 'contour' in plot_type:
+                        p1 = params_plot[nc]
+                        p2 = params_plot[nr]
+                        p1label = get_param_label(p1)
+                        p2label = get_param_label(p2)
+                        cblabel = get_param_label(param_color)
+
+                        _d1 = self.sliced(p1).data()
+                        _d2 = self.sliced(p2).data()
+                        _d3 = self.sliced(param_color).data()
+
+                        token_cb_ax = make_filled_contour_plot(
+                            _d1,
+                            _d2,
+                            _d3,
+                            ax=ax,
+                            interp_func='griddata',
+                            interp_func_args=contour_args,
+                            add_colorbar=False)
+
+                        if nr == (no_of_rows - 1):
+                            ax.set_xlabel(p1label)
+                        if nc == 0:
+                            ax.set_ylabel(p2label)
+                        # set X/Y axis limits
+                        if plim_low is not None and plim_high is not None:
+                            ax.set_xlim(plim_low[nc], plim_high[nc])
+                            ax.set_ylim(plim_low[nr], plim_high[nr])
+                        else:
+                            ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
+                            ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
+
+                        ax.legend(loc='best', fontsize=legend_fontsize)
+
                 elif param_color is not None:
-                    raise IOError(
-                        "Could not find parameter %s to show" % param_color)
+                    raise IOError("Could not find parameter %s to show" %
+                                  param_color)
                 # If user asks for scatter plot without 3rd Dimension info
                 elif plot_type == 'scatter':
                     p1 = params_plot[nc]
@@ -355,11 +439,14 @@ Input:
                     if verbose:
                         print("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=rand_color,
+                    im = ax.scatter(_d1,
+                                    _d2,
+                                    c=rand_color,
                                     alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
+                                    edgecolors=None,
+                                    linewidths=0,
                                     label=label)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -387,42 +474,51 @@ Input:
                         print(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
-                    zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
-                               for lev in contour_levels]
-                    x11vals = np.linspace(
-                        dd[:, 0].min(), dd[:, 0].max(), npixels)
-                    x12vals = np.linspace(
-                        dd[:, 1].min(), dd[:, 1].max(), npixels)
+                    zlevels = [
+                        np.percentile(pdf(dd.T), 100.0 - lev)
+                        for lev in contour_levels
+                    ]
+                    x11vals = np.linspace(dd[:, 0].min(), dd[:, 0].max(),
+                                          npixels)
+                    x12vals = np.linspace(dd[:, 1].min(), dd[:, 1].max(),
+                                          npixels)
                     q, w = np.meshgrid(x11vals, x12vals)
                     r1 = pdf([q.flatten(), w.flatten()])
                     r1.shape = q.shape
                     # Draw contours
-                    im = ax.contour(x11vals, x12vals, r1, zlevels,
-                                    colors=[rand_color],
-                                    linestyles=contour_lstyles[:len(
-                                        contour_levels)],
-                                    label=label)
+                    im = ax.contour(
+                        x11vals,
+                        x12vals,
+                        r1,
+                        zlevels,
+                        colors=[rand_color],
+                        linestyles=contour_lstyles[:len(contour_levels)],
+                        label=label)
 
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
                             print("Computing area inside contours.")
-                        contour_areas[p1+p2] = []
+                        contour_areas[p1 + p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
                             # Add areas inside all independent contours, in case
                             # there are multiple disconnected ones
-                            contour_areas[p1+p2].append(
-                                np.sum([area_inside_contour(vs.vertices)
-                                        for vs in contour.get_paths()]))
+                            contour_areas[p1 + p2].append(
+                                np.sum([
+                                    area_inside_contour(vs.vertices)
+                                    for vs in contour.get_paths()
+                                ]))
                             if verbose:
                                 print("Total area = %.9f, %.9f" %
-                                      (contour_areas[p1+p2][-1]))
+                                      (contour_areas[p1 + p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    print("sub-area %d: %.8e" %
-                                          (_i, area_inside_contour(vs.vertices)))
-                        contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
+                                    print(
+                                        "sub-area %d: %.8e" %
+                                        (_i, area_inside_contour(vs.vertices)))
+                        contour_areas[p1 + p2] = np.array(contour_areas[p1 +
+                                                                        p2])
 
                     ####
                     # BEAUTIFY contour labeling..!
@@ -430,11 +526,12 @@ Input:
                     # a certain way. This remove trailing zero so '1.0' becomes '1'
                     class nf(float):
                         def __repr__(self):
-                            str = '%.1f' % (self.__float__(),)
+                            str = '%.1f' % (self.__float__(), )
                             if str[-1] == '0':
                                 return '%.0f' % self.__float__()
                             else:
                                 return '%.1f' % self.__float__()
+
                     # Recast levels to new class
                     im.levels = [nf(val) for val in contour_levels]
                     # Label levels with specially formatted floats
@@ -445,22 +542,26 @@ Input:
                     ####
                     if label_contours:
                         if contour_labels_inline:
-                            ax.clabel(im, im.levels,
+                            ax.clabel(im,
+                                      im.levels,
                                       inline=False,
                                       use_clabeltext=True,
-                                      fmt=fmt, fontsize=10)
+                                      fmt=fmt,
+                                      fontsize=10)
                         else:
                             for zdx, _ in enumerate(zlevels):
-                                _ = ax.plot([], [], color=rand_color,
-                                            ls=contour_lstyles[:len(
-                                                contour_levels)][zdx],
-                                            label=im.levels[zdx])
+                                _ = ax.plot(
+                                    [], [],
+                                    color=rand_color,
+                                    ls=contour_lstyles[:len(contour_levels)]
+                                    [zdx],
+                                    label=im.levels[zdx])
                             ax.legend(loc=contour_labels_loc,
                                       fontsize=legend_fontsize)
                     else:
                         pass
                     #
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
