@@ -51,7 +51,7 @@ Priors:
 -------
 
     '''
-    if np.any(coeffs < -10.) or np.any(coeffs > 10.):
+    if np.any(coeffs < -30.) or np.any(coeffs > 30.):
         if verbose:
             logging.info(
                 "Rejecting coeffs={} from prior for coeffs".format(coeffs))
