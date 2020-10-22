@@ -98,8 +98,7 @@ dimension
             params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
             fig=None,  # CAN PLOT ON EXISTING FIGURE
             axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
-            # Histogram type (bar / step / barstacked)
-        histogram_type='bar',
+            histogram_type='bar',  # Histogram type (bar / step / barstacked)
             nhbins=30,  # NO OF BINS IN HISTOGRAMS
             projection='rectilinear',
             label='',  # LABEL THAT GOES ON EACH PANEL
