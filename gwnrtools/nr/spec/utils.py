@@ -71,10 +71,11 @@ Can deal only with lines indexed in 4 or fewer digits
     return col, full_key
 
 
-def ParseHeaderForSpECTabularOutputASCII(filename,
-                                         first_column_is_global=True,  # First column is time
-                                         separate_quantities_from_subdomains=True,
-                                         verbose=False):
+def ParseHeaderForSpECTabularOutputASCII(
+        filename,
+        first_column_is_global=True,  # First column is time
+        separate_quantities_from_subdomains=True,
+        verbose=False):
     """
 Parses the header of a SpEC subdomain-by-subdomain output file that
 outputs the same quantitiy separately for each subdomain. Subdomains
@@ -124,7 +125,8 @@ This function returns the following:
                         _header_key)
                     if _header_quantity not in list(header_quantities.keys()):
                         header_quantities[_header_quantity] = {}
-                    header_quantities[_header_quantity][_header_sdname] = _header_col
+                    header_quantities[_header_quantity][
+                        _header_sdname] = _header_col
                 else:
                     header_quantities[_header_key] = _header_col
                 idx += 1
@@ -143,16 +145,17 @@ def ReadH5DatasetWithLegend(tdset, downsample_by=1):
     return retval
 
 
-def GetSegmentDirectories(DIR, LEV, use_non_standard_segments=False,
+def GetSegmentDirectories(DIR,
+                          LEV,
+                          use_non_standard_segments=False,
                           non_standard_prefix='./',
                           verbose=False):
     if use_non_standard_segments:
-        return GetNonStandardSegmentDirectories(DIR, LEV,
-                                                non_standard_prefix=non_standard_prefix,
-                                                verbose=verbose)
+        return GetNonStandardSegmentDirectories(
+            DIR, LEV, non_standard_prefix=non_standard_prefix, verbose=verbose)
     inspiral_dirs = sorted(glob.glob(os.path.join(DIR, 'Lev%d_??/') % LEV))
-    ringdown_dirs = sorted(glob.glob(os.path.join(
-        DIR, 'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
+    ringdown_dirs = sorted(
+        glob.glob(os.path.join(DIR, 'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
     if len(ringdown_dirs) >= 1:
         inspiral_dirs.extend(ringdown_dirs)
     if verbose:
@@ -167,19 +170,25 @@ def GetSegmentLettersFromName(NAME):
     return retval
 
 
-def GetNonStandardSegmentDirectories(DIR, LEV,
-                                     non_standard_prefix='LATE_RINGDOWN_START_SEGMENTS/',
-                                     verbose=False, debug=False):
+def GetNonStandardSegmentDirectories(
+        DIR,
+        LEV,
+        non_standard_prefix='LATE_RINGDOWN_START_SEGMENTS/',
+        verbose=False,
+        debug=False):
     # {{{
     standard_inspiral_dirs = sorted(
         glob.glob(os.path.join(DIR, 'Lev%d_??/') % LEV))
     standard_ringdown_dirs = sorted(
         glob.glob(os.path.join(DIR, 'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
     ##
-    inspiral_dirs = sorted(glob.glob(os.path.join(
-        DIR, non_standard_prefix+'Lev%d_??/') % LEV))
-    ringdown_dirs = sorted(glob.glob(os.path.join(
-        DIR, non_standard_prefix+'Lev%d_Ringdown/Lev%d_??/' % (LEV, LEV))))
+    inspiral_dirs = sorted(
+        glob.glob(os.path.join(DIR, non_standard_prefix + 'Lev%d_??/') % LEV))
+    ringdown_dirs = sorted(
+        glob.glob(
+            os.path.join(
+                DIR, non_standard_prefix + 'Lev%d_Ringdown/Lev%d_??/' %
+                (LEV, LEV))))
     ##
     if debug:
         for kk in standard_inspiral_dirs:
@@ -250,10 +259,13 @@ directory. Returns combined data in a numpy.array.
 """)
 
 
-def ReadSpECTabularOutputFromASCII(DIR, LEV, FILE,
+def ReadSpECTabularOutputFromASCII(DIR,
+                                   LEV,
+                                   FILE,
                                    use_non_standard_segments=False,
                                    non_standard_prefix='./',
-                                   verbose=False, debug=False):
+                                   verbose=False,
+                                   debug=False):
     """
   Read in SpEC's .dat or .txt (ASCII) output files from all available
   segments and combine them. Provide file name with respect to Lev?_??/
@@ -263,16 +275,18 @@ def ReadSpECTabularOutputFromASCII(DIR, LEV, FILE,
     if not os.path.exists(DIR):
         raise IOError("%s does not exist" % DIR)
     #
-    inspiral_dirs = GetSegmentDirectories(DIR, LEV,
-                                          use_non_standard_segments=use_non_standard_segments,
-                                          non_standard_prefix=non_standard_prefix,
-                                          verbose=verbose)
+    inspiral_dirs = GetSegmentDirectories(
+        DIR,
+        LEV,
+        use_non_standard_segments=use_non_standard_segments,
+        non_standard_prefix=non_standard_prefix,
+        verbose=verbose)
     #
     MAX_NROW = 20000
     MAX_NROW_DELTA = 10000
     MAX_NCOL = 200
     data = np.zeros([MAX_NROW, MAX_NCOL])
-    NROW = 0        # Running counter
+    NROW = 0  # Running counter
     NCOL = MAX_NCOL  # NCOL is fixed
     #
     get_NCOL = True
@@ -311,7 +325,7 @@ def ReadSpECTabularOutputFromASCII(DIR, LEV, FILE,
             data[NROW, :ncol] = _data[:ncol]
             NROW += 1
         else:
-            data[NROW:NROW+nrow, :ncol] = _data[:, :ncol]
+            data[NROW:NROW + nrow, :ncol] = _data[:, :ncol]
             NROW += nrow
     #
     return data[:NROW, :NCOL]
@@ -336,10 +350,14 @@ but not between 1000-1500M and then again from 1500-\infty M.
 """)
 
 
-def ReadSpECTabularOutputWithColsFromASCII(DIR, LEV, FILE, downsample_by=1,
+def ReadSpECTabularOutputWithColsFromASCII(DIR,
+                                           LEV,
+                                           FILE,
+                                           downsample_by=1,
                                            use_non_standard_segments=False,
                                            non_standard_prefix='./',
-                                           verbose=False, debug=False):
+                                           verbose=False,
+                                           debug=False):
     """
   Reads in data from SpEC output files that contains variables written
    **subdomain-by-subdomain**.  The same variable needs to be stored in separate
@@ -358,10 +376,12 @@ def ReadSpECTabularOutputWithColsFromASCII(DIR, LEV, FILE, downsample_by=1,
     if not os.path.exists(DIR):
         raise IOError("%s does not exist" % DIR)
     #
-    inspiral_dirs = GetSegmentDirectories(DIR, LEV,
-                                          use_non_standard_segments=use_non_standard_segments,
-                                          non_standard_prefix=non_standard_prefix,
-                                          verbose=verbose)
+    inspiral_dirs = GetSegmentDirectories(
+        DIR,
+        LEV,
+        use_non_standard_segments=use_non_standard_segments,
+        non_standard_prefix=non_standard_prefix,
+        verbose=verbose)
     data = {}
     #
     for idx, _dir in enumerate(inspiral_dirs):
@@ -375,7 +395,7 @@ def ReadSpECTabularOutputWithColsFromASCII(DIR, LEV, FILE, downsample_by=1,
         #
         # Read in data
         _data = np.loadtxt(filename)
-        if np.shape(_data) == (0,):
+        if np.shape(_data) == (0, ):
             if debug:
                 print("No data found for %s" % filename)
             continue
@@ -390,7 +410,9 @@ def ReadSpECTabularOutputWithColsFromASCII(DIR, LEV, FILE, downsample_by=1,
                 col_num = header_quantities[qty][sdn]
                 try:
                     tmpd = np.array(
-                        list(zip(_data[::downsample_by, 0], _data[::downsample_by, col_num])))
+                        list(
+                            zip(_data[::downsample_by, 0],
+                                _data[::downsample_by, col_num])))
                 except:
                     tmpd = np.array([[_data[0], _data[col_num]]])
                 #
@@ -423,11 +445,14 @@ Note 2: SEE SIMILAR FUNCTION ReadSpECTabularOutputFromASCII.
   """)
 
 
-def ReadSpECGlobalOutputWithColsFromASCII(DIR, LEV, FILE,
+def ReadSpECGlobalOutputWithColsFromASCII(DIR,
+                                          LEV,
+                                          FILE,
                                           downsample_by=1,
                                           use_non_standard_segments=False,
                                           non_standard_prefix='./',
-                                          verbose=False, debug=False):
+                                          verbose=False,
+                                          debug=False):
     """
   Reads in data from SpEC output files that contains global variables
   dumped as a function of time.
@@ -447,10 +472,12 @@ def ReadSpECGlobalOutputWithColsFromASCII(DIR, LEV, FILE,
     if not os.path.exists(DIR):
         raise IOError("%s does not exist" % DIR)
     #
-    inspiral_dirs = GetSegmentDirectories(DIR, LEV,
-                                          use_non_standard_segments=use_non_standard_segments,
-                                          non_standard_prefix=non_standard_prefix,
-                                          verbose=verbose)
+    inspiral_dirs = GetSegmentDirectories(
+        DIR,
+        LEV,
+        use_non_standard_segments=use_non_standard_segments,
+        non_standard_prefix=non_standard_prefix,
+        verbose=verbose)
     data = {}
     #
     for idx, _dir in enumerate(inspiral_dirs):
@@ -464,19 +491,21 @@ def ReadSpECGlobalOutputWithColsFromASCII(DIR, LEV, FILE,
         #
         # Read in data
         _data = np.loadtxt(filename)
-        if np.shape(_data) == (0,):
+        if np.shape(_data) == (0, ):
             if debug:
                 print("No data found for %s" % filename)
             continue
-        _, header_quantities = ParseHeaderForSpECTabularOutputASCII(filename,
-                                                                    separate_quantities_from_subdomains=False)
+        _, header_quantities = ParseHeaderForSpECTabularOutputASCII(
+            filename, separate_quantities_from_subdomains=False)
         #
         # Now, parse columns as per column header strings
         for jdx, qty in enumerate(header_quantities):
             col_num = header_quantities[qty]
             try:
                 tmpd = np.array(
-                    list(zip(_data[::downsample_by, 0], _data[::downsample_by, col_num])))
+                    list(
+                        zip(_data[::downsample_by, 0], _data[::downsample_by,
+                                                             col_num])))
             except:
                 tmpd = np.array([[_data[0], _data[col_num]]])
             #
@@ -494,11 +523,12 @@ Get the time at which ringdown segments are started for a given simulation.
 Inputs needed are the main run directory (path to "Ev"), and Lev number (int)
     """
     if not os.path.exists(os.path.join(DIR, 'Lev%s_Ringdown/' % LEV)):
-        print("  Warning: Run in %s has NOT STARTED RINGDOWN AT LEV%d" % (DIR, LEV))
+        print("  Warning: Run in %s has NOT STARTED RINGDOWN AT LEV%d" %
+              (DIR, LEV))
         return -1
-    filename = os.path.join(DIR,
-                            'Lev%s_Ringdown/Lev%d_AA/Run/ConstraintNorms/GhCe_Norms.dat' %
-                            (LEV, LEV))
+    filename = os.path.join(
+        DIR, 'Lev%s_Ringdown/Lev%d_AA/Run/ConstraintNorms/GhCe_Norms.dat' %
+        (LEV, LEV))
     if not os.path.exists(filename):
         print("PATH %s does not exist" % filename)
         raise IOError("Could not determine ringdown start time")
@@ -514,12 +544,13 @@ def GetSpECAhCAppearanceTime(DIR, LEV):
 Get the time at which ringdown segments are started for a given simulation.
 Inputs needed are the main run directory (path to "Ev"), and Lev number (int)
     """
-    ahc_glob = glob.glob(os.path.join(DIR,
-                                      "Lev%d_??/Run/ForContinuation/AhC.dat" % LEV))
+    ahc_glob = glob.glob(
+        os.path.join(DIR, "Lev%d_??/Run/ForContinuation/AhC.dat" % LEV))
     ahc_glob = sorted(ahc_glob)
     if len(ahc_glob) == 0:
         print(
-            "  Warning: AhC as not been found even once @ Run IN %s AT LEV%d" % (DIR, LEV))
+            "  Warning: AhC as not been found even once @ Run IN %s AT LEV%d" %
+            (DIR, LEV))
         return -1
     ahc_file = ahc_glob[0]
     if not os.path.exists(ahc_file):
@@ -633,11 +664,13 @@ NOTE: First input needed is the dictionary output has to be appended to.
     """)
 
 
-def ReadH5Dir(out_dict, in_dir,
+def ReadH5Dir(out_dict,
+              in_dir,
               downsample_by=1,
               read_dirs_matching_0level='',
               read_dirs_matching_alllevels='',
-              verbose=False, debug=False):
+              verbose=False,
+              debug=False):
     """
 Read HDF5 files completely, recursively. Returns a dictionary with structure
 of input HDF5 file preserved.
@@ -658,9 +691,11 @@ NOTE: First input needed is the dictionary output has to be appended to.
                 print("Reading directory: ", kk)
             if kk not in list(retval.keys()):
                 retval[kk] = {}
-            retval[kk] = ReadH5Dir(retval[kk], in_dir[kk],
-                                   read_dirs_matching_0level=read_dirs_matching_alllevels,
-                                   verbose=debug)
+            retval[kk] = ReadH5Dir(
+                retval[kk],
+                in_dir[kk],
+                read_dirs_matching_0level=read_dirs_matching_alllevels,
+                verbose=debug)
         elif type(in_dir[kk]) == h5py._hl.dataset.Dataset:
             if kk not in list(retval.keys()):
                 if verbose:
@@ -671,14 +706,15 @@ NOTE: First input needed is the dictionary output has to be appended to.
                 if verbose:
                     print("Appending dataset: ", kk)
                 # TO CHANGE DATATYPE TO PANDAS, CHANGE THE FOLLOWING
-                _data = ReadH5DatasetWithLegend(
-                    in_dir[kk], downsample_by=downsample_by)
+                _data = ReadH5DatasetWithLegend(in_dir[kk],
+                                                downsample_by=downsample_by)
                 for col_num, col_name in enumerate(_data.keys()):
                     if col_name not in list(retval[kk].keys()):
                         retval[kk][col_name] = _data[col_name]
                     else:
-                        retval[kk][col_name] = np.append(
-                            retval[kk][col_name], _data[col_name], axis=0)
+                        retval[kk][col_name] = np.append(retval[kk][col_name],
+                                                         _data[col_name],
+                                                         axis=0)
     return retval
     # }}}
 
@@ -699,13 +735,16 @@ but not between 1000-1500M and then again from 1500-\infty M.
     """)
 
 
-def ReadSpECTabularOutputWithColsFromH5(DIR, LEV, FILE,
+def ReadSpECTabularOutputWithColsFromH5(DIR,
+                                        LEV,
+                                        FILE,
                                         downsample_by=1,
                                         read_dirs_matching_0level='',
                                         read_dirs_matching_alllevels='',
                                         use_non_standard_segments=False,
                                         non_standard_prefix='./',
-                                        verbose=False, debug=False):
+                                        verbose=False,
+                                        debug=False):
     """
 Reads in SpEC output stored in HDF5 format. The structure of HDF5 file is
 preserved in output dictionary. And output from different segments is combined.
@@ -722,10 +761,12 @@ but not between 1000-1500M and then again from 1500-\infty M.
     if not os.path.exists(DIR):
         raise IOError("%s does not exist" % DIR)
     #
-    inspiral_dirs = GetSegmentDirectories(DIR, LEV,
-                                          use_non_standard_segments=use_non_standard_segments,
-                                          non_standard_prefix=non_standard_prefix,
-                                          verbose=verbose)
+    inspiral_dirs = GetSegmentDirectories(
+        DIR,
+        LEV,
+        use_non_standard_segments=use_non_standard_segments,
+        non_standard_prefix=non_standard_prefix,
+        verbose=verbose)
     data = {}
     #
     for idx, _dir in enumerate(inspiral_dirs):
@@ -738,11 +779,13 @@ but not between 1000-1500M and then again from 1500-\infty M.
             print("READING %s" % filename)
         # Read in data
         fin = h5py.File(filename, 'r')
-        data = ReadH5Dir(data, fin,
-                         downsample_by=downsample_by,
-                         read_dirs_matching_0level=read_dirs_matching_0level,
-                         read_dirs_matching_alllevels=read_dirs_matching_alllevels,
-                         verbose=debug)
+        data = ReadH5Dir(
+            data,
+            fin,
+            downsample_by=downsample_by,
+            read_dirs_matching_0level=read_dirs_matching_0level,
+            read_dirs_matching_alllevels=read_dirs_matching_alllevels,
+            verbose=debug)
         fin.close()
     return data
     # }}}
@@ -764,11 +807,14 @@ op_func   : (function) It takes in all {Q_i} together and maps
     """)
 
 
-def DummyMin(vals, sds): return np.min(vals)
+def DummyMin(vals, sds):
+    return np.min(vals)
 
 
-def GetOpOfQuantityOverDomain(data_dict, op_func=DummyMin,
-                              verbose=True, debug=False):
+def GetOpOfQuantityOverDomain(data_dict,
+                              op_func=DummyMin,
+                              verbose=True,
+                              debug=False):
     """
 Wrapper function that takes in a dataset that contains some quantity
 Q_i == Q_i(t) over each subdomain, as a function of time; and maps them all

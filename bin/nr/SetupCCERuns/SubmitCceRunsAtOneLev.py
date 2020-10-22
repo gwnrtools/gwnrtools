@@ -5,7 +5,6 @@ import sys
 import os
 import ccerun
 
-
 if sys.argv[1] == '-h':
     print("""\
 ######################################################

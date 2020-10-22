@@ -14,7 +14,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 #
 # =============================================================================
 #
@@ -39,7 +38,6 @@ except BaseException:
 
 imp.reload(CC)
 
-
 if sys.argv[1] == '-h':
     print("""\
 ######################################################
@@ -57,7 +55,6 @@ if sys.argv[1] == '-h':
 """)
     exit()
 
-
 #datadir = '/prayush/NR/CCE_2/SKS_d16.6-q3-sA_0_0_-0.6_sB_0_0_-0.4/'
 #outdir = datadir
 levdirs = ['Lev5']
@@ -68,7 +65,6 @@ levdirs = sys.argv[3:]
 if not isinstance(levdirs, list):
     levdirs = [levdirs]
 
-
 # Initialize container class for each Lev of the simulation
 crun = {}
 for ld in levdirs:
@@ -77,11 +73,12 @@ for ld in levdirs:
     datafile = cmd.getoutput('/bin/ls %s/ | grep .h5 | grep CceR' % ld_outdir)
     #
     print(ld_datadir, "\n", ld_outdir, "\n", datafile)
-    crun[ld] = CC.cce_run(datafile=datafile, datadir=ld_datadir,
+    crun[ld] = CC.cce_run(datafile=datafile,
+                          datadir=ld_datadir,
                           pittnull=os.path.join(ld_datadir, datafile),
                           outdir=ld_outdir,
-                          post_process_only=True, verbose=True)
-
+                          post_process_only=True,
+                          verbose=True)
 
 # Combine different segments of CCE
 for ld in levdirs:

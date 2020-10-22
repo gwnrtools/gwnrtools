@@ -522,7 +522,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         # ENSURE DATA SHAPE, EXTRACT DIMENSION
         if verbose:
-            logging.info("Initializing MultiDDistribution object..")
+            logging.info("..initializing MultiDDistribution object")
         data = np.array(data)
         # if np.shape(data)[0] < np.shape(data)[1]:
         #    logging.info "WARNING: FEWER ROWS than COLUMNS, assuming its a row-wise distribution"
@@ -533,7 +533,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         # PROCESS 1-D SLICES (assuming independently sampled variables)
         if verbose:
-            logging.info("PROCESSING 1-D SLICES ..")
+            logging.info("...processing 1-D slices")
         self.slices = [
             OneDDistribution(self.sliced(i), kernel_cut=oneD_kernel_cut)
             for i in range(self.dim)
@@ -541,7 +541,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         # UPPER AND LOWER LIMITS IN 1-D SLICES
         if verbose:
-            logging.info("COMPUTING /LOWER AND UPPER LIMITS IN EACH DIMENSION")
+            logging.info("...computing limits in each dimension")
         if xlimits:
             self.xllimit, self.xulimit = xlimits
         else:

@@ -45,7 +45,6 @@ def rmfile(filename):
 
 class Merger(pycbc.catalog.Merger):
     """Informaton about a specific compact binary merger"""
-
     def __init__(self, name, source='gwtc-1', **kwargs):
         super(Merger, self).__init__(name, source, **kwargs)
         self.psd_url = get_psd_url(source, name)
@@ -69,15 +68,17 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
+                .format(sample_rate))
 
         return self.data['files'][ifo][length][sampling]['GWF']
 
     def frame_data_name(self, ifo, duration, sample_rate):
         """ Get the name of frame data file using pycbc.catalog API
         """
-        return self.frame_data_url(
-            ifo, duration=duration, sample_rate=sample_rate).split('/')[-1]
+        return self.frame_data_url(ifo,
+                                   duration=duration,
+                                   sample_rate=sample_rate).split('/')[-1]
 
     def fetch_data(self, ifo, duration=32, sample_rate=4096, save_dir=''):
         """ Download strain file around the event
@@ -111,13 +112,16 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
+                .format(sample_rate))
 
-        url = self.frame_data_url(
-            ifo, duration=duration, sample_rate=sample_rate)
+        url = self.frame_data_url(ifo,
+                                  duration=duration,
+                                  sample_rate=sample_rate)
         filename = download_file(url, cache=False)
-        local_filename = self.frame_data_name(
-            ifo, duration=duration, sample_rate=sample_rate)
+        local_filename = self.frame_data_name(ifo,
+                                              duration=duration,
+                                              sample_rate=sample_rate)
 
         if save_dir != '.' and save_dir != '':
             mkdir(save_dir)
@@ -141,7 +145,8 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
+                .format(sample_rate))
         return "{}:GWOSC-{}_R1_STRAIN".format(ifo, sampling.upper())
 
     def psd_file_name(self, ifo):
@@ -205,7 +210,8 @@ class Merger(pycbc.catalog.Merger):
             numpy.savetxt(local_filename,
                           numpy.column_stack([
                               resampled_psd.sample_frequencies,
-                              resampled_psd.data]),
+                              resampled_psd.data
+                          ]),
                           fmt='%.12e',
                           header='Frequency(Hz)  PSD')
 

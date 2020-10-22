@@ -3,7 +3,6 @@ Generate 2-D, bounded-kde contour plots and 1D histograms of the masses for all 
 
 """
 
-    
 from __future__ import division
 
 import numpy as np
@@ -21,7 +20,6 @@ from matplotlib import pyplot as plt
 from matplotlib.ticker import Formatter
 from matplotlib import patheffects as PathEffects
 
-
 from scipy.spatial import Delaunay
 
 #import seaborn as sns
@@ -31,18 +29,19 @@ sns.set_style('ticks')
 sns.set_context('talk')
 #sns.set_style({'font.family':'Times New Roman'})
 
+rc_params = {
+    'backend': 'ps',
+    'axes.labelsize': 15,
+    'axes.titlesize': 15,
+    'font.size': 13,
+    'legend.fontsize': 15,
+    'xtick.labelsize': 12,
+    'ytick.labelsize': 12,
+    #'text.usetex': True,
+    'font.family': 'Times New Roman'
+}  #,
+#'font.sans-serif': ['Bitstream Vera Sans']}#,
 
-rc_params = {'backend': 'ps',
-             'axes.labelsize': 15,
-             'axes.titlesize': 15,
-             'font.size': 13,
-             'legend.fontsize': 15,
-             'xtick.labelsize': 12,
-             'ytick.labelsize': 12,
-             #'text.usetex': True,
-             'font.family': 'Times New Roman'}#,
-             #'font.sans-serif': ['Bitstream Vera Sans']}#,
-             
 #matplotlib.rc('font', family='serif', serif='Times New Roman')
 plt.rcParams.update(rc_params)
 
@@ -60,23 +59,41 @@ plot_spindisk = False
 # Define model colors (IMRPhenom, EOBNR)
 colors = ["steelblue", "firebrick"]
 
+
 class DegreeFormatter(Formatter):
     def __call__(self, x, pos=None):
         return r"${:3.0f}^{{\circ}}$".format(x)
+
 
 def ms2q(pts):
     pts = np.atleast_2d(pts)
 
     m1 = pts[:, 0]
     m2 = pts[:, 1]
-    mc = np.power(m1 * m2, 3./5.) * np.power(m1 + m2, -1./5.)
-    q = m2/m1
+    mc = np.power(m1 * m2, 3. / 5.) * np.power(m1 + m2, -1. / 5.)
+    q = m2 / m1
     return np.column_stack([mc, q])
 
-def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=None, xhigh=None, ylow=None, yhigh=None, transform=None,
-                shade=False, vertical=False,
-                bw="scott", gridsize=500, cut=3, clip=None, legend=True,
-                shade_lowest=True, ax=None, **kwargs):
+
+def plot_bounded_2d_kde(data,
+                        data2=None,
+                        contour_data=None,
+                        levels=None,
+                        xlow=None,
+                        xhigh=None,
+                        ylow=None,
+                        yhigh=None,
+                        transform=None,
+                        shade=False,
+                        vertical=False,
+                        bw="scott",
+                        gridsize=500,
+                        cut=3,
+                        clip=None,
+                        legend=True,
+                        shade_lowest=True,
+                        ax=None,
+                        **kwargs):
 
     if ax is None:
         ax = plt.gca()
@@ -100,7 +117,7 @@ def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=N
         bivariate = True
         x = data
         y = data2
-    if bivariate==False:
+    if bivariate == False:
         raise TypeError("Bounded 2D KDE are only available for"
                         "bivariate distributions.")
     else:
@@ -135,11 +152,10 @@ def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=N
             # inds = np.argsort(den)[::-1]
             # den = den[inds]
 
-            
             zvalues = np.empty(len(levels))
             for i, level in enumerate(levels):
-                ilevel = int(np.ceil(Nden*level))
-                ilevel = min(ilevel, Nden-1)
+                ilevel = int(np.ceil(Nden * level))
+                ilevel = min(ilevel, Nden - 1)
                 zvalues[i] = den[ilevel]
             zvalues.sort()
 
@@ -153,8 +169,6 @@ def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=N
         # positions = np.column_stack([xx.ravel(), yy.ravel()])
 
         # z = np.reshape(post_kde(transform(positions)), xx.shape)
-
-
 
         # Black (thin) contours with while outlines by default
         kwargs['linewidths'] = kwargs.get('linewidths', 1.)
@@ -187,14 +201,26 @@ def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=N
             # Add white outlines
             if kwargs['colors'] == 'k':
                 plt.setp(cset.collections,
-                         path_effects=[PathEffects.withStroke(linewidth=1.5, foreground="w")])
+                         path_effects=[
+                             PathEffects.withStroke(linewidth=1.5,
+                                                    foreground="w")
+                         ])
             fmt = {}
-            strs = ['{}%'.format(int(100*level)) for level in levels[::-1]]
+            strs = ['{}%'.format(int(100 * level)) for level in levels[::-1]]
             for l, s in zip(cset.levels, strs):
                 fmt[l] = s
 
-            plt.clabel(cset, cset.levels, fmt=fmt, fontsize=11, manual=False, **kwargs)
-            plt.setp(cset.labelTexts, color='k', path_effects=[PathEffects.withStroke(linewidth=1.5, foreground="w")])
+            plt.clabel(cset,
+                       cset.levels,
+                       fmt=fmt,
+                       fontsize=11,
+                       manual=False,
+                       **kwargs)
+            plt.setp(cset.labelTexts,
+                     color='k',
+                     path_effects=[
+                         PathEffects.withStroke(linewidth=1.5, foreground="w")
+                     ])
         else:
             cset = contour_func(xx, yy, z, n_levels, **kwargs)
 
@@ -216,10 +242,26 @@ def plot_bounded_2d_kde(data, data2=None, contour_data=None, levels=None, xlow=N
 
     return ax
 
-def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels=None, xlow=None, xhigh=None, ylow=None, yhigh=None, transform=None,
-                shade=False, vertical=False,
-                bw="scott", gridsize=500, cut=3, clip=None, legend=True,
-                shade_lowest=True, ax=None, **kwargs):
+
+def plot_bounded_2d_kde_otherevents(data,
+                                    data2=None,
+                                    contour_data=None,
+                                    levels=None,
+                                    xlow=None,
+                                    xhigh=None,
+                                    ylow=None,
+                                    yhigh=None,
+                                    transform=None,
+                                    shade=False,
+                                    vertical=False,
+                                    bw="scott",
+                                    gridsize=500,
+                                    cut=3,
+                                    clip=None,
+                                    legend=True,
+                                    shade_lowest=True,
+                                    ax=None,
+                                    **kwargs):
 
     if ax is None:
         ax = plt.gca()
@@ -244,7 +286,7 @@ def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels
         x = data
         y = data2
 
-    if bivariate==False:
+    if bivariate == False:
         raise TypeError("Bounded 2D KDE are only available for"
                         "bivariate distributions.")
     else:
@@ -281,8 +323,8 @@ def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels
 
             zvalues = np.empty(len(levels))
             for i, level in enumerate(levels):
-                ilevel = int(np.ceil(Nden*level))
-                ilevel = min(ilevel, Nden-1)
+                ilevel = int(np.ceil(Nden * level))
+                ilevel = min(ilevel, Nden - 1)
                 zvalues[i] = den[ilevel]
             zvalues.sort()
 
@@ -303,7 +345,7 @@ def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels
         # Plot the contours
         n_levels = kwargs.pop("n_levels", 10)
         # cmap = kwargs.get("cmap", None)
- 
+
         # if cmap is None:
         #     kwargs['colors'] = kwargs.get('colors', 'k')
         # if isinstance(cmap, string_types):
@@ -329,14 +371,26 @@ def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels
             # Add white outlines
             if kwargs['colors'] == 'k':
                 plt.setp(cset.collections,
-                         path_effects=[PathEffects.withStroke(linewidth=1.5, foreground="w")])
+                         path_effects=[
+                             PathEffects.withStroke(linewidth=1.5,
+                                                    foreground="w")
+                         ])
             fmt = {}
-            strs = ['{}%'.format(int(100*level)) for level in levels[::-1]]
+            strs = ['{}%'.format(int(100 * level)) for level in levels[::-1]]
             for l, s in zip(cset.levels, strs):
                 fmt[l] = s
 
-            plt.clabel(cset, cset.levels, fmt=fmt, fontsize=7, manual=False, **kwargs)
-            plt.setp(cset.labelTexts, color='k', path_effects=[PathEffects.withStroke(linewidth=1.5, foreground="w")])
+            plt.clabel(cset,
+                       cset.levels,
+                       fmt=fmt,
+                       fontsize=7,
+                       manual=False,
+                       **kwargs)
+            plt.setp(cset.labelTexts,
+                     color='k',
+                     path_effects=[
+                         PathEffects.withStroke(linewidth=1.5, foreground="w")
+                     ])
         else:
             cset = contour_func(xx, yy, z, n_levels, **kwargs)
 
@@ -358,6 +412,7 @@ def plot_bounded_2d_kde_otherevents(data, data2=None,contour_data = None, levels
 
     return ax
 
+
 def unpickle_contour_data(post_name):
     #infile = os.path.join('', 'folded_{}_contour_data.pkl'.format(post_name))
     infile = os.path.join('', '{}_contour_data.pkl'.format(post_name))
@@ -365,59 +420,108 @@ def unpickle_contour_data(post_name):
         cdata = pickle.load(inp)
     return cdata
 
+
 #xlim=None, ylim=None, cmap='Purples',
-def plot_2d_mass(params, pos_HL, cdata_HL, model_posts=None, labels=None,
-            xlim=None, ylim=None, cmap='Purples',
-            colors=colors, **kwargs):
+def plot_2d_mass(params,
+                 pos_HL,
+                 cdata_HL,
+                 model_posts=None,
+                 labels=None,
+                 xlim=None,
+                 ylim=None,
+                 cmap='Purples',
+                 colors=colors,
+                 **kwargs):
     """ **kwargs are passed to plot_bounded_2d_kde """
     if labels is None:
         labels = [None for p in params]
 
-
-    postHL_series = [pd.Series(pos_HL[p], name=label) for p, label in zip(params, labels)]
+    postHL_series = [
+        pd.Series(pos_HL[p], name=label) for p, label in zip(params, labels)
+    ]
     #postHLV_series = [pd.Series(pos_HLV[p], name=label) for p, label in zip(params, labels)]
     #postHLV_series = [pd.Series(pos_HLV[p], name=label) for p, label in zip(params, labels)]
 
     model_post_series = []
     if model_posts is not None:
         for p, label in zip(params, labels):
-            model_post_series.append([pd.Series(pos[p], name=label) for pos in model_posts])
+            model_post_series.append(
+                [pd.Series(pos[p], name=label) for pos in model_posts])
 
-    ratio=5
-    credible_interval=np.array([5, 95])
+    ratio = 5
+    credible_interval = np.array([5, 95])
     gs = plt.GridSpec(ratio + 1, ratio + 1)
 
-    g = sns.JointGrid(postHL_series[0], postHL_series[1], xlim=xlim, ylim=ylim, space=0, ratio=ratio) # Need to specify xlim and ylim?
-    g = g.plot_joint(plot_bounded_2d_kde, contour_data=cdata_HL, cmap=cmap, shade=True, shade_lowest=False, n_levels=30, **kwargs)
+    g = sns.JointGrid(postHL_series[0],
+                      postHL_series[1],
+                      xlim=xlim,
+                      ylim=ylim,
+                      space=0,
+                      ratio=ratio)  # Need to specify xlim and ylim?
+    g = g.plot_joint(plot_bounded_2d_kde,
+                     contour_data=cdata_HL,
+                     cmap=cmap,
+                     shade=True,
+                     shade_lowest=False,
+                     n_levels=30,
+                     **kwargs)
     #g = g.plot_joint(plot_bounded_2d_kde, contour_data=cdata_HL,colors='k', levels=[.5, .9], **kwargs)
-    plot_bounded_2d_kde_otherevents(postHL_series[0], postHL_series[1], cdata_HL, xlim=xlim, ylim=ylim, levels=[.5, .9], colors='k', gridsize=500, **kwargs)
+    plot_bounded_2d_kde_otherevents(postHL_series[0],
+                                    postHL_series[1],
+                                    cdata_HL,
+                                    xlim=xlim,
+                                    ylim=ylim,
+                                    levels=[.5, .9],
+                                    colors='k',
+                                    gridsize=500,
+                                    **kwargs)
 
-
-    n, _, _ = g.ax_marg_x.hist(postHL_series[0], color=".7", bins=50, histtype='stepfilled',linewidth=1.5,normed=True)
+    n, _, _ = g.ax_marg_x.hist(postHL_series[0],
+                               color=".7",
+                               bins=50,
+                               histtype='stepfilled',
+                               linewidth=1.5,
+                               normed=True)
     nmax = np.max(n)
 
-    n, _, _ = g.ax_marg_x.hist(postHL_series[0], color="k", bins=50, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
+    n, _, _ = g.ax_marg_x.hist(postHL_series[0],
+                               color="k",
+                               bins=50,
+                               histtype='step',
+                               linewidth=1.5,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
 
     # n, _, _ = g.ax_marg_x.hist(postHLV_series[0], color="seagreen", bins=50, histtype='step',linewidth=1,normed=True)
     # nmax = max(nmax,np.max(n))
-    
-    # n, _, _ = g.ax_marg_x.hist(postHLV_series[0], color="k", bins=30, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
 
-    
-    g.ax_marg_x.set_ylim(ymax=1.01*nmax)
+    # n, _, _ = g.ax_marg_x.hist(postHLV_series[0], color="k", bins=30, histtype='step',linewidth=1.5,normed=True)
+    nmax = max(nmax, np.max(n))
+
+    g.ax_marg_x.set_ylim(ymax=1.01 * nmax)
 
     qvalues = np.percentile(postHL_series[0], [5, 95])
     for q in qvalues:
         g.ax_marg_x.axvline(q, ls="dashed", color='k')
     g.ax_marg_x.set_position(gs[ratio, :-1].get_position(g.fig))
 
-    n, _, _  = g.ax_marg_y.hist(postHL_series[1], orientation='horizontal', color='0.7', bins=30, histtype='stepfilled',linewidth=1.5,normed=True)
+    n, _, _ = g.ax_marg_y.hist(postHL_series[1],
+                               orientation='horizontal',
+                               color='0.7',
+                               bins=30,
+                               histtype='stepfilled',
+                               linewidth=1.5,
+                               normed=True)
     nmax = np.max(n)
 
-    n, _, _  = g.ax_marg_y.hist(postHL_series[1], orientation='horizontal', color='k', bins=30, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
+    n, _, _ = g.ax_marg_y.hist(postHL_series[1],
+                               orientation='horizontal',
+                               color='k',
+                               bins=30,
+                               histtype='step',
+                               linewidth=1.5,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
 
     # n, _, _  = g.ax_marg_y.hist(postHLV_series[1], orientation='horizontal', color='seagreen', bins=30, histtype='step',linewidth=1,normed=True)
     # nmax = max(nmax,np.max(n))
@@ -425,7 +529,7 @@ def plot_2d_mass(params, pos_HL, cdata_HL, model_posts=None, labels=None,
     # n, _, _  = g.ax_marg_y.hist(postHLV_series[1], orientation='horizontal', color="k", bins=30, histtype='step',linewidth=1.5,normed=True)
     # nmax = np.max(n)
 
-    g.ax_marg_y.set_xlim(xmax=1.01*nmax)
+    g.ax_marg_y.set_xlim(xmax=1.01 * nmax)
 
     qvalues = np.percentile(postHL_series[1], [5, 95])
     for q in qvalues:
@@ -434,67 +538,131 @@ def plot_2d_mass(params, pos_HL, cdata_HL, model_posts=None, labels=None,
 
     return g
 
-def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels=None,
-            xlim=None, ylim=None, cmap='Purples',
-            colors=colors, **kwargs):
+
+def plot_2d_chieff(params,
+                   pos_HL,
+                   pos_prior,
+                   cdata_HL,
+                   model_posts=None,
+                   labels=None,
+                   xlim=None,
+                   ylim=None,
+                   cmap='Purples',
+                   colors=colors,
+                   **kwargs):
     """ **kwargs are passed to plot_bounded_2d_kde """
     if labels is None:
         labels = [None for p in params]
 
-
-    postHL_series = [pd.Series(pos_HL[p], name=label) for p, label in zip(params, labels)]
-    postprior_series = [pd.Series(pos_prior[p], name=label) for p, label in zip(params, labels)]
+    postHL_series = [
+        pd.Series(pos_HL[p], name=label) for p, label in zip(params, labels)
+    ]
+    postprior_series = [
+        pd.Series(pos_prior[p], name=label)
+        for p, label in zip(params, labels)
+    ]
     #postHLV_series = [pd.Series(pos_HLV[p], name=label) for p, label in zip(params, labels)]
 
     model_post_series = []
     if model_posts is not None:
         for p, label in zip(params, labels):
-            model_post_series.append([pd.Series(pos[p], name=label) for pos in model_posts])
+            model_post_series.append(
+                [pd.Series(pos[p], name=label) for pos in model_posts])
 
-    ratio=5
-    credible_interval=np.array([5, 95])
+    ratio = 5
+    credible_interval = np.array([5, 95])
     gs = plt.GridSpec(ratio + 1, ratio + 1)
 
-    g = sns.JointGrid(postHL_series[0], postHL_series[1], xlim=xlim, ylim=ylim, space=0, ratio=ratio) # Need to specify xlim and ylim?
-    g = g.plot_joint(plot_bounded_2d_kde, contour_data=cdata_HL, cmap=cmap, shade=True, shade_lowest=False, n_levels=30, **kwargs)
+    g = sns.JointGrid(postHL_series[0],
+                      postHL_series[1],
+                      xlim=xlim,
+                      ylim=ylim,
+                      space=0,
+                      ratio=ratio)  # Need to specify xlim and ylim?
+    g = g.plot_joint(plot_bounded_2d_kde,
+                     contour_data=cdata_HL,
+                     cmap=cmap,
+                     shade=True,
+                     shade_lowest=False,
+                     n_levels=30,
+                     **kwargs)
     #g = g.plot_joint(plot_bounded_2d_kde, contour_data=cdata_HL,colors='k', levels=[.5, .9], **kwargs)
-    
-    plot_bounded_2d_kde_otherevents(postHL_series[0], postHL_series[1], cdata_HL, xlim=xlim, ylim=ylim, levels=[.5, .9], colors='k', gridsize=500, **kwargs)
 
+    plot_bounded_2d_kde_otherevents(postHL_series[0],
+                                    postHL_series[1],
+                                    cdata_HL,
+                                    xlim=xlim,
+                                    ylim=ylim,
+                                    levels=[.5, .9],
+                                    colors='k',
+                                    gridsize=500,
+                                    **kwargs)
 
-    n, _, _ = g.ax_marg_x.hist(postHL_series[0], color=".7", bins=50, histtype='stepfilled',linewidth=1.5,normed=True)
+    n, _, _ = g.ax_marg_x.hist(postHL_series[0],
+                               color=".7",
+                               bins=50,
+                               histtype='stepfilled',
+                               linewidth=1.5,
+                               normed=True)
     nmax = np.max(n)
 
-    n, _, _ = g.ax_marg_x.hist(postHL_series[0], color="k", bins=50, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
+    n, _, _ = g.ax_marg_x.hist(postHL_series[0],
+                               color="k",
+                               bins=50,
+                               histtype='step',
+                               linewidth=1.5,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
 
-    n, _, _ = g.ax_marg_x.hist(postprior_series[0], color="seagreen", bins=50, histtype='step',linewidth=1,normed=True)
-    nmax = max(nmax,np.max(n))
-    
+    n, _, _ = g.ax_marg_x.hist(postprior_series[0],
+                               color="seagreen",
+                               bins=50,
+                               histtype='step',
+                               linewidth=1,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
+
     # n, _, _ = g.ax_marg_x.hist(postHLV_series[0], color="k", bins=30, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
+    nmax = max(nmax, np.max(n))
 
-    
-    g.ax_marg_x.set_ylim(ymax=1.01*nmax)
+    g.ax_marg_x.set_ylim(ymax=1.01 * nmax)
 
     qvalues = np.percentile(postHL_series[0], [5, 95])
     for q in qvalues:
         g.ax_marg_x.axvline(q, ls="dashed", color='k')
     g.ax_marg_x.set_position(gs[ratio, :-1].get_position(g.fig))
 
-    n, _, _  = g.ax_marg_y.hist(postHL_series[1], orientation='horizontal', color='0.7', bins=30, histtype='stepfilled',linewidth=1.5,normed=True)
+    n, _, _ = g.ax_marg_y.hist(postHL_series[1],
+                               orientation='horizontal',
+                               color='0.7',
+                               bins=30,
+                               histtype='stepfilled',
+                               linewidth=1.5,
+                               normed=True)
     nmax = np.max(n)
 
-    n, _, _  = g.ax_marg_y.hist(postHL_series[1], orientation='horizontal', color='k', bins=30, histtype='step',linewidth=1.5,normed=True)
-    nmax = max(nmax,np.max(n))
+    n, _, _ = g.ax_marg_y.hist(postHL_series[1],
+                               orientation='horizontal',
+                               color='k',
+                               bins=30,
+                               histtype='step',
+                               linewidth=1.5,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
 
-    n, _, _  = g.ax_marg_y.hist(postprior_series[1], orientation='horizontal', color='seagreen', bins=30, histtype='step',linewidth=1,normed=True)
-    nmax = max(nmax,np.max(n))
+    n, _, _ = g.ax_marg_y.hist(postprior_series[1],
+                               orientation='horizontal',
+                               color='seagreen',
+                               bins=30,
+                               histtype='step',
+                               linewidth=1,
+                               normed=True)
+    nmax = max(nmax, np.max(n))
 
     # n, _, _  = g.ax_marg_y.hist(postHLV_series[1], orientation='horizontal', color="k", bins=30, histtype='step',linewidth=1.5,normed=True)
     # nmax = np.max(n)
 
-    g.ax_marg_y.set_xlim(xmax=1.01*nmax)
+    g.ax_marg_y.set_xlim(xmax=1.01 * nmax)
 
     qvalues = np.percentile(postHL_series[1], [5, 95])
     for q in qvalues:
@@ -503,11 +671,11 @@ def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels
 
     return g
 
+
 ###########################################################################
 #Posterior Samples are in                                                 #
 # https://git.ligo.org/chris-pankow/lvc_pe_samples/tree/svn-migration     #
 ###########################################################################
-
 
 # pos_HL = np.genfromtxt('HL_posterior_samples.dat', names=True)
 # pos_HLV= np.genfromtxt('HLV_posterior_samples.dat', names=True)
@@ -544,7 +712,6 @@ def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels
 #     #     if pos_HLV['theta_jn'][i] > 90:
 #     #         pos_HLV['theta_jn'][i] = 180-pos_HLV['theta_jn'][i]
 
-
 #     cdata_HL = unpickle_contour_data('GW170814_HL_dist_inc')
 #     cdata_HLV = unpickle_contour_data('GW170814_HLV_dist_inc')
 
@@ -561,9 +728,6 @@ def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels
 #                                    plt.Line2D([0,0], [1,0], color="firebrick", linewidth=1.5)],
 #                                   ['HL','HLV'], loc='upper right', frameon=False)
 
-
-
-   
 #     g.ax_marg_x.axis('off')
 #     g.ax_marg_y.axis('off')
 
@@ -575,7 +739,6 @@ def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels
 
 #     sns.despine(fig=g.fig, trim=True)
 
-
 #     ax.arrow(190,317, 0, 355, lw=1, width=.002, color='firebrick',head_length=1,head_width=0.1)
 #     ax.arrow(200,343, 0, 526, lw=1, width=.002, color='k',head_width=01,head_length=0.1)
 
@@ -583,7 +746,6 @@ def plot_2d_chieff(params, pos_HL, pos_prior, cdata_HL, model_posts=None, labels
 #     plt.plot((200,200),(869,869), 'k', marker='^',markersize=5)
 #     plt.plot((190,190),(317,317), 'firebrick', marker='v',markersize=5)
 #     plt.plot((190,190),(672,672), 'firebrick', marker='^',markersize=5)
-
 
 #     g.fig.savefig('distance-thetajn.pdf', bbox_inches='tight', bbox_extra_artists=[])
 #     g.fig.savefig('distance-thetajn.png', bbox_inches='tight', bbox_extra_artists=[], dpi=600)
@@ -594,18 +756,19 @@ if plot_m1m2:
     #               "secondary mass $(\mathrm{M}_\odot)$"]
     # else:
 
-    pos_HL= np.genfromtxt('GW170814_HLV_combined_Prod-1and7-HLVClean_equaISnumbers_addedFMS.dat', names=True)
+    pos_HL = np.genfromtxt(
+        'GW170814_HLV_combined_Prod-1and7-HLVClean_equaISnumbers_addedFMS.dat',
+        names=True)
 
     np.random.shuffle(pos_HL)
-        
-    labels = ["$m_{1} (\mathrm{M}_\odot)$",
-                  "$m_{2} (\mathrm{M}_\odot)$"]
-        #labels = ["a","b"]
+
+    labels = ["$m_{1} (\mathrm{M}_\odot)$", "$m_{2} (\mathrm{M}_\odot)$"]
+    #labels = ["a","b"]
 
     # xlim=(-40, 120)
     # ylim=(-100, 1300)
-    xlim=(15, 45.)
-    ylim=(15, 35.)
+    xlim = (15, 45.)
+    ylim = (15, 35.)
 
     # pos_HL['theta_jn'] *=  180./np.pi
     # pos_HLV['theta_jn'] *=  180./np.pi
@@ -617,14 +780,20 @@ if plot_m1m2:
     #     if pos_HLV['theta_jn'][i] > 90:
     #         pos_HLV['theta_jn'][i] = 180-pos_HLV['theta_jn'][i]
 
-
     cdata_HL = unpickle_contour_data('GW170814_equal_m1_m2')
     # cdata_1 = unpickle_contour_data('GW170104_m1_m2')
     # cdata_2 = unpickle_contour_data('GW150914_m1_m2')
     # cdata_3 = unpickle_contour_data('GW151226_m1_m2')
     # cdata_4 = unpickle_contour_data('LVT151012_m1_m2')
 
-    g = plot_2d_mass(['m1_source', 'm2_source'], pos_HL, cdata_HL, xlim=xlim, ylim=ylim, labels=labels, transform=ms2q, yhigh=1.)
+    g = plot_2d_mass(['m1_source', 'm2_source'],
+                     pos_HL,
+                     cdata_HL,
+                     xlim=xlim,
+                     ylim=ylim,
+                     labels=labels,
+                     transform=ms2q,
+                     yhigh=1.)
 
     # if annotate:
     #     x = np.linspace(xlim[0], xlim[1], 100)
@@ -637,20 +806,16 @@ if plot_m1m2:
     #                                plt.Line2D([0,0], [1,0], color="firebrick", linewidth=1.5)],
     #                               ['HL','HLV'], loc='upper right', frameon=False)
 
-
-   
     g.ax_marg_x.axis('off')
     g.ax_marg_y.axis('off')
 
     ax = g.ax_joint
     #ax.xaxis.set_major_formatter(DegreeFormatter())
-    ax.set_yticks([15, 20., 25., 30,35])
-    ax.set_xticks([15, 20., 25., 30,35,40,45])
+    ax.set_yticks([15, 20., 25., 30, 35])
+    ax.set_xticks([15, 20., 25., 30, 35, 40, 45])
     # ax.set_xticks([0., 30., 60., 90,120,150,180])
 
     sns.despine(fig=g.fig, trim=True)
-
-
 
     # label_locs = {'GW150914':(43, 26),
     #               'LVT151012':(48, 8.5),
@@ -670,8 +835,10 @@ if plot_m1m2:
     # g.ax_joint.contour(m1,m2,mchirp,[21.2237407784], colors='black', linestyles='dashed',linewidth=0.5)
 
     g.fig.savefig('m1_m2.pdf', bbox_inches='tight', bbox_extra_artists=[])
-    g.fig.savefig('m1_m2.png', bbox_inches='tight', bbox_extra_artists=[], dpi=600)
-
+    g.fig.savefig('m1_m2.png',
+                  bbox_inches='tight',
+                  bbox_extra_artists=[],
+                  dpi=600)
 
 if plot_effspin:
     # if annotate:
@@ -679,19 +846,19 @@ if plot_effspin:
     #               "secondary mass $(\mathrm{M}_\odot)$"]
     # else:
 
-    pos_HL= np.genfromtxt('IMR.dat', names=True)
-    pos_prior= np.genfromtxt('prior.dat', names=True)
+    pos_HL = np.genfromtxt('IMR.dat', names=True)
+    pos_prior = np.genfromtxt('prior.dat', names=True)
 
     np.random.shuffle(pos_HL)
     np.random.shuffle(pos_prior)
-        
+
     labels = ['$\chi_\mathrm{p}$', '$\chi_\mathrm{eff}$']
-        #labels = ["a","b"]
+    #labels = ["a","b"]
 
     # xlim=(-40, 120)
     # ylim=(-100, 1300)
-    xlim=(-0.4,1.1)
-    ylim=(-1.1,1.1)
+    xlim = (-0.4, 1.1)
+    ylim = (-1.1, 1.1)
 
     # pos_HL['theta_jn'] *=  180./np.pi
     # pos_HLV['theta_jn'] *=  180./np.pi
@@ -703,11 +870,18 @@ if plot_effspin:
     #     if pos_HLV['theta_jn'][i] > 90:
     #         pos_HLV['theta_jn'][i] = 180-pos_HLV['theta_jn'][i]
 
-
     cdata_HL = unpickle_contour_data('GW170814_IMR_chieff_chip')
     #cdata_HLV = unpickle_contour_data('GW170814_HLV_m1_m2')
 
-    g = plot_2d_chieff(['chi_p', 'chi_eff'], pos_HL, pos_prior, cdata_HL, xlim=xlim, ylim=ylim, labels=labels, transform=ms2q, yhigh=1.)
+    g = plot_2d_chieff(['chi_p', 'chi_eff'],
+                       pos_HL,
+                       pos_prior,
+                       cdata_HL,
+                       xlim=xlim,
+                       ylim=ylim,
+                       labels=labels,
+                       transform=ms2q,
+                       yhigh=1.)
 
     # if annotate:
     #     x = np.linspace(xlim[0], xlim[1], 100)
@@ -719,11 +893,13 @@ if plot_effspin:
     #    g.fig.get_axes()[0].legend([plt.Line2D([0,0], [1,0], color='k', linewidth=1.5),
     #                                plt.Line2D([0,0], [1,0], color="firebrick", linewidth=1.5)],
     #                               ['HL','HLV'], loc='upper right', frameon=False)
-    g.fig.get_axes()[0].legend([plt.Line2D([0,0], [1,0], color='k', linewidth=1.5),
-                                plt.Line2D([0,0], [1,0], color='seagreen',linewidth=1)],
-                                ['Posterior','Prior'], loc='upper right', frameon=False)
+    g.fig.get_axes()[0].legend([
+        plt.Line2D([0, 0], [1, 0], color='k', linewidth=1.5),
+        plt.Line2D([0, 0], [1, 0], color='seagreen', linewidth=1)
+    ], ['Posterior', 'Prior'],
+                               loc='upper right',
+                               frameon=False)
 
-   
     g.ax_marg_x.axis('off')
     g.ax_marg_y.axis('off')
 
@@ -738,8 +914,6 @@ if plot_effspin:
     ax.set_xticks([0, .25, .5, .75, 1])
 
     sns.despine(fig=g.fig, trim=True)
-
-
 
     # label_locs = {'GW150914':(43, 26),
     #               'LVT151012':(48, 8.5),
@@ -759,5 +933,7 @@ if plot_effspin:
     # g.ax_joint.contour(m1,m2,mchirp,[21.2237407784], colors='black', linestyles='dashed',linewidth=0.5)
 
     g.fig.savefig('chieff.pdf', bbox_inches='tight', bbox_extra_artists=[])
-    g.fig.savefig('chieff.png', bbox_inches='tight', bbox_extra_artists=[], dpi=600)
-
+    g.fig.savefig('chieff.png',
+                  bbox_inches='tight',
+                  bbox_extra_artists=[],
+                  dpi=600)

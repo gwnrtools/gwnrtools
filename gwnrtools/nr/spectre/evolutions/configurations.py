@@ -14,13 +14,11 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 '''
 Collections of configuration files for various 
 evolution systems as Python dictionaries for 
 their text and formatting
 '''
-
 
 __header__ = '''\
 # Distributed under the MIT License.
@@ -30,7 +28,6 @@ __header__ = '''\
 # Output files
 reduction_data_file_name = 'EvolutionReductions'
 volume_data_file_name = 'EvolutionVolume'
-
 
 input_files = {}
 input_files['bc_on_x_periodic_on_y'] = '''\
@@ -165,7 +162,6 @@ Observers:
   ReductionFileName: "{1:s}"
 '''.format(volume_data_file_name, reduction_data_file_name)
 
-
 #
 # Sample submission files for solvers with spectre
 # These are totally derived from:
@@ -174,13 +170,9 @@ Observers:
 # We start with a list of available clusters, and another
 # of the compilers we want to use. While we expect the first
 # list to change / grow, not so much for the second.
-__available_clusters__ = [
-    'Wheeler', 'Wheeler_unlimited'
-]
+__available_clusters__ = ['Wheeler', 'Wheeler_unlimited']
 
-__available_compilers__ = [
-    'gcc', 'clang'
-]
+__available_compilers__ = ['gcc', 'clang']
 
 # We initialize subnmission file hash tables to None
 __cluster_submission_files__ = {}

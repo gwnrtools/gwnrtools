@@ -37,12 +37,16 @@ def get_unique_hex_tag(N=1, num_digits=10):
     if N == 1:
         return '%0{}x'.format(num_digits) % random.randrange(16**num_digits)
     else:
-        return ['%0{}x'.format(num_digits) % random.randrange(16**num_digits)
-                for i in range(N)]
+        return [
+            '%0{}x'.format(num_digits) % random.randrange(16**num_digits)
+            for i in range(N)
+        ]
 
 
 def get_sim_hash(N=1, num_digits=10):
-    return ilwd.ilwdchar(":{}:0".format(get_unique_hex_tag(N=N, num_digits=num_digits)))
+    return ilwd.ilwdchar(":{}:0".format(
+        get_unique_hex_tag(N=N, num_digits=num_digits)))
+
 
 #############################
 
@@ -55,6 +59,7 @@ def get_uniform_mass_range(m_lower, m_upper, m_sep):
     mlist.append(m_upper)
     return np.array(mlist)
     # }}}
+
 
 #############################
 
@@ -81,7 +86,9 @@ def outside_mchirp_window(bank, sim, w):
 
 def outside_tau0_window(bank, sim, window, f_lower):
     b_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(getattr(bank, 'mass1'),
-                                                 getattr(bank, 'mass2'), f_lower)
+                                                 getattr(bank, 'mass2'),
+                                                 f_lower)
     s_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(getattr(sim, 'mass1'),
-                                                 getattr(sim, 'mass2'), f_lower)
+                                                 getattr(sim, 'mass2'),
+                                                 f_lower)
     return abs(b_tau0 - s_tau0) > window

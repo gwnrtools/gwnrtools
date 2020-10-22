@@ -20,7 +20,6 @@
 #
 # =============================================================================
 #
-
 """Utilities for various actions on PSD measured from data"""
 
 import numpy
@@ -28,9 +27,13 @@ import scipy
 from pycbc.types import FrequencySeries
 
 
-def resample_and_extrapolate_psd(freq_vals, psd_vals, delta_f, f_max,
-                                 precision=None,
-                                 interpolation_func=scipy.interpolate.interp1d):
+def resample_and_extrapolate_psd(
+        freq_vals,
+        psd_vals,
+        delta_f,
+        f_max,
+        precision=None,
+        interpolation_func=scipy.interpolate.interp1d):
     """Resamples given psd(f) data to a uniform grid with spacing
     equal to delta_f provided. Also extrapolates the same to
     f = 0 if data is not given below some physically measurable
@@ -57,14 +60,15 @@ def resample_and_extrapolate_psd(freq_vals, psd_vals, delta_f, f_max,
 
     n = int(numpy.round(f_max / delta_f))
     interpolated_psd = FrequencySeries(numpy.zeros(n),
-                                       delta_f=delta_f, dtype=precision)
+                                       delta_f=delta_f,
+                                       dtype=precision)
     interpolated_freq_vals = numpy.array(interpolated_psd.sample_frequencies)
 
     # Assume monotonic freq_vals
     data_f_min = freq_vals[0]
     data_f_max = freq_vals[-1]
-    data_f_mask = (interpolated_freq_vals >= data_f_min) & (
-        interpolated_freq_vals <= data_f_max)
+    data_f_mask = (interpolated_freq_vals >=
+                   data_f_min) & (interpolated_freq_vals <= data_f_max)
     interpolated_psd.data[data_f_mask] = psd_interp(
         interpolated_freq_vals[data_f_mask])
 

@@ -31,29 +31,29 @@ def JOfOmegaNonSpinning(m, eta, om):
     """
     c.f. Eq.234 of Blanchet (2013) Living Review arxiv:1310.1528
     """
-    x = om ** (2./3.)
+    x = om**(2. / 3.)
     mu = eta * m
     J0 = mu * m / x**0.5
     J1 = (1.5 + eta / 6.0) * x
-    J2 = (27./8. - 19.*eta/8. + eta**2 / 24.) * x**2
-    J3 = (135./16. + (-6889./144. + 41./24. * np.pi**2) * eta + 31. * eta**2 / 24. +
-          7. * eta**3 / 1296.) * x**3
+    J2 = (27. / 8. - 19. * eta / 8. + eta**2 / 24.) * x**2
+    J3 = (135. / 16. + (-6889. / 144. + 41. / 24. * np.pi**2) * eta +
+          31. * eta**2 / 24. + 7. * eta**3 / 1296.) * x**3
     e4 = -123671. / 5760. + 9037. * np.pi**2 / 1536. + 1792. * np.log(2) / 15. +\
         896.*np.euler_gamma/15. + (-498449./3456. + 3157. * np.pi**2 / 576.) * eta +\
         301. * eta**2 / 1728. + 77. * eta**3 / 31104.
-    j4 = -5. * e4 / 7. + 64./35.
-    J4 = (2835./128. + eta*j4 - 64. * eta * np.log(x)/3.) * x**4
+    j4 = -5. * e4 / 7. + 64. / 35.
+    J4 = (2835. / 128. + eta * j4 - 64. * eta * np.log(x) / 3.) * x**4
     e5 = 0
-    j5 = -2. * e5 / 3. - 4988./945. - 656. * eta / 135.
-    J5 = (15309./256. + eta * j5 + (9976./105. +
-                                    1312.*eta/15.)*eta*np.log(x)) * x**5
-    return J0 * (1. + J1 + J2 + J3 + J4 + J5*0)
+    j5 = -2. * e5 / 3. - 4988. / 945. - 656. * eta / 135.
+    J5 = (15309. / 256. + eta * j5 +
+          (9976. / 105. + 1312. * eta / 15.) * eta * np.log(x)) * x**5
+    return J0 * (1. + J1 + J2 + J3 + J4 + J5 * 0)
 
 
 def InnerProductVectors(v1, v2):
     sm = 0
     for tv1, tv2 in zip(v1, v2):
-        sm += tv1*tv2
+        sm += tv1 * tv2
     v1_norm = np.sum(v1**2)**0.5
     v2_norm = np.sum(v2**2)**0.5
     sm /= v1_norm

@@ -58,9 +58,7 @@ verbose = False
 ######################################################################
 class nr_mode():
     # {{{
-    def __init__(self, mode_data,
-                 delta_t=1.0,
-                 verbose=0):
+    def __init__(self, mode_data, delta_t=1.0, verbose=0):
         """
 Container for a single NR mode.
 
@@ -85,7 +83,9 @@ Returns mode frequency as a numpy.FLOAT64 array
         r, c = np.shape(mode_data)
         if c > r:
             if verbose > 1:
-                print("Transposing input mode array, r={}, c={} before.".format(r, c))
+                print(
+                    "Transposing input mode array, r={}, c={} before.".format(
+                        r, c))
             mode_data = np.transpose(mode_data)
 
         # Store time & mode samples
@@ -109,6 +109,7 @@ Returns mode frequency as a numpy.FLOAT64 array
         self.dimLess = True
         _ = self.resample(delta_t)
         return
+
     ##
 
     def resample(self, delta_t):
@@ -119,28 +120,32 @@ Takes in the new sampling time step, in units of total mass M
         """
         if delta_t != self.delta_t or not hasattr(self, "mode_array"):
             if verbose > 0:
-                print("Resampling mode data to sample rate: {} (1/M)".format(1./delta_t))
+                print("Resampling mode data to sample rate: {} (1/M)".format(
+                    1. / delta_t))
             self.delta_t = delta_t
-            t_array = np.arange(np.min(self.t_samples),
-                                np.max(self.t_samples), delta_t)
+            t_array = np.arange(np.min(self.t_samples), np.max(self.t_samples),
+                                delta_t)
             mode_array = self.mode_real_interp(
                 t_array) + self.mode_imag_interp(t_array) * 1.0j
-            self.mode_array = TimeSeries(
-                mode_array, delta_t=delta_t, copy=True)
+            self.mode_array = TimeSeries(mode_array,
+                                         delta_t=delta_t,
+                                         copy=True)
             find_max_start = len(self.mode_array) * 4 / 5
             max_idx = find_max_start + \
                 self.mode_array[find_max_start:].abs_max_loc()[-1]
             if self.verbose > 1:
                 print("\t\tMax of mode found at index: {}".format(max_idx))
             # Set epoch of mode to place amplitude peak at t=0
-            self.mode_array = TimeSeries(self.mode_array,
-                                         epoch=lal.LIGOTimeGPS(
-                                             -1.*self.mode_array.sample_times[max_idx]),
-                                         copy=True)
+            self.mode_array = TimeSeries(
+                self.mode_array,
+                epoch=lal.LIGOTimeGPS(-1. *
+                                      self.mode_array.sample_times[max_idx]),
+                copy=True)
         self.dimLess = True
         self.totalmass = None
         self.distance = None
         return self
+
     ##
 
     def resample_to_Hz(self, delta_t, total_mass, distance=1.0e6):
@@ -160,20 +165,28 @@ Takes in the total mass M (in units of solar masses)
             self.mode_array = TimeSeries(self.mode_array * ampl_scaling,
                                          delta_t=delta_t,
                                          epoch=lal.LIGOTimeGPS(
-                                             float(self.mode_array._epoch) * time_scaling),
+                                             float(self.mode_array._epoch) *
+                                             time_scaling),
                                          copy=True)
             self.totalmass = total_mass
             self.distance = distance
             self.delta_t = delta_t
         else:
             if self.verbose > 1:
-                print("\tNo need to resample, as delta_t, total_mass and distance are same as before.")
+                print(
+                    "\tNo need to resample, as delta_t, total_mass and distance are same as before."
+                )
         self.dimLess = False
         if self.verbose > 2:
-            print("WARNING: After resampling to Hz, make sure to resample before using dimensionless units")
+            print(
+                "WARNING: After resampling to Hz, make sure to resample before using dimensionless units"
+            )
         return self
+
     ##
-    def data(self): return self.mode_array
+    def data(self):
+        return self.mode_array
+
     ##
 
     def amplitude(self, startIdx=0, stopIdx=-1):
@@ -183,8 +196,8 @@ Return the amplitude TimeSeries of the mode
         return TimeSeries(np.abs(self.mode_array[startIdx:stopIdx]),
                           delta_t=self.mode_array.delta_t,
                           epoch=self.mode_array._epoch,
-                          copy=True
-                          )
+                          copy=True)
+
     ##
 
     def phase(self, startIdx=0, stopIdx=-1):
@@ -193,19 +206,23 @@ Return the phase TimeSeries of the mode
         """
         re_array = self.mode_array.real()[startIdx:stopIdx]
         im_array = self.mode_array.imag()[startIdx:stopIdx]
-        ph_array = phase_from_polarizations(re_array, -1*im_array)
-        return TimeSeries(ph_array,
-                          delta_t=self.mode_array.delta_t,
-                          epoch=self.mode_array._epoch,  # FIXME: BUG HERE IF USING PART OF ARRAY?
-                          copy=True
-                          )
+        ph_array = phase_from_polarizations(re_array, -1 * im_array)
+        return TimeSeries(
+            ph_array,
+            delta_t=self.mode_array.delta_t,
+            epoch=self.mode_array.
+            _epoch,  # FIXME: BUG HERE IF USING PART OF ARRAY?
+            copy=True)
+
     ##
 
     def angular_velocity(self, startIdx=0, stopIdx=-1):
         """
 Return the angular velocity TimeSeries of the mode, in units (radians per time Unit)
         """
-        return (2. * np.pi) * self.frequency(startIdx=startIdx, stopIdx=stopIdx)
+        return (2. * np.pi) * self.frequency(startIdx=startIdx,
+                                             stopIdx=stopIdx)
+
     ##
 
     def frequency(self, startIdx=0, stopIdx=-1):
@@ -213,14 +230,14 @@ Return the angular velocity TimeSeries of the mode, in units (radians per time U
 Return the frequency TimeSeries of the mode, in units (cycles per time Unit)
         """
         _phase = self.phase(startIdx=startIdx, stopIdx=stopIdx)
-        phase_deriv_interp = InterpolatedUnivariateSpline(_phase.sample_times,
-                                                          _phase.data).derivative(n=1)
+        phase_deriv_interp = InterpolatedUnivariateSpline(
+            _phase.sample_times, _phase.data).derivative(n=1)
         _frequency = phase_deriv_interp(_phase.sample_times) / 2. / np.pi
         return TimeSeries(_frequency,
                           delta_t=_phase.delta_t,
                           epoch=_phase._epoch,
-                          copy=True
-                          )
+                          copy=True)
+
     ##
 
     def data_duration_in_time(self):
@@ -235,4 +252,5 @@ Return the frequency TimeSeries of the mode, in units (cycles per time Unit)
     def data_duration(self):
         x, y = self.data_duration_in_time()
         return y - x
+
     # }}}

@@ -3,7 +3,6 @@
 # Copyright (c) 2018, Prayush Kumar
 # See LICENSE file for details: <https://github.com/prayush/gwnrtools/blob/master/LICENSE>
 
-
 import time
 import os
 import sys
@@ -42,13 +41,12 @@ def new_row(tabletype):
         return lsctables.SimInspiral()
     raise IOError("Input table type neither Sim or Sngl Inspiral")
 
+
 ### option parsing ###
 
-
-parser = OptionParser(
-    version=git_version.verbose_msg,
-    usage="%prog [OPTIONS]",
-    description="""\
+parser = OptionParser(version=git_version.verbose_msg,
+                      usage="%prog [OPTIONS]",
+                      description="""\
     Takes in a Sim or Sngl InspiralTable file. Copies over all the columns to 
     a new file of the opposite table type. The columns which are not copyable,
     are printed out to the user. 
@@ -59,19 +57,25 @@ parser = OptionParser(
     flaky at best.
     """)
 
-
-parser.add_option("-x", "--input-catalog",
-                  help="Names of the xml file to append the information to", type=str, default=None)
+parser.add_option("-x",
+                  "--input-catalog",
+                  help="Names of the xml file to append the information to",
+                  type=str,
+                  default=None)
 parser.add_option("-t", "--output-catalog", help='output file name')
 
-parser.add_option("-V", "--verbose", action="store_true",
-                  help="print extra debugging information", default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv_frame_files = parser.parse_args()
 
 if options.input_catalog is not None:
     indoc = ligolw_utils.load_filename(options.input_catalog,
-                                       contenthandler=LIGOLWContentHandler, verbose=options.verbose)
+                                       contenthandler=LIGOLWContentHandler,
+                                       verbose=options.verbose)
     #
     try:
         input_table = lsctables.SnglInspiralTable.get_table(indoc)
@@ -83,7 +87,9 @@ if options.input_catalog is not None:
     # print tabletype
     length = len(input_table)
 else:
-    print("Waning: No input table given to append to, will construct one from scratch")
+    print(
+        "Waning: No input table given to append to, will construct one from scratch"
+    )
     inputtabletype = lsctables.SimInspiralTable
     #raise IOError("Please give a table to add the information about NR waveforms to.")
 
@@ -109,13 +115,15 @@ outcols = list(oslots.intersection(tslots))
 uncopiedcols = list(tslots - oslots)
 
 if options.verbose:
-    print("##### The followings columns ARE NOT copied over: ####\n", file=sys.stdout)
+    print("##### The followings columns ARE NOT copied over: ####\n",
+          file=sys.stdout)
     print(uncopiedcols, file=sys.stdout)
     print("\n\n", file=sys.stdout)
     sys.stdout.flush()
 
 if options.verbose:
-    print("##### The followings columns ARE copied over: ####\n", file=sys.stdout)
+    print("##### The followings columns ARE copied over: ####\n",
+          file=sys.stdout)
     print(outcols, file=sys.stdout)
     print("\n\n", file=sys.stdout)
     sys.stdout.flush()
@@ -123,11 +131,14 @@ if options.verbose:
 # create a blank xml document and add the process id
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, ifos=[
-                                                "G1"],
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    ifos=["G1"],
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 # Create output table
 if outputtabletype == lsctables.SnglInspiralTable:
@@ -160,11 +171,9 @@ for idx, tmplt in enumerate(input_table):
     # Add the point to the output table
     out_table.append(newp)
 
-
 # write the xml doc to disk
 proctable = lsctables.ProcessTable.get_table(outdoc)
 proctable[0].end_time = gpstime.GpsSecondsFromPyUTC(time.time())
-
 
 outname = options.output_catalog
 if '.xml' not in outname:

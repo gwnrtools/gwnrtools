@@ -9,7 +9,6 @@ import sys
 import time
 _itime = time.time()
 
-
 sys.path.append('/home/prayush/src/nsbh_tidal/emcee_PE/src/')
 sys.path.append('/home/prayush/src/nsbh_tidal/emcee_PE/scripts/')
 sys.path.append('/home/prayush/src/UseNRinDA/Scripts/')
@@ -34,14 +33,22 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 ##################################################
 parser = OptionParser(
     usage="%prog [OPTIONS]",
-    description="Takes posterior_samples.dat from LI and adds (redshift, mass_source) columns.")
+    description=
+    "Takes posterior_samples.dat from LI and adds (redshift, mass_source) columns."
+)
 
-parser.add_option("-p", "--input-posterior", metavar='FILE',
+parser.add_option("-p",
+                  "--input-posterior",
+                  metavar='FILE',
                   help='posterior samples to process',
                   default='posterior_samples.dat')
-parser.add_option("-o", "--output-posterior", metavar='FILE',
+parser.add_option("-o",
+                  "--output-posterior",
+                  metavar='FILE',
                   help="Output file to be written")
-parser.add_option("-V", "--verbose", action="store_true",
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
                   help="print extra debugging information",
                   default=False)
 
@@ -59,6 +66,7 @@ def AddRedshiftAndSourceFrameParamsToPosterior(in_file, out_file):
     Headers, Data = \
         LU.get_header_data_from_posterior_samples_file(
             in_file, no_of_samples=-1)
+
     ##
 
     def AppendQuantityToPosterior(Data, Headers, newQ, newQName):
@@ -69,11 +77,12 @@ def AddRedshiftAndSourceFrameParamsToPosterior(in_file, out_file):
         if options.verbose:
             print("New Data, shape: ", np.shape(Data))
         return Data, Headers
+
     # redshift
     d_array = Data[:, LU.get_param_idx('dist', Headers)]
     z_array = CU.calculate_redshift(d_array)
-    Data, Headers = AppendQuantityToPosterior(
-        Data, Headers, z_array, 'redshift')
+    Data, Headers = AppendQuantityToPosterior(Data, Headers, z_array,
+                                              'redshift')
     # Append source frame mass parameters
     for param in ['m1', 'm2', 'mc', 'mtotal', 'mf']:
         if options.verbose:

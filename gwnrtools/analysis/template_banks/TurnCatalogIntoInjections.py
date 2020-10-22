@@ -29,7 +29,8 @@ class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
 MAX_NR_LENGTH = 100000
 
 
-def nextpow2(x): return int(2**np.ceil(np.log2(x)))
+def nextpow2(x):
+    return int(2**np.ceil(np.log2(x)))
 
 
 def add_strings(strlist, fill=None):
@@ -87,20 +88,23 @@ def get_data_from_metadatafile(fin):
     #
     sys.stdout.flush()
     sys.stderr.flush()
-    chi1x = np.float64(chi1line.split()[-3][:-1])/m1**2
-    chi1y = np.float64(chi1line.split()[-2][:-1])/m1**2
-    chi1z = np.float64(chi1line.split()[-1])/m1**2
-    chi2x = np.float64(chi2line.split()[-3][:-1])/m2**2
-    chi2y = np.float64(chi2line.split()[-2][:-1])/m2**2
-    chi2z = np.float64(chi2line.split()[-1])/m2**2
+    chi1x = np.float64(chi1line.split()[-3][:-1]) / m1**2
+    chi1y = np.float64(chi1line.split()[-2][:-1]) / m1**2
+    chi1z = np.float64(chi1line.split()[-1]) / m1**2
+    chi2x = np.float64(chi2line.split()[-3][:-1]) / m2**2
+    chi2y = np.float64(chi2line.split()[-2][:-1]) / m2**2
+    chi2z = np.float64(chi2line.split()[-1]) / m2**2
     return [m1, m2, chi1x, chi1y, chi1z, chi2x, chi2y, chi2z, omega, trelax]
 
 
-def get_waveform_location(p, cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
-                          cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                          extrapolated_filename='rhOverM_Asymptotic_GeometricUnits.h5',
-                          finite_radii_filename='rh_FiniteRadii_CodeUnits.h5',
-                          wavetype='cce', allow_symlinks=True):
+def get_waveform_location(
+        p,
+        cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
+        cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+        extrapolated_filename='rhOverM_Asymptotic_GeometricUnits.h5',
+        finite_radii_filename='rh_FiniteRadii_CodeUnits.h5',
+        wavetype='cce',
+        allow_symlinks=True):
     if wavetype == 'cce':
         filename = cce_filename
     elif wavetype == 'extrapolated':
@@ -124,8 +128,8 @@ def get_waveform_location(p, cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
         print("Waveform found for %s at %s" % (tag, h22file), file=sys.stdout)
         return h22file
     elif allow_symlinks and os.path.islink(h22file):
-        print("Waveform SYMLINK found for %s at %s" %
-              (tag, h22file), file=sys.stdout)
+        print("Waveform SYMLINK found for %s at %s" % (tag, h22file),
+              file=sys.stdout)
         return h22file
     else:
         print("Waveform %s NOT found for %s" % (h22file, tag), file=sys.stdout)
@@ -141,37 +145,60 @@ parser = OptionParser(
     metadata for the simulation in it, for different Levs. Stores the tag and
     this information in an xml file.""")
 
-parser.add_option("--nr-input-dir", metavar='DIR', help='DEFUNCT: Main dir with nr sim',
-                  default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/')
+parser.add_option(
+    "--nr-input-dir",
+    metavar='DIR',
+    help='DEFUNCT: Main dir with nr sim',
+    default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/'
+)
 
 parser.add_option("--f-lower", type=float, help="Low f cutoff", default=15.)
-parser.add_option("--sample-rate", type=float,
-                  help="WF sample rate", default=4096)
-parser.add_option("--upper-mass-threshold", type=float,
-                  help="Upper limit for total mass sampling", default=150.)
+parser.add_option("--sample-rate",
+                  type=float,
+                  help="WF sample rate",
+                  default=4096)
+parser.add_option("--upper-mass-threshold",
+                  type=float,
+                  help="Upper limit for total mass sampling",
+                  default=150.)
 parser.add_option("--mass-sampling-step", type=float, help="dM", default=1.)
 
-parser.add_option("-x", "--input-catalog",
-                  help="Names of the xml file to append the information to", type=str, default=None)
+parser.add_option("-x",
+                  "--input-catalog",
+                  help="Names of the xml file to append the information to",
+                  type=str,
+                  default=None)
 parser.add_option("-t", "--output-catalog", help='output file name')
 
-parser.add_option("-F", "--force-file-exists", action="store_true",
-                  help="Only add injections if the NR data file exists", default=False)
+parser.add_option("-F",
+                  "--force-file-exists",
+                  action="store_true",
+                  help="Only add injections if the NR data file exists",
+                  default=False)
 
-parser.add_option("--transverse-spin-threshold", type=float,
-                  help="Magnitude of x,y spins below which they are set to 0", default=1.e-4)
+parser.add_option("--transverse-spin-threshold",
+                  type=float,
+                  help="Magnitude of x,y spins below which they are set to 0",
+                  default=1.e-4)
 
-parser.add_option("--zero-transverse-spins", action="store_true",
-                  help="if transverse spins are smaller than spin-threshold, set them to 0", default=True)
+parser.add_option(
+    "--zero-transverse-spins",
+    action="store_true",
+    help="if transverse spins are smaller than spin-threshold, set them to 0",
+    default=True)
 
-parser.add_option("-V", "--verbose", action="store_true",
-                  help="print extra debugging information", default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv_frame_files = parser.parse_args()
 
 if options.input_catalog is not None:
     indoc = ligolw_utils.load_filename(options.input_catalog,
-                                       contenthandler=LIGOLWContentHandler, verbose=options.verbose)
+                                       contenthandler=LIGOLWContentHandler,
+                                       verbose=options.verbose)
     #
     try:
         input_table = lsctables.SnglInspiralTable.get_table(indoc)
@@ -183,7 +210,9 @@ if options.input_catalog is not None:
     # print tabletype
     length = len(input_table)
 else:
-    print("Waning: No input table given to append to, will construct one from scratch")
+    print(
+        "Waning: No input table given to append to, will construct one from scratch"
+    )
     inputtabletype = lsctables.SimInspiralTable
     #raise IOError("Please give a table to add the information about NR waveforms to.")
 
@@ -191,16 +220,25 @@ else:
 # create a blank xml document and add the process id
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, ifos=[
-                                                "G1"],
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    ifos=["G1"],
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
-out_table = lsctables.New(inputtabletype, columns=['mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y', 'spin2z', 'inclination', 'polarization',
-                                                   'latitude', 'longitude', 'bandpass', 'alpha', 'alpha1', 'alpha2', 'process_id', 'waveform', 'numrel_data', 'numrel_mode_min', 'numrel_mode_max', 't_end_time', 'f_lower'])
+out_table = lsctables.New(
+    inputtabletype,
+    columns=[
+        'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y', 'spin1z',
+        'spin2x', 'spin2y', 'spin2z', 'inclination', 'polarization',
+        'latitude', 'longitude', 'bandpass', 'alpha', 'alpha1', 'alpha2',
+        'process_id', 'waveform', 'numrel_data', 'numrel_mode_min',
+        'numrel_mode_max', 't_end_time', 'f_lower'
+    ])
 outdoc.childNodes[0].appendChild(out_table)
-
 
 if options.input_catalog is not None:
     # Fill in the INPUT table
@@ -215,13 +253,18 @@ if options.input_catalog is not None:
         mLowMassCutoff = mw / np.pi / lal.MTSUN_SI / options.f_lower
         while True:
             total_mass = mLowMassCutoff
-            estimated_length_pow2 = nextpow2(
-                MAX_NR_LENGTH * total_mass * lal.MTSUN_SI)
-            nrwav = nr_wave(filename=point.numrel_data, modeLmax=2,
+            estimated_length_pow2 = nextpow2(MAX_NR_LENGTH * total_mass *
+                                             lal.MTSUN_SI)
+            nrwav = nr_wave(filename=point.numrel_data,
+                            modeLmax=2,
                             sample_rate=options.sample_rate,
                             time_length=estimated_length_pow2,
-                            totalmass=total_mass, inclination=0, phi=0,
-                            distance=1e6, ex_order=3, verbose=options.verbose)
+                            totalmass=total_mass,
+                            inclination=0,
+                            phi=0,
+                            distance=1e6,
+                            ex_order=3,
+                            verbose=options.verbose)
             m_lower = nrwav.get_lowest_binary_mass(1100, options.f_lower)
             if m_lower > mLowMassCutoff:
                 mLowMassCutoff = m_lower
@@ -234,11 +277,13 @@ if options.input_catalog is not None:
             # Check if NR wave can be rescaled to the lowest total mass
             if idx == 0:
                 if verbose:
-                    print(" .. scaling for lowest M to check ..", file=sys.stdout)
+                    print(" .. scaling for lowest M to check ..",
+                          file=sys.stdout)
                 try:
                     nrwav.rescale_to_totalmass(mass)
                 except IOError:
-                    print(" ... FAILED to GENERATE, moving on.. ", file=sys.stdout)
+                    print(" ... FAILED to GENERATE, moving on.. ",
+                          file=sys.stdout)
                     sys.stdout.flush()
                     continue
                 sys.stdout.flush()

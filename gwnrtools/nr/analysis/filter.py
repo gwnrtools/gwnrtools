@@ -26,7 +26,6 @@ from gwnrtools.utils.support import *
 from gwnrtools.waveform.condition import blend
 import sys
 
-
 from glue.ligolw import lsctables
 from glue.ligolw import ligolw
 import lal
@@ -38,8 +37,13 @@ class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
 
 
 #############################
-def overlaps_vs_totalmass(wav1, wav2, psd=None, mf_lower=-1.,
-                          m_lower=-1., m_upper=100., m_delta=5.):
+def overlaps_vs_totalmass(wav1,
+                          wav2,
+                          psd=None,
+                          mf_lower=-1.,
+                          m_lower=-1.,
+                          m_upper=100.,
+                          m_delta=5.):
     '''
 Need two wobjects of nr_waveform class.
 
@@ -72,10 +76,10 @@ Returns an array of total masses and overlaps.
     for mtot in mass_range:
         # wav1.rescale_to_totalmass( mtot )
         # wav2.rescale_to_totalmass( mtot )
-        wav_blended1 = blend(wav1, mtot, wav1.sample_rate,
-                             wav1.time_length, t_option)  # blending
-        wav_blended2 = blend(wav2, mtot, wav1.sample_rate,
-                             wav1.time_length, t_option)  # blending
+        wav_blended1 = blend(wav1, mtot, wav1.sample_rate, wav1.time_length,
+                             t_option)  # blending
+        wav_blended2 = blend(wav2, mtot, wav1.sample_rate, wav1.time_length,
+                             t_option)  # blending
         if len(wav_blended1) != len(wav_blended2):
             raise RuntimeError(
                 "blending function return different sets of waveforms!!")
@@ -90,10 +94,14 @@ Returns an array of total masses and overlaps.
     # }}}
 
 
-def calculate_mismatch_between_levs_hdf5(self,
-                                         wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                                         outdir='matches', outputfile='OverlapsLevs.h5', catalogfile=None,
-                                         m_upper=100., m_delta=5.):
+def calculate_mismatch_between_levs_hdf5(
+        self,
+        wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+        outdir='matches',
+        outputfile='OverlapsLevs.h5',
+        catalogfile=None,
+        m_upper=100.,
+        m_delta=5.):
     # {{{
     cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
     fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
@@ -126,11 +134,14 @@ def calculate_mismatch_between_levs_hdf5(self,
                     fout.create_group(ccef)
                 # Compute matches
                 if self.verbose:
-                    print("\n\nOverlaps for %s Between %s and %s" % (ccef, ld1, ld2),
+                    print("\n\nOverlaps for %s Between %s and %s" %
+                          (ccef, ld1, ld2),
                           file=sys.stderr)
                 overlaps = overlaps_vs_totalmass(self.hwaveforms[ld1][ccef],
-                                                 self.hwaveforms[ld2][ccef], psd=self.psd,
-                                                 m_upper=m_upper, m_delta=m_delta)
+                                                 self.hwaveforms[ld2][ccef],
+                                                 psd=self.psd,
+                                                 m_upper=m_upper,
+                                                 m_delta=m_delta)
                 # Add matches and masses as a dataset to the group
                 dsetname = ld1 + '_' + ld2 + '.dat'
                 fout[ccef].create_dataset(dsetname, data=overlaps)

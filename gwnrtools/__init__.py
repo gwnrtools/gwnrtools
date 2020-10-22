@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """
 gwnrtools is a toolkit for gravitational-wave physics
 """
@@ -28,9 +27,8 @@ from gwnrtools.utils import *
 
 def get_version_information():
     import os
-    version_file = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "gwnrtools/.version"
-    )
+    version_file = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                                "gwnrtools/.version")
     try:
         with open(version_file, "r") as f:
             return f.readline().rstrip()

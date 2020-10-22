@@ -48,7 +48,6 @@ class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
 __itime__ = time.time()
 verbose = False
 
-
 ################################################################################
 ################################################################################
 ### Constants Definitions ###
@@ -56,13 +55,19 @@ verbose = False
 ################################################################################
 MAX_NR_LENGTH = 10000
 
-EPS_Params = {'eta': 1.e-7,
-              'spin1x': 1.e-7, 'spin1y': 1.e-7, 'spin1z': 1.e-7,
-              'spin2x': 1.e-7, 'spin2y': 1.e-7, 'spin2z': 1.e-7
-              }
+EPS_Params = {
+    'eta': 1.e-7,
+    'spin1x': 1.e-7,
+    'spin1y': 1.e-7,
+    'spin1z': 1.e-7,
+    'spin2x': 1.e-7,
+    'spin2y': 1.e-7,
+    'spin2z': 1.e-7
+}
 EPS_Default = 1.e-7
-params_tested = ['eta', 'spin1x', 'spin1y',
-                 'spin1z', 'spin2x', 'spin2y', 'spin2z']
+params_tested = [
+    'eta', 'spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y', 'spin2z'
+]
 
 ################################################################################
 ################################################################################
@@ -71,7 +76,9 @@ params_tested = ['eta', 'spin1x', 'spin1y',
 ################################################################################
 
 
-def nextpow2(x): return int(2**ceil(log2(x)))
+def nextpow2(x):
+    return int(2**ceil(log2(x)))
+
 
 ################################################################################
 # Matches the pameter 'param' in templates p and c, and checks if they agrene
@@ -104,8 +111,8 @@ def does_this_map(p, c, param='eta', return_err=False, verbose=False):
     else:
         eps = EPS_Default
 
-    num_err = np.abs(val1-val2)
-    den_err = np.abs((val1+val2)/2.)
+    num_err = np.abs(val1 - val2)
+    den_err = np.abs((val1 + val2) / 2.)
     if den_err == 0 or np.abs(val1) <= eps or np.abs(val2) <= eps:
         frac_err = num_err
     else:
@@ -270,8 +277,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
         try:
             fin = h5py.File(fp, 'r')
         except:
-            raise IOError(
-                error_msg + (" ** Could not open catalog file %s **" % fp))
+            raise IOError(error_msg +
+                          (" ** Could not open catalog file %s **" % fp))
         #
         gin = fin[map_var]
         #
@@ -296,7 +303,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
         #################################################################
         # 3. READ IN CATALOG XML
         indoc = ligolw_utils.load_filename(fp,
-                                           contenthandler=LIGOLWContentHandler, verbose=verbose)
+                                           contenthandler=LIGOLWContentHandler,
+                                           verbose=verbose)
         #
         try:
             fin = lsctables.SimInspiralTable.get_table(indoc)
@@ -314,8 +322,11 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
             tmp_errs = []
             for param in params_tested:
                 is_map = True
-                tval, err = does_this_map(p, row, param=param,
-                                          return_err=True, verbose=verbose)
+                tval, err = does_this_map(p,
+                                          row,
+                                          param=param,
+                                          return_err=True,
+                                          verbose=verbose)
                 # Store the fractional error for this parameter, for this row
                 errs.append(err)
                 # Now, even if *one* parameter differs, we reject this row and
@@ -338,10 +349,11 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
                 rows.append(row)
                 #
                 if verbose:
-                    print("Template found in catalog: %s " %
-                          fp, file=sys.stdout)
+                    print("Template found in catalog: %s " % fp,
+                          file=sys.stdout)
                     print("Location of NR data     : %s " %
-                          getattr(row, 'numrel_data'), file=sys.stdout)
+                          getattr(row, 'numrel_data'),
+                          file=sys.stdout)
                 #
                 # Get out of the loop over the catalog if the 'longest' simulation is
                 # not required
@@ -350,8 +362,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
 
         if len(mflower) > 0 and len(rows) > 0:
             if verbose:
-                print(" .. template matches %s simulations" %
-                      len(rows), file=sys.stderr)
+                print(" .. template matches %s simulations" % len(rows),
+                      file=sys.stderr)
             is_map = True
 
         #################################################################
@@ -362,7 +374,8 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
             if use_longest_simulation:
                 if verbose:
                     print(
-                        "Found the following simulations with same parameters as the template:\n", file=sys.stderr)
+                        "Found the following simulations with same parameters as the template:\n",
+                        file=sys.stderr)
                     for rr in rows:
                         print("\t", str(rr.numrel_data), file=sys.stderr)
 
@@ -378,7 +391,9 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
             # parameters
             if verbose:
                 print(
-                    " .. template does not match any sim in the NR catalog table.\nParameters: ", p, file=sys.stdout)
+                    " .. template does not match any sim in the NR catalog table.\nParameters: ",
+                    p,
+                    file=sys.stdout)
             print("MIN ERROR for rejection..: %e\n" % np.array(errs).min())
             raise RuntimeError("NR data not found")
 
@@ -391,11 +406,17 @@ export NR_CATALOG_FILE={}:$NR_CATALOG_FILE
 ################################################################################
 # Return the re-scaled NR waveform
 ################################################################################
-def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
-                              modeLmin=2, modeLmax=8,
-                              modeMmin=2, modeMmax=None,
+def get_hplus_hcross_from_sxs(hdf5_file_name,
+                              template_params,
+                              delta_t,
+                              modeLmin=2,
+                              modeLmax=8,
+                              modeMmin=2,
+                              modeMmax=None,
                               junk_duration=600,
-                              taper=True, verbose=False, debug=False):
+                              taper=True,
+                              verbose=False,
+                              debug=False):
     if verbose:
         print(" \n\n\nIn get_hplus_hcross_from_sxs..", file=sys.stdout)
         sys.stdout.flush()
@@ -410,6 +431,7 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
                 return getattr(template_params, value)
         except:
             return template_params[value]
+
     #
     # Get relevant binary parameters
     #
@@ -433,11 +455,12 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
         pass
 
     if debug:
-        print("mass = {}, theta = {}, phi = {}, distance = {}, end_time = {}".format(
-            total_mass, theta, phi, distance, end_time), file=sys.stdout)
+        print("mass = {}, theta = {}, phi = {}, distance = {}, end_time = {}".
+              format(total_mass, theta, phi, distance, end_time),
+              file=sys.stdout)
         try:
-            print("end_time = 0 (could be %f)" %
-                  template_params['end_time'], file=sys.stdout)
+            print("end_time = 0 (could be %f)" % template_params['end_time'],
+                  file=sys.stdout)
         except:
             pass
     #
@@ -452,10 +475,13 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
     ###########################################################################
     if type(hdf5_file_name) != str:
         if verbose:
-            print("\tUsing nr_wave datastructure. Rescaling to {}Msun".format(total_mass))
+            print("\tUsing nr_wave datastructure. Rescaling to {}Msun".format(
+                total_mass))
         nrwav = hdf5_file_name
-        nrwav.get_polarizations(
-            M=total_mass, distance=distance, inclination=theta, phi=phi)
+        nrwav.get_polarizations(M=total_mass,
+                                distance=distance,
+                                inclination=theta,
+                                phi=phi)
         if verbose:
             print("\tRescaled to {} Msun".format(nrwav.totalmass))
     else:
@@ -472,14 +498,19 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
                 if debug:
                     print("\n \t>>try %d at reading waveform" % (idx + 1))
                     print(
-                        "\t[More than ONE try is required if estimated NR length is too short]")
+                        "\t[More than ONE try is required if estimated NR length is too short]"
+                    )
                 idx += 1
                 group_name = get_param("group_name")  # GROUP NAME
                 nrwav = gwnr.nr.nr_wave(filename=hdf5_file_name,
-                                        sample_rate=1./delta_t, time_length=estimated_length_pow2,
-                                        totalmass=total_mass, inclination=theta, phi=phi,
-                                        modeLmin=modeLmin, modeLmax=modeLmax,
-                                        distance=distance*1e6,
+                                        sample_rate=1. / delta_t,
+                                        time_length=estimated_length_pow2,
+                                        totalmass=total_mass,
+                                        inclination=theta,
+                                        phi=phi,
+                                        modeLmin=modeLmin,
+                                        modeLmax=modeLmax,
+                                        distance=distance * 1e6,
                                         group_name=group_name,
                                         verbose=debug)
                 break
@@ -489,12 +520,16 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
                 if num_length_tries == 0:
                     if verbose:
                         print(
-                            "......................................................................")
-                        print("Max number of length retries exceeded: {}. Final length tried: {}".format(
-                              max_num_length_tries, estimated_length_pow2/2))
+                            "......................................................................"
+                        )
+                        print(
+                            "Max number of length retries exceeded: {}. Final length tried: {}"
+                            .format(max_num_length_tries,
+                                    estimated_length_pow2 / 2))
                         print("Final ERROR: {}".format(ve))
                         print(
-                            "......................................................................")
+                            "......................................................................"
+                        )
                     break
     if debug and type(hdf5_file_name) == str:
         print("\t Waveform read from %s" % hdf5_file_name, file=sys.stdout)
@@ -526,15 +561,17 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
     else:
         t_filter = junk_duration
 
-    m_lower = nrwav.get_lowest_binary_mass(
-        t_filter, f_lower, totalmass=total_mass)
+    m_lower = nrwav.get_lowest_binary_mass(t_filter,
+                                           f_lower,
+                                           totalmass=total_mass)
     if m_lower > total_mass:
-        raise IOError("Cannot rescale below %f Msun starting at %fHz, asked for %f Msun" %
-                      (m_lower, f_lower, total_mass))
+        raise IOError(
+            "Cannot rescale below %f Msun starting at %fHz, asked for %f Msun"
+            % (m_lower, f_lower, total_mass))
     else:
         if verbose:
-            print("Can comfortably rescale to %f Msun starting at %fHz" % (
-                total_mass, f_lower))
+            print("Can comfortably rescale to %f Msun starting at %fHz" %
+                  (total_mass, f_lower))
     # >> At this point, we know that f_lower is attained at t_filter or LATER
 
     # 2) Get the starting point of the waveform, given f_lower
@@ -555,14 +592,16 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
         upwin_t_start = np.maximum(0., t_start_M - upwin_t_width)
         if upwin_t_width + upwin_t_start < junk_duration:
             if verbose > 0:
-                print("Tapering window was not covering junk radiation. Changing it to [0,{}}]".format(
-                    junk_duration))
+                print(
+                    "Tapering window was not covering junk radiation. Changing it to [0,{}}]"
+                    .format(junk_duration))
             upwin_t_start = 0.0
             upwin_t_width = junk_duration
         #
         if verbose:
-            print("Length of waveform: ", (len(nrwav.rescaled_hp)
-                                           * nrwav.delta_t / total_mass / lal.MTSUN_SI))
+            print("Length of waveform: ",
+                  (len(nrwav.rescaled_hp) * nrwav.delta_t / total_mass /
+                   lal.MTSUN_SI))
         hp, hc = nrwav.taper_filter_waveform(ttaper1=upwin_t_start,
                                              ttaper2=upwin_t_width,
                                              ftaper3=downwin_amp_frac,
@@ -570,10 +609,12 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
         #
         # Upgrade the index before which we trim the wave
         t_start_index = int(
-            np.round(upwin_t_start / (hp.delta_t/total_mass/lal.MTSUN_SI)))
+            np.round(upwin_t_start / (hp.delta_t / total_mass / lal.MTSUN_SI)))
         if debug:
-            print("Tapering window [start1-2], [end-amplfraction - t-width]: [%.1f - %.1f], [%.5f - %.1f]" %
-                  (upwin_t_start, upwin_t_width+upwin_t_start, downwin_amp_frac, downwin_t_width))
+            print(
+                "Tapering window [start1-2], [end-amplfraction - t-width]: [%.1f - %.1f], [%.5f - %.1f]"
+                % (upwin_t_start, upwin_t_width + upwin_t_start,
+                   downwin_amp_frac, downwin_t_width))
     else:
         hp, hc = [nrwav.rescaled_hp, nrwav.rescaled_hc]
 
@@ -625,18 +666,22 @@ def get_hplus_hcross_from_sxs(hdf5_file_name, template_params, delta_t,
     #
     # Prepare the output polarization vectors, with the correct epoch set
     #
-    hp = TimeSeries(hp.data, delta_t=delta_t,
-                    epoch=lal.LIGOTimeGPS(end_time+time_start_s), copy=True)
-    hc = TimeSeries(hc.data, delta_t=delta_t,
-                    epoch=lal.LIGOTimeGPS(end_time+time_start_s), copy=True)
+    hp = TimeSeries(hp.data,
+                    delta_t=delta_t,
+                    epoch=lal.LIGOTimeGPS(end_time + time_start_s),
+                    copy=True)
+    hc = TimeSeries(hc.data,
+                    delta_t=delta_t,
+                    epoch=lal.LIGOTimeGPS(end_time + time_start_s),
+                    copy=True)
     #
     if debug:
-        for idx in range(len(hp)-1, 1, -1):
+        for idx in range(len(hp) - 1, 1, -1):
             if hp[idx] != 0 and hc[idx] != 0:
                 break
         try:
-            print("  Length of rescaled waveform = %f.." %
-                  idx*hp.delta_t, file=sys.stdout)
+            print("  Length of rescaled waveform = %f.." % idx * hp.delta_t,
+                  file=sys.stdout)
             print(" hp.epoch = ", hp._epoch, file=sys.stdout)
             sys.stdout.flush()
         except:

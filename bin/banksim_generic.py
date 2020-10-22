@@ -34,11 +34,14 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 ####################       Input parsing     #####################
 #########################################################################
 #{{{
-parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
+parser = argparse.ArgumentParser(
+    usage="%%prog [OPTIONS]",
+    description="""
 Takes in a sub-bank and proposal points (as XML). Computes overlaps between
 the systems in those files, and stores the maximum of these overlaps (for
 each proposal point) in a file match_id_part_pid.dat.
-""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+""",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--bank-file-name",
@@ -68,56 +71,60 @@ parser.add_argument("--proposal-batch-size",
                     help="No of points for which wavefors be pre-generated",
                     default=100,
                     type=int)
-parser.add_argument('-f', '--low-frequency-cutoff', metavar='FREQ',
+parser.add_argument('-f',
+                    '--low-frequency-cutoff',
+                    metavar='FREQ',
                     dest="f_min",
                     help='low frequency cutoff of matched filter',
                     default=15.0,
                     type=float)
-parser.add_argument("-r", "--sample-rate",
+parser.add_argument("-r",
+                    "--sample-rate",
                     dest="sample_rate",
                     help="Sample Rate [Hz]",
                     default=4096,
                     type=int)
-parser.add_argument("-l", "--signal-length",
+parser.add_argument("-l",
+                    "--signal-length",
                     dest="signal_length",
                     help="The length of the signal (s)",
                     default=128,
                     type=int)
-parser.add_argument("--mchirp-window",
-                    default=0.01,
-                    type=float)
+parser.add_argument("--mchirp-window", default=0.01, type=float)
 parser.add_argument("--eccentricity-window",
                     dest="ecc_window",
                     default=0.01,
                     type=float)
-parser.add_argument("--minimal-match",
-                    dest="mm",
-                    default=0.97,
-                    type=float)
-parser.add_argument("--psd-name", metavar="STRING",
+parser.add_argument("--minimal-match", dest="mm", default=0.97, type=float)
+parser.add_argument("--psd-name",
+                    metavar="STRING",
                     help="Name of PSD to be used.",
                     default="aLIGOZeroDetHighPower")
-parser.add_argument("-E", "--eliminate", action="store_true",
+parser.add_argument("-E",
+                    "--eliminate",
+                    action="store_true",
                     help="""If enabled, and if any proposal point has overlap
 over the desired threshold, then that proposal point is eliminated instantly""",
                     default=False)
-parser.add_argument("--elimination-dir", metavar="STRING",
+parser.add_argument("--elimination-dir",
+                    metavar="STRING",
                     help="Where are hashes of eliminated proposals stored?",
                     default='testpoints_eliminated/')
 
-
 # Miscellaneous
-parser.add_argument("-V", "--verbose", action="store_true",
+parser.add_argument("-V",
+                    "--verbose",
+                    action="store_true",
                     help="print extra debugging information",
-                    default=False )
-parser.add_argument("-C", "--comment", metavar="STRING",
+                    default=False)
+parser.add_argument("-C",
+                    "--comment",
+                    metavar="STRING",
                     help="add the optional STRING as the process:comment",
-                    default='' )
+                    default='')
 
 options = parser.parse_args()
 #}}}
-
-
 
 #########################################################################
 ####################### Functions to generate waveform ##################
@@ -127,31 +134,34 @@ options = parser.parse_args()
 generate_fplus_fcross = overhead_antenna_pattern
 generate_detector_strain = WF.generate_detector_strain
 
+
 #############################
 def outside_mchirp_window(bank, sim, w):
-  #{{{
-  bmchirp = None
-  smchirp = None
+    #{{{
+    bmchirp = None
+    smchirp = None
 
-  if hasattr(bank,"mchirp"):
-    bmchirp = bank.mchirp
-  elif hasattr(bank,"mass1") and hasattr(bank,"mass2"):
-    bmchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(bank.mass1, bank.mass2)
-  elif hasattr(bank,"mtotal") and hasattr(bank,"eta"):
-    bmchirp = bank.mtotal * (bank.eta**0.6)
+    if hasattr(bank, "mchirp"):
+        bmchirp = bank.mchirp
+    elif hasattr(bank, "mass1") and hasattr(bank, "mass2"):
+        bmchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(
+            bank.mass1, bank.mass2)
+    elif hasattr(bank, "mtotal") and hasattr(bank, "eta"):
+        bmchirp = bank.mtotal * (bank.eta**0.6)
 
-  if hasattr(sim,"mchirp"):
-    smchirp = sim.mchirp
-  elif hasattr(sim,"mass1") and hasattr(sim,"mass2"):
-    smchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
-  elif hasattr(sim,"mtotal") and hasattr(sim,"eta"):
-    smchirp = sim.mtotal * (sim.eta**0.6)
+    if hasattr(sim, "mchirp"):
+        smchirp = sim.mchirp
+    elif hasattr(sim, "mass1") and hasattr(sim, "mass2"):
+        smchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
+    elif hasattr(sim, "mtotal") and hasattr(sim, "eta"):
+        smchirp = sim.mtotal * (sim.eta**0.6)
 
-  if abs(smchirp - bmchirp) > (w*bmchirp) :
-    return True
+    if abs(smchirp - bmchirp) > (w * bmchirp):
+        return True
 
-  return False
-  #}}}
+    return False
+    #}}}
+
 
 def outside_ecc_window(bank, sim, w):
     #{{{
@@ -162,9 +172,10 @@ def outside_ecc_window(bank, sim, w):
     if hasattr(sim, "alpha"):
         s_ecc = sim.alpha
     if abs(s_ecc - b_ecc) > w:
-      return True
+        return True
     return False
     #}}}
+
 
 def get_waveform(wav, approximant, f_min, dt, N):
     """This function will generate the waveform corresponding to the point
@@ -188,75 +199,111 @@ def get_waveform(wav, approximant, f_min, dt, N):
     inc = wav.inclination
     dist = wav.distance
 
-    df = 1./(dt * N)
-    f_max = min( 1./(2.*dt), 0.15 / ((m1+m2)*lal.MTSUN_SI) )
+    df = 1. / (dt * N)
+    f_max = min(1. / (2. * dt), 0.15 / ((m1 + m2) * lal.MTSUN_SI))
 
     if approximant in fd_approximants():
         try:
             hptild, hctild = get_fd_waveform(approximant=approximant,
-                                    mass1=m1, mass2=m2,
-                                    spin1x=s1x, spin1y=s1y, spin1z=s1z,
-                                    spin2x=s2x, spin2y=s2y, spin2z=s2z,
-                                    eccentricity=ecc,
-                                    mean_per_ano=mean_per_ano,
-                                    long_asc_nodes=long_asc_nodes,
-                                    coa_phase=coa_phase,
-                                    inclination=inc, distance=dist,
-                                    f_lower=f_min, f_final=f_max, delta_f=df)
+                                             mass1=m1,
+                                             mass2=m2,
+                                             spin1x=s1x,
+                                             spin1y=s1y,
+                                             spin1z=s1z,
+                                             spin2x=s2x,
+                                             spin2y=s2y,
+                                             spin2z=s2z,
+                                             eccentricity=ecc,
+                                             mean_per_ano=mean_per_ano,
+                                             long_asc_nodes=long_asc_nodes,
+                                             coa_phase=coa_phase,
+                                             inclination=inc,
+                                             distance=dist,
+                                             f_lower=f_min,
+                                             f_final=f_max,
+                                             delta_f=df)
         except RuntimeError as re:
             for c in dir(wav):
-                if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
+                if "__" not in c and "get" not in c and "set" not in c and hasattr(
+                        wav, c):
                     print(c, getattr(wav, c))
             raise RuntimeError(re)
-        hptilde = FrequencySeries(hptild, delta_f=df,
-                                  dtype=np.complex128,copy=True)
-        hpref_padded = FrequencySeries(zeros(N/2 + 1), delta_f=df,
-                                  dtype=np.complex128, copy=True )
+        hptilde = FrequencySeries(hptild,
+                                  delta_f=df,
+                                  dtype=np.complex128,
+                                  copy=True)
+        hpref_padded = FrequencySeries(zeros(N / 2 + 1),
+                                       delta_f=df,
+                                       dtype=np.complex128,
+                                       copy=True)
         hpref_padded[0:len(hptilde)] = hptilde
-        hctilde = FrequencySeries(hctild, delta_f=df,
-                                  dtype=np.complex128,copy=True)
-        hcref_padded = FrequencySeries(zeros(N/2 + 1), delta_f=df,
-                                  dtype=np.complex128, copy=True )
+        hctilde = FrequencySeries(hctild,
+                                  delta_f=df,
+                                  dtype=np.complex128,
+                                  copy=True)
+        hcref_padded = FrequencySeries(zeros(N / 2 + 1),
+                                       delta_f=df,
+                                       dtype=np.complex128,
+                                       copy=True)
         hcref_padded[0:len(hctilde)] = hctilde
         href_padded = generate_detector_strain(wav, hpref_padded, hcref_padded)
     elif approximant in td_approximants():
         #raise IOError("Time domain approximants not supported at the moment..")
         try:
             hp, hc = get_td_waveform(approximant=approximant,
-                            mass1=m1, mass2=m2,
-                            spin1x=s1x, spin1y=s1y, spin1z=s1z,
-                            spin2x=s2x, spin2y=s2y, spin2z=s2z,
-                            eccentricity=ecc,
-                            mean_per_ano=mean_per_ano,
-                            long_asc_nodes=long_asc_nodes,
-                            coa_phase=coa_phase,
-                            inclination=inc, distance=dist,
-                            f_lower=f_min, delta_t=dt)
+                                     mass1=m1,
+                                     mass2=m2,
+                                     spin1x=s1x,
+                                     spin1y=s1y,
+                                     spin1z=s1z,
+                                     spin2x=s2x,
+                                     spin2y=s2y,
+                                     spin2z=s2z,
+                                     eccentricity=ecc,
+                                     mean_per_ano=mean_per_ano,
+                                     long_asc_nodes=long_asc_nodes,
+                                     coa_phase=coa_phase,
+                                     inclination=inc,
+                                     distance=dist,
+                                     f_lower=f_min,
+                                     delta_t=dt)
         except RuntimeError as re:
             for c in dir(wav):
-                if "__" not in c and "get" not in c and "set" not in c and hasattr(wav, c):
+                if "__" not in c and "get" not in c and "set" not in c and hasattr(
+                        wav, c):
                     print(c, getattr(wav, c))
             raise RuntimeError(re)
-        hpref_padded = TimeSeries(zeros(N), delta_t=dt,dtype=hp.dtype,copy=True)
+        hpref_padded = TimeSeries(zeros(N),
+                                  delta_t=dt,
+                                  dtype=hp.dtype,
+                                  copy=True)
         hpref_padded[:len(hp)] = hp
-        hcref_padded = TimeSeries(zeros(N), delta_t=dt,dtype=hc.dtype,copy=True)
+        hcref_padded = TimeSeries(zeros(N),
+                                  delta_t=dt,
+                                  dtype=hc.dtype,
+                                  copy=True)
         hcref_padded[:len(hc)] = hc
-        href_padded_td = generate_detector_strain(wav,hpref_padded,hcref_padded)
+        href_padded_td = generate_detector_strain(wav, hpref_padded,
+                                                  hcref_padded)
         href_padded = make_frequency_series(href_padded_td)
     return href_padded
     #}}}
 
 
 def get_sim_hash(N=1, num_digits=10):
-      return ilwd.ilwdchar(":%s:0"%DA.get_unique_hex_tag(N = N,
-                                                         num_digits = num_digits))
+    return ilwd.ilwdchar(":%s:0" %
+                         DA.get_unique_hex_tag(N=N, num_digits=num_digits))
 
-def get_tag(wav): return str(wav.simulation_id.column_name)
+
+def get_tag(wav):
+    return str(wav.simulation_id.column_name)
+
 
 def waveform_exists(wav, waves):
     sid = get_tag(wav)
     if sid in waves: return True
     return False
+
 
 def is_eliminated(wav):
     sid = get_tag(wav)
@@ -276,22 +323,24 @@ if not options.bank_file_name:
 
 if not os.path.exists(options.bank_file_name):
     logging.info("This sub-bank file does not exist !")
-    raise IOError("The sub-bank file %s does not exist" % options.bank_file_name)
+    raise IOError("The sub-bank file %s does not exist" %
+                  options.bank_file_name)
 
 if options.verbose:
     logging.info("..Opening bank file %s" % options.bank_file_name)
 bank_doc = ligolw_utils.load_filename(options.bank_file_name,
-                  contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
-                  verbose=options.verbose)
+                                      contenthandler=table.use_in(
+                                          ligolw.LIGOLWContentHandler),
+                                      verbose=options.verbose)
 try:
     bank_table = lsctables.SimInspiralTable.get_table(bank_doc)
 except ValueError:
     try:
         bank_table = lsctables.SnglInspiralTable.get_table(bank_doc)
-        # We need to assign unique tags to all rows in this 
-        # table as we won't have those available under the 
+        # We need to assign unique tags to all rows in this
+        # table as we won't have those available under the
         # `simulation_id` column. We also addtionally include
-        # sensible values for `inclination`, `distance`, 
+        # sensible values for `inclination`, `distance`,
         # `latitude`, `longitude` and `polarization` fields!
         for row in bank_table:
             row.simulation_id = get_sim_hash()
@@ -317,8 +366,9 @@ if not os.path.exists(options.prop_file_name):
 
 logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
-                  contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
-                  verbose=options.verbose)
+                                      contenthandler=table.use_in(
+                                          ligolw.LIGOLWContentHandler),
+                                      verbose=options.verbose)
 try:
     prop_table = lsctables.SimInspiralTable.get_table(prop_doc)
 except ValueError:
@@ -331,14 +381,14 @@ sys.stdout.flush()
 #############################   Compute Overlaps   ######################
 #########################################################################
 # Initialize quantities for overlap calculations
-f_min         = options.f_min
+f_min = options.f_min
 signal_length = options.signal_length
-sample_rate   = options.sample_rate
+sample_rate = options.sample_rate
 
-dt            = 1. / float(sample_rate)
-N             = signal_length * sample_rate
-n             = N / 2 + 1
-df            = 1. / float(signal_length)
+dt = 1. / float(sample_rate)
+N = signal_length * sample_rate
+n = N / 2 + 1
+df = 1. / float(signal_length)
 if options.verbose:
     logging.info("f_min={}, sig_len={}, sample_rate={}, dt={}, N={}".format(f_min,\
         signal_length,sample_rate,dt,N))
@@ -367,9 +417,12 @@ matches = {}
 # Split into batches
 bank_batch_size = options.bank_batch_size
 if len(bank_table) == 0:
-    try: os.mknod(options.match_file_name)
-    except OSError: pass
-    logging.info("Bank file {} is empty. Exiting!".format(options.bank_file_name))
+    try:
+        os.mknod(options.match_file_name)
+    except OSError:
+        pass
+    logging.info("Bank file {} is empty. Exiting!".format(
+        options.bank_file_name))
     sys.exit(0)
 elif len(bank_table) <= bank_batch_size:
     bank_batches = [bank_table]
@@ -385,15 +438,19 @@ if options.eliminate:
 
 prop_batch_size = options.proposal_batch_size
 if len(prop_table) == 0:
-    try: os.mknod(options.match_file_name)
-    except OSError: pass
-    logging.info("Proposal file {} is empty. Exiting!".format(options.prop_file_name))
+    try:
+        os.mknod(options.match_file_name)
+    except OSError:
+        pass
+    logging.info("Proposal file {} is empty. Exiting!".format(
+        options.prop_file_name))
     sys.exit(0)
 elif len(prop_table) <= prop_batch_size:
     prop_batches = [prop_table]
 else:
     prop_batches = [prop_table[i:i+prop_batch_size] for i in range(0,\
                                               len(prop_table), prop_batch_size)]
+
 
 ##########################################################
 def append_one_match(bank, sim, mval):
@@ -402,10 +459,11 @@ def append_one_match(bank, sim, mval):
         myfile.flush()
     return
 
-cnt_bank_generations  = 0
-cnt_test_generations  = 0
+
+cnt_bank_generations = 0
+cnt_test_generations = 0
 cnt_match_evaluations = 0
-cnt_eliminations      = 0
+cnt_eliminations = 0
 for i, bank_batch in enumerate(bank_batches):
     bank_batch_waveforms = {}
     if options.verbose:
@@ -434,16 +492,18 @@ for i, bank_batch in enumerate(bank_batches):
 
                 ## Now, we really need to generate both of these waveforms!
                 if options.verbose:
-                    logging.info("\t\t\t Will need waves for ({}, {})".format(k, l))
+                    logging.info("\t\t\t Will need waves for ({}, {})".format(
+                        k, l))
 
                 if waveform_exists(pb, bank_batch_waveforms):
                     stilde = bank_batch_waveforms[get_tag(pb)]
                 else:
                     cnt_bank_generations += 1
                     if options.verbose:
-                        logging.info("\t\t\t\t Computing waves for ({}, o)".format(k))
+                        logging.info(
+                            "\t\t\t\t Computing waves for ({}, o)".format(k))
                     stilde = get_waveform(pb, options.bank_approximant, f_min,
-                                                                        dt, N)
+                                          dt, N)
                     bank_batch_waveforms[get_tag(pb)] = stilde
 
                 if waveform_exists(pp, prop_batch_waveforms):
@@ -451,13 +511,16 @@ for i, bank_batch in enumerate(bank_batches):
                 else:
                     cnt_test_generations += 1
                     if options.verbose:
-                        logging.info("\t\t\t\t Computing waves for (o, {})".format(l))
+                        logging.info(
+                            "\t\t\t\t Computing waves for (o, {})".format(l))
                     htilde = get_waveform(pp, options.proposal_approximant,
-                                                              f_min, dt, N)
+                                          f_min, dt, N)
                     prop_batch_waveforms[get_tag(pp)] = htilde
 
                 ## Compute match!
-                mval, _ = match(stilde, htilde, psd=psd,
+                mval, _ = match(stilde,
+                                htilde,
+                                psd=psd,
                                 low_frequency_cutoff=f_min)
                 append_one_match(pb, pp, mval)
                 cnt_match_evaluations += 1
@@ -466,12 +529,13 @@ for i, bank_batch in enumerate(bank_batches):
                 if options.eliminate:
                     if mval > options.mm:
                         try:
-                            os.mknod(options.elimination_dir +'/'+ get_tag(pp))
+                            os.mknod(options.elimination_dir + '/' +
+                                     get_tag(pp))
                             cnt_eliminations += 1
                             if options.verbose:
                                 "Eliminated {}".format(get_tag(pp))
-                        except: pass
-
+                        except:
+                            pass
 
 if options.verbose:
     logging.info("Written results to file: {}".format(options.match_file_name))

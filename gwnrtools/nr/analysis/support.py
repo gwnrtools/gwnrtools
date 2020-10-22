@@ -36,6 +36,7 @@ except:
 
 try:
     from glue.ligolw import ligolw, lsctables
+
     @lsctables.use_in
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
         pass
@@ -75,8 +76,8 @@ def extrapolated_outdir_from_cce_outdir(outdir):
         s2z = '0'
     else:
         s2z = '%.3f' % np.float128(s2z)
-    retdir = 'BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s' % (idtype, d, q,
-                                                       s1x, s1y, s1z, s2x, s2y, s2z)
+    retdir = 'BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s' % (idtype, d, q, s1x, s1y,
+                                                       s1z, s2x, s2y, s2z)
     return retdir
     # }}}
 

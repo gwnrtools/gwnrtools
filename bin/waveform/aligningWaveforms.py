@@ -15,7 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update({'text.usetex': True})
 
-
 ######
 golden_ratio = (5.**0.5 + 1.) / 2.
 
@@ -30,9 +29,13 @@ def shift_waveform_phase_time(hp, hc, t_shift, ph_shift):
         print("shifting by %f radians" % ph_shift)
         phase = phase + ph_shift
         hpnew = TimeSeries(amplitude * np.cos(phase),
-                           epoch=hpnew._epoch, delta_t=hpnew.delta_t, dtype=hpnew.dtype)
+                           epoch=hpnew._epoch,
+                           delta_t=hpnew.delta_t,
+                           dtype=hpnew.dtype)
         hcnew = TimeSeries(amplitude * np.sin(phase),
-                           epoch=hcnew._epoch, delta_t=hcnew.delta_t, dtype=hcnew.dtype)
+                           epoch=hcnew._epoch,
+                           delta_t=hcnew.delta_t,
+                           dtype=hcnew.dtype)
     # First apply time shift
     if t_shift != 0:
         id_shift = int(np.round(t_shift / hpnew.delta_t))
@@ -52,17 +55,25 @@ def align_waveforms_amplitude_peak(hplus1, hcross1, hplus2, hcross2):
     amp2 = amplitude_from_polarizations(hp2, hc2)
     # Get amplitude peaks
     amp1I = interp1d(amp1.sample_times, -1 * amp1.data)
-    x0 = np.float64(np.where(amp1.data == max(amp1.data))[0][0] * amp1.delta_t +
-                    amp1._epoch)
-    tmp = minimize_scalar(amp1I, x0, method='bounded',
-                          bounds=(x0 - 10 * amp1.delta_t, x0 + 10 * amp1.delta_t))
+    x0 = np.float64(
+        np.where(amp1.data == max(amp1.data))[0][0] * amp1.delta_t +
+        amp1._epoch)
+    tmp = minimize_scalar(amp1I,
+                          x0,
+                          method='bounded',
+                          bounds=(x0 - 10 * amp1.delta_t,
+                                  x0 + 10 * amp1.delta_t))
     h1_max_amp_time = tmp['x']
     h1_max_amp = -1 * tmp['fun']
     amp2I = interp1d(amp2.sample_times, -1 * amp2.data)
-    x0 = np.float64(np.where(amp2.data == max(amp2.data))[0][0] * amp2.delta_t +
-                    amp2._epoch)
-    tmp = minimize_scalar(amp2I, x0, method='bounded',
-                          bounds=(x0 - 10 * amp2.delta_t, x0 + 10 * amp2.delta_t))
+    x0 = np.float64(
+        np.where(amp2.data == max(amp2.data))[0][0] * amp2.delta_t +
+        amp2._epoch)
+    tmp = minimize_scalar(amp2I,
+                          x0,
+                          method='bounded',
+                          bounds=(x0 - 10 * amp2.delta_t,
+                                  x0 + 10 * amp2.delta_t))
     h2_max_amp_time = tmp['x']
     h2_max_amp = -1 * tmp['fun']
     print("h1 max time = %f, epoch = %f" %
@@ -110,13 +121,10 @@ def align_waveforms_at_frequency(hplus1, hcross1, hplus2, hcross2, falign):
     for idx in range(id_start, len(freq1)):
         if freq1[idx] > 2 * falign and freq1[idx + 1] > 2 * falign:
             break
-    tmp = minimize_scalar(
-        f1I,
-        id_start,
-        method='bounded',
-        bounds=(
-            id_start,
-            idx))
+    tmp = minimize_scalar(f1I,
+                          id_start,
+                          method='bounded',
+                          bounds=(id_start, idx))
     f1_align_idx = int(np.round(tmp['x']))
     t1 = f1_align_idx * freq1.delta_t
     #
@@ -126,13 +134,10 @@ def align_waveforms_at_frequency(hplus1, hcross1, hplus2, hcross2, falign):
     for idx in range(id_start, len(freq2)):
         if freq2[idx] > 2 * falign and freq2[idx + 1] > 2 * falign:
             break
-    tmp = minimize_scalar(
-        f2I,
-        id_start,
-        method='bounded',
-        bounds=(
-            id_start,
-            idx))
+    tmp = minimize_scalar(f2I,
+                          id_start,
+                          method='bounded',
+                          bounds=(id_start, idx))
     f2_align_idx = int(np.round(tmp['x']))
     t2 = f2_align_idx * freq2.delta_t
     #
@@ -156,13 +161,23 @@ def align_waveforms_at_frequency(hplus1, hcross1, hplus2, hcross2, falign):
     return hp1, hc1, hp2, hc2
 
 
-def align_waveforms_optimally(h_plus1, h_cross1, hplus2, hcross2, psd=None,
-                              low_frequency_cutoff=None, high_frequency_cutoff=None,
-                              tsign=1, phsign=-1):
+def align_waveforms_optimally(h_plus1,
+                              h_cross1,
+                              hplus2,
+                              hcross2,
+                              psd=None,
+                              low_frequency_cutoff=None,
+                              high_frequency_cutoff=None,
+                              tsign=1,
+                              phsign=-1):
     #
-    h_plus2 = TimeSeries(hplus2, epoch=hplus2._epoch, delta_t=hplus2.delta_t,
+    h_plus2 = TimeSeries(hplus2,
+                         epoch=hplus2._epoch,
+                         delta_t=hplus2.delta_t,
                          dtype=hplus2.dtype)
-    h_cross2 = TimeSeries(hcross2, epoch=hcross2._epoch, delta_t=hcross2.delta_t,
+    h_cross2 = TimeSeries(hcross2,
+                          epoch=hcross2._epoch,
+                          delta_t=hcross2.delta_t,
                           dtype=hcross2.dtype)
     #
     if psd is None:
@@ -190,9 +205,17 @@ def align_waveforms_optimally(h_plus1, h_cross1, hplus2, hcross2, psd=None,
     return h_plus1, h_cross1, hp2, hc2
 
 
-def make_inspiral_merger_plot(hp1, hc1, hp2, hc2, tscale=1., lp=0.9, rp=1.1,
-                              xlabel=r'$\mathrm{Time (M)}$', ylabel=r'$\\frac{R}{M}\,h_{22}\,(t)$',
-                              legend=None, savefig='plot.pdf'):
+def make_inspiral_merger_plot(hp1,
+                              hc1,
+                              hp2,
+                              hc2,
+                              tscale=1.,
+                              lp=0.9,
+                              rp=1.1,
+                              xlabel=r'$\mathrm{Time (M)}$',
+                              ylabel=r'$\\frac{R}{M}\,h_{22}\,(t)$',
+                              legend=None,
+                              savefig='plot.pdf'):
     a1 = amplitude_from_polarizations(hp1, hc1)
     _, max_id1 = a1.abs_max_loc()
     a2 = amplitude_from_polarizations(hp2, hc2)
@@ -202,7 +225,10 @@ def make_inspiral_merger_plot(hp1, hc1, hp2, hc2, tscale=1., lp=0.9, rp=1.1,
     fig = plt.figure(figsize=(8 / 2, 8 / golden_ratio / 2))
     gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1])
     ax0 = plt.subplot(gs[0])
-    ax0.plot(np.arange(len(hp1)) * tscale, hp1, np.arange(len(hp2)) * tscale, hp2,
+    ax0.plot(np.arange(len(hp1)) * tscale,
+             hp1,
+             np.arange(len(hp2)) * tscale,
+             hp2,
              lw=0.5)
     xmin, xmax = 0, min(max_id1, max_id2) * lp * tscale
     ax0.set_xlim(xmin, xmax)
@@ -211,24 +237,38 @@ def make_inspiral_merger_plot(hp1, hc1, hp2, hc2, tscale=1., lp=0.9, rp=1.1,
     ax0.legend(legend, loc='best')
     #
     ax1 = plt.subplot(gs[1])
-    ax1.plot(np.arange(len(hp1)) * tscale, hp1, np.arange(len(hp2)) * tscale, hp2,
+    ax1.plot(np.arange(len(hp1)) * tscale,
+             hp1,
+             np.arange(len(hp2)) * tscale,
+             hp2,
              lw=0.5)
     xmin, xmax = min(max_id1, max_id2) * lp * \
         tscale, min(max_id1, max_id2) * rp * tscale
     ax1.set_xlim(xmin, xmax)
     print(xmin, xmax)
-    ax1.set_xticks([int(xmin * 0.9 + 0.1 * xmax),
-                    int(xmin * 0.5 + 0.5 * xmax),
-                    int(xmin * 0.05 + 0.95 * xmax)])
+    ax1.set_xticks([
+        int(xmin * 0.9 + 0.1 * xmax),
+        int(xmin * 0.5 + 0.5 * xmax),
+        int(xmin * 0.05 + 0.95 * xmax)
+    ])
     #
     plt.tight_layout()
     plt.savefig(savefig)
 
 
-def make_inspiral_merger_plot_3(hp1, hc1, hp2, hc2, hp3, hc3,
-                                tscale=1., lp=0.9, rp=1.1,
-                                xlabel=r'$\mathrm{Time (M)}$', ylabel=r'$\\frac{R}{M}\,h_{22}\,(t)$',
-                                legend=None, savefig='plot.pdf'):
+def make_inspiral_merger_plot_3(hp1,
+                                hc1,
+                                hp2,
+                                hc2,
+                                hp3,
+                                hc3,
+                                tscale=1.,
+                                lp=0.9,
+                                rp=1.1,
+                                xlabel=r'$\mathrm{Time (M)}$',
+                                ylabel=r'$\\frac{R}{M}\,h_{22}\,(t)$',
+                                legend=None,
+                                savefig='plot.pdf'):
     a1 = amplitude_from_polarizations(hp1, hc1)
     _, max_id1 = a1.abs_max_loc()
     a2 = amplitude_from_polarizations(hp2, hc2)
@@ -239,10 +279,16 @@ def make_inspiral_merger_plot_3(hp1, hc1, hp2, hc2, hp3, hc3,
     fig = plt.figure(figsize=(8 / 2, 8 / golden_ratio / 2))
     gs = gridspec.GridSpec(1, 2, width_ratios=[3, 1])
     ax0 = plt.subplot(gs[0])
-    ax0.plot(
-        np.arange(len(hp2)) * tscale, hp2, '-',
-        np.arange(len(hp3)) * tscale, hp3, '-',
-        np.arange(len(hp1)) * tscale, hp1, 'k--', lw=0.5)
+    ax0.plot(np.arange(len(hp2)) * tscale,
+             hp2,
+             '-',
+             np.arange(len(hp3)) * tscale,
+             hp3,
+             '-',
+             np.arange(len(hp1)) * tscale,
+             hp1,
+             'k--',
+             lw=0.5)
     xmin, xmax = 0, min(max_id1, max_id2) * lp * tscale
     ax0.set_xlim(xmin, xmax)
     ax0.set_xlabel(xlabel)
@@ -250,31 +296,39 @@ def make_inspiral_merger_plot_3(hp1, hc1, hp2, hc2, hp3, hc3,
     ax0.legend(legend, loc='best')
     #
     ax1 = plt.subplot(gs[1])
-    ax1.plot(
-        np.arange(len(hp2)) * tscale, hp2, '-',
-        np.arange(len(hp3)) * tscale, hp3, '-',
-        np.arange(len(hp1)) * tscale, hp1, 'k--', lw=0.5)
+    ax1.plot(np.arange(len(hp2)) * tscale,
+             hp2,
+             '-',
+             np.arange(len(hp3)) * tscale,
+             hp3,
+             '-',
+             np.arange(len(hp1)) * tscale,
+             hp1,
+             'k--',
+             lw=0.5)
     xmin, xmax = min(max_id1, max_id2) * lp * \
         tscale, min(max_id1, max_id2) * rp * tscale
     ax1.set_xlim(xmin, xmax)
     print(xmin, xmax)
-    ax1.set_xticks([int(xmin * 0.9 + 0.1 * xmax),
-                    int(xmin * 0.5 + 0.5 * xmax),
-                    int(xmin * 0.05 + 0.95 * xmax)])
+    ax1.set_xticks([
+        int(xmin * 0.9 + 0.1 * xmax),
+        int(xmin * 0.5 + 0.5 * xmax),
+        int(xmin * 0.05 + 0.95 * xmax)
+    ])
     #
     plt.tight_layout()
     plt.savefig(savefig)
+
 
 #####
 
-
 fig_width_pt = 246.0  # Get this from LaTeX using \showthe\columnwidth
 fig_height_pt = 0.3 * 672.0
-inches_per_pt = 1.0 / 72.27                 # Convert pt to inch
-golden_mean = (np.sqrt(5.0) - 1.0) / 2.0         # Aesthetic ratio
-fig_width = fig_width_pt * inches_per_pt    # width in inches
-fig_height = fig_height_pt * inches_per_pt    # height in inches
-fig_height = fig_width * golden_mean      # height in inches
+inches_per_pt = 1.0 / 72.27  # Convert pt to inch
+golden_mean = (np.sqrt(5.0) - 1.0) / 2.0  # Aesthetic ratio
+fig_width = fig_width_pt * inches_per_pt  # width in inches
+fig_height = fig_height_pt * inches_per_pt  # height in inches
+fig_height = fig_width * golden_mean  # height in inches
 fig_size = [fig_width, fig_height]
 plt.rcParams.update(  # try to match font sizes of document
     {'axes.labelsize': 10,
@@ -302,7 +356,8 @@ nrm1, nrm2 = mchirp_eta_to_mass1_mass2(nrmc, nret)
 nrq = nrm1 / eta_mass1_to_mass2(nret, nrm1)
 
 nrwav = UseNRinDA.nr_waveform(
-    filename='/home/prayush/research/NR/EffectualnessStudies/NRwaveforms/SKS_d13.9-q3-sA_0_0_0.85_sB_0_0_0.85-Lev5/extracted-rhOverM_CcePITT_Asymptotic_GeometricUnits/CceR0420.dir/Y_l2_m2.dat',
+    filename=
+    '/home/prayush/research/NR/EffectualnessStudies/NRwaveforms/SKS_d13.9-q3-sA_0_0_0.85_sB_0_0_0.85-Lev5/extracted-rhOverM_CcePITT_Asymptotic_GeometricUnits/CceR0420.dir/Y_l2_m2.dat',
     time_length=8)
 nrwav.rescale_to_totalmass(nrmt)
 nrhp = TimeSeries(nrwav.rescaled_hp, epoch=0)
@@ -310,23 +365,23 @@ nrhc = TimeSeries(nrwav.rescaled_hc, epoch=0)
 nrh_max_amp_t, _ = nrwav.get_amplitude_peak()
 
 # Get actual EOB waveform
-hp0t, hc0t = get_td_waveform(approximant='SEOBNRv2', mass1=nrm1, mass2=nrm2,
-                             spin1z=nrs1, spin2z=nrs2,
+hp0t, hc0t = get_td_waveform(approximant='SEOBNRv2',
+                             mass1=nrm1,
+                             mass2=nrm2,
+                             spin1z=nrs1,
+                             spin2z=nrs2,
                              distance=(nrm1 + nrm2) * lal.MRSUN_SI /
                              (1.e6 * lal.PC_SI),
-                             delta_t=nrwav.dt, f_lower=f_low - 1.)
-hp0 = TimeSeries(
-    np.zeros(
-        nrwav.n),
-    delta_t=hp0t.delta_t,
-    dtype=hp0t.dtype,
-    epoch=0)
-hc0 = TimeSeries(
-    np.zeros(
-        nrwav.n),
-    delta_t=hc0t.delta_t,
-    dtype=hc0t.dtype,
-    epoch=0)
+                             delta_t=nrwav.dt,
+                             f_lower=f_low - 1.)
+hp0 = TimeSeries(np.zeros(nrwav.n),
+                 delta_t=hp0t.delta_t,
+                 dtype=hp0t.dtype,
+                 epoch=0)
+hc0 = TimeSeries(np.zeros(nrwav.n),
+                 delta_t=hc0t.delta_t,
+                 dtype=hc0t.dtype,
+                 epoch=0)
 hp0[:len(hp0t)] = hp0t * 0.5 * np.pi  # FIXME: Magic factors!!
 hc0[:len(hc0t)] = hc0t * 0.5 * np.pi
 
@@ -336,11 +391,17 @@ hnrhp, hnrhc, hhp0, hhc0 = align_waveforms_amplitude_peak(nrhp, nrhc, hp0, hc0)
 # align at 20 Hz
 hnrhp, hnrhc, hhp0, hhc0 = align_waveforms_at_frequency(
     nrhp, nrhc, hp0, hc0, 20)
-make_inspiral_merger_plot(hnrhp, hnrhc, hhp0, hhc0,
-                          legend=['NR', 'SEOBNRv2'],
-                          tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
-                          lp=0.96, rp=1.02,
-                          savefig='ExactParameters_LFAligned_q%.1f_sA%.2f_sB%.2f.png' % (nrq, nrs1, nrs2))
+make_inspiral_merger_plot(
+    hnrhp,
+    hnrhc,
+    hhp0,
+    hhc0,
+    legend=['NR', 'SEOBNRv2'],
+    tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
+    lp=0.96,
+    rp=1.02,
+    savefig='ExactParameters_LFAligned_q%.1f_sA%.2f_sB%.2f.png' %
+    (nrq, nrs1, nrs2))
 
 # Get BEST MATCH EOB waveform
 s1 = 0.90702927
@@ -350,23 +411,23 @@ et = 0.14983673
 mt = mc / et**0.6
 m1, m2 = mchirp_eta_to_mass1_mass2(mc, et)
 
-hp1t, hc1t = get_td_waveform(approximant='SEOBNRv2', mass1=nrm1, mass2=nrm2,
-                             spin1z=nrs1, spin2z=nrs2,
+hp1t, hc1t = get_td_waveform(approximant='SEOBNRv2',
+                             mass1=nrm1,
+                             mass2=nrm2,
+                             spin1z=nrs1,
+                             spin2z=nrs2,
                              distance=(nrm1 + nrm2) * lal.MRSUN_SI /
                              (1.e6 * lal.PC_SI),
-                             delta_t=nrwav.dt, f_lower=f_low - 1.)
-hp1 = TimeSeries(
-    np.zeros(
-        nrwav.n),
-    delta_t=hp1t.delta_t,
-    dtype=hp1t.dtype,
-    epoch=0)
-hc1 = TimeSeries(
-    np.zeros(
-        nrwav.n),
-    delta_t=hc1t.delta_t,
-    dtype=hc1t.dtype,
-    epoch=0)
+                             delta_t=nrwav.dt,
+                             f_lower=f_low - 1.)
+hp1 = TimeSeries(np.zeros(nrwav.n),
+                 delta_t=hp1t.delta_t,
+                 dtype=hp1t.dtype,
+                 epoch=0)
+hc1 = TimeSeries(np.zeros(nrwav.n),
+                 delta_t=hc1t.delta_t,
+                 dtype=hc1t.dtype,
+                 epoch=0)
 hp1[:len(hp1t)] = hp1t * 0.5 * np.pi  # FIXME: Magic factors!!
 hc1[:len(hc1t)] = hc1t * 0.5 * np.pi
 
@@ -378,20 +439,41 @@ tsign = 1
 phsign = -1
 for tsign in [-1, 1]:
     for phsign in [-1, 1]:
-        _, _, hhp1, hhc1 = align_waveforms_optimally(hnrhp, hnrhc, hp1, hc1, psd=psd,
-                                                     low_frequency_cutoff=f_low, high_frequency_cutoff=f_high,
-                                                     tsign=tsign, phsign=phsign)
+        _, _, hhp1, hhc1 = align_waveforms_optimally(
+            hnrhp,
+            hnrhc,
+            hp1,
+            hc1,
+            psd=psd,
+            low_frequency_cutoff=f_low,
+            high_frequency_cutoff=f_high,
+            tsign=tsign,
+            phsign=phsign)
         #
-        make_inspiral_merger_plot(hnrhp, hnrhc, hhp1, hhc1,
-                                  legend=['NR', 'SEOBNRv2'],
-                                  tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
-                                  lp=0.96, rp=1.02,
-                                  savefig='BestMatchParameters_LFAligned_q%.1f_sA%.2f_sB%.2f_%d_%d.png' %
-                                  (nrq, nrs1, nrs2, tsign, phsign))
+        make_inspiral_merger_plot(
+            hnrhp,
+            hnrhc,
+            hhp1,
+            hhc1,
+            legend=['NR', 'SEOBNRv2'],
+            tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
+            lp=0.96,
+            rp=1.02,
+            savefig=
+            'BestMatchParameters_LFAligned_q%.1f_sA%.2f_sB%.2f_%d_%d.png' %
+            (nrq, nrs1, nrs2, tsign, phsign))
         #
-        make_inspiral_merger_plot_3(hnrhp, hnrhc, hhp0, hhc0, hhp1, hhc1,
-                                    legend=['NR', 'Same Params', 'Best Match'],
-                                    tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
-                                    lp=0.96, rp=1.02,
-                                    savefig='ExactBestMatchParameters_Aligned_q%.1f_sA%.2f_sB%.2f_%d_%d.png' %
-                                    (nrq, nrs1, nrs2, tsign, phsign))
+        make_inspiral_merger_plot_3(
+            hnrhp,
+            hnrhc,
+            hhp0,
+            hhc0,
+            hhp1,
+            hhc1,
+            legend=['NR', 'Same Params', 'Best Match'],
+            tscale=hnrhp.delta_t / nrmt / lal.MTSUN_SI,
+            lp=0.96,
+            rp=1.02,
+            savefig=
+            'ExactBestMatchParameters_Aligned_q%.1f_sA%.2f_sB%.2f_%d_%d.png' %
+            (nrq, nrs1, nrs2, tsign, phsign))

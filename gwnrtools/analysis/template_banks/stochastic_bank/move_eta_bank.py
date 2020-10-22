@@ -15,7 +15,6 @@ from numpy import pi, sqrt
 import matplotlib
 matplotlib.use('Agg')
 
-
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 ############## Functions ######################
@@ -37,17 +36,17 @@ class test:
     def m1_m2_to_tau0_tau3(self, m1, m2):
         mt = m1 + m2
         et = m1 * m2 / mt**2
-        tau3 = 1.0 / (8.0 * (pi * pi * options.f_min**5.0)
-                      ** (1.0 / 3.0) * mt**(2.0 / 3.0) * et)
-        tau0 = 5.0 / (256.0 * pi * options.f_min **
-                      (8.0 / 3.0) * mt**(5.0 / 3.0) * et)
+        tau3 = 1.0 / (8.0 * (pi * pi * options.f_min**5.0)**(1.0 / 3.0) *
+                      mt**(2.0 / 3.0) * et)
+        tau0 = 5.0 / (256.0 * pi * options.f_min**(8.0 / 3.0) *
+                      mt**(5.0 / 3.0) * et)
         return (tau0, tau3)
 
     def m1_m2_to_tau0_tau3(self, m1, m2, f_min):
         mt = m1 + m2
         et = m1 * m2 / mt**2
-        tau3 = 1.0 / (8.0 * (pi * pi * f_min**5.0) **
-                      (1.0 / 3.0) * mt**(2.0 / 3.0) * et)
+        tau3 = 1.0 / (8.0 * (pi * pi * f_min**5.0)**(1.0 / 3.0) *
+                      mt**(2.0 / 3.0) * et)
         tau0 = 5.0 / (256.0 * pi * f_min**(8.0 / 3.0) * mt**(5.0 / 3.0) * et)
         return (tau0, tau3)
 
@@ -104,7 +103,9 @@ def are_same(a, b):
 parser = OptionParser(
     version=git_version.verbose_msg,
     usage="%prog [OPTIONS]",
-    description="Takes in the iteration id. Reads in bank_id.xml. Writes bank_id_part_pid.xml, where each of these part files have bank-batch-size consecutive elements of the bank_id.xml. pid is part-id.")
+    description=
+    "Takes in the iteration id. Reads in bank_id.xml. Writes bank_id_part_pid.xml, where each of these part files have bank-batch-size consecutive elements of the bank_id.xml. pid is part-id."
+)
 
 parser = OptionParser()
 parser.add_option("--input-bank", help="input bank", type=str)
@@ -115,10 +116,9 @@ parser.add_option("--mass-cut", help="component mass cut", type=float)
 parser.add_option("--mtotal-cut", help="total mass cut", type=float)
 parser.add_option("--mchirp-cut", help="chirp mass cut", type=float)
 parser.add_option("--eta-cut", help="eta cut", type=float)
-parser.add_option(
-    "--extract-eta",
-    help="single eta to be extracted",
-    type=float)
+parser.add_option("--extract-eta",
+                  help="single eta to be extracted",
+                  type=float)
 parser.add_option("--extract-q", help="single q to be extracted", type=float)
 parser.add_option("--insert-eta", help="single eta to be pushed", type=float)
 parser.add_option("--remove-eta", help="single eta to be pushed", type=float)
@@ -132,21 +132,20 @@ parser.add_option(
 parser.add_option(
     "--strict-region-alignedspin",
     action="store_true",
-    help="choose templates in a region, which has to be specified. For BBH with chi1 = chi2.",
+    help=
+    "choose templates in a region, which has to be specified. For BBH with chi1 = chi2.",
     default=False)
 
-parser.add_option(
-    "-C",
-    "--comment",
-    metavar="STRING",
-    help="add the optional STRING as the process:comment",
-    default='')
-parser.add_option(
-    "-V",
-    "--verbose",
-    action="store_true",
-    help="print extra debugging information",
-    default=False)
+parser.add_option("-C",
+                  "--comment",
+                  metavar="STRING",
+                  help="add the optional STRING as the process:comment",
+                  default='')
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 (options, args) = parser.parse_args()
 # }}}
@@ -161,21 +160,25 @@ if options.strict_region_alignedspin is False and options.mtotal_cut is None and
 bank_file_name = options.input_bank
 in_bank_doc = ligolw_utils.load_filename(bank_file_name, options.verbose)
 try:
-    in_bank_table = table.get_table(
-        in_bank_doc, lsctables.SimInspiralTable.tableName)
+    in_bank_table = table.get_table(in_bank_doc,
+                                    lsctables.SimInspiralTable.tableName)
 except ValueError:
-    in_bank_table = table.get_table(
-        in_bank_doc, lsctables.SnglInspiralTable.tableName)
+    in_bank_table = table.get_table(in_bank_doc,
+                                    lsctables.SnglInspiralTable.tableName)
 
 ################### Cut the bank amd write it to disk ############
 subfile_name = options.output_bank
 print("Writing sub-bank file %s" % subfile_name)
 out_subbank_doc = ligolw.Document()
 out_subbank_doc.appendChild(ligolw.LIGO_LW())
-out_proc_id = ligolw_process.register_to_xmldoc(out_subbank_doc,
-                                                PROGRAM_NAME, options.__dict__, comment=options.comment,
-                                                version=git_version.id, cvs_repository=git_version.branch,
-                                                cvs_entry_time=git_version.date).process_id
+out_proc_id = ligolw_process.register_to_xmldoc(
+    out_subbank_doc,
+    PROGRAM_NAME,
+    options.__dict__,
+    comment=options.comment,
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 print(options.columns)
 if options.columns is None:
@@ -184,58 +187,30 @@ if options.columns is None:
         out_subbank_table = lsctables.New(
             lsctables.SimInspiralTable,
             columns=[
-                'mass1',
-                'mass2',
-                'mchirp',
-                'eta',
-                'spin1x',
-                'spin1y',
-                'spin1z',
-                'spin2x',
-                'spin2y',
-                'spin2z',
-                'inclination',
-                'polarization',
-                'latitude',
-                'longitude',
-                'bandpass',
-                'alpha',
-                'alpha1',
-                'alpha2',
-                'process_id'])
+                'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y',
+                'spin1z', 'spin2x', 'spin2y', 'spin2z', 'inclination',
+                'polarization', 'latitude', 'longitude', 'bandpass', 'alpha',
+                'alpha1', 'alpha2', 'process_id'
+            ])
     else:
         out_subbank_table = lsctables.New(
             lsctables.SnglInspiralTable,
             columns=[
-                'mass1',
-                'mass2',
-                'mchirp',
-                'eta',
-                'spin1x',
-                'spin1y',
-                'spin1z',
-                'spin2x',
-                'spin2y',
-                'spin2z',
-                'inclination',
-                'polarization',
-                'latitude',
-                'longitude',
-                'bandpass',
-                'alpha',
-                'alpha1',
-                'alpha2',
-                'process_id'])
+                'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y',
+                'spin1z', 'spin2x', 'spin2y', 'spin2z', 'inclination',
+                'polarization', 'latitude', 'longitude', 'bandpass', 'alpha',
+                'alpha1', 'alpha2', 'process_id'
+            ])
 else:
     cols = []
     for col in options.columns.split():
         cols.append(col)
     if options.table == 'sim':
-        out_subbank_table = lsctables.New(
-            lsctables.SimInspiralTable, columns=cols)
+        out_subbank_table = lsctables.New(lsctables.SimInspiralTable,
+                                          columns=cols)
     else:
-        out_subbank_table = lsctables.New(
-            lsctables.SnglInspiralTable, columns=cols)
+        out_subbank_table = lsctables.New(lsctables.SnglInspiralTable,
+                                          columns=cols)
 
 if options.remove_q is not None:
     options.remove_eta = options.remove_q / (1. + options.remove_q)**2
@@ -292,9 +267,7 @@ for bank_point in in_bank_table:
                 bank_point.mtotal = mt
         out_subbank_table.append(bank_point)
 
-
-subbank_proctable = table.get_table(
-    out_subbank_doc,
-    lsctables.ProcessTable.tableName)
+subbank_proctable = table.get_table(out_subbank_doc,
+                                    lsctables.ProcessTable.tableName)
 subbank_proctable[0].end_time = gpstime.GpsSecondsFromPyUTC(time.time())
 ligolw_utils.write_filename(out_subbank_doc, subfile_name)

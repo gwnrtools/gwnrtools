@@ -100,16 +100,17 @@ def smooth(x, window_len=11, window='flat'):
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError(
-            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+            "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        )
 
-    s = np.r_[x[window_len-1:0:-1], x, x[-1:-window_len:-1]]
+    s = np.r_[x[window_len - 1:0:-1], x, x[-1:-window_len:-1]]
     # print(len(s))
     if window == 'flat':  # moving average
         w = np.ones(window_len, 'd')
     else:
-        w = eval('np.'+window+'(window_len)')
+        w = eval('np.' + window + '(window_len)')
 
-    y = np.convolve(w/w.sum(), s, mode='valid')
+    y = np.convolve(w / w.sum(), s, mode='valid')
     return y
 
 
@@ -117,8 +118,8 @@ def moving_window_average(x, i, window_len=10):
     """
     Return the average of x[i - window_len/2 : i + window_len/2]
     """
-    imin = np.maximum(0, i - window_len/2)
-    imax = np.minimum(len(x), i + window_len/2)
+    imin = np.maximum(0, i - window_len / 2)
+    imax = np.minimum(len(x), i + window_len / 2)
     return np.mean(x[imin:imax])
 
 
@@ -131,13 +132,13 @@ def planck_window(N=None, eps=None, one_sided=True, winstart=0):
     win = ones(N)
     N1 = int(eps * (N - 1.)) + 1
     den_t1_Zp = 1. + 2. * win / (N - 1.)
-    Zp = 2. * eps * (1./den_t1_Zp + 1./(den_t1_Zp - 2.*eps))
+    Zp = 2. * eps * (1. / den_t1_Zp + 1. / (den_t1_Zp - 2. * eps))
     win[0:N1] = array(1. / (exp(Zp) + 1.))[0:N1]
     ##
     if one_sided is not True:
         N2 = (1. - eps) * (N - 1.) + 1
         den_t1_Zm = 1. - 2. * win / (N - 1.)
-        Zm = 2. * eps * (1./den_t1_Zm + 1./(den_t1_Zm - 2.*eps))
+        Zm = 2. * eps * (1. / den_t1_Zm + 1. / (den_t1_Zm - 2. * eps))
         win[N2:] = array(1. / (exp(Zm) + 1.))[N2:]
     ##
     win = append(ones(winstart), win)
@@ -150,8 +151,8 @@ def windowing_tanh(waveform_array, bin_to_center_window, sharpness):
     waveform_array = asarray(waveform_array)
     length_of_waveform = size(waveform_array)
     x = arange(length_of_waveform)
-    window_function = (tanh(sharpness * (x - bin_to_center_window)) + 1.)/2.
-    temp = window_function*waveform_array
+    window_function = (tanh(sharpness * (x - bin_to_center_window)) + 1.) / 2.
+    temp = window_function * waveform_array
     return temp
     # }}}
 
@@ -164,6 +165,7 @@ def windowing_tanh(waveform_array, bin_to_center_window, sharpness):
 ######################################################################
 ######################################################################
 
+
 #############################
 def blend(hin, mm, sample, time, t_opt, WinID=-1):
     # Only dealing with real part, don't do hc calculations
@@ -174,17 +176,20 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     hp0._epoch = hc0._epoch = 0
     amp = TimeSeries(np.sqrt(hp0**2 + hc0**2), copy=True, delta_t=hp0.delta_t)
     max_a, max_a_index = amp.abs_max_loc()
-    print(("\n\n In blend:\nTotal Mass = %f, len(hp0,hc0) = %d, %d = %f s" %
-           (mm, len(hp0), len(hc0), hp0.sample_times[-1]-hp0.sample_times[0])))
+    print(
+        ("\n\n In blend:\nTotal Mass = %f, len(hp0,hc0) = %d, %d = %f s" %
+         (mm, len(hp0), len(hc0), hp0.sample_times[-1] - hp0.sample_times[0])))
     print(("Waveform max = %e, located at %d" % (max_a, max_a_index)))
     # amp_after_peak = amp
     # amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
     amp_after_peak = amp[max_a_index:]
-    iA, vA = min(enumerate(amp_after_peak), key=lambda x: abs(x[1]-0.01*max_a))
+    iA, vA = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.01 * max_a))
     iA += max_a_index
     # iA, vA = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.01*max_a))
-    iB, vB = min(enumerate(amp_after_peak), key=lambda x: abs(x[1]-0.1*max_a))
+    iB, vB = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.1 * max_a))
     iB += max_a_index
     if iA <= max_a_index:
         print(("iA = %d, iB = %d, vA = %e, vB = %e" % (iA, iB, vA, vB)))
@@ -207,7 +212,7 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
         # Yet another way
         amp_after_peak = amp[max_a_index:]
         iA, vA = min(enumerate(amp_after_peak),
-                     key=lambda x: abs(x[1]-0.01*max_a))
+                     key=lambda x: abs(x[1] - 0.01 * max_a))
         iA += max_a_index
         print(("Newfound iA another way = %d" % iA))
         raise RuntimeError("Had to find amplitude threshold the hard way")
@@ -229,9 +234,12 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
         if (WinID >= 0 and WinID < len(t)) and i != WinID:
             continue
         print(("Testing window with t = ", t[i]))
-        hphc.append(hin.blending_function(
-            hp0=hp0, t=t[i], sample_rate=sample, time_length=time))
-    print(("No of blending windows being tested = %d" % (len(hphc)-1)))
+        hphc.append(
+            hin.blending_function(hp0=hp0,
+                                  t=t[i],
+                                  sample_rate=sample,
+                                  time_length=time))
+    print(("No of blending windows being tested = %d" % (len(hphc) - 1)))
     return hphc
     # }}}
 
@@ -251,8 +259,10 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     amp_after_peak = amp
     amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
-    iA, vA = min(enumerate(amp_after_peak), key=lambda x: abs(x[1]-0.01*max_a))
-    iB, vB = min(enumerate(amp_after_peak), key=lambda x: abs(x[1]-0.1*max_a))
+    iA, vA = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.01 * max_a))
+    iB, vB = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.1 * max_a))
     print((iA, iB))
     t = [[t_opt[0]*mm, 500*mm, hp0.sample_times.data[iA]/mtsun, hp0.sample_times.data[iA]/mtsun+t_opt[3]*mm],  # Prayush's E
          [t_opt[0]*mm, t_opt[1]*mm, hp0.sample_times.data[iA] / \
@@ -266,8 +276,11 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     # hphc.append(hp0)
     for i in range(len(t)):
         print((t[i]))
-        hphc.append(nrtool.blending_function_Tukey(hp0=hp0, t=t[i],
-                                                   sample_rate=sample, time_length=time))
+        hphc.append(
+            nrtool.blending_function_Tukey(hp0=hp0,
+                                           t=t[i],
+                                           sample_rate=sample,
+                                           time_length=time))
     print(("No of blending windows being tested = %d" % len(hphc)))
     return hphc
     # }}}

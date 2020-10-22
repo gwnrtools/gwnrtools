@@ -25,11 +25,14 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 ####################       Input parsing     #####################
 #########################################################################
 #{{{
-parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
+parser = argparse.ArgumentParser(
+    usage="%%prog [OPTIONS]",
+    description="""
 Reads in all match files for given testpoint set against current bank. Removes
 all testpoints which have match > [MM] for at least one point in the existing
 bank. Write the final testpoints as testpoints_sufficiently_far/test_%d.xml.
-""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+""",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--proposal-file-name",
@@ -43,25 +46,26 @@ parser.add_argument("--match-file-name-glob",
                     help="glob for files that store matches")
 
 # Physics related inputs
-parser.add_argument("--minimal-match",
-                    dest="mm",
-                    default=0.97,
-                    type=float)
-parser.add_argument("--elimination-dir", metavar="STRING",
+parser.add_argument("--minimal-match", dest="mm", default=0.97, type=float)
+parser.add_argument("--elimination-dir",
+                    metavar="STRING",
                     help="Where are hashes of eliminated proposals stored?",
                     default='testpoints_eliminated/')
 
 # Miscellaneous
-parser.add_argument("-V", "--verbose", action="store_true",
+parser.add_argument("-V",
+                    "--verbose",
+                    action="store_true",
                     help="print extra debugging information",
-                    default=False )
-parser.add_argument("-C", "--comment", metavar="STRING",
+                    default=False)
+parser.add_argument("-C",
+                    "--comment",
+                    metavar="STRING",
                     help="add the optional STRING as the process:comment",
-                    default='' )
+                    default='')
 
 options = parser.parse_args()
 #}}}
-
 
 #########################################################################
 #################### Opening input/output files/tables ##################
@@ -80,8 +84,9 @@ if not os.path.exists(options.prop_file_name):
 
 logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
-                  contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
-                  verbose=options.verbose)
+                                      contenthandler=table.use_in(
+                                          ligolw.LIGOLWContentHandler),
+                                      verbose=options.verbose)
 try:
     prop_table = lsctables.SimInspiralTable.get_table(prop_doc)
 except ValueError:
@@ -91,10 +96,10 @@ except ValueError:
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
 new_inspiral_table = lsctables.New(lsctables.SimInspiralTable,
-    columns=prop_table.columnnames)
+                                   columns=prop_table.columnnames)
 outdoc.childNodes[0].appendChild(new_inspiral_table)
-out_proc_id = ligolw_process.register_to_xmldoc(outdoc,
-    PROGRAM_NAME, options.__dict__, comment=options.comment).process_id
+out_proc_id = ligolw_process.register_to_xmldoc(
+    outdoc, PROGRAM_NAME, options.__dict__, comment=options.comment).process_id
 outname = options.new_prop_file_name
 #}}}
 
@@ -105,16 +110,19 @@ sys.stdout.flush()
 ####################### Functions to do things         ##################
 #########################################################################
 # Miscellaneous
-def get_tag(wav): return str(wav.simulation_id.column_name)
+def get_tag(wav):
+    return str(wav.simulation_id.column_name)
+
 
 def is_eliminated(wav):
     sid = get_tag(wav)
     if os.path.exists(os.path.join(options.elimination_dir, sid)): return True
     return False
 
+
 def parse_match_file(mfile_name,
-                     mvals_for_each_bank_point = {},
-                     mvals_for_each_test_point = {}):
+                     mvals_for_each_bank_point={},
+                     mvals_for_each_test_point={}):
     if not os.path.exists(mfile_name):
         raise IOError("Provided file {} not found.".format(mfile_name))
     with open(mfile_name, 'r') as mfile:
@@ -131,8 +139,11 @@ def parse_match_file(mfile_name,
                 mvals_for_each_test_point[ptag][btag] = line[-1]
     return mvals_for_each_bank_point, mvals_for_each_test_point
 
+
 def get_all_matches_against_point(p, mvals_dict):
-    return np.array([mvals_dict[p][mval] for mval in mvals_dict[p]], dtype=np.float128)
+    return np.array([mvals_dict[p][mval] for mval in mvals_dict[p]],
+                    dtype=np.float128)
+
 
 #########################################################################
 #############################   Remove eliminated pts   #################
@@ -185,8 +196,8 @@ ligolw_utils.write_filename(outdoc, outname)
 cnt_eliminations = len(prop_table) - len(new_inspiral_table)
 if options.verbose:
     logging.info("Written results to file: {}".format(outname))
-    logging.info("Total {} test points eliminated, {} left.".format(cnt_eliminations,
-        len(new_inspiral_table)))
+    logging.info("Total {} test points eliminated, {} left.".format(
+        cnt_eliminations, len(new_inspiral_table)))
     logging.info("Time taken: {} seconds".format(time.time() - _itime))
 
 sys.stdout.flush()

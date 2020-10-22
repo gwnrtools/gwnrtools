@@ -21,7 +21,6 @@ run needs to be continued from where it stopped or not.
 """)
     exit()
 
-
 workdir = sys.argv[1]
 os.chdir(workdir)
 pwd = cmd.getoutput('pwd')
@@ -46,10 +45,11 @@ for d in dirs:
         testn = 0
         for f in out_files:
             testn = max(
-                testn, len(
+                testn,
+                len(
                     cmd.getoutput(
-                        r'cat %s | grep "Requested\ timestep\ not\ in\ worldtube\ data\ file.\ Stopping"' %
-                        f).split()))
+                        r'cat %s | grep "Requested\ timestep\ not\ in\ worldtube\ data\ file.\ Stopping"'
+                        % f).split()))
         print("Found ", testn)
         if testn != 0:
             print("This has finished!")
@@ -81,7 +81,8 @@ for d in dirs:
         #
         print("Copying highResCce-resubmit.par to highResCce.par")
         cmd.getoutput(
-            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par')
+            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par'
+        )
         #
         print("Moving highResCce to highResCce-%d" % nn)
         cmd.getoutput('mv highResCce highResCce-%d' % nn)
@@ -119,6 +120,7 @@ class cce_run():
             os.chdir('%s/%s/%s' % (self.workdir, self.dirname, ld))
             self.nn[ld] = len(glob.glob('highResCce-*.par')) + 1
             os.chdir(pwd)
+
     #
 
     def get_recent_output_file(self, ld):
@@ -132,6 +134,7 @@ class cce_run():
                 max_mtime, ofile = mtime, ff
         os.chdir(pwd)
         return ofile
+
     #
 
     def is_to_be_continued(self, ld):
@@ -145,9 +148,9 @@ class cce_run():
         if usedtime < askedtime:
             if usedtime < 120:
                 if self.verbose:
-                    print(
-                        "Warning: %s/%s Run stopped too soon!" %
-                        (self.dirname, ld), file=sys.stdout)
+                    print("Warning: %s/%s Run stopped too soon!" %
+                          (self.dirname, ld),
+                          file=sys.stdout)
                 return False
             else:
                 if self.verbose:
@@ -158,6 +161,7 @@ class cce_run():
             if self.verbose:
                 print("Run needs to be restarted", file=sys.stdout)
             return True
+
     #
 
     def setup_rerun(self, ld):
@@ -174,7 +178,8 @@ class cce_run():
         if self.verbose:
             print("Copying highResCce-resubmit.par to highResCce.par")
         cmd.getoutput(
-            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par')
+            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par'
+        )
         #
         if self.verbose:
             print("Moving highResCce to highResCce-%d" % nn)
@@ -182,6 +187,7 @@ class cce_run():
         cmd.getoutput('rm -rf highResCce-0')
         cmd.getoutput('ln -s highResCce-%d highResCce-0' % nn)
         os.chdir(pwd)
+
     #
 
     def submit_rerun(self, ld):
@@ -193,4 +199,5 @@ class cce_run():
             self.dirname, ld, nn)
         cmd.getoutput(comm)
         os.chdir(pwd)
+
     # }}}

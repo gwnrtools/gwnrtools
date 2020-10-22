@@ -55,16 +55,17 @@ _starting_time = time.time()
 
 
 def get_detector_response(ra, dec, psi, detector_tag, gmst=0):
-    detMap = {'H1': lal.LALDetectorIndexLHODIFF,
-              'H2': lal.LALDetectorIndexLHODIFF,
-              'L1': lal.LALDetectorIndexLLODIFF,
-              'G1': lal.LALDetectorIndexGEO600DIFF,
-              'V1': lal.LALDetectorIndexVIRGODIFF,
-              'T1': lal.LALDetectorIndexTAMA300DIFF,
-              'AL1': lal.LALDetectorIndexLLODIFF,
-              'AH1': lal.LALDetectorIndexLHODIFF,
-              'AV1': lal.LALDetectorIndexVIRGODIFF
-              }
+    detMap = {
+        'H1': lal.LALDetectorIndexLHODIFF,
+        'H2': lal.LALDetectorIndexLHODIFF,
+        'L1': lal.LALDetectorIndexLLODIFF,
+        'G1': lal.LALDetectorIndexGEO600DIFF,
+        'V1': lal.LALDetectorIndexVIRGODIFF,
+        'T1': lal.LALDetectorIndexTAMA300DIFF,
+        'AL1': lal.LALDetectorIndexLLODIFF,
+        'AH1': lal.LALDetectorIndexLHODIFF,
+        'AV1': lal.LALDetectorIndexVIRGODIFF
+    }
     detector = detMap[detector_tag]
     # get detector
     detval = lal.CachedDetectors[detector]
@@ -114,13 +115,15 @@ def get_time_at_frequency_from_polarizations(hp, hc, fvalue):
     obj_func = np.abs(np.abs(fr) - fvalue)
     id_start = np.where(obj_func == np.min(obj_func))[0][0]
     for idx in range(id_start, len(fr)):
-        if fr[idx] > 2*fvalue and fr[idx+1] > 2*fvalue:
+        if fr[idx] > 2 * fvalue and fr[idx + 1] > 2 * fvalue:
             break
     #
     frI = InterpolatedUnivariateSpline(fr.sample_times, obj_func)
-    tmp = minimize_scalar(frI, fr.sample_times[id_start],
+    tmp = minimize_scalar(frI,
+                          fr.sample_times[id_start],
                           method='bounded',
-                          bounds=(fr.sample_times[id_start], fr.sample_times[idx]))
+                          bounds=(fr.sample_times[id_start],
+                                  fr.sample_times[idx]))
     return tmp['x']
 
 
@@ -135,17 +138,20 @@ Input a TimeSeries with epoch set correctly.
     """
     # Define time interval to be searched
     idx_first = int(len(fr) * 0.2)  # 20% margin for junk - TOO MUCH?
-    idx_end = np.where(np.abs(fr.sample_times.data) == np.abs(
-        fr.sample_times.data).min())[0][0]  # Assume a properly aligned TimeSeries
+    idx_end = np.where(
+        np.abs(fr.sample_times.data) == np.abs(fr.sample_times.data).min())[0][
+            0]  # Assume a properly aligned TimeSeries
     # Starting guess
     obj_func = np.abs(np.abs(fr) - fvalue)[idx_first:idx_end]
     id_start = np.where(obj_func == np.min(obj_func))[0][int(
-        np.ceil(len(np.where(obj_func == np.min(obj_func))[0])/2))]
+        np.ceil(len(np.where(obj_func == np.min(obj_func))[0]) / 2))]
     # Interpolate and find
-    frI = InterpolatedUnivariateSpline(
-        fr.sample_times[idx_first:idx_end], obj_func)
-    tmp = minimize_scalar(frI, fr.sample_times[id_start],
+    frI = InterpolatedUnivariateSpline(fr.sample_times[idx_first:idx_end],
+                                       obj_func)
+    tmp = minimize_scalar(frI,
+                          fr.sample_times[id_start],
                           method='bounded',
-                          bounds=(fr.sample_times[idx_first], fr.sample_times[idx_end]))
+                          bounds=(fr.sample_times[idx_first],
+                                  fr.sample_times[idx_end]))
     # Return time value
     return tmp['x']

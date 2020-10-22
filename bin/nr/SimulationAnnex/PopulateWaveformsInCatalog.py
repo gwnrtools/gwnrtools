@@ -94,20 +94,24 @@ def get_data_from_metadatafile(fin, old_format_for_spins=False):
     chi2y = np.float64(chi2line.split()[-2][:-1])
     chi2z = np.float64(chi2line.split()[-1])
     if old_format_for_spins:
-        chi1x /= (m1 ** 2)
-        chi1y /= (m1 ** 2)
-        chi1z /= (m1 ** 2)
-        chi2x /= (m2 ** 2)
-        chi2y /= (m2 ** 2)
-        chi2z /= (m2 ** 2)
+        chi1x /= (m1**2)
+        chi1y /= (m1**2)
+        chi1z /= (m1**2)
+        chi2x /= (m2**2)
+        chi2y /= (m2**2)
+        chi2z /= (m2**2)
     return [m1, m2, chi1x, chi1y, chi1z, chi2x, chi2y, chi2z, omega, trelax]
 
 
-def get_waveform_location(p, cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
-                          cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                          extrapolated_filename='rhOverM_Asymptotic_GeometricUnits.h5',
-                          finite_radii_filename='rh_FiniteRadii_CodeUnits.h5',
-                          wavetypes='cce', wavename='', allow_symlinks=True):
+def get_waveform_location(
+        p,
+        cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
+        cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+        extrapolated_filename='rhOverM_Asymptotic_GeometricUnits.h5',
+        finite_radii_filename='rh_FiniteRadii_CodeUnits.h5',
+        wavetypes='cce',
+        wavename='',
+        allow_symlinks=True):
     """
   Goes through all wavetypes IN ORDER GIVEN, and returns the location of
   first waveform found on disk
@@ -128,9 +132,8 @@ def get_waveform_location(p, cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
         #
         tag = p.waveform
         if options.verbose:
-            print(
-                "Trying wavetype %s for %s " %
-                (wavetype, tag), file=sys.stdout)
+            print("Trying wavetype %s for %s " % (wavetype, tag),
+                  file=sys.stdout)
         #
         subdir = tag.split('-')[-1]
         dirname = add_strings(tag.split('-')[:-1], '-')
@@ -146,25 +149,22 @@ def get_waveform_location(p, cce_filename_ascii='h_from_Psi4_scri.L02Mp02.dat',
                 '/highResCce.joined/' + filename
         if os.path.exists(h22file) and os.path.getsize(h22file) > 0:
             if options.verbose:
-                print(
-                    "Waveform found for %s at %s" %
-                    (tag, h22file), file=sys.stdout)
+                print("Waveform found for %s at %s" % (tag, h22file),
+                      file=sys.stdout)
             return h22file
         elif allow_symlinks and os.path.islink(h22file):
             if options.verbose:
-                print(
-                    "Waveform SYMLINK found for %s at %s" %
-                    (tag, h22file), file=sys.stdout)
+                print("Waveform SYMLINK found for %s at %s" % (tag, h22file),
+                      file=sys.stdout)
             return h22file
         else:
             if options.verbose:
-                print(
-                    "Waveform %s NOT found for %s" %
-                    (h22file, tag), file=sys.stdout)
+                print("Waveform %s NOT found for %s" % (h22file, tag),
+                      file=sys.stdout)
     return None
 
-### option parsing ###
 
+### option parsing ###
 
 parser = OptionParser(
     version=git_version.verbose_msg,
@@ -177,12 +177,14 @@ parser.add_option(
     "--nr-input-dir",
     metavar='DIR',
     help='Main dir with nr sim',
-    default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/')
+    default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/'
+)
 parser.add_option("-i", "--input-tags", help="Names of the tags")
 parser.add_option(
     "-l",
     "--lev-tag",
-    help="RegEx for the Subdirectory of the simulation directory containing the waveform files",
+    help=
+    "RegEx for the Subdirectory of the simulation directory containing the waveform files",
     default='Production/BBH*/Lev?')
 parser.add_option(
     "-w",
@@ -195,60 +197,57 @@ parser.add_option(
     help="Please provide one of cce, extrapolated, finite-radius",
     default='')
 
-
-parser.add_option(
-    "-x",
-    "--input-catalog",
-    help="Names of the xml file to append the information to",
-    type=str,
-    default=None)
+parser.add_option("-x",
+                  "--input-catalog",
+                  help="Names of the xml file to append the information to",
+                  type=str,
+                  default=None)
 parser.add_option("-t", "--output-catalog", help='output file name')
 
-parser.add_option(
-    "--use-hdf",
-    action="store_true",
-    help="Store ascii file or HDF5 file location?",
-    default=False)
+parser.add_option("--use-hdf",
+                  action="store_true",
+                  help="Store ascii file or HDF5 file location?",
+                  default=False)
 parser.add_option(
     "--use-symlinks",
     action="store_true",
     help="Catalog symlinks even if the linked file does not exist",
     default=False)
-parser.add_option(
-    "--use-highest-lev",
-    action="store_true",
-    help="Use only the highest lev for each simulation",
-    default=False)
+parser.add_option("--use-highest-lev",
+                  action="store_true",
+                  help="Use only the highest lev for each simulation",
+                  default=False)
 
 parser.add_option(
     "--restrict-zero-spins",
     action="store_true",
-    help="Use only the non-spinning waveforms. transverse-spin-threshold is used as the spin-threshold",
+    help=
+    "Use only the non-spinning waveforms. transverse-spin-threshold is used as the spin-threshold",
     default=False)
 parser.add_option(
     "--restrict-aligned-spins",
     action="store_true",
-    help="Use only the aligned-spin simulation. transverse spin threshold is reqd",
+    help=
+    "Use only the aligned-spin simulation. transverse spin threshold is reqd",
     default=False)
-parser.add_option(
-    "--transverse-spin-threshold",
-    type=float,
-    help="Magnitude of x,y spins below which they are set to 0",
-    default=1.e-4)
+parser.add_option("--transverse-spin-threshold",
+                  type=float,
+                  help="Magnitude of x,y spins below which they are set to 0",
+                  default=1.e-4)
 parser.add_option("--store-path-relative-to", type=str, default='')
 
-parser.add_option(
-    "-V",
-    "--verbose",
-    action="store_true",
-    help="print extra debugging information",
-    default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv_frame_files = parser.parse_args()
 
 if options.input_catalog is not None:
     indoc = ligolw_utils.load_filename(options.input_catalog,
-                                       contenthandler=LIGOLWContentHandler, verbose=options.verbose)
+                                       contenthandler=LIGOLWContentHandler,
+                                       verbose=options.verbose)
     try:
         input_table = lsctables.SnglInspiralTable.get_table(indoc)
         inputtabletype = lsctables.SnglInspiralTable
@@ -258,7 +257,9 @@ if options.input_catalog is not None:
     # print tabletype
     length = len(input_table)
 else:
-    print("Waning: No input table given to append to, will construct one from scratch")
+    print(
+        "Waning: No input table given to append to, will construct one from scratch"
+    )
     inputtabletype = lsctables.SimInspiralTable
     #raise IOError("Please give a table to add the information about NR waveforms to.")
 
@@ -266,40 +267,24 @@ else:
 # Create a blank xml document and add the process id
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, ifos=[
-                                                "G1"],
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    ifos=["G1"],
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 out_table = lsctables.New(
     inputtabletype,
     columns=[
-        'mass1',
-        'mass2',
-        'mchirp',
-        'eta',
-        'spin1x',
-        'spin1y',
-        'spin1z',
-        'spin2x',
-        'spin2y',
-        'spin2z',
-        'inclination',
-        'polarization',
-        'latitude',
-        'longitude',
-        'bandpass',
-        'alpha',
-        'alpha1',
-        'alpha2',
-        'process_id',
-        'waveform',
-        'numrel_data',
-        'numrel_mode_min',
-        'numrel_mode_max',
-        't_end_time',
-        'f_lower'])
+        'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y', 'spin1z',
+        'spin2x', 'spin2y', 'spin2z', 'inclination', 'polarization',
+        'latitude', 'longitude', 'bandpass', 'alpha', 'alpha1', 'alpha2',
+        'process_id', 'waveform', 'numrel_data', 'numrel_mode_min',
+        'numrel_mode_max', 't_end_time', 'f_lower'
+    ])
 outdoc.childNodes[0].appendChild(out_table)
 
 wavetypes = options.wavetype.split()
@@ -324,15 +309,16 @@ if options.input_catalog is not None:
             if hasattr(point, nn):
                 npoint.__setattr__(nn, point.__getattribute__(nn))
         #
-        npoint.numrel_data = get_waveform_location(npoint, wavetypes=wavetypes,
-                                                   wavename=options.wave_name,
-                                                   allow_symlinks=options.use_symlinks)
+        npoint.numrel_data = get_waveform_location(
+            npoint,
+            wavetypes=wavetypes,
+            wavename=options.wave_name,
+            allow_symlinks=options.use_symlinks)
 
         if npoint.numrel_data is None:
             if options.verbose:
-                print(
-                    "NO WAVE FOUND for %s. SKIPPING.." %
-                    npoint.waveform, file=sys.stderr)
+                print("NO WAVE FOUND for %s. SKIPPING.." % npoint.waveform,
+                      file=sys.stderr)
                 sys.stderr.flush()
             del npoint
             continue
@@ -395,9 +381,11 @@ else:
             npoint.mchirp = (npoint.mass1 + npoint.mass2) * npoint.eta**0.6
             ##
             try:
-                npoint.numrel_data = get_waveform_location(npoint, wavetypes=wavetypes,
-                                                           wavename=options.wave_name,
-                                                           allow_symlinks=options.use_symlinks)
+                npoint.numrel_data = get_waveform_location(
+                    npoint,
+                    wavetypes=wavetypes,
+                    wavename=options.wave_name,
+                    allow_symlinks=options.use_symlinks)
             except BaseException:
                 FAILED_DATA_LOCATION.append(tag)
                 del npoint
@@ -406,34 +394,40 @@ else:
                 FAILED_DATA_LOCATION.append(tag)
                 if options.verbose:
                     print("NO WAVE FOUND for %s. SKIPPING.." % npoint.waveform,
-                          npoint.numrel_data, file=sys.stderr)
+                          npoint.numrel_data,
+                          file=sys.stderr)
                     sys.stderr.flush()
                 del npoint
                 continue
             #
             if options.restrict_zero_spins:
                 sthreshold = options.transverse_spin_threshold
-                if abs(npoint.spin1x) > sthreshold or abs(npoint.spin1y) > sthreshold or abs(npoint.spin1z) > sthreshold or abs(
-                        npoint.spin2x) > sthreshold or abs(npoint.spin2y) > sthreshold or abs(npoint.spin2z) > sthreshold:
+                if abs(npoint.spin1x) > sthreshold or abs(
+                        npoint.spin1y) > sthreshold or abs(
+                            npoint.spin1z) > sthreshold or abs(
+                                npoint.spin2x) > sthreshold or abs(
+                                    npoint.spin2y) > sthreshold or abs(
+                                        npoint.spin2z) > sthreshold:
                     continue
 
             if options.restrict_aligned_spins:
                 tsthreshold = options.transverse_spin_threshold
-                if abs(npoint.spin1x) > tsthreshold or abs(npoint.spin1y) > tsthreshold or abs(
-                        npoint.spin2x) > tsthreshold or abs(npoint.spin2y) > tsthreshold:
+                if abs(npoint.spin1x) > tsthreshold or abs(
+                        npoint.spin1y) > tsthreshold or abs(
+                            npoint.spin2x) > tsthreshold or abs(
+                                npoint.spin2y) > tsthreshold:
                     continue
                 if abs(npoint.spin1z) < tsthreshold and abs(
                         npoint.spin2z) < tsthreshold:
                     continue
 
             if len(options.store_path_relative_to) != 0:
-                npoint.numrel_data = string.split(npoint.numrel_data,
-                                                  options.store_path_relative_to)[-1]
+                npoint.numrel_data = string.split(
+                    npoint.numrel_data, options.store_path_relative_to)[-1]
 
             out_table.append(npoint)
             if options.use_highest_lev:
                 break
-
 
 # write the xml doc to disk
 proctable = lsctables.ProcessTable.get_table(outdoc)
@@ -444,6 +438,5 @@ ligolw_utils.write_filename(outdoc, outname)
 
 print("\n\n Total %d simulations cataloged" % len(out_table))
 print("\n\n Simulations for which metadata reading failed:\n", FAILED_METADATA)
-print(
-    "\n\n Simulations for which data location was not found:\n",
-    FAILED_DATA_LOCATION)
+print("\n\n Simulations for which data location was not found:\n",
+      FAILED_DATA_LOCATION)

@@ -39,8 +39,13 @@ from gwnrtools.stats import OneDRandom
 from gwnrtools.waveform.enigma_utils import FitMOmegaIMRAttachmentNonSpinning
 
 
-def log_prior_enigma(q, total_mass, PNO, coeffs, omega_attach,
-                     sp_info, verbose=False):
+def log_prior_enigma(q,
+                     total_mass,
+                     PNO,
+                     coeffs,
+                     omega_attach,
+                     sp_info,
+                     verbose=False):
     '''
 Priors:
 -------
@@ -62,8 +67,8 @@ Priors:
             omega_attach > float(sp_info.omega_attach.range[-1]):
         if verbose:
             logging.info(
-                "Rejecting MOmg={} from prior on omega_attach: {}".format(omega_attach,
-                                                                          sp_info.omega_attach.range))
+                "Rejecting MOmg={} from prior on omega_attach: {}".format(
+                    omega_attach, sp_info.omega_attach.range))
         return -np.inf
 
     if len(sp_info.q.range) == 1:
@@ -80,36 +85,45 @@ Priors:
             return -np.inf
     else:
         raise RuntimeError(
-            "Unable to handle q prior with q={}, range={}".format(q, sp_info.q.range))
+            "Unable to handle q prior with q={}, range={}".format(
+                q, sp_info.q.range))
 
     if len(sp_info.total_mass.range) == 1:
         if total_mass != float(sp_info.total_mass.range[0]):
             if verbose:
                 logging.info(
-                    "Rejecting M={} from prior on total_mass: {}".format(total_mass,
-                                                                         sp_info.total_mass.range))
+                    "Rejecting M={} from prior on total_mass: {}".format(
+                        total_mass, sp_info.total_mass.range))
             return -np.inf
     elif len(sp_info.total_mass.range) == 2:
-        if total_mass < float(sp_info.total_mass.range[0]) or total_mass > float(sp_info.total_mass.range[1]):
+        if total_mass < float(
+                sp_info.total_mass.range[0]) or total_mass > float(
+                    sp_info.total_mass.range[1]):
             if verbose:
                 logging.info(
-                    "Rejecting M={} from prior on total_mass: {}".format(total_mass,
-                                                                         sp_info.total_mass.range))
+                    "Rejecting M={} from prior on total_mass: {}".format(
+                        total_mass, sp_info.total_mass.range))
             return -np.inf
     else:
-        raise RuntimeError("Unable to handle total_mass prior with M={}, range={}".format(
-            total_mass, sp_info.total_mass.range))
+        raise RuntimeError(
+            "Unable to handle total_mass prior with M={}, range={}".format(
+                total_mass, sp_info.total_mass.range))
 
     if verbose:
-        logging.info(
-            "ACCEPTED q={}, M={}, PNO={}, coeffs={}, om={}".format(q, total_mass,
-                                                                   PNO, coeffs, omega_attach))
+        logging.info("ACCEPTED q={}, M={}, PNO={}, coeffs={}, om={}".format(
+            q, total_mass, PNO, coeffs, omega_attach))
 
     return 0.0
 
 
-def log_likelihood_enigma(mass1, mass2, omega_attach, PNO, f_lower, sample_rate,
-                          psd, dilation_map_match=False):
+def log_likelihood_enigma(mass1,
+                          mass2,
+                          omega_attach,
+                          PNO,
+                          f_lower,
+                          sample_rate,
+                          psd,
+                          dilation_map_match=False):
     '''
 This function takes in all parameters, including:
 - masses
@@ -142,8 +156,9 @@ Finally returns L = exp(-0.5 x m x m)
                                    delta_t=dt)
     except Exception as e:
         logging.error(traceback.format_exc())
-        logging.warn("Could not generate ENIGMA wave..m1={},m2={},omg={},PNO={}".format(
-            mass1, mass2, omega_attach, PNO))
+        logging.warn(
+            "Could not generate ENIGMA wave..m1={},m2={},omg={},PNO={}".format(
+                mass1, mass2, omega_attach, PNO))
         logging.error("\n")
         return -np.inf
     h1p = make_padded_frequency_series(h1p, N, df)
@@ -170,13 +185,16 @@ Finally returns L = exp(-0.5 x m x m)
     log_like, _ = match(h1p, h2p, psd=psd, low_frequency_cutoff=f_lower)
 
     if dilation_map_match:
-        def obj1(m): return np.log(m)
+
+        def obj1(m):
+            return np.log(m)
 
         def obj2(m, exp=30):
-            return np.sin(m*np.pi/2) ** exp
+            return np.sin(m * np.pi / 2)**exp
 
         def match_map_for_likelihood(m, exp=30):
             return obj1(m) + obj2(m, exp=30)
+
         return match_map_for_likelihood(log_like)
 
     return -(1. - log_like)
@@ -186,8 +204,13 @@ Finally returns L = exp(-0.5 x m x m)
 fit = FitMOmegaIMRAttachmentNonSpinning()
 
 
-def log_prob_enigma(theta, inputs, f_lower, sampling_params, psd,
-                    dilation_map_match=False, verbose=False,
+def log_prob_enigma(theta,
+                    inputs,
+                    f_lower,
+                    sampling_params,
+                    psd,
+                    dilation_map_match=False,
+                    verbose=False,
                     ignore_samples_for=[]):
     '''
     Inputs:
@@ -219,19 +242,30 @@ def log_prob_enigma(theta, inputs, f_lower, sampling_params, psd,
     m_omega_attach = fit.fit_ratio_poly_44(eta, coeffs)
 
     # prior probability
-    log_prior = log_prior_enigma(
-        q, total_mass, PNO, coeffs, m_omega_attach, sampling_params)
+    log_prior = log_prior_enigma(q, total_mass, PNO, coeffs, m_omega_attach,
+                                 sampling_params)
     if not np.isfinite(log_prior):
         return log_prior
 
     # posterior = likelihood x prior
-    return log_likelihood_enigma(mass1, mass2, m_omega_attach, PNO,
-                                 f_lower, inputs.sample_rate, psd,
-                                 dilation_map_match=dilation_map_match) + log_prior
+    return log_likelihood_enigma(
+        mass1,
+        mass2,
+        m_omega_attach,
+        PNO,
+        f_lower,
+        inputs.sample_rate,
+        psd,
+        dilation_map_match=dilation_map_match) + log_prior
 
 
-def log_prob_enigma_fixed_masses(theta, inputs, f_lower, sampling_params, psd,
-                                 omega_fit_tag, dilation_map_match=False,
+def log_prob_enigma_fixed_masses(theta,
+                                 inputs,
+                                 f_lower,
+                                 sampling_params,
+                                 psd,
+                                 omega_fit_tag,
+                                 dilation_map_match=False,
                                  verbose=False,
                                  ignore_samples_for=[]):
     '''
@@ -257,6 +291,7 @@ def log_prob_enigma_fixed_masses(theta, inputs, f_lower, sampling_params, psd,
             return (a, b)
         else:
             return (b, a)
+
     mass1, mass2 = ordered_masses(oned_sampling_obj)
     q = mass1 / mass2
     eta = q / (1. + q)**2
@@ -270,20 +305,34 @@ def log_prob_enigma_fixed_masses(theta, inputs, f_lower, sampling_params, psd,
         raise
 
     # prior probability
-    log_prior = log_prior_enigma(
-        q, total_mass, PNO, coeffs, m_omega_attach, sampling_params,
-        verbose=verbose)
+    log_prior = log_prior_enigma(q,
+                                 total_mass,
+                                 PNO,
+                                 coeffs,
+                                 m_omega_attach,
+                                 sampling_params,
+                                 verbose=verbose)
     if not np.isfinite(log_prior):
         return log_prior
 
     # posterior = likelihood x prior
-    return log_likelihood_enigma(mass1, mass2, m_omega_attach, PNO,
-                                 f_lower, inputs.sample_rate, psd,
-                                 dilation_map_match=dilation_map_match) + log_prior
+    return log_likelihood_enigma(
+        mass1,
+        mass2,
+        m_omega_attach,
+        PNO,
+        f_lower,
+        inputs.sample_rate,
+        psd,
+        dilation_map_match=dilation_map_match) + log_prior
 
 
-def log_prob_enigma_fixed_total_mass_hidden_q(theta, inputs, f_lower,
-                                              all_params, psd, omega_fit_tag,
+def log_prob_enigma_fixed_total_mass_hidden_q(theta,
+                                              inputs,
+                                              f_lower,
+                                              all_params,
+                                              psd,
+                                              omega_fit_tag,
                                               dilation_map_match=False,
                                               verbose=False):
     '''
@@ -302,7 +351,8 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta, inputs, f_lower,
 
     # Sample mass ratio using information stored in the sampling_params obj
     hidden_params = all_params[all_params.columns[[
-        all_params[c].vartype == 'hidden' for c in all_params]]]
+        all_params[c].vartype == 'hidden' for c in all_params
+    ]]]
     oned_sampler = OneDRandom(hidden_params)
     q = oned_sampler.sample('q')
 
@@ -326,30 +376,35 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta, inputs, f_lower,
     else:
         debug = False
 
-    log_prior = log_prior_enigma(
-        q, total_mass, PNO, coeffs, m_omega_attach, all_params,
-        verbose=debug)
+    log_prior = log_prior_enigma(q,
+                                 total_mass,
+                                 PNO,
+                                 coeffs,
+                                 m_omega_attach,
+                                 all_params,
+                                 verbose=debug)
 
     if not np.isfinite(log_prior):
         return log_prior
 
     # posterior = likelihood x prior
-    return log_likelihood_enigma(mass1, mass2, m_omega_attach, PNO,
-                                 f_lower, inputs.sample_rate, psd,
-                                 dilation_map_match=dilation_map_match) + log_prior
+    return log_likelihood_enigma(
+        mass1,
+        mass2,
+        m_omega_attach,
+        PNO,
+        f_lower,
+        inputs.sample_rate,
+        psd,
+        dilation_map_match=dilation_map_match) + log_prior
 
 
 # TAGS for available fits
 __available_fits__ = [
-    'fit_quadratic_poly',
-    'fit_cubic_poly',
-    'fit_ratio_poly_44',
-    'fit_ratio_sqrt_poly_44',
-    'fit_ratio_sqrt_hyb1_poly_44',
-    'fit_ratio_poly_43',
-    'fit_ratio_sqrt_poly_43',
-    'fit_ratio_sqrt_hyb1_poly_43',
-    'fit_ratio_poly_34'
+    'fit_quadratic_poly', 'fit_cubic_poly', 'fit_ratio_poly_44',
+    'fit_ratio_sqrt_poly_44', 'fit_ratio_sqrt_hyb1_poly_44',
+    'fit_ratio_poly_43', 'fit_ratio_sqrt_poly_43',
+    'fit_ratio_sqrt_hyb1_poly_43', 'fit_ratio_poly_34'
 ]
 
 # TAGGED list of log(probability) functions
@@ -365,75 +420,49 @@ __ranges_of_sampled_params__ = {}
 # TAG : fit_quadratic_poly
 tmp = 'fit_quadratic_poly'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 # TAG : fit_cubic_poly
 tmp = 'fit_cubic_poly'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
 __order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_hyb1_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_hyb1_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_34'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = [
-    'PNO', 'a1', 'a2', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {
-    'PNO': [6, 7, 8, 9, 10, 11, 12]
-}
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 # Set priors on coefficients used in all TAGGED fits
 for tag in __available_fits__:

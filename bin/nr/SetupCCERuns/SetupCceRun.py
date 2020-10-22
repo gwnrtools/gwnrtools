@@ -6,7 +6,6 @@ import sys
 import numpy as np
 import subprocess as cmd
 
-
 if sys.argv[1] == '-h':
     print("""\
 ######################################################
@@ -26,7 +25,6 @@ within the directory passed as the second argument.
 # The idea is to give this script as input a
   """)
     exit()
-
 
 indir = sys.argv[1]  # .strip('/')
 outdir = sys.argv[-1]
@@ -51,7 +49,8 @@ for levdir in levdirs:
     cmd.getoutput('cp %s .' % pittnull)
     cmd.getoutput('ln -s %s' % (workfile))
     cmd.getoutput(
-        'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700.par highResCce.par')
+        'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700.par highResCce.par'
+    )
     h5File = cmd.getoutput('ls *.h5')
     os.makedirs('highResCce')
     os.chdir(pwd)
@@ -65,10 +64,10 @@ for levdir in levdirs:
     fout.write('RUNDIR=.\n\n')
     fout.write('cp -L ${RUNDIR}/${H5FILEin} /dev/shm/${H5FILEout}\n')
     fout.write(
-        '/scinet/gpc/mpi/openmpi/1.4.4-intel-v12.1/bin/mpirun -np 8 ${RUNDIR}/cactus_pittnull ${RUNDIR}/${PARFILE}\n')
+        '/scinet/gpc/mpi/openmpi/1.4.4-intel-v12.1/bin/mpirun -np 8 ${RUNDIR}/cactus_pittnull ${RUNDIR}/${PARFILE}\n'
+    )
     fout.close()
     #
-
 
 ###
 print('mkdir -p %s/%s/%s' % (outdir, indir.split('/')[-1], levdir))

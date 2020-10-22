@@ -16,7 +16,6 @@
 import numpy as np
 import pandas as pd
 
-
 # BBH
 default_bbh_params = pd.DataFrame({})
 
@@ -42,8 +41,7 @@ default_bbh_params['declination'] = ('fixed', [0.])
 default_bbh_params['polarization'] = ('fixed', [0.])
 
 # Set names
-default_bbh_params = default_bbh_params.set_index(
-    pd.Index(['dist', 'range']))
+default_bbh_params = default_bbh_params.set_index(pd.Index(['dist', 'range']))
 
 # BBH ranges
 default_bbh_param_ranges = pd.DataFrame({})
@@ -63,13 +61,10 @@ default_bbh_param_ranges['spin2z'] = ('continuous', [-1., 1.])
 
 # Binary source - kinematic parameters
 default_bbh_param_ranges['coa_phase'] = ('continuous', [0., 2. * np.pi])
-default_bbh_param_ranges['inclination'] = (
-    'continuous', [-1. * np.pi, np.pi])
+default_bbh_param_ranges['inclination'] = ('continuous', [-1. * np.pi, np.pi])
 
-default_bbh_param_ranges['right_ascension'] = (
-    'continuous', [0., 2. * np.pi])
-default_bbh_param_ranges['declination'] = (
-    'continuous', [-1. * np.pi, np.pi])
+default_bbh_param_ranges['right_ascension'] = ('continuous', [0., 2. * np.pi])
+default_bbh_param_ranges['declination'] = ('continuous', [-1. * np.pi, np.pi])
 default_bbh_param_ranges['polarization'] = ('continuous', [0, 2. * np.pi])
 
 # Set names
@@ -94,13 +89,10 @@ default_bns_params_ranges['spin2z'] = ('continuous', [-1., 1.])
 
 # Binary source - kinematic parameters
 default_bns_params_ranges['coa_phase'] = ('continuous', [0., 2. * np.pi])
-default_bns_params_ranges['inclination'] = (
-    'continuous', [-1. * np.pi, np.pi])
+default_bns_params_ranges['inclination'] = ('continuous', [-1. * np.pi, np.pi])
 
-default_bns_params_ranges['right_ascension'] = (
-    'continuous', [0., 2. * np.pi])
-default_bns_params_ranges['declination'] = (
-    'continuous', [-1. * np.pi, np.pi])
+default_bns_params_ranges['right_ascension'] = ('continuous', [0., 2. * np.pi])
+default_bns_params_ranges['declination'] = ('continuous', [-1. * np.pi, np.pi])
 default_bns_params_ranges['polarization'] = ('continuous', [0, 2. * np.pi])
 
 # Set names
@@ -109,35 +101,9 @@ default_bns_params_ranges = default_bns_params_ranges.set_index(
 
 # List of the names of possible CBC internal parameters
 __all_cbc_parameters__ = [
-    'mass1',
-    'mass2',
-    'q',
-    'eta',
-    'total_mass',
-    'chirp_mass',
-    'mchirp',
-    'spin1x',
-    'spin1y',
-    'spin1z',
-    'spin2x',
-    'spin2y',
-    'spin2z',
-    'spin1',
-    'spin2',
-    'a1',
-    'a2',
-    'distance',
-    'luminosity_distance',
-    'coa_phase',
-    'inclination',
-    'iota',
-    'theta_jn',
-    'alpha',
-    'delta',
-    'ra',
-    'right_ascension',
-    'dec',
-    'declination',
-    'psi',
-    'polarization'
+    'mass1', 'mass2', 'q', 'eta', 'total_mass', 'chirp_mass', 'mchirp',
+    'spin1x', 'spin1y', 'spin1z', 'spin2x', 'spin2y', 'spin2z', 'spin1',
+    'spin2', 'a1', 'a2', 'distance', 'luminosity_distance', 'coa_phase',
+    'inclination', 'iota', 'theta_jn', 'alpha', 'delta', 'ra',
+    'right_ascension', 'dec', 'declination', 'psi', 'polarization'
 ]

@@ -12,15 +12,11 @@ from __future__ import absolute_import
 import os
 import h5py
 
-
 import numpy as np
 
 from .single_mode import nr_mode
 ######################################################################
-verbose      = False
-
-
-
+verbose = False
 
 
 ## @nr_data pyexample
@@ -43,16 +39,18 @@ class nr_data():
     #{{{
     def __init__(self,
                  filename,
-                 filetype = 'HDF',
-                 wavetype = 'Auto',
-                 ex_order = 3,
-                 group_name = None,
-                 UNDERSTOOD_TYPES = ['CCE', 'Extrapolated', 'FiniteRadius', 'NoGroup'],
-                 modeLmin = 2,
-                 modeLmax = 4,
-                 skipM0 = True,
-                 delta_t = 1.0,
-                 verbose = 0):
+                 filetype='HDF',
+                 wavetype='Auto',
+                 ex_order=3,
+                 group_name=None,
+                 UNDERSTOOD_TYPES=[
+                     'CCE', 'Extrapolated', 'FiniteRadius', 'NoGroup'
+                 ],
+                 modeLmin=2,
+                 modeLmax=4,
+                 skipM0=True,
+                 delta_t=1.0,
+                 verbose=0):
         """
 #### Input Options:
 ### 1. filename = FULL PATH to NR data file
@@ -85,12 +83,14 @@ class nr_data():
         """
         ## Check inputs
         if not os.path.exists(filename):
-            raise IOError("HDF file {} cannot be read: does not exist".format(filename))
+            raise IOError(
+                "HDF file {} cannot be read: does not exist".format(filename))
         if os.path.getsize(filename) == 0:
-            raise IOError("HDF file {} cannot be read: file empty".format(filename))
+            raise IOError(
+                "HDF file {} cannot be read: file empty".format(filename))
 
-        self.verbose  = verbose
-        self.skipM0   = skipM0
+        self.verbose = verbose
+        self.skipM0 = skipM0
         self.UNDERSTOOD_TYPES = UNDERSTOOD_TYPES
         self.filename = filename
         self.filetype = filetype
@@ -100,12 +100,13 @@ class nr_data():
 
         self.modeLmin = modeLmin
         self.modeLmax = modeLmax
-        self.delta_t  = delta_t
+        self.delta_t = delta_t
 
         self.fin = h5py.File(self.filename, 'r')
         self.modes = {}
         self.read_nr_data()
         return
+
     def read_nr_data(self):
         ##{{{
         if 'HDF' in self.filetype:
@@ -130,26 +131,30 @@ class nr_data():
             ## Create output dictionary
             self.modes = {}
             ## Loop over modes
-            for modeL in np.arange( 2, self.modeLmax+1 ):
+            for modeL in np.arange(2, self.modeLmax + 1):
                 self.modes[modeL] = {}
-                for modeM in np.arange( -1*modeL, modeL+1 ):
-                    if self.skipM0 and modeM==0: continue
+                for modeM in np.arange(-1 * modeL, modeL + 1):
+                    if self.skipM0 and modeM == 0: continue
                     ## Get dataset for this mode
                     try:
                         mdata = np.loadtxt(self.filename % (modeL, modeM))
                         if self.verbose > 2:
-                            print("\t\t\tShape of data read is ", np.shape(mdata))
+                            print("\t\t\tShape of data read is ",
+                                  np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
+                            print("WARNING: Ignoring mode ({},{})".format(
+                                modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,
-                                                       delta_t = self.delta_t,
-                                                       verbose = self.verbose)
+                                                       delta_t=self.delta_t,
+                                                       verbose=self.verbose)
                     ## Measure maximum duration of any mode
-                    MINLEN = np.minimum(MINLEN, self.modes[modeL][modeM].data_duration())
-                    MAXLEN = np.maximum(MAXLEN, self.modes[modeL][modeM].data_duration())
+                    MINLEN = np.minimum(
+                        MINLEN, self.modes[modeL][modeM].data_duration())
+                    MAXLEN = np.maximum(
+                        MAXLEN, self.modes[modeL][modeM].data_duration())
                 self.MAX_DURATION_M = MAXLEN
                 self.MIN_DURATION_M = MINLEN
                 ## If no (l,m) mode is found for a given (l), pop it
@@ -157,7 +162,8 @@ class nr_data():
                 ## If no (l) item exists in self.modes, no data has been read at ALL!
                 if len(self.modes) == 0: raise IOError("No (ASCII) data READ!")
         else:
-            raise IOError("ASCII datafile not accepted in this format. Read HELP.")
+            raise IOError(
+                "ASCII datafile not accepted in this format. Read HELP.")
         return self
         ##}}}
     def read_nr_data_dataset(self):
@@ -176,23 +182,27 @@ class nr_data():
                 self.modes[modeL] = {}
                 for modeM in dataset[modeL]:
                     modeM = int(modeM)
-                    if self.skipM0 and modeM==0: continue
+                    if self.skipM0 and modeM == 0: continue
                     ## Get dataset for this mode
                     try:
                         mdata = dataset[modeL][modeM]
                         if self.verbose > 2:
-                            print("\t\t\tShape of data read is ", np.shape(mdata))
+                            print("\t\t\tShape of data read is ",
+                                  np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
+                            print("WARNING: Ignoring mode ({},{})".format(
+                                modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,
-                                                       delta_t = self.delta_t,
-                                                       verbose = self.verbose)
+                                                       delta_t=self.delta_t,
+                                                       verbose=self.verbose)
                     ## Measure maximum duration of any mode
-                    MINLEN = np.minimum(MINLEN, self.modes[modeL][modeM].data_duration())
-                    MAXLEN = np.maximum(MAXLEN, self.modes[modeL][modeM].data_duration())
+                    MINLEN = np.minimum(
+                        MINLEN, self.modes[modeL][modeM].data_duration())
+                    MAXLEN = np.maximum(
+                        MAXLEN, self.modes[modeL][modeM].data_duration())
             self.MAX_DURATION_M = MAXLEN
             self.MIN_DURATION_M = MINLEN
             ###############
@@ -211,8 +221,10 @@ class nr_data():
             fname = self.filename.split('/')[-1]
             if '_Asymptotic_GeometricUnits' in fname:
                 _wavetype = 'Extrapolated'
-            elif 'Cce' in fname: _wavetype = 'CCE'
-            elif 'FiniteRad' in fname: _wavetype = 'FiniteRadius'
+            elif 'Cce' in fname:
+                _wavetype = 'CCE'
+            elif 'FiniteRad' in fname:
+                _wavetype = 'FiniteRadius'
             elif 'HDF' in self.filetype:
                 fgrps = [str(grptmp) for grptmp in list(self.fin.keys())]
                 if 'Y_l2_m2.dat' in fgrps: _wavetype = 'NoGroup'
@@ -227,27 +239,35 @@ class nr_data():
         self.get_nr_data_hdf5_wavetype()
         f = self.fin
         if self.wavetype == 'CCE':
-            grp='CceR%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
+            grp = 'CceR%04d.dir' % max(
+                [int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
             self.group_name = grp
             return self
         elif self.wavetype == 'Extrapolated':
             for kdx, k in enumerate(f.keys()):
                 if 'Extrapolated' not in str(k): continue
                 last_k = k
-                try: n = int(k[-1])
+                try:
+                    n = int(k[-1])
                 except:
-                    try: n = int(k.split('.dir')[0][-1])
+                    try:
+                        n = int(k.split('.dir')[0][-1])
                     except:
                         if self.verbose > 1:
-                            print("\t\t.. tested (wavetype is extrapolated) groupname: {}".format(k))
-                        raise IOError("Could not find the group for extrapolated waveforms")
+                            print(
+                                "\t\t.. tested (wavetype is extrapolated) groupname: {}"
+                                .format(k))
+                        raise IOError(
+                            "Could not find the group for extrapolated waveforms"
+                        )
                 if self.ex_order == n:
                     self.group_name = k
                     return self
             self.group_name = last_k
             return self
         elif self.wavetype == 'FiniteRadius':
-            grp='R%04d.dir' % max([int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
+            grp = 'R%04d.dir' % max(
+                [int(k.split('.dir')[0][-4:]) for k in list(f.keys())])
             self.group_name = grp
             return self
         ## If all fails ...
@@ -260,10 +280,11 @@ class nr_data():
         group_name = self.get_nr_data_hdf5_groupname().group_name
         ##
         if self.verbose > 1:
-                print("Reading NR data in HDF5 from {}".format(self.filename))
+            print("Reading NR data in HDF5 from {}".format(self.filename))
         if wavetype != 'NoGroup':
             if self.verbose > 1:
-                print("\tReading from {} out of ".format(group_name), list(self.fin.keys()))
+                print("\tReading from {} out of ".format(group_name),
+                      list(self.fin.keys()))
             wavedata = self.fin[group_name]
         else:
             wavedata = self.fin
@@ -278,31 +299,37 @@ class nr_data():
         if True:
             ## Read modes
             MAXLEN, MINLEN = -1, 1e100
-            for modeL in np.arange(self.modeLmin, self.modeLmax+1):
+            for modeL in np.arange(self.modeLmin, self.modeLmax + 1):
                 self.modes[modeL] = {}
-                for modeM in np.arange( modeL, -1*modeL-1, -1 ):
+                for modeM in np.arange(modeL, -1 * modeL - 1, -1):
                     if self.skipM0 and modeM == 0: continue
                     ## Get dataset for this mode
                     try:
                         if self.verbose > 2:
-                            print("\t\tTrying to read: %d,%d mode" % (modeL, modeM))
-                        mdata = wavedata['Y_l{}_m{}.dat'.format(modeL, modeM)].value
+                            print("\t\tTrying to read: %d,%d mode" %
+                                  (modeL, modeM))
+                        mdata = wavedata['Y_l{}_m{}.dat'.format(modeL,
+                                                                modeM)].value
                         if self.verbose > 2:
-                            print("\t\tShape of data read is ", np.shape(mdata))
+                            print("\t\tShape of data read is ",
+                                  np.shape(mdata))
                     except:
                         if self.verbose > 0:
-                            print("WARNING: Ignoring mode ({},{})".format(modeL, modeM))
+                            print("WARNING: Ignoring mode ({},{})".format(
+                                modeL, modeM))
                         continue
                     ## Initialize a nr_mode class with this dataset
                     self.modes[modeL][modeM] = nr_mode(mdata,
                                                        delta_t=self.delta_t,
                                                        verbose=self.verbose)
                     ## Measure maximum duration of any mode
-                    MINLEN = np.minimum(MINLEN, self.modes[modeL][modeM].data_duration())
-                    MAXLEN = np.maximum(MAXLEN, self.modes[modeL][modeM].data_duration())
+                    MINLEN = np.minimum(
+                        MINLEN, self.modes[modeL][modeM].data_duration())
+                    MAXLEN = np.maximum(
+                        MAXLEN, self.modes[modeL][modeM].data_duration())
             self.MAX_DURATION_M = MAXLEN
             self.MIN_DURATION_M = MINLEN
         return self
         ##}}}
-    #}}}
 
+    #}}}

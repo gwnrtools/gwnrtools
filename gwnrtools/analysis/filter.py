@@ -45,11 +45,20 @@ class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
 ######################################################################
 #      Overlap and Fitting Factor
 
-def calculate_faithfulness(m1, m2,
-                           s1x=0, s1y=0, s1z=0,
-                           s2x=0, s2y=0, s2z=0,
-                           tc=0, phic=0,
-                           ra=0, dec=0, polarization=0,
+
+def calculate_faithfulness(m1,
+                           m2,
+                           s1x=0,
+                           s1y=0,
+                           s1z=0,
+                           s2x=0,
+                           s2y=0,
+                           s2z=0,
+                           tc=0,
+                           phic=0,
+                           ra=0,
+                           dec=0,
+                           polarization=0,
                            signal_approx='IMRPhenomD',
                            signal_file=None,
                            tmplt_approx='IMRPhenomC',
@@ -76,7 +85,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 0) OPTION CHECKING
     if aligned_spin_tmplt_only:
         print(
-            "WARNING: Spin components parallel to L allowed, others set to 0 in templates.")
+            "WARNING: Spin components parallel to L allowed, others set to 0 in templates."
+        )
 
     # 1) GENERATE FILTERING META-PARAMETERS
     filter_N = signal_duration * sample_rate
@@ -89,34 +99,40 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 2) GENERATE THE TARGET SIGNAL
     # Get the signal waveform first
     if signal_approx in pywf.fd_approximants():
-        generator = pywfg.FDomainDetFrameGenerator(pywfg.FDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_f=delta_f, f_lower=f_lower,
-                                                   approximant=signal_approx)
+        generator = pywfg.FDomainDetFrameGenerator(
+            pywfg.FDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_f=delta_f,
+            f_lower=f_lower,
+            approximant=signal_approx)
     elif signal_approx in pywf.td_approximants():
-        generator = pywfg.TDomainDetFrameGenerator(pywfg.TDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_t=delta_t, f_lower=f_lower,
-                                                   approximant=signal_approx)
+        generator = pywfg.TDomainDetFrameGenerator(
+            pywfg.TDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_t=delta_t,
+            f_lower=f_lower,
+            approximant=signal_approx)
     elif 'FromDataFile' in signal_approx:
         if os.path.getsize(signal_file) == 0:
-            raise RuntimeError(
-                " ERROR:...OOPS. Waveform file %s empty!!" % signal_file)
+            raise RuntimeError(" ERROR:...OOPS. Waveform file %s empty!!" %
+                               signal_file)
         try:
             _ = np.loadtxt(signal_file)
         except BaseException:
-            raise RuntimeError(
-                " WARNING: FAILURE READING DATA FROM %s.." % signal_file)
+            raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." %
+                               signal_file)
 
         waveform_params = lsctables.SimInspiral()
         waveform_params.latitude = 0
@@ -133,7 +149,9 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
             if verbose:
                 print(".. generating signal waveform ")
             signal_htilde, _params = get_waveform(signal_approx,
-                                                  -1, -1, -1,
+                                                  -1,
+                                                  -1,
+                                                  -1,
                                                   waveform_params,
                                                   f_lower,
                                                   sample_rate,
@@ -149,26 +167,26 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     else:
         raise IOError("Signal Approximant %s not found.." % signal_approx)
     if verbose:
-        print("..Generating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)" %
-              (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z))
+        print(
+            "..Generating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
+            % (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z))
         sys.stdout.flush()
 
     if signal_approx in pywf.fd_approximants():
-        signal = generator.generate_from_args(m1, m2,
-                                              s1x, s1y, s1z,
-                                              s2x, s2y, s2z,
-                                              phic, tc, ra, dec, polarization)
+        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y,
+                                              s2z, phic, tc, ra, dec,
+                                              polarization)
         # NOTE: SEOBNRv4 has extra high frequency content, it seems..
         if 'SEOBNRv4_ROM' in signal_approx or 'SEOBNRv2_ROM' in signal_approx:
-            signal_h = extend_waveform_FrequencySeries(
-                signal['H1'], filter_n, force_fit=True)
+            signal_h = extend_waveform_FrequencySeries(signal['H1'],
+                                                       filter_n,
+                                                       force_fit=True)
         else:
             signal_h = extend_waveform_FrequencySeries(signal['H1'], filter_n)
     elif signal_approx in pywf.td_approximants():
-        signal = generator.generate_from_args(m1, m2,
-                                              s1x, s1y, s1z,
-                                              s2x, s2y, s2z,
-                                              phic, tc, ra, dec, polarization)
+        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y,
+                                              s2z, phic, tc, ra, dec,
+                                              polarization)
         signal_h = make_frequency_series(signal['H1'])
         signal_h = extend_waveform_FrequencySeries(signal_h, filter_n)
     elif 'FromDataFile' in signal_approx:
@@ -179,34 +197,40 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 3) GENERATE THE TARGET TEMPLATE
     # Get the signal waveform first
     if tmplt_approx in pywf.fd_approximants():
-        generator = pywfg.FDomainDetFrameGenerator(pywfg.FDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_f=delta_f, f_lower=f_lower,
-                                                   approximant=tmplt_approx)
+        generator = pywfg.FDomainDetFrameGenerator(
+            pywfg.FDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_f=delta_f,
+            f_lower=f_lower,
+            approximant=tmplt_approx)
     elif tmplt_approx in pywf.td_approximants():
-        generator = pywfg.TDomainDetFrameGenerator(pywfg.TDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_t=delta_t, f_lower=f_lower,
-                                                   approximant=tmplt_approx)
+        generator = pywfg.TDomainDetFrameGenerator(
+            pywfg.TDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_t=delta_t,
+            f_lower=f_lower,
+            approximant=tmplt_approx)
     elif 'FromDataFile' in tmplt_approx:
         if os.path.getsize(tmplt_file) == 0:
-            raise RuntimeError(
-                " ERROR:...OOPS. Waveform file %s empty!!" % tmplt_file)
+            raise RuntimeError(" ERROR:...OOPS. Waveform file %s empty!!" %
+                               tmplt_file)
         try:
             _ = np.loadtxt(tmplt_file)
         except BaseException:
-            raise RuntimeError(
-                " WARNING: FAILURE READING DATA FROM %s.." % tmplt_file)
+            raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." %
+                               tmplt_file)
 
         waveform_params = lsctables.SimInspiral()
         waveform_params.latitude = 0
@@ -223,7 +247,9 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
             if verbose:
                 print(".. generating signal waveform ")
             tmplt_htilde, _params = get_waveform(tmplt_approx,
-                                                 -1, -1, -1,
+                                                 -1,
+                                                 -1,
+                                                 -1,
                                                  waveform_params,
                                                  f_lower,
                                                  1. / delta_t,
@@ -251,14 +277,15 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     #
     if verbose:
         print(
-            "..Generating template with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)" %
-            (_m1, _m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z))
+            "..Generating template with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
+            % (_m1, _m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z))
         sys.stdout.flush()
 
     if tmplt_approx in pywf.fd_approximants():
         try:
-            template = generator.generate_from_args(_m1, _m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z,
-                                                    phic, tc, ra, dec, polarization)
+            template = generator.generate_from_args(_m1, _m2, _s1x, _s1y, _s1z,
+                                                    _s2x, _s2y, _s2z, phic, tc,
+                                                    ra, dec, polarization)
         except RuntimeError as rerr:
             print("""FAILED TO GENERATE %s waveform for
               masses = %.3f, %.3f
@@ -269,15 +296,17 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
             raise RuntimeError(rerr)
         # NOTE: SEOBNRv4 has extra high frequency content, it seems..
         if 'SEOBNRv4_ROM' in tmplt_approx or 'SEOBNRv2_ROM' in tmplt_approx:
-            template_h = extend_waveform_FrequencySeries(
-                template['H1'], filter_n, force_fit=True)
+            template_h = extend_waveform_FrequencySeries(template['H1'],
+                                                         filter_n,
+                                                         force_fit=True)
         else:
             template_h = extend_waveform_FrequencySeries(
                 template['H1'], filter_n)
     elif tmplt_approx in pywf.td_approximants():
         try:
-            template = generator.generate_from_args(_m1, _m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z,
-                                                    phic, tc, ra, dec, polarization)
+            template = generator.generate_from_args(_m1, _m2, _s1x, _s1y, _s1z,
+                                                    _s2x, _s2y, _s2z, phic, tc,
+                                                    ra, dec, polarization)
         except RuntimeError as rerr:
             print("""FAILED TO GENERATE %s waveform for
               masses = %.3f, %.3f
@@ -297,8 +326,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     m, idx = match(signal_h, template_h, psd=psd, low_frequency_cutoff=f_lower)
 
     if debug:
-        print(
-            "MATCH IS %.6f for parameters" % m, m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z)
+        print("MATCH IS %.6f for parameters" % m, m1, m2, _s1x, _s1y, _s1z,
+              _s2x, _s2y, _s2z)
         sys.stderr.flush()
     #
     # 5) RETURN OPTIMIZED MATCH
@@ -307,11 +336,19 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
 
 
 #############################
-def calculate_fitting_factor(m1, m2,
-                             s1x=0, s1y=0, s1z=0,
-                             s2x=0, s2y=0, s2z=0,
-                             tc=0, phic=0,
-                             ra=0, dec=0, polarization=0,
+def calculate_fitting_factor(m1,
+                             m2,
+                             s1x=0,
+                             s1y=0,
+                             s1z=0,
+                             s2x=0,
+                             s2y=0,
+                             s2z=0,
+                             tc=0,
+                             phic=0,
+                             ra=0,
+                             dec=0,
+                             polarization=0,
                              signal_approx='IMRPhenomD',
                              signal_file=None,
                              tmplt_approx='IMRPhenomC',
@@ -346,14 +383,21 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # {{{
     # 0) OPTION CHECKING
     if vary_masses_only:
-        print("WARNING: Only component masses are allowed to be varied in templates. Setting the rest to signal values.")
+        print(
+            "WARNING: Only component masses are allowed to be varied in templates. Setting the rest to signal values."
+        )
     if vary_masses_and_aligned_spin_only:
-        print("WARNING: Only component masses and spin components parallel to L allowed to be varied in templates. Setting the rest to signal values.")
+        print(
+            "WARNING: Only component masses and spin components parallel to L allowed to be varied in templates. Setting the rest to signal values."
+        )
     if vary_masses_only and vary_masses_and_aligned_spin_only:
         raise IOError(
-            "Inconsistent options: vary_masses_only and vary_masses_and_aligned_spin_only")
+            "Inconsistent options: vary_masses_only and vary_masses_and_aligned_spin_only"
+        )
     if (not vary_masses_only) and (not vary_masses_and_aligned_spin_only):
-        print("WARNING: All mass and spin components varied in templates. Sky parameters still fixed to signal values.")
+        print(
+            "WARNING: All mass and spin components varied in templates. Sky parameters still fixed to signal values."
+        )
 
     # 1) GENERATE FILTERING META-PARAMETERS
     signal_duration = int(signal_duration)
@@ -363,8 +407,9 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     delta_t = 1. / sample_rate
     delta_f = 1. / signal_duration
     if verbose:
-        print("signal_duration = %d, sample_rate = %d, filter_N = %d, filter_n = %d" % (
-            signal_duration, sample_rate, filter_N, filter_n))
+        print(
+            "signal_duration = %d, sample_rate = %d, filter_N = %d, filter_n = %d"
+            % (signal_duration, sample_rate, filter_N, filter_n))
         print("deltaT = %f, deltaF = %f" % (delta_t, delta_f))
     # LIGO Noise PSD
     psd = from_string(psd_string, filter_n, delta_f, f_lower)
@@ -372,34 +417,40 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # 2) GENERATE THE TARGET SIGNAL
     # PREPARATORY: Get the signal generator
     if signal_approx in pywf.fd_approximants():
-        generator = pywfg.FDomainDetFrameGenerator(pywfg.FDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_f=delta_f, f_lower=f_lower,
-                                                   approximant=signal_approx)
+        generator = pywfg.FDomainDetFrameGenerator(
+            pywfg.FDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_f=delta_f,
+            f_lower=f_lower,
+            approximant=signal_approx)
     elif signal_approx in pywf.td_approximants():
-        generator = pywfg.TDomainDetFrameGenerator(pywfg.TDomainCBCGenerator, 0,
-                                                   variable_args=['mass1', 'mass2',
-                                                                  'spin1x', 'spin1y', 'spin1z',
-                                                                  'spin2x', 'spin2y', 'spin2z',
-                                                                  'coa_phase',
-                                                                  'tc', 'ra', 'dec', 'polarization'],
-                                                   detectors=['H1'],
-                                                   delta_t=delta_t, f_lower=f_lower,
-                                                   approximant=signal_approx)
+        generator = pywfg.TDomainDetFrameGenerator(
+            pywfg.TDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z', 'coa_phase', 'tc', 'ra', 'dec',
+                'polarization'
+            ],
+            detectors=['H1'],
+            delta_t=delta_t,
+            f_lower=f_lower,
+            approximant=signal_approx)
     elif 'FromDataFile' in signal_approx:
         if os.path.getsize(signal_file) == 0:
-            raise RuntimeError(
-                " ERROR:...OOPS. Waveform file %s empty!!" % signal_file)
+            raise RuntimeError(" ERROR:...OOPS. Waveform file %s empty!!" %
+                               signal_file)
         try:
             _ = np.loadtxt(signal_file)
         except BaseException:
-            raise RuntimeError(
-                " WARNING: FAILURE READING DATA FROM %s.." % signal_file)
+            raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." %
+                               signal_file)
 
         waveform_params = lsctables.SimInspiral()
         waveform_params.latitude = 0
@@ -416,7 +467,9 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
             if verbose:
                 print(".. generating signal waveform ")
             signal_htilde, _params = get_waveform(signal_approx,
-                                                  -1, -1, -1,
+                                                  -1,
+                                                  -1,
+                                                  -1,
                                                   waveform_params,
                                                   f_lower,
                                                   sample_rate,
@@ -434,18 +487,20 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
 
     if verbose:
         print(
-            "\nGenerating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)" %
-            (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z))
+            "\nGenerating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
+            % (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z))
         sys.stdout.flush()
 
     # Actually GENERATE THE SIGNAL
     if signal_approx in pywf.fd_approximants():
-        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z,
-                                              phic, tc, ra, dec, polarization)
+        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y,
+                                              s2z, phic, tc, ra, dec,
+                                              polarization)
         signal_h = extend_waveform_FrequencySeries(signal['H1'], filter_n)
     elif signal_approx in pywf.td_approximants():
-        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z,
-                                              phic, tc, ra, dec, polarization)
+        signal = generator.generate_from_args(m1, m2, s1x, s1y, s1z, s2x, s2y,
+                                              s2z, phic, tc, ra, dec,
+                                              polarization)
         signal_h = make_frequency_series(signal['H1'])
         signal_h = extend_waveform_FrequencySeries(signal_h, filter_n)
     elif 'FromDataFile' in signal_approx:
@@ -463,29 +518,42 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     # requested to be varied. This fixing is done inside the objective
     # function.
     if tmplt_approx in pywf.fd_approximants():
-        generator_tmplt = pywfg.FDomainDetFrameGenerator(pywfg.FDomainCBCGenerator, 0,
-                                                         variable_args=['mass1', 'mass2',
-                                                                        'spin1x', 'spin1y', 'spin1z',
-                                                                        'spin2x', 'spin2y', 'spin2z'
-                                                                        ],
-                                                         detectors=['H1'],
-                                                         coa_phase=phic,
-                                                         tc=tc, ra=ra, dec=dec, polarization=polarization,
-                                                         delta_f=delta_f, f_lower=f_lower,
-                                                         approximant=tmplt_approx)
+        generator_tmplt = pywfg.FDomainDetFrameGenerator(
+            pywfg.FDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z'
+            ],
+            detectors=['H1'],
+            coa_phase=phic,
+            tc=tc,
+            ra=ra,
+            dec=dec,
+            polarization=polarization,
+            delta_f=delta_f,
+            f_lower=f_lower,
+            approximant=tmplt_approx)
     elif tmplt_approx in pywf.td_approximants():
         raise IOError(
-            "Time-domain templates not supported yet (TDomainDetFrameGenerator doesn't exist)")
-        generator_tmplt = pywfg.TDomainDetFrameGenerator(pywfg.TDomainCBCGenerator, 0,
-                                                         variable_args=['mass1', 'mass2',
-                                                                        'spin1x', 'spin1y', 'spin1z',
-                                                                        'spin2x', 'spin2y', 'spin2z'
-                                                                        ],
-                                                         detectors=['H1'],
-                                                         coa_phase=phic,
-                                                         tc=tc, ra=ra, dec=dec, polarization=polarization,
-                                                         delta_t=delta_t, f_lower=f_lower,
-                                                         approximant=tmplt_approx)
+            "Time-domain templates not supported yet (TDomainDetFrameGenerator doesn't exist)"
+        )
+        generator_tmplt = pywfg.TDomainDetFrameGenerator(
+            pywfg.TDomainCBCGenerator,
+            0,
+            variable_args=[
+                'mass1', 'mass2', 'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                'spin2y', 'spin2z'
+            ],
+            detectors=['H1'],
+            coa_phase=phic,
+            tc=tc,
+            ra=ra,
+            dec=dec,
+            polarization=polarization,
+            delta_t=delta_t,
+            f_lower=f_lower,
+            approximant=tmplt_approx)
     elif 'FromDataFile' in tmplt_approx:
         raise RuntimeError(
             "Using **templates** from data files is not implemented yet")
@@ -521,26 +589,27 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
                 "No of vars %d not supported (should be 2 or 4 or 8)" % len(x))
 
         # 2) CHECK FOR CONSISTENCY
-        if (_s1x**2 + _s1y**2 + _s1z**2) > s_max or (_s2x **
-                                                     2 + _s2y**2 + _s2z**2) > s_max:
+        if (_s1x**2 + _s1y**2 + _s1z**2) > s_max or (_s2x**2 + _s2y**2 +
+                                                     _s2z**2) > s_max:
             return 1e99
 
         # 2) ASSUME THAT
         signal_h, tmplt_generator = args
-        tmplt = tmplt_generator.generate_from_args(
-            m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z)
+        tmplt = tmplt_generator.generate_from_args(m1, m2, _s1x, _s1y, _s1z,
+                                                   _s2x, _s2y, _s2z)
         tmplt_h = make_frequency_series(tmplt['H1'])
 
         if debug:
-            print("IN FF Objective-> for parameters:", m1,
-                  m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z)
+            print("IN FF Objective-> for parameters:", m1, m2, _s1x, _s1y,
+                  _s1z, _s2x, _s2y, _s2z)
         if debug:
             print("IN FF Objective-> Length(tmplt) = %d, making it %d" %
                   (len(tmplt['H1']), filter_n))
         # NOTE: SEOBNRv4 has extra high frequency content, it seems..
         if 'SEOBNRv4_ROM' in tmplt_approx or 'SEOBNRv2_ROM' in tmplt_approx:
-            tmplt_h = extend_waveform_FrequencySeries(
-                tmplt_h, filter_n, force_fit=True)
+            tmplt_h = extend_waveform_FrequencySeries(tmplt_h,
+                                                      filter_n,
+                                                      force_fit=True)
         else:
             tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n)
 
@@ -548,8 +617,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
         m, _ = match(signal_h, tmplt_h, psd=psd, low_frequency_cutoff=f_lower)
 
         if debug:
-            print("MATCH IS %.6f for parameters:" %
-                  m, m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z)
+            print("MATCH IS %.6f for parameters:" % m, m1, m2, _s1x, _s1y,
+                  _s1z, _s2x, _s2y, _s2z)
 
         retval = np.log10(1. - m)
 
@@ -557,6 +626,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
         if retval <= -6.0:
             retval = -6.0
         return retval
+
     objective_function_fitting_factor.counter = 0
 
     # 5) DEFINE A CONSTRAINT FUNCTION FOR PSO TO RESPECT
@@ -612,8 +682,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
     s_eff_max = s_eff + effective_spin_window
 
     if verbose:
-        print(m1, m2, mt, et, mc, mc_min, mc_max, et_min,
-              et_max, m1_min, m1_max, m2_min, m2_max)
+        print(m1, m2, mt, et, mc, mc_min, mc_max, et_min, et_max, m1_min,
+              m1_max, m2_min, m2_max)
 
     if vary_masses_only:
         low_lim = [m1_min, m2_min]
@@ -629,24 +699,36 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
         print("\nSearching within limits:\n", low_lim, " and \n", high_lim)
         print("\nCalculating overlap now..")
         sys.stdout.flush()
-    olap, idx = calculate_faithfulness(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z,
-                                       tc=tc, phic=phic,
-                                       ra=ra, dec=dec,
-                                       polarization=polarization,
-                                       signal_approx=signal_approx,
-                                       signal_file=signal_file,
-                                       tmplt_approx=tmplt_approx,
-                                       tmplt_file=None,
-                                       aligned_spin_tmplt_only=vary_masses_and_aligned_spin_only,
-                                       non_spin_tmplt_only=vary_masses_only,
-                                       f_lower=f_lower, sample_rate=sample_rate,
-                                       signal_duration=signal_duration,
-                                       verbose=verbose, debug=debug)
+    olap, idx = calculate_faithfulness(
+        m1,
+        m2,
+        s1x,
+        s1y,
+        s1z,
+        s2x,
+        s2y,
+        s2z,
+        tc=tc,
+        phic=phic,
+        ra=ra,
+        dec=dec,
+        polarization=polarization,
+        signal_approx=signal_approx,
+        signal_file=signal_file,
+        tmplt_approx=tmplt_approx,
+        tmplt_file=None,
+        aligned_spin_tmplt_only=vary_masses_and_aligned_spin_only,
+        non_spin_tmplt_only=vary_masses_only,
+        f_lower=f_lower,
+        sample_rate=sample_rate,
+        signal_duration=signal_duration,
+        verbose=verbose,
+        debug=debug)
     #
     if verbose:
-        print("Overlap with aligned_spin_tmplt_only = ", vary_masses_and_aligned_spin_only,
-              " and non_spin_tmplt_only = ", vary_masses_only, ": ", olap, np.log10(
-                  1. - olap))
+        print("Overlap with aligned_spin_tmplt_only = ",
+              vary_masses_and_aligned_spin_only, " and non_spin_tmplt_only = ",
+              vary_masses_only, ": ", olap, np.log10(1. - olap))
         sys.stdout.flush()
     #
     idx = 1
@@ -658,7 +740,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
 
         if idx > num_retries:
             print(
-                "WARNING: Failed to improve on overlap in %d iterations. Set ff = olap now" % num_retries)
+                "WARNING: Failed to improve on overlap in %d iterations. Set ff = olap now"
+                % num_retries)
             ff = olap
             break
 
@@ -666,7 +749,8 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
             print("\nTry %d to compute fitting factor" % idx)
             sys.stdout.flush()
         params, ff = pso(objective_function_fitting_factor,
-                         low_lim, high_lim,
+                         low_lim,
+                         high_lim,
                          f_ieqcons=constraint_function_fitting_factor,
                          args=pso_args,
                          swarmsize=pso_swarm_size,
@@ -701,6 +785,7 @@ IN PROGRESS: Adding facility to use "FromDataFile" waveforms
 ######################################################################
 ######################################################################
 
+
 #############################
 def overlap_between_waveforms(wav1, wav2, psd=None, f_lower=15.):
     '''
@@ -717,8 +802,7 @@ def overlap_between_waveforms(wav1, wav2, psd=None, f_lower=15.):
     #
     len1, len2, lenp = len(wav1), len(wav2), len(psd)
     if len1 != len2:
-        raise IOError(
-            "Length of waveforms not equal: %d,%d" % (len1, len2))
+        raise IOError("Length of waveforms not equal: %d,%d" % (len1, len2))
     if wav1.delta_t != wav2.delta_t:
         raise IOError("Mismatched wave sample rate")
     if len1 != 2 * lenp - 2:
@@ -731,16 +815,17 @@ def overlap_between_waveforms(wav1, wav2, psd=None, f_lower=15.):
 ######################################################################
 #      SNR CALCULATIONS
 
+
 def compute_snr_vs_time(wave, psd, time_step=1e-2, f_lower=15.0):
     # wave should be longer than dt
-    assert(time_step < len(wave) * wave.delta_t)
+    assert (time_step < len(wave) * wave.delta_t)
 
     from numpy import round, arange
     from pycbc.filter import sigma
     from pycbc.types import TimeSeries
 
-    integration_stop_times = arange(
-        time_step, len(wave) * wave.delta_t, time_step)
+    integration_stop_times = arange(time_step,
+                                    len(wave) * wave.delta_t, time_step)
 
     def truncate_wave_at_time(wave, end_time):
         wave_c = TimeSeries(wave, delta_t=wave.delta_t, copy=True)

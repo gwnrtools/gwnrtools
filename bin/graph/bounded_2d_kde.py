@@ -7,12 +7,19 @@ A bounded 2-D KDE class for all of your bounded 2-D KDE needs.
 import numpy as np
 from scipy.stats import gaussian_kde as kde
 
+
 class Bounded_2d_kde(kde):
     r"""Represents a two-dimensional Gaussian kernel density estimator
     for a probability distribution function that exists on a bounded
     domain."""
-
-    def __init__(self, pts, xlow=None, xhigh=None, ylow=None, yhigh=None, *args, **kwargs):
+    def __init__(self,
+                 pts,
+                 xlow=None,
+                 xhigh=None,
+                 ylow=None,
+                 yhigh=None,
+                 *args,
+                 **kwargs):
         """Initialize with the given bounds.  Either ``low`` or
         ``high`` may be ``None`` if the bounds are one-sided.  Extra
         parameters are passed to :class:`gaussian_kde`.
@@ -65,29 +72,35 @@ class Bounded_2d_kde(kde):
         x, y = pts.T
         pdf = super(Bounded_2d_kde, self).evaluate(pts.T)
         if self.xlow is not None:
-            pdf += super(Bounded_2d_kde, self).evaluate([2*self.xlow - x, y])
+            pdf += super(Bounded_2d_kde, self).evaluate([2 * self.xlow - x, y])
 
         if self.xhigh is not None:
-            pdf += super(Bounded_2d_kde, self).evaluate([2*self.xhigh - x, y])
+            pdf += super(Bounded_2d_kde,
+                         self).evaluate([2 * self.xhigh - x, y])
 
         if self.ylow is not None:
-            pdf += super(Bounded_2d_kde, self).evaluate([x, 2*self.ylow - y])
+            pdf += super(Bounded_2d_kde, self).evaluate([x, 2 * self.ylow - y])
 
         if self.yhigh is not None:
-            pdf += super(Bounded_2d_kde, self).evaluate([x, 2*self.yhigh - y])
+            pdf += super(Bounded_2d_kde,
+                         self).evaluate([x, 2 * self.yhigh - y])
 
         if self.xlow is not None:
             if self.ylow is not None:
-                pdf += super(Bounded_2d_kde, self).evaluate([2*self.xlow - x, 2*self.ylow - y])
+                pdf += super(Bounded_2d_kde, self).evaluate(
+                    [2 * self.xlow - x, 2 * self.ylow - y])
 
             if self.yhigh is not None:
-                pdf += super(Bounded_2d_kde, self).evaluate([2*self.xlow - x, 2*self.yhigh - y])
+                pdf += super(Bounded_2d_kde, self).evaluate(
+                    [2 * self.xlow - x, 2 * self.yhigh - y])
 
         if self.xhigh is not None:
             if self.ylow is not None:
-                pdf += super(Bounded_2d_kde, self).evaluate([2*self.xhigh - x, 2*self.ylow - y])
+                pdf += super(Bounded_2d_kde, self).evaluate(
+                    [2 * self.xhigh - x, 2 * self.ylow - y])
             if self.yhigh is not None:
-                pdf += super(Bounded_2d_kde, self).evaluate([2*self.xhigh - x, 2*self.yhigh - y])
+                pdf += super(Bounded_2d_kde, self).evaluate(
+                    [2 * self.xhigh - x, 2 * self.yhigh - y])
 
         return pdf
 

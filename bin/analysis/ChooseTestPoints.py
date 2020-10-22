@@ -22,7 +22,6 @@ from glue.ligolw import utils as ligolw_utils
 from glue.ligolw.utils import process as ligolw_process
 from glue import git_version
 
-
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 
@@ -30,180 +29,152 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 parser = OptionParser(
     version=git_version.verbose_msg,
     usage="%prog [OPTIONS]",
-    description="Creates a set of random points in the spinning space, for the set of parameters that are not passed as input, and writes it to XML")
+    description=
+    "Creates a set of random points in the spinning space, for the set of parameters that are not passed as input, and writes it to XML"
+)
 
-parser.add_option(
-    "--mass1",
-    help="Mass of the heavier object [Msun]",
-    dest="mass1",
-    type=float)
-parser.add_option(
-    "--mass2",
-    help="Mass of the lighter object [Msun]",
-    dest="mass2",
-    type=float)
-parser.add_option(
-    "--mchirp-min",
-    help="Lower limit for chirp mass [Msun]",
-    type=float)
-parser.add_option(
-    "--mchirp-max",
-    help="Upper limit for chirp mass [Msun]",
-    type=float)
-parser.add_option(
-    "--mtotal-min",
-    help="Lower limit for total mass [Msun]",
-    type=float)
-parser.add_option(
-    "--mtotal-max",
-    help="Upper limit for total mass [Msun]",
-    type=float)
+parser.add_option("--mass1",
+                  help="Mass of the heavier object [Msun]",
+                  dest="mass1",
+                  type=float)
+parser.add_option("--mass2",
+                  help="Mass of the lighter object [Msun]",
+                  dest="mass2",
+                  type=float)
+parser.add_option("--mchirp-min",
+                  help="Lower limit for chirp mass [Msun]",
+                  type=float)
+parser.add_option("--mchirp-max",
+                  help="Upper limit for chirp mass [Msun]",
+                  type=float)
+parser.add_option("--mtotal-min",
+                  help="Lower limit for total mass [Msun]",
+                  type=float)
+parser.add_option("--mtotal-max",
+                  help="Upper limit for total mass [Msun]",
+                  type=float)
 parser.add_option("--eta-min", help="Lower limit for eta", type=float)
 parser.add_option("--eta-max", help="Upper limit for eta", type=float)
-parser.add_option(
-    "--ecc-min",
-    help="Lower limit for eccentricity",
-    type=float,
-    default=0)
-parser.add_option(
-    "--ecc-max",
-    help="Upper limit for eccentricity",
-    type=float,
-    default=0)
-parser.add_option(
-    "--anomaly-min",
-    help="Lower limit for mean anomaly",
-    type=float,
-    default=0)
-parser.add_option(
-    "--anomaly-max",
-    help="Upper limit for mean anomaly",
-    type=float,
-    default=0)
-parser.add_option(
-    "--spin1x",
-    help="s1-x of the heavier object",
-    dest="spin1x",
-    type=float)
-parser.add_option(
-    "--spin1y",
-    help="s1-y of the heavier object",
-    dest="spin1y",
-    type=float)
-parser.add_option(
-    "--spin1z",
-    help="s1-z of the heavier object",
-    dest="spin1z",
-    type=float)
-parser.add_option(
-    "--spin1z-min",
-    help="Max s1-z of the heavier object",
-    type=float,
-    default=-0.99)
-parser.add_option(
-    "--spin1z-max",
-    help="Min s1-z of the heavier object",
-    type=float,
-    default=0.99)
-parser.add_option(
-    "--spin1mag",
-    help="s1-magnitude of the heavier object",
-    dest="spin1mag",
-    type=float)
-parser.add_option(
-    "--spin2x",
-    help="s2-x of the lighter object",
-    dest="spin2x",
-    type=float)
-parser.add_option(
-    "--spin2y",
-    help="s2-y of the lighter object",
-    dest="spin2y",
-    type=float)
-parser.add_option(
-    "--spin2z",
-    help="s2-z of the lighter object",
-    dest="spin2z",
-    type=float)
-parser.add_option(
-    "--spin2z-min",
-    help="Min s2-z of the lighter object",
-    type=float,
-    default=-1.)
-parser.add_option(
-    "--spin2z-max",
-    help="Max s2-z of the lighter object",
-    type=float,
-    default=1.)
-parser.add_option(
-    "--spin2mag",
-    help="s2-magnitude of the lighter object",
-    dest="spin2mag",
-    type=float)
-parser.add_option(
-    "--lambda1-min",
-    help="Lower limit for Lambda of M1",
-    type=float,
-    default=0)
-parser.add_option(
-    "--lambda1-max",
-    help="Lower limit for Lambda of M1",
-    type=float,
-    default=0)
-parser.add_option(
-    "--lambda2-min",
-    help="Lower limit for Lambda of M1",
-    type=float,
-    default=0)
-parser.add_option(
-    "--lambda2-max",
-    help="Lower limit for Lambda of M1",
-    type=float,
-    default=4500)
+parser.add_option("--ecc-min",
+                  help="Lower limit for eccentricity",
+                  type=float,
+                  default=0)
+parser.add_option("--ecc-max",
+                  help="Upper limit for eccentricity",
+                  type=float,
+                  default=0)
+parser.add_option("--anomaly-min",
+                  help="Lower limit for mean anomaly",
+                  type=float,
+                  default=0)
+parser.add_option("--anomaly-max",
+                  help="Upper limit for mean anomaly",
+                  type=float,
+                  default=0)
+parser.add_option("--spin1x",
+                  help="s1-x of the heavier object",
+                  dest="spin1x",
+                  type=float)
+parser.add_option("--spin1y",
+                  help="s1-y of the heavier object",
+                  dest="spin1y",
+                  type=float)
+parser.add_option("--spin1z",
+                  help="s1-z of the heavier object",
+                  dest="spin1z",
+                  type=float)
+parser.add_option("--spin1z-min",
+                  help="Max s1-z of the heavier object",
+                  type=float,
+                  default=-0.99)
+parser.add_option("--spin1z-max",
+                  help="Min s1-z of the heavier object",
+                  type=float,
+                  default=0.99)
+parser.add_option("--spin1mag",
+                  help="s1-magnitude of the heavier object",
+                  dest="spin1mag",
+                  type=float)
+parser.add_option("--spin2x",
+                  help="s2-x of the lighter object",
+                  dest="spin2x",
+                  type=float)
+parser.add_option("--spin2y",
+                  help="s2-y of the lighter object",
+                  dest="spin2y",
+                  type=float)
+parser.add_option("--spin2z",
+                  help="s2-z of the lighter object",
+                  dest="spin2z",
+                  type=float)
+parser.add_option("--spin2z-min",
+                  help="Min s2-z of the lighter object",
+                  type=float,
+                  default=-1.)
+parser.add_option("--spin2z-max",
+                  help="Max s2-z of the lighter object",
+                  type=float,
+                  default=1.)
+parser.add_option("--spin2mag",
+                  help="s2-magnitude of the lighter object",
+                  dest="spin2mag",
+                  type=float)
+parser.add_option("--lambda1-min",
+                  help="Lower limit for Lambda of M1",
+                  type=float,
+                  default=0)
+parser.add_option("--lambda1-max",
+                  help="Lower limit for Lambda of M1",
+                  type=float,
+                  default=0)
+parser.add_option("--lambda2-min",
+                  help="Lower limit for Lambda of M1",
+                  type=float,
+                  default=0)
+parser.add_option("--lambda2-max",
+                  help="Lower limit for Lambda of M1",
+                  type=float,
+                  default=4500)
 parser.add_option("--sample-lambda1", action="store_true", default=False)
 parser.add_option("--sample-lambda2", action="store_true", default=False)
 parser.add_option(
     "--inclination",
-    help="inclination angle, between the orbital angular momentum and line of sight from the detector",
+    help=
+    "inclination angle, between the orbital angular momentum and line of sight from the detector",
     dest="inclination",
     type=float)
 parser.add_option(
     "--polarization",
-    help="polarization angle, between the radiatoin frame and the detector frame",
+    help=
+    "polarization angle, between the radiatoin frame and the detector frame",
     dest="polarization",
     type=float)
-parser.add_option(
-    "--num-points",
-    help="Number of points needed in the test-points file",
-    dest="npoints",
-    type=int)
-parser.add_option(
-    "--sample-m1-m2",
-    action="store_true",
-    help="pass if you want to sample the m1-m2 axes",
-    default=True)
-parser.add_option(
-    "--sample-mchirp-eta",
-    action="store_true",
-    help="pass if you want to sample the mchirp-eta axes",
-    default=False)
-parser.add_option(
-    "--sample-mtotal-q",
-    action="store_true",
-    help="pass if you want to sample the mtotal-q axes",
-    default=False)
-parser.add_option(
-    "-V",
-    "--verbose",
-    action="store_true",
-    help="Verbose output",
-    default=False)
-parser.add_option(
-    "-C",
-    "--comment",
-    metavar="STRING",
-    help="add the optional STRING as the process:comment",
-    default='')
+parser.add_option("--num-points",
+                  help="Number of points needed in the test-points file",
+                  dest="npoints",
+                  type=int)
+parser.add_option("--sample-m1-m2",
+                  action="store_true",
+                  help="pass if you want to sample the m1-m2 axes",
+                  default=True)
+parser.add_option("--sample-mchirp-eta",
+                  action="store_true",
+                  help="pass if you want to sample the mchirp-eta axes",
+                  default=False)
+parser.add_option("--sample-mtotal-q",
+                  action="store_true",
+                  help="pass if you want to sample the mtotal-q axes",
+                  default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="Verbose output",
+                  default=False)
+parser.add_option("-C",
+                  "--comment",
+                  metavar="STRING",
+                  help="add the optional STRING as the process:comment",
+                  default='')
 
 options, argv_frame_files = parser.parse_args()
 
@@ -225,10 +196,14 @@ else:
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
 
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, comment=options.comment,
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    comment=options.comment,
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 # Functions to sample the different parameters
 mass1_min = 1.
@@ -341,30 +316,15 @@ def sample_range(MIN, MAX):
 
 # Determine which input options are missing, and which need to be randomly
 # sampled.
-sim_inspiral_table = lsctables.New(
-    lsctables.SimInspiralTable,
-    columns=[
-        'mass1',
-        'mass2',
-        'mchirp',
-        'eta',
-        'spin1x',
-        'spin1y',
-        'spin1z',
-        'spin2x',
-        'spin2y',
-        'spin2z',
-        'inclination',
-        'polarization',
-        'latitude',
-        'longitude',
-        'bandpass',
-        'alpha',
-        'alpha1',
-        'alpha2',
-        'alpha3',
-        'alpha4',
-        'process_id'])
+sim_inspiral_table = lsctables.New(lsctables.SimInspiralTable,
+                                   columns=[
+                                       'mass1', 'mass2', 'mchirp', 'eta',
+                                       'spin1x', 'spin1y', 'spin1z', 'spin2x',
+                                       'spin2y', 'spin2z', 'inclination',
+                                       'polarization', 'latitude', 'longitude',
+                                       'bandpass', 'alpha', 'alpha1', 'alpha2',
+                                       'alpha3', 'alpha4', 'process_id'
+                                   ])
 outdoc.childNodes[0].appendChild(sim_inspiral_table)
 
 
@@ -390,8 +350,8 @@ def accept_point(m1, m2):
 
 def accept_point_mchirp_eta(mchirp, eta):
     m1, m2 = mchirp_eta_to_m1_m2(mchirp, eta)
-    if ((m1 + m2) <= mtotal_max) and (m1 > mass_min) and (m2 >
-                                                          mass_min) and (m1 < mass_max) and (m2 < mass_max):
+    if ((m1 + m2) <= mtotal_max) and (m1 > mass_min) and (m2 > mass_min) and (
+            m1 < mass_max) and (m2 < mass_max):
         return True
     else:
         return False
@@ -401,8 +361,9 @@ def accept_point_mtotal_q(mtotal, q):
     eta = q / (1. + q)**2
     mchirp = mtotal * eta**0.6
     m1, m2 = mchirp_eta_to_m1_m2(mchirp, eta)
-    if (mtotal <= mtotal_max) and (mtotal >= mtotal_min) and (eta >= eta_min) and (eta <= eta_max) and (
-            m1 > mass1_min) and (m2 > mass2_min) and (m1 < mass1_max) and (m2 < mass2_max):
+    if (mtotal <= mtotal_max) and (mtotal >= mtotal_min) and (
+            eta >= eta_min) and (eta <= eta_max) and (m1 > mass1_min) and (
+                m2 > mass2_min) and (m1 < mass1_max) and (m2 < mass2_max):
         return True
     else:
         print("sample mtotal = %f, q = %f REJECTED!" % (mtotal, q))
@@ -493,12 +454,10 @@ for i in np.arange(npoints):
     else:
         smplpt.spin1z = sample_range(options.spin1z_min, options.spin1z_max)
     # Sample the spin1 magnitude
-    if (smplpt.spin1x or smplpt.spin1y or smplpt.spin1z) and not (
-            options.spin1x and options.spin1y and options.spin1z):
-        s1mag = np.sqrt(
-            smplpt.spin1x**2.0 +
-            smplpt.spin1y**2.0 +
-            smplpt.spin1z**2.0)
+    if (smplpt.spin1x or smplpt.spin1y or smplpt.spin1z
+        ) and not (options.spin1x and options.spin1y and options.spin1z):
+        s1mag = np.sqrt(smplpt.spin1x**2.0 + smplpt.spin1y**2.0 +
+                        smplpt.spin1z**2.0)
         if options.spin1mag is not None:
             news1mag = options.spin1mag
         else:
@@ -521,12 +480,10 @@ for i in np.arange(npoints):
     else:
         smplpt.spin2z = sample_range(options.spin2z_min, options.spin2z_max)
     # Sample the spin2 magnitude
-    if (smplpt.spin2x or smplpt.spin2y or smplpt.spin2z) and not (
-            options.spin2x and options.spin2y and options.spin2z):
-        s2mag = np.sqrt(
-            smplpt.spin2x**2.0 +
-            smplpt.spin2y**2.0 +
-            smplpt.spin2z**2.0)
+    if (smplpt.spin2x or smplpt.spin2y or smplpt.spin2z
+        ) and not (options.spin2x and options.spin2y and options.spin2z):
+        s2mag = np.sqrt(smplpt.spin2x**2.0 + smplpt.spin2y**2.0 +
+                        smplpt.spin2z**2.0)
         if options.spin2mag:
             news2mag = options.spin2mag
         else:
@@ -562,7 +519,6 @@ for i in np.arange(npoints):
     #
     sim_inspiral_table.append(smplpt)
     # print smplpt.spin1z, smplpt.spin2z
-
 
 # Store the samples in the output file
 proctable = table.get_table(outdoc, lsctables.ProcessTable.tableName)

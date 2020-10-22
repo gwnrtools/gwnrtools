@@ -25,7 +25,9 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 ####################       Input parsing     #####################
 #########################################################################
 #{{{
-parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""
+parser = argparse.ArgumentParser(
+    usage="%%prog [OPTIONS]",
+    description="""
 Reads in all match files for given testpoint set against itself. Then:
 0) match files are named as matches_sufficiently_far/match_A_B_A_D.dat, and:
    - A := testpoints_sufficiently_far/test_A.xml (is the testpoints ID)
@@ -39,7 +41,8 @@ Reads in all match files for given testpoint set against itself. Then:
 5) Remove its nearest neighbors with which it had match > [MM]
 6) Repeat steps 3)-5) till max(G) = 0
 7) Add survivors to old bank
-""", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+""",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 # IO related inputs
 parser.add_argument("--proposal-file-name",
@@ -56,42 +59,50 @@ parser.add_argument("--match-file-name-glob",
                     help="glob for files that store matches")
 
 # Physics related inputs
-parser.add_argument("--minimal-match",
-                    dest="mm",
-                    default=0.97,
-                    type=float)
-parser.add_argument("--elimination-dir", metavar="STRING",
+parser.add_argument("--minimal-match", dest="mm", default=0.97, type=float)
+parser.add_argument("--elimination-dir",
+                    metavar="STRING",
                     help="Where are hashes of eliminated proposals stored?",
                     default='testpoints_eliminated/')
 
 # Miscellaneous
-parser.add_argument("-V", "--verbose", action="store_true",
+parser.add_argument("-V",
+                    "--verbose",
+                    action="store_true",
                     help="print extra debugging information",
-                    default=False )
-parser.add_argument("--debug", action="store_true",
+                    default=False)
+parser.add_argument("--debug",
+                    action="store_true",
                     help="print debugging information",
-                    default=False )
-parser.add_argument("-C", "--comment", metavar="STRING",
+                    default=False)
+parser.add_argument("-C",
+                    "--comment",
+                    metavar="STRING",
                     help="add the optional STRING as the process:comment",
-                    default='' )
+                    default='')
 
 options = parser.parse_args()
+
 #}}}
+
 
 #########################################################################
 ####################### Functions to do things         ##################
 #########################################################################
 # Miscellaneous
-def get_tag(wav): return str(wav.simulation_id.column_name)
+def get_tag(wav):
+    return str(wav.simulation_id.column_name)
+
 
 def is_eliminated(wav):
     sid = get_tag(wav)
     if os.path.exists(os.path.join(options.elimination_dir, sid)): return True
     return False
 
+
 def parse_match_file(mfile_name,
-                     mvals_for_each_bank_point = {},
-                     mvals_for_each_test_point = {}):
+                     mvals_for_each_bank_point={},
+                     mvals_for_each_test_point={}):
     if not os.path.exists(mfile_name):
         raise IOError("Provided file {} not found.".format(mfile_name))
     with open(mfile_name, 'r') as mfile:
@@ -108,12 +119,15 @@ def parse_match_file(mfile_name,
                 mvals_for_each_test_point[ptag][btag] = line[-1]
     return mvals_for_each_bank_point, mvals_for_each_test_point
 
+
 def get_all_matches_against_point(p, mvals_dict):
     mkeys = mvals_dict[p].keys()
     ##TESTME
     # remove matches with points that have been removed from mvals_dict
     mkeys = [k for k in mkeys if k in mvals_dict]
-    return np.array([mvals_dict[p][k] for k in mkeys], dtype=np.float128), mkeys
+    return np.array([mvals_dict[p][k] for k in mkeys],
+                    dtype=np.float128), mkeys
+
 
 def get_all_G_values(mvals_dict):
     g_values = {}
@@ -124,6 +138,7 @@ def get_all_G_values(mvals_dict):
         g_points[p] = [mpoints[i] for i in high_mval_indices]
         g_values[p] = len(high_mval_indices)
     return g_values, g_points
+
 
 #########################################################################
 #################### Opening input/output files/tables ##################
@@ -142,14 +157,17 @@ if not os.path.exists(options.prop_file_name):
 
 logging.info("Opening proposals file %s" % options.prop_file_name)
 prop_doc = ligolw_utils.load_filename(options.prop_file_name,
-                  contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
-                  verbose=options.verbose)
-try: prop_table = lsctables.SimInspiralTable.get_table(prop_doc)
+                                      contenthandler=table.use_in(
+                                          ligolw.LIGOLWContentHandler),
+                                      verbose=options.verbose)
+try:
+    prop_table = lsctables.SimInspiralTable.get_table(prop_doc)
 except ValueError:
     raise IOError("Only sim_inspiral tables are understood for proposals..")
 
 prop_table_tag_dict = {}
-for p in prop_table: prop_table_tag_dict[get_tag(p)] = p
+for p in prop_table:
+    prop_table_tag_dict[get_tag(p)] = p
 
 # Open the old bank file and get the table
 if not options.old_bank_file_name:
@@ -163,8 +181,9 @@ if not os.path.exists(options.old_bank_file_name):
 
 logging.info("Opening bank file %s" % options.old_bank_file_name)
 old_bank_doc = ligolw_utils.load_filename(options.old_bank_file_name,
-                  contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
-                  verbose=options.verbose)
+                                          contenthandler=table.use_in(
+                                              ligolw.LIGOLWContentHandler),
+                                          verbose=options.verbose)
 try:
     old_bank_table = lsctables.SimInspiralTable.get_table(old_bank_doc)
 except ValueError:
@@ -174,12 +193,13 @@ except ValueError:
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
 new_inspiral_table = lsctables.New(lsctables.SimInspiralTable,
-    columns=old_bank_table.columnnames)
+                                   columns=old_bank_table.columnnames)
 outdoc.childNodes[0].appendChild(new_inspiral_table)
-out_proc_id = ligolw_process.register_to_xmldoc(outdoc,
-    PROGRAM_NAME, options.__dict__, comment=options.comment).process_id
+out_proc_id = ligolw_process.register_to_xmldoc(
+    outdoc, PROGRAM_NAME, options.__dict__, comment=options.comment).process_id
 outname = options.new_bank_file_name
-for p in old_bank_table: new_inspiral_table.append(p)
+for p in old_bank_table:
+    new_inspiral_table.append(p)
 #}}}
 
 sys.stdout.flush()
@@ -218,7 +238,7 @@ for k in mvals_for_each_test_point:
 ## 6)
 ## 3)
 best_testpoints = []
-gvals, gpoints  = get_all_G_values(mvals_for_each_test_point)
+gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
 if len(gvals.values()) > 0: max_gval = np.max(gvals.values())
 else: max_gval = -1
 if options.verbose:
@@ -227,7 +247,7 @@ if options.verbose:
 
 while max_gval > 0:
     ## 4)
-    test_points_for_each_gval = {v:k for k,v in gvals.iteritems()}
+    test_points_for_each_gval = {v: k for k, v in gvals.iteritems()}
     test_point_with_max_gval = test_points_for_each_gval[max_gval]
     best_testpoints.append(test_point_with_max_gval)
     if options.verbose:
@@ -244,14 +264,15 @@ while max_gval > 0:
         for p in gpoints[test_point_with_max_gval]:
             if p in mvals_for_each_test_point:
                 mvals_for_each_test_point.pop(p)
-            else: logging.info("point {} to be removed not found!!".format(p))
+            else:
+                logging.info("point {} to be removed not found!!".format(p))
         if options.verbose:
             logging.info("\t\t removed {} points.".format(\
                           1 + len(gpoints[test_point_with_max_gval])))
     ##
     ## 3)
     ## TESTME
-    # How about we try and remove things from gvals instead of 
+    # How about we try and remove things from gvals instead of
     # recomputing gvals
     if _test:
         # First remove all points that have been eliminated above
@@ -260,11 +281,17 @@ while max_gval > 0:
         for p in points_to_be_removed:
             if p in mvals_for_each_test_point:
                 mvals_for_each_test_point.pop(p)
-            else: logging.info("point {} to be removed not found-1Of3!!".format(p))
+            else:
+                logging.info(
+                    "point {} to be removed not found-1Of3!!".format(p))
             if p in gvals: gvals.pop(p)
-            else: logging.info("point {} to be removed not found-2Of3!!".format(p))
+            else:
+                logging.info(
+                    "point {} to be removed not found-2Of3!!".format(p))
             if p in gpoints: gpoints.pop(p)
-            else: logging.info("point {} to be removed not found-3Of3!!".format(p))
+            else:
+                logging.info(
+                    "point {} to be removed not found-3Of3!!".format(p))
         if options.verbose:
             logging.info("\t\t removed {} points.".format(\
                           len(points_to_be_removed)))
@@ -276,7 +303,8 @@ while max_gval > 0:
         if options.verbose:
             logging.info("\t\t corrected G-values and G-points")
         if options.debug:
-            logging.info("-- new gvals (total {}): {}".format(len(gvals), gvals))
+            logging.info("-- new gvals (total {}): {}".format(
+                len(gvals), gvals))
     if not _test:
         gvals, gpoints = get_all_G_values(mvals_for_each_test_point)
     ##

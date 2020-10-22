@@ -55,8 +55,9 @@ class ConfigWriter():
 
     def types(self):
         return self.configs.keys()
-####
 
+
+####
 
 ####
 # **`InferenceConfigs`**:
@@ -65,19 +66,22 @@ class ConfigWriter():
 
 
 class InferenceConfigs():
-    def __init__(self, run_dir, configs={},
-                 # workflow opts
-                 n_cpus=10,
-                 checkpoint_interval=2000,
-                 # nested samplers opts
-                 n_live=2000,
-                 n_maxmcmc=8000,
-                 d_logz=0.1,
-                 # parallel mcmc opts
-                 n_walkers=1000,
-                 n_temperatures=20,
-                 n_maxsamps_per_walker=1000,
-                 n_eff_samples=4000):
+    def __init__(
+            self,
+            run_dir,
+            configs={},
+            # workflow opts
+            n_cpus=10,
+            checkpoint_interval=2000,
+            # nested samplers opts
+            n_live=2000,
+            n_maxmcmc=8000,
+            d_logz=0.1,
+            # parallel mcmc opts
+            n_walkers=1000,
+            n_temperatures=20,
+            n_maxsamps_per_walker=1000,
+            n_eff_samples=4000):
         '''
         Stores config files for pycbc_inference runs
 
@@ -121,7 +125,7 @@ class InferenceConfigs():
         '''
         self.run_dir = run_dir
         # Make this >>
-        assert(isinstance(configs, dict))
+        assert (isinstance(configs, dict))
         self.configs = configs
 
         # Add data configs
@@ -159,14 +163,13 @@ class InferenceConfigs():
         self.config_writers = {}
         for config_name in self.config_names:
             self.config_writers[config_name] = ConfigWriter(
-                config_name + '.ini',
-                self.configs[config_name], run_dir)
+                config_name + '.ini', self.configs[config_name], run_dir)
 
     def available_configs(self):
         return self.config_names
 
     def get_config_writer(self, name):
-        assert(name in self.available_configs())
+        assert (name in self.available_configs())
         return self.config_writers[name]
 
     def get(self, config_name, type_name=None):
@@ -351,8 +354,11 @@ checkpoint-interval = {ckpt_interval}
 
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
-""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
-           n_maxsamps_per_walker=n_maxsamps_per_walker, ckpt_interval=ckpt_interval)
+""".format(n_cpus=n_cpus,
+           n_walkers=n_walkers,
+           n_eff_samples=n_eff_samples,
+           n_maxsamps_per_walker=n_maxsamps_per_walker,
+           ckpt_interval=ckpt_interval)
         self.configs['sampler']['emcee_pt'] = """\
 [sampler]
 name = emcee_pt
@@ -378,9 +384,12 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_temperatures=n_temperatures,
+""".format(n_cpus=n_cpus,
+           n_walkers=n_walkers,
+           n_temperatures=n_temperatures,
            n_maxsamps_per_walker=n_maxsamps_per_walker,
-           n_eff_samples=n_eff_samples, ckpt_interval=ckpt_interval)
+           n_eff_samples=n_eff_samples,
+           ckpt_interval=ckpt_interval)
         self.configs['sampler']['epsie'] = """\
 [sampler]
 name = epsie
@@ -452,9 +461,12 @@ name = normal
 
 [jump_proposal-spin2_a]
 name = normal
-""".format(n_cpus=n_cpus, n_walkers=n_walkers, n_eff_samples=n_eff_samples,
-           n_temperatures=n_temperatures, n_maxsamps_per_walker=n_maxsamps_per_walker,
-            ckpt_interval=ckpt_interval)
+""".format(n_cpus=n_cpus,
+           n_walkers=n_walkers,
+           n_eff_samples=n_eff_samples,
+           n_temperatures=n_temperatures,
+           n_maxsamps_per_walker=n_maxsamps_per_walker,
+           ckpt_interval=ckpt_interval)
         self.configs['sampler']['dynesty'] = """\
 [sampler]
 name = dynesty
@@ -494,7 +506,10 @@ checkpoint-interval = {ckpt_interval}
 evidence-tolerance = {d_logz}
 sampling-efficiency = 0.8
 importance-nested-sampling = True
-""".format(n_cpus=n_cpus, n_live=n_live, d_logz=d_logz, ckpt_interval=ckpt_interval)
+""".format(n_cpus=n_cpus,
+           n_live=n_live,
+           d_logz=d_logz,
+           ckpt_interval=ckpt_interval)
         self.configs['sampler']['cpnest'] = """\
 [sampler]
 ;
@@ -756,4 +771,6 @@ name = uniform_sky
 ; polarization prior
 name = uniform_angle
 """
+
+
 ####

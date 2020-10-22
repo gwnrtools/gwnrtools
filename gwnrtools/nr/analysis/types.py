@@ -39,8 +39,11 @@ class overlaps_vs_totalmass():
         self.M, self.O = dataset[:, 0], dataset[:, 1:]
         self.nWindows = len(self.O[0, :])
         # }}}
+
     #
-    def X(self): return self.M
+    def X(self):
+        return self.M
+
     #
 
     def Y(self, idx):
@@ -61,10 +64,11 @@ class overlaps_vs_totalmass():
         if len(idx) == 1:
             return Y[idx, taperid]
         for idx, mm in enumerate(X):
-            if (mm-mass) < 1.e-12:
+            if (mm - mass) < 1.e-12:
                 return Y[idx, taperid]
         raise IOError("This mass value not found")
         # }}}
+
     # }}}
 
 
@@ -73,6 +77,7 @@ class Overlaps():
         Provide an interable, corresponding to subdirs in HDF5 file,
         Provide overlaps, labels corresponding to each subdir
     """
+
     # {{{
 
     def __init__(self, filename=None, outdir=None, verbose=True, debug=False):
@@ -86,6 +91,7 @@ class Overlaps():
         self.filekeys = {}
         self.read_data()
         self.keys = self.iterables()
+
     #
 
     def string_from_dir(self, dirname):
@@ -93,10 +99,12 @@ class Overlaps():
             return dirname.strip('.dir')
         else:
             return dirname
+
     #
 
     def dir_from_string(self, strname):
         return strname + '.dir'
+
     #
 
     def string_from_dset(self, dsetname):
@@ -107,12 +115,13 @@ class Overlaps():
         for idx in range(len(dtmp)):
             if '.dir' in dtmp[idx]:
                 break
-        if idx == len(dtmp)-1 and idx == 1:
+        if idx == len(dtmp) - 1 and idx == 1:
             idx = 0
-        d1, d2 = add_strings(dtmp[:idx+1]), add_strings(dtmp[idx+1:])
+        d1, d2 = add_strings(dtmp[:idx + 1]), add_strings(dtmp[idx + 1:])
         d1, d2 = self.string_from_dir(d1), self.string_from_dir(d2)
         print("d1, d2 = ", d1, d2)
         return d1 + '_' + d2
+
     #
 
     def dset_from_string(self, dsetname):
@@ -123,9 +132,10 @@ class Overlaps():
         for idx in range(len(dtmp)):
             if '.dir' in dtmp[idx]:
                 break
-        d1, d2 = add_strings(dtmp[:idx+1]), add_strings(dtmp[idx+1:])
+        d1, d2 = add_strings(dtmp[:idx + 1]), add_strings(dtmp[idx + 1:])
         d1, d2 = string_from_dir(d1), string_from_dir(d2)
         return d1 + '_' + d2
+
     #
 
     def read_data(self):
@@ -134,6 +144,7 @@ class Overlaps():
             self.filedirs[k] = []
             self.read_dir(l1dir=k, openfile=False)
         self.fin.close()
+
     #
 
     def read_dir(self, l1dir=None, openfile=True):
@@ -148,6 +159,7 @@ class Overlaps():
             self.read_dataset(l1dir=l1dir, dset=k, openfile=False)
         return
         # }}}
+
     #
 
     def read_dataset(self, l1dir=None, dset=None, openfile=False):
@@ -166,6 +178,7 @@ class Overlaps():
         self.keys = list(self.data.keys())
         return
         # }}}
+
     #
 
     def get_dirdsetname_from_iterable(self, itr=None):
@@ -174,6 +187,7 @@ class Overlaps():
             raise RuntimeError("Iter %s not defined" % itr)
         return self.filekeys[itr]
         # }}}
+
     #
 
     def get_iterable(self, l1dir=None, dsetname=None):
@@ -183,18 +197,20 @@ class Overlaps():
         if dsetname == None:
             raise IOError("No dir name given for reading dset")
         try:
-            itr = self.string_from_dir(
-                l1dir) + '/' + self.string_from_dset(dsetname)
+            itr = self.string_from_dir(l1dir) + '/' + self.string_from_dset(
+                dsetname)
         except:
             raise "Problem with get_iterable for %s, %s"
         self.filekeys[itr] = [l1dir, dsetname]
         return itr
         # }}}
+
     #
 
     def iterables(self):
         '''This is the main function to return the inner dataset'''
         return list(self.data.keys())
+
     #
 
     def overlaps_vs_totalmass(self, itr=None):
@@ -203,18 +219,21 @@ class Overlaps():
             raise IOError("Invalid iterable %s" % itr)
         return self.data[itr]
         # }}}
+
     #
 
     def overlaps(self, itr):
         # {{{
         return self.overlaps_vs_totalmass(itr=itr).O
         # }}}
+
     #
 
     def mismatches(self, itr):
         # {{{
         return 1. - self.overlaps_vs_totalmass(itr=itr).O
         # }}}
+
     # }}}
 
 
@@ -230,9 +249,13 @@ class SimulationErrors():
       # 2a. Extrapolation Order
       # 2b. Levs
       # 2c. Tapering window  """
+
     # {{{
 
-    def __init__(self, simdir=None, matchdirs=['matches'], verbose=True,
+    def __init__(self,
+                 simdir=None,
+                 matchdirs=['matches'],
+                 verbose=True,
                  debug=False):
         # {{{
         self.verbose = verbose
@@ -242,11 +265,12 @@ class SimulationErrors():
         if len(self.matchdirs):
             for d in self.matchdirs:
                 if not os.path.exists(self.simdir + '/' + d):
-                    raise IOError(
-                        "Match directories do not exist for %s" % self.simdir)
+                    raise IOError("Match directories do not exist for %s" %
+                                  self.simdir)
         for d in self.matchdirs:
             self.read_all_overlaps(matchdir=d)
         # }}}
+
     #
 
     def read_all_overlaps(self, matchdir=None):
@@ -268,17 +292,19 @@ class SimulationErrors():
         os.chdir(pwd)
         return
         # }}}
+
     #
 
-    def read_ccer_overlaps(self, matchdir=None,
+    def read_ccer_overlaps(self,
+                           matchdir=None,
                            matchfile='OverlapsExtractionRadii.h5'):
         # {{{
         if self.verbose:
             print("Reading CCER overlaps frm %s/%s" % (matchdir, matchfile))
-        self.ccer_overlaps = Overlaps(
-            filename=matchfile,
-            outdir=self.simdir+'/'+matchdir,
-            verbose=self.verbose, debug=self.debug)
+        self.ccer_overlaps = Overlaps(filename=matchfile,
+                                      outdir=self.simdir + '/' + matchdir,
+                                      verbose=self.verbose,
+                                      debug=self.debug)
         self.ccer_dirnames = list(self.ccer_overlaps.filedirs.keys())
         self.ccer_dsetnames = {}
         for d in self.ccer_dirnames:
@@ -287,17 +313,17 @@ class SimulationErrors():
             [self.ccer_overlaps.string_from_dir(d) for d in self.ccer_dirnames]
         return
         # }}}
+
     #
 
-    def read_ccelev_overlaps(self, matchdir=None,
-                             matchfile='OverlapsLevs.h5'):
+    def read_ccelev_overlaps(self, matchdir=None, matchfile='OverlapsLevs.h5'):
         # {{{
         if self.verbose:
             print("Reading CCELev overlaps frm %s/%s" % (matchdir, matchfile))
-        self.ccelev_overlaps = Overlaps(
-            filename=matchfile,
-            outdir=self.simdir+'/'+matchdir,
-            verbose=self.verbose, debug=self.debug)
+        self.ccelev_overlaps = Overlaps(filename=matchfile,
+                                        outdir=self.simdir + '/' + matchdir,
+                                        verbose=self.verbose,
+                                        debug=self.debug)
         self.ccelev_dirnames = list(self.ccelev_overlaps.filedirs.keys())
         self.ccelev_dsetnames = {}
         for d in self.ccelev_dirnames:
@@ -307,17 +333,20 @@ class SimulationErrors():
                 d) for d in self.ccelev_dirnames]
         return
         # }}}
+
     #
 
-    def read_cceextrap_overlaps(self, matchdir=None,
+    def read_cceextrap_overlaps(self,
+                                matchdir=None,
                                 matchfile='OverlapsExtrapolated.h5'):
         # {{{
         if self.verbose:
-            print("Reading CCEExrapolation overlaps frm %s/%s" % (matchdir, matchfile))
-        self.cceextrap_overlaps = Overlaps(
-            filename=matchfile,
-            outdir=self.simdir+'/'+matchdir,
-            verbose=self.verbose, debug=self.debug)
+            print("Reading CCEExrapolation overlaps frm %s/%s" %
+                  (matchdir, matchfile))
+        self.cceextrap_overlaps = Overlaps(filename=matchfile,
+                                           outdir=self.simdir + '/' + matchdir,
+                                           verbose=self.verbose,
+                                           debug=self.debug)
         #
         self.cceextrap_dirnames = list(self.cceextrap_overlaps.filedirs.keys())
         self.cceextrap_dsetnames = {}
@@ -332,7 +361,7 @@ class SimulationErrors():
             # if self.debug == True: print "tmpsplit = ", tmpsplit
             for idx in range(len(tmpsplit)):
                 if 'Extrapolated' in tmpsplit[idx]:
-                    eo = tmpsplit[idx+1].split('.')[0]
+                    eo = tmpsplit[idx + 1].split('.')[0]
                     break
                 elif 'Outer' in tmpsplit[idx]:
                     eo = tmpsplit[idx].split('.')[0]
@@ -345,6 +374,7 @@ class SimulationErrors():
                 print("extraporders = ", self.extraporders)
         return
         # }}}
+
     #
 
     def ccer(self, key=None, noduplicate=True, onlyduplicate=False):
@@ -377,6 +407,7 @@ class SimulationErrors():
             tmp[itr] = self.ccer_overlaps.overlaps_vs_totalmass(itr=itr)
         return tmp
         # }}}
+
     #
 
     def ccelev(self, key=None, noduplicate=True, onlyduplicate=False):
@@ -409,6 +440,7 @@ class SimulationErrors():
             tmp[itr] = self.ccelev_overlaps.overlaps_vs_totalmass(itr=itr)
         return tmp
         # }}}
+
     #
 
     def cceextrapolated(self, key=None, noduplicate=True, onlyduplicate=False):
@@ -441,9 +473,12 @@ class SimulationErrors():
             tmp[itr] = self.cceextrap_overlaps.overlaps_vs_totalmass(itr=itr)
         return tmp
         # }}}
+
     #
 
-    def get_max_cce_mismatch(self, spl_lev='Lev5', spl_extrap=['N2', 'N3', 'N4'],
+    def get_max_cce_mismatch(self,
+                             spl_lev='Lev5',
+                             spl_extrap=['N2', 'N3', 'N4'],
                              spl_ccer=None):
         """ The purpose here is to estimate the error in the highest Lev waveforms
             As that is Lev5 for all simulations, its in that waveform that we need 
@@ -465,21 +500,26 @@ class SimulationErrors():
         if spl_ccer is None:
             spl_ccer = 'CceR%04d' % max([int(x[-4:]) for x in self.cceradii])
         #
-        const_combinations = [
-            [self.cceradii[0], spl_lev, 'Lev%d' % (int(spl_lev[-1])-1)], [self.cceradii[1], spl_lev, 'Lev%d' % (int(spl_lev[-1])-1)], [
-                self.cceradii[0], self.cceradii[1], spl_lev], [spl_ccer, spl_lev, 'N2'], [spl_ccer, spl_lev, 'N3'], [spl_ccer, spl_lev, 'N4']
-        ]
+        const_combinations = [[
+            self.cceradii[0], spl_lev,
+            'Lev%d' % (int(spl_lev[-1]) - 1)
+        ], [self.cceradii[1], spl_lev,
+            'Lev%d' % (int(spl_lev[-1]) - 1)],
+                              [self.cceradii[0], self.cceradii[1], spl_lev],
+                              [spl_ccer, spl_lev, 'N2'],
+                              [spl_ccer, spl_lev, 'N3'],
+                              [spl_ccer, spl_lev, 'N4']]
         const_funcs = [
-            self.ccelev, self.ccelev, self.ccer, self.cceextrapolated, self.cceextrapolated, self.cceextrapolated
+            self.ccelev, self.ccelev, self.ccer, self.cceextrapolated,
+            self.cceextrapolated, self.cceextrapolated
         ]
         if spl_lev != 'Lev5':
-            const_combinations = [
-                [self.cceradii[0], spl_lev, 'Lev%d' % (
-                    int(spl_lev[-1])+1)], [self.cceradii[1], spl_lev, 'Lev%d' % (int(spl_lev[-1])+1)]
-            ] + const_combinations
-            const_funcs = [
-                self.ccelev, self.ccelev
-            ] + const_funcs
+            const_combinations = [[
+                self.cceradii[0], spl_lev,
+                'Lev%d' % (int(spl_lev[-1]) + 1)
+            ], [self.cceradii[1], spl_lev,
+                'Lev%d' % (int(spl_lev[-1]) + 1)]] + const_combinations
+            const_funcs = [self.ccelev, self.ccelev] + const_funcs
         #
         overlaps_all = []
         for idx, key_combo in enumerate(const_combinations):
@@ -498,16 +538,19 @@ class SimulationErrors():
                 max_min_mtotal = max(max_min_mtotal, olap.M[0])
                 min_masses = olap.X()
         num_taper_windows = olap.nWindows
-        max_overlaps = np.ones(len(min_masses), 1+num_taper_windows) * -1.
+        max_overlaps = np.ones(len(min_masses), 1 + num_taper_windows) * -1.
         for taperid in range(num_taper_windows):
             for mid, mass in enumerate(min_masses):
-                olaps = [obj.get_overlap_mass_taper(mass, taperid)
-                         for obj in overlaps_all]
-                max_overlaps[mid, 1+taperid] = max(olaps)
+                olaps = [
+                    obj.get_overlap_mass_taper(mass, taperid)
+                    for obj in overlaps_all
+                ]
+                max_overlaps[mid, 1 + taperid] = max(olaps)
                 max_overlaps[mid, 0] = mass
         #
         return overlaps_vs_totalmass(dataset=max_overlaps)
         # }}}
+
     # }}}
 
 
@@ -516,6 +559,7 @@ class EffectualnessAndBias():
     '''
     storage: tag/approximant/
     '''
+
     # {{{
 
     def __init__(self, outdir='.', verbose=True):
@@ -524,6 +568,7 @@ class EffectualnessAndBias():
         self.outdir = outdir
         self.data = {}
         # }}}
+
     #
 
     def read_data_from_combined_file(self, simtags=None, filename=None):
@@ -570,14 +615,20 @@ class EffectualnessAndBias():
                         sig_s2 = nr_s2 - s2_diff
                         # out_row = np.array([mtot, sig_et, sig_s1, sig_s2,\
                         #                tmp_mc, tmp_et, tmp_s1, tmp_s2, olap])
-                        out_row = np.array([mtot, nr_et, nr_s1, nr_s2,
-                                            sig_mc, sig_et, sig_s1, sig_s2, ff])
+                        out_row = np.array([
+                            mtot, nr_et, nr_s1, nr_s2, sig_mc, sig_et, sig_s1,
+                            sig_s2, ff
+                        ])
                         self.data[sim][approx][mtot] = np.array([out_row])
         return
         # }}}
+
     #
 
-    def read_data_from_file(self, simtags=None, filename=None, keepalldata=False):
+    def read_data_from_file(self,
+                            simtags=None,
+                            filename=None,
+                            keepalldata=False):
         """ Reads in data for ALL simulations and ALL approxes in a single output
             file. Stores them so they can be fetched from a simulation's nametag.
             If simtags are given (as a list), then only those simulations' data is 
@@ -591,7 +642,7 @@ class EffectualnessAndBias():
         # mtotal num_of_aux_cols, eta 1, spin1z 2, spin2z 3
         # template parameters and columns
         # mchirp 5, eta 6, spin1z 7, spin2z 8
-        f = h5py.File(self.outdir+'/'+filename, 'r')
+        f = h5py.File(self.outdir + '/' + filename, 'r')
         sims = list(f.keys())
         if simtags != None and len(simtags) > 0:
             newsims = []
@@ -628,8 +679,10 @@ class EffectualnessAndBias():
                             continue
                         tmp_mc, tmp_et, tmp_s1, tmp_s2 = row[5:9]
                         sig_et, sig_s1, sig_s2 = row[1:4]
-                        out_row = np.array([mtot, sig_et, sig_s1, sig_s2,
-                                            tmp_mc, tmp_et, tmp_s1, tmp_s2, olap])
+                        out_row = np.array([
+                            mtot, sig_et, sig_s1, sig_s2, tmp_mc, tmp_et,
+                            tmp_s1, tmp_s2, olap
+                        ])
                         #
                         if mtot not in list(self.data[sim][approx].keys()):
                             self.data[sim][approx][mtot] = out_row
@@ -655,6 +708,7 @@ class EffectualnessAndBias():
         f.close()
         return
         # }}}
+
     #
 
     def effectualness_vs_totalmass(self, inkey=None, approx=None):
@@ -670,6 +724,7 @@ class EffectualnessAndBias():
         ff = np.array([max(self.data[inkey][app][mm][:, -1]) for mm in masses])
         return masses, ff
         # }}}
+
     #
 
     def best_match_parameters(self, inkey=None, approx=None):
@@ -683,22 +738,34 @@ class EffectualnessAndBias():
         masses = np.array(list(self.data[inkey][app].keys()))
         masses.sort()
         ff = np.array([max(self.data[inkey][app][mm][:, -1]) for mm in masses])
-        sig_mc = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -5] for mm in masses])
-        sig_et = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -4] for mm in masses])
-        sig_s1 = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -3] for mm in masses])
-        sig_s2 = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -2] for mm in masses])
+        sig_mc = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -5]
+            for mm in masses
+        ])
+        sig_et = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -4]
+            for mm in masses
+        ])
+        sig_s1 = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -3]
+            for mm in masses
+        ])
+        sig_s2 = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -2]
+            for mm in masses
+        ])
         # NR parameters are fixed for a simulation, so they dont need to be
         # accumulated
         nr_et = self.data[inkey][app][mm][0, 1]
-        nr_q = (1. + (1. - 4.*nr_et)**0.5 - 2.*nr_et)/(2.*nr_et)
+        nr_q = (1. + (1. - 4. * nr_et)**0.5 - 2. * nr_et) / (2. * nr_et)
         nr_q = np.ones(len(ff)) * nr_q  # Its constant
         nr_et = np.ones(len(ff)) * nr_et
         nr_mc = masses * nr_et**0.6
@@ -709,10 +776,14 @@ class EffectualnessAndBias():
         #
         return ff, nr_mc, nr_et, nr_s1, nr_s2, sig_mc, sig_et, sig_s1, sig_s2
         # }}}
+
     #
 
-    def parameterbiases_vs_parameters(self, inkey=None, approx=None,
-                                      chieff=False, total_mass=False):
+    def parameterbiases_vs_parameters(self,
+                                      inkey=None,
+                                      approx=None,
+                                      chieff=False,
+                                      total_mass=False):
         """
         Computes the relative/absolute differences between maximum-overlap
         parameters and those of the injections themselves. Default behavior
@@ -738,26 +809,38 @@ class EffectualnessAndBias():
         masses = np.array(list(self.data[inkey][app].keys()))
         masses.sort()
         ff = np.array([max(self.data[inkey][app][mm][:, -1]) for mm in masses])
-        sig_mc = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -5] for mm in masses])
-        sig_et = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -4] for mm in masses])
+        sig_mc = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -5]
+            for mm in masses
+        ])
+        sig_et = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -4]
+            for mm in masses
+        ])
         if chieff:
             sig_m1, sig_m2 = pnutils.mchirp_eta_to_mass1_mass2(sig_mc, sig_et)
         if total_mass:
             sig_mt = sig_mc * sig_et**-0.6
-        sig_s1 = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -3] for mm in masses])
-        sig_s2 = np.array(
-            [self.data[inkey][app][mm][np.where(self.data[inkey][app][mm][:, -1] ==
-                                                max(self.data[inkey][app][mm][:, -1]))[0][0], -2] for mm in masses])
+        sig_s1 = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -3]
+            for mm in masses
+        ])
+        sig_s2 = np.array([
+            self.data[inkey][app][mm][np.where(
+                self.data[inkey][app][mm][:, -1] ==
+                max(self.data[inkey][app][mm][:, -1]))[0][0], -2]
+            for mm in masses
+        ])
         # NR parameters are fixed for a simulation, so they dont need to be
         # accumulated
         nr_et = self.data[inkey][app][mm][0, 1]
-        nr_q = (1. + (1. - 4.*nr_et)**0.5 - 2.*nr_et)/(2.*nr_et)
+        nr_q = (1. + (1. - 4. * nr_et)**0.5 - 2. * nr_et) / (2. * nr_et)
         nr_q = np.ones(len(ff)) * nr_q  # Its constant
         nr_et = np.ones(len(ff)) * nr_et
         nr_mc = masses * nr_et**0.6
@@ -773,18 +856,18 @@ class EffectualnessAndBias():
             #nr_seff = spins_to_PNeffective_spin(nr_m1, nr_m2, nr_s1, nr_s2)
             #sig_seff= spins_to_PNeffective_spin(sig_m1, sig_m2, sig_s1, sig_s2)
             nr_seff = spins_to_massweighted_spin(nr_m1, nr_m2, nr_s1, nr_s2)
-            sig_seff = spins_to_massweighted_spin(
-                sig_m1, sig_m2, sig_s1, sig_s2)
+            sig_seff = spins_to_massweighted_spin(sig_m1, sig_m2, sig_s1,
+                                                  sig_s2)
         #mc_diff = (nr_mc-sig_mc)/nr_mc
         #eta_diff = (nr_et-sig_et)/nr_et
         #
         # NB: here 'mc_diff' really can contain either mchirp or mtotal differences,
         # please do not pay attention to the nomenclature 'mc'
         if total_mass:
-            mc_diff = (sig_mt - masses)/masses
+            mc_diff = (sig_mt - masses) / masses
         else:
-            mc_diff = (sig_mc - nr_mc)/nr_mc
-        eta_diff = (sig_et-nr_et)/nr_et
+            mc_diff = (sig_mc - nr_mc) / nr_mc
+        eta_diff = (sig_et - nr_et) / nr_et
         # Handle spins specially for q = 1
         if 'q1' not in inkey:
             if chieff:
@@ -794,8 +877,8 @@ class EffectualnessAndBias():
             s2_diff = sig_s2 - nr_s2  # nr_s2-sig_s2
         else:
             s1_diff, s2_diff = np.zeros(len(nr_s1)), np.zeros(len(nr_s2))
-            s11d, s12d = sig_s1-nr_s1, sig_s2-nr_s1  # nr_s1 - sig_s1, nr_s1 - sig_s2
-            s21d, s22d = sig_s1-nr_s2, sig_s2-nr_s2  # nr_s2 - sig_s1, nr_s2 - sig_s2
+            s11d, s12d = sig_s1 - nr_s1, sig_s2 - nr_s1  # nr_s1 - sig_s1, nr_s1 - sig_s2
+            s21d, s22d = sig_s1 - nr_s2, sig_s2 - nr_s2  # nr_s2 - sig_s1, nr_s2 - sig_s2
             s1122rms = (s11d**2 + s22d**2)**0.5
             s1221rms = (s12d**2 + s21d**2)**0.5
             mask = s1122rms < s1221rms
@@ -808,6 +891,7 @@ class EffectualnessAndBias():
                 s1_diff = sig_seff - nr_seff
         return masses, nr_q, nr_s1, nr_s2, mc_diff, eta_diff, s1_diff, s2_diff, ff
         # }}}
+
     #
 
     def effectualness_vs_parameters(self, inkey=None, approx=None):
@@ -822,7 +906,7 @@ class EffectualnessAndBias():
         masses.sort()
         ff = np.array([max(self.data[inkey][app][mm][:, -1]) for mm in masses])
         nr_et = self.data[inkey][app][mm][0, 1]
-        nr_q = (1. + (1. - 4.*nr_et)**0.5 - 2.*nr_et)/(2.*nr_et)
+        nr_q = (1. + (1. - 4. * nr_et)**0.5 - 2. * nr_et) / (2. * nr_et)
         nr_q = np.ones(len(ff)) * nr_q  # Its constant
         nr_s1 = np.ones(len(ff)) * \
             self.data[inkey][app][mm][0, 2]  # Its constant
@@ -830,4 +914,5 @@ class EffectualnessAndBias():
             self.data[inkey][app][mm][0, 3]  # Its constant
         return masses, nr_q, nr_s1, nr_s2, ff
         # }}}
+
     # }}}

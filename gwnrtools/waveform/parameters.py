@@ -41,12 +41,12 @@ def spins_to_2PNeffective_spin(m1, m2, chi1, chi2):
 
 def spins_to_massweighted_spin(m1, m2, chi1, chi2):
     chiwt = m1 * chi1 + m2 * chi2
-    return chiwt / (m1+m2)
+    return chiwt / (m1 + m2)
 
 
 def spins_to_damoureffective_spin(m1, m2, chi1, chi2):
-    chiwt = 4 * m1**2 * chi1 + 4 * m2**2 * chi2 + 3.*m1*m2*(chi1+chi2)
-    return chiwt / 4. / (m1+m2)**2
+    chiwt = 4 * m1**2 * chi1 + 4 * m2**2 * chi2 + 3. * m1 * m2 * (chi1 + chi2)
+    return chiwt / 4. / (m1 + m2)**2
 
 
 def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
@@ -58,13 +58,13 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
     """
     m1_2, m2_2 = m1**2, m2**2
     # Magnitude of the spin projections in the orbital plane */
-    S1_perp = m1_2*np.sqrt(s1x*s1x + s1y*s1y)
-    S2_perp = m2_2*np.sqrt(s2x*s2x + s2y*s2y)
+    S1_perp = m1_2 * np.sqrt(s1x * s1x + s1y * s1y)
+    S2_perp = m2_2 * np.sqrt(s2x * s2x + s2y * s2y)
     # /* From this we can compute chip*/
-    A1 = 2. + (3.*m2) / (2*m1)
-    A2 = 2. + (3.*m1) / (2*m2)
-    ASp1 = A1*S1_perp
-    ASp2 = A2*S2_perp
+    A1 = 2. + (3. * m2) / (2 * m1)
+    A2 = 2. + (3. * m1) / (2 * m2)
+    ASp1 = A1 * S1_perp
+    ASp2 = A2 * S2_perp
     if type(m1) != float and type(m1) != int:
         num = np.zeros(len(m1))
         den = np.zeros(len(m1))
@@ -74,7 +74,7 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
         mask = ASp2 <= ASp1
         num[mask] = ASp1[mask]
         #
-        den = A1*m1_2
+        den = A1 * m1_2
     else:
         if ASp2 > ASp1:
             num = ASp2
@@ -95,8 +95,8 @@ def q_to_eta(q):
 
 def eta_to_q(eta):
     a = c = 1.
-    b = 2. - 1./np.array(eta)
-    D = (b**2 - 4.*a*c)**0.5
+    b = 2. - 1. / np.array(eta)
+    D = (b**2 - 4. * a * c)**0.5
     # print type(a), type(b), type(c), type(D)
-    roots = [(-b + D)/(2.*a), (-b - D)/(2.*a)]
+    roots = [(-b + D) / (2. * a), (-b - D) / (2. * a)]
     return roots[0]

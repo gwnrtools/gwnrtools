@@ -29,15 +29,16 @@ import numpy as np
 import re
 from gwnrtools.utils import find_nearest, approx_equal
 
-
 ########################################
 # Auxiliary CLASSES
 ########################################
+
 
 class ParsePVD():
     """
 Elementary class to modify PVD files
     """
+
     # {{{
 
     def __init__(self, filename):
@@ -45,6 +46,7 @@ Elementary class to modify PVD files
         self.pvdlines = self.pvdfin.readlines()
         self.orig_pvdlines = self.pvdlines
         return
+
     #
 
     def RemoveBreaks(self):
@@ -59,7 +61,7 @@ Elementary class to modify PVD files
                 cnt += 1
                 if cnt == 1:
                     revlist.append(pvdrev[i])
-                    revlist.append(pvdrev[i+1])
+                    revlist.append(pvdrev[i + 1])
                 i += 2
                 continue
             else:
@@ -67,6 +69,7 @@ Elementary class to modify PVD files
                 i += 1
         self.pvdlines = revlist[::-1]
         return
+
     #
 
     def RetrieveUniqueTimeSteps(self):
@@ -79,6 +82,7 @@ Returns time stamps of all unique time steps
                                if re.findall('timestep="\d+.\d+"', tl) != []])))
         self.tsteps.sort()
         return self.tsteps
+
     #
 
     def DownsampleTimeSteps(self, downsample_factor):
@@ -128,4 +132,5 @@ Writes out a new PVD file (presumably after processing).
         with open(filename, "w") as fout:
             for pl in self.pvdlines:
                 fout.write(pl)
+
     # }}}

@@ -10,7 +10,9 @@ parser.add_argument('--m1', type=float)
 parser.add_argument('--m2', type=float)
 parser.add_argument('--s1z', default=0., type=float)
 parser.add_argument('--s2z', default=0., type=float)
-parser.add_argument('--dist', default=1.e3, type=float,
+parser.add_argument('--dist',
+                    default=1.e3,
+                    type=float,
                     help="distance to source in MegaParsecs")
 parser.add_argument(
     '--incl',
@@ -23,9 +25,7 @@ parser.add_argument('--approx', default='SEOBNRv2', type=str)
 parser.add_argument('--delta-t', default=1. / 4096., type=float)
 parser.add_argument('--delta-f', default=1. / 128., type=float)
 
-
 args = parser.parse_args()
-
 
 # INITIALIZE
 approx = args.approx
@@ -47,8 +47,10 @@ incl = args.incl
 # GET WAVEFORM
 if approx in td_approximants():
     hp, hc = get_td_waveform(approximant=approx,
-                             mass1=m1, mass2=m2,
-                             spin1z=s1z, spin2z=s2z,
+                             mass1=m1,
+                             mass2=m2,
+                             spin1z=s1z,
+                             spin2z=s2z,
                              distance=dist,
                              inclination=incl,
                              f_lower=f_lower,
@@ -59,13 +61,14 @@ if approx in td_approximants():
     # print len(hp), time_length, df, n, time_length * sample_rate / 2 + 1
 elif approx in fd_approximants():
     hp, hc = get_fd_waveform(approximant=approx,
-                             mass1=m1, mass2=m2,
-                             spin1z=s1z, spin2z=s2z,
+                             mass1=m1,
+                             mass2=m2,
+                             spin1z=s1z,
+                             spin2z=s2z,
                              distance=dist,
                              inclination=incl,
                              f_lower=f_lower,
                              delta_f=df)
-
 
 # GET PSD
 psd = from_string('aLIGOZeroDetHighPower', n, df, f_lower)
@@ -73,6 +76,5 @@ psd = from_string('aLIGOZeroDetHighPower', n, df, f_lower)
 # COMPUTE OPTIMAL SNR
 h = hp  # REPLACE WITH h = Fplus * hp + Fcross * hc
 opt_snr = sigma(h, psd=psd, low_frequency_cutoff=f_lower)
-
 
 print("Optimal SNR = %f" % (opt_snr))

@@ -41,11 +41,8 @@ def add_strings(strlist, fill=None):
 
 
 def get_metadatafiles(nr_tag):
-    levdirs = glob.glob(
-        options.nr_input_dir +
-        '/' +
-        nr_tag +
-        '/Production/BBH*/Lev?')
+    levdirs = glob.glob(options.nr_input_dir + '/' + nr_tag +
+                        '/Production/BBH*/Lev?')
     levstrs, metadatafiles = [], {}
     for levdir in levdirs:
         levname = levdir.split('/')[-1]
@@ -93,8 +90,10 @@ def get_data_from_metadatafile(fin):
     return [m1, m2, chi1x, chi1y, chi1z, chi2x, chi2y, chi2z, omega, trelax]
 
 
-def get_waveform_location(p, extrap_filename='h_from_Psi4_scri.L02Mp02.dat',
-                          cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
+def get_waveform_location(
+        p,
+        extrap_filename='h_from_Psi4_scri.L02Mp02.dat',
+        cce_filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
     tag = p.waveform
     subdir = tag.split('-')[-1]
     dirname = add_strings(tag.split('-')[:-1], '-')
@@ -123,22 +122,21 @@ parser = OptionParser(
     metadata for the simulation in it, for different Levs. Stores the tag and
     this information in an xml file.""")
 
-parser.add_option(
-    "-x",
-    "--input-catalogs",
-    help="Names of the xml file to append the information to",
-    default=None)
+parser.add_option("-x",
+                  "--input-catalogs",
+                  help="Names of the xml file to append the information to",
+                  default=None)
 parser.add_option("-t", "--output-catalog", help='output file name')
 parser.add_option(
     "--nr-input-dir",
     metavar='DIR',
     help='Main dir with nr sim',
-    default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/')
-parser.add_option(
-    "--use-hdf",
-    action="store_true",
-    help="Store ascii file or HDF5 file location?",
-    default=False)
+    default='/home/p/pfeiffer/prayush/scratch/projects/CCE/ChuAlignedSpinning/'
+)
+parser.add_option("--use-hdf",
+                  action="store_true",
+                  help="Store ascii file or HDF5 file location?",
+                  default=False)
 
 parser.add_option(
     "-Q",
@@ -147,12 +145,11 @@ parser.add_option(
     type=float,
     default=-2.)
 
-parser.add_option(
-    "-V",
-    "--verbose",
-    action="store_true",
-    help="print extra debugging information",
-    default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv_frame_files = parser.parse_args()
 
@@ -168,7 +165,8 @@ if options.input_catalogs is not None:
         if options.verbose:
             print("using >> %s" % input_catalog)
         indoc = ligolw_utils.load_filename(input_catalog,
-                                           contenthandler=LIGOLWContentHandler, verbose=options.verbose)
+                                           contenthandler=LIGOLWContentHandler,
+                                           verbose=options.verbose)
         #
         try:
             input_table = lsctables.SnglInspiralTable.get_table(indoc)
@@ -186,46 +184,29 @@ else:
 
 # ##################################################################
 
-
 # ##################################################################
 # From each input table, write over all rows with valid waveform locations.
 # create a blank xml document and add the process id
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, ifos=[
-                                                "G1"],
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    ifos=["G1"],
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 out_table = lsctables.New(
     inputtabletype,
     columns=[
-        'mass1',
-        'mass2',
-        'mchirp',
-        'eta',
-        'spin1x',
-        'spin1y',
-        'spin1z',
-        'spin2x',
-        'spin2y',
-        'spin2z',
-        'inclination',
-        'polarization',
-        'latitude',
-        'longitude',
-        'bandpass',
-        'alpha',
-        'alpha1',
-        'alpha2',
-        'process_id',
-        'waveform',
-        'numrel_data',
-        'numrel_mode_min',
-        'numrel_mode_max',
-        't_end_time',
-        'f_lower'])
+        'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y', 'spin1z',
+        'spin2x', 'spin2y', 'spin2z', 'inclination', 'polarization',
+        'latitude', 'longitude', 'bandpass', 'alpha', 'alpha1', 'alpha2',
+        'process_id', 'waveform', 'numrel_data', 'numrel_mode_min',
+        'numrel_mode_max', 't_end_time', 'f_lower'
+    ])
 outdoc.childNodes[0].appendChild(out_table)
 
 # Copy the INPUT table
@@ -238,9 +219,8 @@ for input_catalog, input_table in input_tables:
         qth = options.upper_q_threshold
         if point.eta < (qth / (1. + qth)**2):
             if options.verbose:
-                print(
-                    "  -- Not including %s" %
-                    point.waveform, file=sys.stdout)
+                print("  -- Not including %s" % point.waveform,
+                      file=sys.stdout)
                 sys.stdout.flush()
             continue
         # Check if the waveform location is specified.

@@ -31,7 +31,11 @@ from .configurations import cluster_submission_file
 
 
 class BatchEvolutions(object):
-    def __init__(self, exes, inputs, tests, test_dir,
+    def __init__(self,
+                 exes,
+                 inputs,
+                 tests,
+                 test_dir,
                  reduction_data_file_name='PlaneWave2DPeriodicReductions.h5',
                  volume_data_file_name='PlaneWave2DPeriodicVolume0.h5',
                  xdmf_converter=None):
@@ -80,9 +84,8 @@ Returns True if they do for all tests.
                     os.path.getsize(self.exes[config_name]) > 0:
                 logging.info("Exec for test {0:s}: Found".format(config_name))
             else:
-                logging.info(
-                    "Exec for test {0:s}: Not Found at {1}".format(
-                        config_name, self.exes[config_name]))
+                logging.info("Exec for test {0:s}: Not Found at {1}".format(
+                    config_name, self.exes[config_name]))
 
     def exe(self, config_name):
         '''
@@ -124,7 +127,8 @@ Full path to cluster submission file for a given test
         '''
         return os.path.join(self.run_dir(test), "{0:s}.sh".format(cluster))
 
-    def setup_run(self, test,
+    def setup_run(self,
+                  test,
                   cluster='local',
                   compiler='gcc',
                   spectre_root=None,
@@ -170,7 +174,8 @@ Setup a single test run:
 
         # Write appropriate submission file if needed
         if cluster != 'local':
-            with open(self.cluster_submission_file(test, cluster), 'w') as fout:
+            with open(self.cluster_submission_file(test, cluster),
+                      'w') as fout:
                 fout.write(
                     cluster_submission_file(
                         cluster=cluster,
@@ -179,9 +184,7 @@ Setup a single test run:
                         run_dir=run_dir,
                         input_file=self.input_file_name(test),
                         exe=self.exe_name(config_name),
-                        tag=test
-                    )
-                )
+                        tag=test))
         else:
             pass
         return exe_dest, run_dir
@@ -200,7 +203,8 @@ WARNING: To be run on the cluster only!
             'sbatch',
             os.path.split(self.cluster_submission_file(test, cluster))[-1],
             '> sub.out'
-        ], shell=True)
+        ],
+                                       shell=True)
 
     def run(self, test, setup=False, ncores=4, cluster='local'):
         '''
@@ -229,14 +233,14 @@ Run a single test:
             input_file = os.path.split(self.input_file(test))[-1]
 
             # Run SpECTRE here
-            logging.info("Executing ./{0:s} ++ppn {1:d} --input-file {2:s}".format(exe,
-                                                                                   ncores,
-                                                                                   input_file))
+            logging.info(
+                "Executing ./{0:s} ++ppn {1:d} --input-file {2:s}".format(
+                    exe, ncores, input_file))
             return subprocess.check_output([
-                './{0:s} ++ppn {1:d} --input-file {2:s}'.format(exe,
-                                                                ncores,
-                                                                input_file)
-            ], shell=True)
+                './{0:s} ++ppn {1:d} --input-file {2:s}'.format(
+                    exe, ncores, input_file)
+            ],
+                                           shell=True)
         else:
             self.submit_to_cluster(self, test, cluster)
 
@@ -255,16 +259,16 @@ written for a given test
         out_found = []
         for output in which:
             out_file = self.output_file(test, output)
-            logging.info(
-                "Checking for {0:s} data...: {1:s}".format(output, out_file))
+            logging.info("Checking for {0:s} data...: {1:s}".format(
+                output, out_file))
             if os.path.exists(out_file):
                 size = os.path.getsize(out_file) / (1024 * 1024)
                 unit = 'M'
                 if size < 1:
                     size = os.path.getsize(out_file) / (1024 * 1)
                     unit = 'k'
-                logging.info(
-                    "...Found with size {0:.2f}{1:s}".format(size, unit))
+                logging.info("...Found with size {0:.2f}{1:s}".format(
+                    size, unit))
                 out_found.append(True)
             else:
                 logging.info("...Not Written.")

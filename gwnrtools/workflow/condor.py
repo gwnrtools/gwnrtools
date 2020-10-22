@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """Setup workflow to calculate fitting factors for a given template bank
 against a custom set of simulated signals"""
 
@@ -21,8 +20,14 @@ from glue.pipeline import CondorDAGJob, CondorDAGNode, CondorJob
 
 
 class BaseJob(CondorDAGJob, CondorJob):
-    def __init__(self, log_dir, executable, cp, section, gpu=False,
-                 accounting_group=None, request_memory=None):
+    def __init__(self,
+                 log_dir,
+                 executable,
+                 cp,
+                 section,
+                 gpu=False,
+                 accounting_group=None,
+                 request_memory=None):
         CondorDAGJob.__init__(self, "vanilla", executable)
 
         if gpu:
@@ -30,7 +35,8 @@ class BaseJob(CondorDAGJob, CondorJob):
         # These are all python jobs so need to pull in the env
         self.add_condor_cmd('getenv', 'True')
         log_base = os.path.join(
-            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
+            log_dir,
+            os.path.basename(executable) + '-$(cluster)-$(process)')
         self.set_stderr_file(log_base + '.err')
         self.set_stdout_file(log_base + '.out')
         self.set_sub_file(os.path.basename(executable) + '.sub')
@@ -46,8 +52,14 @@ class BaseJob(CondorDAGJob, CondorJob):
 
 
 class BanksimNode(CondorDAGNode):
-    def __init__(self, job, inj_file, tmplt_file, match_file, gpu=True,
-                 gpu_postscript=False, inj_per_job=None):
+    def __init__(self,
+                 job,
+                 inj_file,
+                 tmplt_file,
+                 match_file,
+                 gpu=True,
+                 gpu_postscript=False,
+                 inj_per_job=None):
         CondorDAGNode.__init__(self, job)
 
         self.add_file_opt("signal-file", inj_file)
@@ -58,10 +70,11 @@ class BanksimNode(CondorDAGNode):
 
         if gpu and gpu_postscript:
             self.set_retry(5)
-            mf = match_file+".$(Process)"
-            mf1 = match_file+".0"
-            mf2 = match_file+".1"
-            self.add_file_opt("match-file", match_file+".$(Process)",
+            mf = match_file + ".$(Process)"
+            mf1 = match_file + ".0"
+            mf2 = match_file + ".1"
+            self.add_file_opt("match-file",
+                              match_file + ".$(Process)",
                               file_is_output_file=True)
             self.job().__queue = 2
 
@@ -79,7 +92,8 @@ class BanksimNode(CondorDAGNode):
             self.add_post_script_arg(match_file)
             self.add_post_script_arg(str(inj_per_job))
         else:
-            self.add_file_opt("match-file", match_file,
+            self.add_file_opt("match-file",
+                              match_file,
                               file_is_output_file=True)
 
 
@@ -102,20 +116,28 @@ class FaithsimNode(CondorDAGNode):
 
 
 class InferenceJob(CondorDAGJob, CondorJob):
-    def __init__(self, log_dir, executable, cp, section, gpu=False,
-                 accounting_group=None, request_memory=None, request_cpus=10):
+    def __init__(self,
+                 log_dir,
+                 executable,
+                 cp,
+                 section,
+                 gpu=False,
+                 accounting_group=None,
+                 request_memory=None,
+                 request_cpus=10):
         CondorDAGJob.__init__(self, "vanilla", os.path.abspath(executable))
 
-        self.add_condor_cmd('initialdir', os.path.dirname(
-            os.path.abspath(executable)))
+        self.add_condor_cmd('initialdir',
+                            os.path.dirname(os.path.abspath(executable)))
 
         if gpu:
-            CondorJob.__init__(
-                self, "vanilla", os.path.basename(executable), 2)
+            CondorJob.__init__(self, "vanilla", os.path.basename(executable),
+                               2)
         # These are all python jobs so need to pull in the env
         self.add_condor_cmd('getenv', 'True')
         log_base = os.path.join(
-            log_dir, os.path.basename(executable) + '-$(cluster)-$(process)')
+            log_dir,
+            os.path.basename(executable) + '-$(cluster)-$(process)')
         self.set_stderr_file(log_base + '.err')
         self.set_stdout_file(log_base + '.out')
         self.set_sub_file(executable + '.sub')

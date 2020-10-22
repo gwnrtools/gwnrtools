@@ -22,7 +22,6 @@
 #
 from __future__ import print_function
 
-
 from numpy import *
 import numpy as np
 import copy as cp
@@ -37,14 +36,15 @@ try:
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
         pass
 except:
-    print("Could not import ligolw in %s, LIGO XML tables wont be read" % __file__)
+    print("Could not import ligolw in %s, LIGO XML tables wont be read" %
+          __file__)
 
 from pycbc.detector import *
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 
-
 ######################################################################
 #     POSTERIOR UTILITIES
+
 
 def get_param_idx(param_name, header):
     if param_name in header:
@@ -83,9 +83,14 @@ def get_param_from_names(line, names, header):
     return param
 
 
-def get_h_from_posterior_line(line, header, det_tag, approx='IMRPhenomPv2',
-                              delta_f=None, delta_t=None,
-                              filter_n=0, filter_N=0,
+def get_h_from_posterior_line(line,
+                              header,
+                              det_tag,
+                              approx='IMRPhenomPv2',
+                              delta_f=None,
+                              delta_t=None,
+                              filter_n=0,
+                              filter_N=0,
                               return_polarizations=False,
                               debug=True):
     """
@@ -160,9 +165,14 @@ Input:
     # Get PhenomP waveform in source frame
     if delta_f is not None:
         hp_1, hc_1 = get_fd_waveform(approximant=approx,
-                                     mass1=m1, mass2=m2,
-                                     spin1x=s1x, spin1y=s1y, spin1z=s1z,
-                                     spin2x=s2x, spin2y=s2y, spin2z=s2z,
+                                     mass1=m1,
+                                     mass2=m2,
+                                     spin1x=s1x,
+                                     spin1y=s1y,
+                                     spin1z=s1z,
+                                     spin2x=s2x,
+                                     spin2y=s2y,
+                                     spin2z=s2z,
                                      inclination=incl,
                                      coa_phase=phi_ref,
                                      distance=dist,
@@ -179,13 +189,19 @@ Input:
             flow = flow * 2
         try:
             hp_1, hc_1 = get_td_waveform(approximant=approx,
-                                         mass1=m1, mass2=m2,
-                                         spin1x=s1x, spin1y=s1y, spin1z=s1z,
-                                         spin2x=s2x, spin2y=s2y, spin2z=s2z,
+                                         mass1=m1,
+                                         mass2=m2,
+                                         spin1x=s1x,
+                                         spin1y=s1y,
+                                         spin1z=s1z,
+                                         spin2x=s2x,
+                                         spin2y=s2y,
+                                         spin2z=s2z,
                                          inclination=incl,
                                          coa_phase=phi_ref,
                                          distance=dist,
-                                         f_lower=flow, f_ref=flow,
+                                         f_lower=flow,
+                                         f_ref=flow,
                                          delta_t=delta_t)
             print("Length of raw %s waveform: %d" % (approx, len(hp_1)))
         except RuntimeError as re:
@@ -198,7 +214,8 @@ Input:
                           spin2x=%f, spin2y=%f, spin2z=%f,
                           inclination=%f, distance=%f,
                           f_lower=%f, delta_t=%f)
-                """ % (approx, m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, incl, dist, flow, delta_t))
+                """ % (approx, m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, incl,
+                       dist, flow, delta_t))
             return None
         # Convert to detector frame
         ht_1 = Fp * hp_1 + Fc * hc_1
@@ -229,15 +246,19 @@ SI Units required: phase shift (radians); time shift(seconds)
     line = cp.deepcopy(orig_line)
     line[get_param_idx("phase", header)] += phase_shift
     # Get SEOBNRv3 h(t) for posterior sample
-    ht_1 = get_hoft_from_posterior_line(line, header, det_tag,
+    ht_1 = get_hoft_from_posterior_line(line,
+                                        header,
+                                        det_tag,
                                         approx='SEOBNRv3',
-                                        delta_t=delta_t, filter_N=filter_N)
+                                        delta_t=delta_t,
+                                        filter_N=filter_N)
     ht_1.roll(int(time_shift * sample_rate))
     return ht_1
 
 
 def get_1dslice_posterior(data_iter, header, param='logl'):
-    return np.array([float(line[get_param_idx(param, header)]) for line in data_iter])
+    return np.array(
+        [float(line[get_param_idx(param, header)]) for line in data_iter])
 
 
 def write_posterior_samples_file(filename, header, data):

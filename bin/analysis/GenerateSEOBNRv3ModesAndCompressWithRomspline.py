@@ -25,8 +25,7 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 #########################################
 # {{{
 ### option parsing ###
-parser = OptionParser(
-    usage="""
+parser = OptionParser(usage="""
 ### INPUTS
 # 1 No of waves to generate
 # 2 Path of directory to write data to
@@ -37,73 +36,107 @@ parser = OptionParser(
 # 7 Sub-sampling factor "subsamp_n" (defaults to 4)
 # 8 Output type: (0) HDF5 or (1) ASCII
 """,
-    description="")
+                      description="")
 
-parser.add_option('-n', '--num', help='No of waves to generate',
-                  type=int, default=4)
-parser.add_option('-o', '--output-dir-prefix',
-                  help='Path of directory to write data to', type=str, default='.')
-parser.add_option('-s', '--seobnr-version',
-                  help='SEOBNRv3 version number, 3 = v3, 300 = v3_opt, 304 = v3_opt_rk4',
-                  type=int, default=3)
-parser.add_option('--aligned-spin', action="store_true",
-                  help='If specified, spin1x=spin1y=spin2x=spin2y=0', default=False)
+parser.add_option('-n',
+                  '--num',
+                  help='No of waves to generate',
+                  type=int,
+                  default=4)
+parser.add_option('-o',
+                  '--output-dir-prefix',
+                  help='Path of directory to write data to',
+                  type=str,
+                  default='.')
+parser.add_option(
+    '-s',
+    '--seobnr-version',
+    help='SEOBNRv3 version number, 3 = v3, 300 = v3_opt, 304 = v3_opt_rk4',
+    type=int,
+    default=3)
+parser.add_option('--aligned-spin',
+                  action="store_true",
+                  help='If specified, spin1x=spin1y=spin2x=spin2y=0',
+                  default=False)
 
 parser.add_option('--q-min', help='Min. mass ratio', type=float, default=1.0)
 parser.add_option('--q-max', help='Max. mass ratio', type=float, default=10.0)
-parser.add_option(
-    '--spin1z-min',
-    help='Min. spin1z',
-    type=float,
-    default=-0.99)
+parser.add_option('--spin1z-min',
+                  help='Min. spin1z',
+                  type=float,
+                  default=-0.99)
 parser.add_option('--spin1z-max', help='Max. spin1z', type=float, default=0.99)
-parser.add_option(
-    '--spin2z-min',
-    help='Min. spin2z',
-    type=float,
-    default=-0.99)
+parser.add_option('--spin2z-min',
+                  help='Min. spin2z',
+                  type=float,
+                  default=-0.99)
 parser.add_option('--spin2z-max', help='Max. spin2z', type=float, default=0.99)
-parser.add_option('--spin-mag-min', help='Min. spin magnitude',
-                  type=float, default=0.)
-parser.add_option('--spin-mag-max', help='Max. spin magnitude',
-                  type=float, default=0.99)
+parser.add_option('--spin-mag-min',
+                  help='Min. spin magnitude',
+                  type=float,
+                  default=0.)
+parser.add_option('--spin-mag-max',
+                  help='Max. spin magnitude',
+                  type=float,
+                  default=0.99)
 
-parser.add_option('--phi-ref', help='Ref phase [rads]',
-                  type=float, default=0)
-parser.add_option('--distance', help='Distance to source [Mpc]',
-                  type=float, default=1.0e6)
+parser.add_option('--phi-ref', help='Ref phase [rads]', type=float, default=0)
+parser.add_option('--distance',
+                  help='Distance to source [Mpc]',
+                  type=float,
+                  default=1.0e6)
 
-parser.add_option('--sample-rate', help='Sample Rate [Hz]',
-                  type=float, default=4096.0)
-parser.add_option('--f-lower', help='Low frequency cutoff [Hz]',
-                  type=float, default=14.0)
+parser.add_option('--sample-rate',
+                  help='Sample Rate [Hz]',
+                  type=float,
+                  default=4096.0)
+parser.add_option('--f-lower',
+                  help='Low frequency cutoff [Hz]',
+                  type=float,
+                  default=14.0)
 
-parser.add_option('-t', '--tolerance',
+parser.add_option('-t',
+                  '--tolerance',
                   help='Tolerance of spline (defaults sensibly)',
-                  type=float, default=1.e-4)
-parser.add_option('-d', '--degree',
+                  type=float,
+                  default=1.e-4)
+parser.add_option('-d',
+                  '--degree',
                   help='Tolerance of spline (-1 defaults sensibly)',
-                  type=int, default=5)
+                  type=int,
+                  default=5)
 
-parser.add_option('-c', '--compression-mode',
+parser.add_option('-c',
+                  '--compression-mode',
                   help="""0/1/2 - 0 for compressing amplitude/phase,
                     1 for compressing modes,
                     2 for raw""",
-                  type=int, default=2)
-parser.add_option("--write-amp-phase", action="store_true",
-                  help="Write amplitude and phase (raw)", default=False)
+                  type=int,
+                  default=2)
+parser.add_option("--write-amp-phase",
+                  action="store_true",
+                  help="Write amplitude and phase (raw)",
+                  default=False)
 
-parser.add_option('-f', '--subsamp-factor',
+parser.add_option('-f',
+                  '--subsamp-factor',
                   help='Sub-sampling factor "subsamp_n" (defaults to 4)',
-                  type=int, default=1)
+                  type=int,
+                  default=1)
 parser.add_option('--output-type',
-                  help='Output type: (0) HDF5 or (1) ASCII', type=int, default=0)
+                  help='Output type: (0) HDF5 or (1) ASCII',
+                  type=int,
+                  default=0)
 
 parser.add_option('--num-write-verbose',
-                  help='No of waves to generate before prompting the user', type=int,
+                  help='No of waves to generate before prompting the user',
+                  type=int,
                   default=1)
-parser.add_option("-V", "--verbose", action="store_true",
-                  help="print extra debugging information", default=False)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv = parser.parse_args()
 print("Restricting to aligned spins..: ", options.aligned_spin)
@@ -162,11 +195,18 @@ num_write_verbose = options.num_write_verbose
 #########################################
 
 
-def compress_modes_to_splines(hLM, total_mass,
-                              to_amp_phase=True, to_modes=False,
-                              tol_one=1e-5, tol_two=1e-5,
-                              func_one=np.array, subsamp_fac_one_low=4, subsamp_fac_one_high=2,
-                              func_two=np.log, subsamp_fac_two_low=4, subsamp_fac_two_high=1,
+def compress_modes_to_splines(hLM,
+                              total_mass,
+                              to_amp_phase=True,
+                              to_modes=False,
+                              tol_one=1e-5,
+                              tol_two=1e-5,
+                              func_one=np.array,
+                              subsamp_fac_one_low=4,
+                              subsamp_fac_one_high=2,
+                              func_two=np.log,
+                              subsamp_fac_two_low=4,
+                              subsamp_fac_two_high=1,
                               verbose=False):
     """
 Compresses modes provided in hLM according to total mass,
@@ -178,13 +218,10 @@ decrease run time drastically.
 
 [DEFAULTS are sensible for raw modes.]
     """
-# {{{
+    # {{{
     #################################
-    t_arr = TimeSeries(
-        hLM.tdata.data *
-        total_mass *
-        lal.MTSUN_SI,
-        delta_t=hLM.mode.deltaT)
+    t_arr = TimeSeries(hLM.tdata.data * total_mass * lal.MTSUN_SI,
+                       delta_t=hLM.mode.deltaT)
     h_real = TimeSeries(hLM.mode.data.data.real, delta_t=hLM.mode.deltaT)
     h_imag = TimeSeries(hLM.mode.data.data.imag, delta_t=hLM.mode.deltaT)
     ampLM = amplitude_from_polarizations(h_real, h_imag)
@@ -199,10 +236,12 @@ decrease run time drastically.
         phsLM = phase_from_polarizations(h_real, h_imag) + np.pi
         phsLM_min = phsLM.min()
         #################
-        t_amp_subsampled = np.append(t_arr.data[0:idx - 500:subsamp_fac_one_low],
-                                     t_arr.data[idx - 500:-1:subsamp_fac_one_high])
-        amp_subsampled = np.append(ampLM.data[0:idx - 500:subsamp_fac_one_low],
-                                   ampLM.data[idx - 500:-1:subsamp_fac_one_high])
+        t_amp_subsampled = np.append(
+            t_arr.data[0:idx - 500:subsamp_fac_one_low],
+            t_arr.data[idx - 500:-1:subsamp_fac_one_high])
+        amp_subsampled = np.append(
+            ampLM.data[0:idx - 500:subsamp_fac_one_low],
+            ampLM.data[idx - 500:-1:subsamp_fac_one_high])
         funcamp = func_one(amp_subsampled)
         #
         if verbose:
@@ -213,10 +252,12 @@ decrease run time drastically.
         funcamp_subsampled_spline = romspline.ReducedOrderSpline(
             t_amp_subsampled, funcamp, tol=tol_one)
         #################
-        t_phs_subsampled = np.append(t_arr.data[0:idx - 500:subsamp_fac_two_low],
-                                     t_arr.data[idx - 500:-1:subsamp_fac_two_high])
-        phs_subsampled = np.append(phsLM.data[0:idx - 500:subsamp_fac_two_low],
-                                   phsLM.data[idx - 500:-1:subsamp_fac_two_high])
+        t_phs_subsampled = np.append(
+            t_arr.data[0:idx - 500:subsamp_fac_two_low],
+            t_arr.data[idx - 500:-1:subsamp_fac_two_high])
+        phs_subsampled = np.append(
+            phsLM.data[0:idx - 500:subsamp_fac_two_low],
+            phsLM.data[idx - 500:-1:subsamp_fac_two_high])
         funcphs = func_two(phs_subsampled - phsLM_min)
         #
         if verbose:
@@ -238,10 +279,12 @@ decrease run time drastically.
         #################################
         if verbose:
             __t0 = time.time()
-        t_h_real_subsampled = np.append(t_arr.data[0:idx - 500:subsamp_fac_one_low],
-                                        t_arr.data[idx - 500:-1:subsamp_fac_one_high])
-        h_real_subsampled = np.append(h_real.data[0:idx - 500:subsamp_fac_one_low],
-                                      h_real.data[idx - 500:-1:subsamp_fac_one_high])
+        t_h_real_subsampled = np.append(
+            t_arr.data[0:idx - 500:subsamp_fac_one_low],
+            t_arr.data[idx - 500:-1:subsamp_fac_one_high])
+        h_real_subsampled = np.append(
+            h_real.data[0:idx - 500:subsamp_fac_one_low],
+            h_real.data[idx - 500:-1:subsamp_fac_one_high])
         if verbose:
             print(" took %.2f seconds.." % (time.time() - __t0))
             __t0 = time.time()
@@ -249,10 +292,12 @@ decrease run time drastically.
         func_hreal_subsampled_spline = romspline.ReducedOrderSpline(
             t_h_real_subsampled, h_real_subsampled, tol=tol_one)
         #
-        t_h_imag_subsampled = np.append(t_arr.data[0:idx - 500:subsamp_fac_two_low],
-                                        t_arr.data[idx - 500:-1:subsamp_fac_two_high])
-        h_imag_subsampled = np.append(h_imag.data[0:idx - 500:subsamp_fac_two_low],
-                                      h_imag.data[idx - 500:-1:subsamp_fac_two_high])
+        t_h_imag_subsampled = np.append(
+            t_arr.data[0:idx - 500:subsamp_fac_two_low],
+            t_arr.data[idx - 500:-1:subsamp_fac_two_high])
+        h_imag_subsampled = np.append(
+            h_imag.data[0:idx - 500:subsamp_fac_two_low],
+            h_imag.data[idx - 500:-1:subsamp_fac_two_high])
         if verbose:
             print(" took %.2f seconds.." % (time.time() - __t0))
             __t0 = time.time()
@@ -277,8 +322,12 @@ decrease run time drastically.
         return h_real, h_imag, t_arr.min(), t_arr.max()
         #################################
     else:
-        IOError("CANNOT compress BOTH of amp/phase OR modes (CAN WRITE RAW though)")
+        IOError(
+            "CANNOT compress BOTH of amp/phase OR modes (CAN WRITE RAW though)"
+        )
     #################################
+
+
 # }}}
 
 
@@ -286,7 +335,7 @@ def write_compressed_modes_to_HDF5(waves):
     """
   Write mode time-series to disk as ASCII. Very specific inputs.
     """
-# {{{
+    # {{{
     for file_name, mode_array, splines, tminmax in waves.values():
         # Write data to HDF5 file by passing a group descriptor
         fp = h5py.File(file_name + '.h5', 'w')
@@ -300,6 +349,8 @@ def write_compressed_modes_to_HDF5(waves):
         fp.create_dataset("TimeRangeInSeconds", data=tminmax)
         fp.close()
     return
+
+
 # }}}
 
 
@@ -307,7 +358,7 @@ def write_raw_modes_to_HDF5(waves, subsamp_n=1, modes=True):
     """
   Write mode time-series to disk as ASCII. Very specific inputs.
     """
-# {{{
+    # {{{
     for file_name, mode_array, splines, tminmax in waves.values():
         # Write data to HDF5 file by passing a group descriptor
         fp = h5py.File(file_name + '.h5', 'w')
@@ -323,15 +374,17 @@ def write_raw_modes_to_HDF5(waves, subsamp_n=1, modes=True):
                 # If compression was not desired, check if raw amp/phase are to
                 # be written instead of the raw modes
                 ampLM = amplitude_from_polarizations(spline_real, spline_imag)
-                phsLM = phase_from_polarizations(
-                    spline_real, spline_imag) + np.pi
+                phsLM = phase_from_polarizations(spline_real,
+                                                 spline_imag) + np.pi
                 spline_real, spline_imag = ampLM, phsLM
                 header_string += "\n[%d] Amp[h%d%d]" % (2 * jdx + 2, el, em)
                 header_string += "\n[%d] Phase[h%d%d]" % (2 * jdx + 3, el, em)
             #
             if jdx == 0:
-                data_array = np.array(list(zip(spline_real.sample_times.data,
-                                          spline_real.data, spline_imag.data)))
+                data_array = np.array(
+                    list(
+                        zip(spline_real.sample_times.data, spline_real.data,
+                            spline_imag.data)))
             elif jdx > 0:
                 tmp_data_array = np.array(
                     list(zip(spline_real.data, spline_imag.data)))
@@ -343,6 +396,8 @@ def write_raw_modes_to_HDF5(waves, subsamp_n=1, modes=True):
         fp.create_dataset("ModesKey", data=header_string)
         fp.close()
     return
+
+
 # }}}
 
 
@@ -350,7 +405,7 @@ def write_raw_modes_to_ASCII(waves, subsamp_n=1, modes=True):
     """
   Write mode time-series to disk as ASCII. Very specific inputs.
     """
-# {{{
+    # {{{
     for file_name, mode_array, splines, tminmax in waves.values():
         # Header
         header_string = "[1] Time"
@@ -364,15 +419,17 @@ def write_raw_modes_to_ASCII(waves, subsamp_n=1, modes=True):
                 # If compression was not desired, check if raw amp/phase are to
                 # be written instead of the raw modes
                 ampLM = amplitude_from_polarizations(spline_real, spline_imag)
-                phsLM = phase_from_polarizations(
-                    spline_real, spline_imag) + np.pi
+                phsLM = phase_from_polarizations(spline_real,
+                                                 spline_imag) + np.pi
                 spline_real, spline_imag = ampLM, phsLM
                 header_string += "\n[%d] Amp[h%d%d]" % (2 * jdx + 2, el, em)
                 header_string += "\n[%d] Phase[h%d%d]" % (2 * jdx + 3, el, em)
             #
             if jdx == 0:
-                data_array = np.array(list(zip(spline_real.sample_times.data,
-                                          spline_real.data, spline_imag.data)))
+                data_array = np.array(
+                    list(
+                        zip(spline_real.sample_times.data, spline_real.data,
+                            spline_imag.data)))
             elif jdx > 0:
                 tmp_data_array = np.array(
                     list(zip(spline_real.data, spline_imag.data)))
@@ -388,17 +445,17 @@ def write_raw_modes_to_ASCII(waves, subsamp_n=1, modes=True):
             file_format += '%.16e\t'
         # Write
         if not os.path.exists(file_name):
-            np.savetxt(
-                file_name + '.txt.gz',
-                data_array,
-                fmt=file_format,
-                header=header_string)
+            np.savetxt(file_name + '.txt.gz',
+                       data_array,
+                       fmt=file_format,
+                       header=header_string)
         else:
             print("Warning: FILE NOT WRITTEN FOR ", file_name, header_string)
             continue
     return
-# }}}
 
+
+# }}}
 
 #########################################
 ############# MAIN    # #################
@@ -437,16 +494,20 @@ for idx in range(num_waves):
     if idx != 0 and (idx % num_write == 0):
         if compress_none:
             if 'ASCII' in output_mode:
-                write_raw_modes_to_ASCII(
-                    waves, subsamp_n=subsamp_n, modes=write_amp_phase)
+                write_raw_modes_to_ASCII(waves,
+                                         subsamp_n=subsamp_n,
+                                         modes=write_amp_phase)
             elif 'HDF' in output_mode:
-                write_raw_modes_to_HDF5(
-                    waves, subsamp_n=subsamp_n, modes=write_amp_phase)
+                write_raw_modes_to_HDF5(waves,
+                                        subsamp_n=subsamp_n,
+                                        modes=write_amp_phase)
             else:
-                write_raw_modes_to_ASCII(
-                    waves, subsamp_n=subsamp_n, modes=write_amp_phase)
-                write_raw_modes_to_HDF5(
-                    waves, subsamp_n=subsamp_n, modes=write_amp_phase)
+                write_raw_modes_to_ASCII(waves,
+                                         subsamp_n=subsamp_n,
+                                         modes=write_amp_phase)
+                write_raw_modes_to_HDF5(waves,
+                                        subsamp_n=subsamp_n,
+                                        modes=write_amp_phase)
         else:
             write_compressed_modes_to_HDF5(waves)
         del waves
@@ -464,7 +525,7 @@ for idx in range(num_waves):
     #
     # Sample spin A
     _t1, _t2, _t3 = uniform(-1, 1), uniform(-1, 1), uniform(-1, 1)
-    _abst = (_t1 ** 2 + _t2 ** 2 + _t3 ** 2) ** 0.5
+    _abst = (_t1**2 + _t2**2 + _t3**2)**0.5
     _s1m = uniform(spin_mag_min, spin_mag_max)
     s1x = _s1m * (_t1 / _abst)
     s1y = _s1m * (_t2 / _abst)
@@ -474,7 +535,7 @@ for idx in range(num_waves):
         s1x = s1y = 0
     # Sample spin B
     _t1, _t2, _t3 = uniform(-1, 1), uniform(-1, 1), uniform(-1, 1)
-    _abst = (_t1 ** 2 + _t2 ** 2 + _t3 ** 2) ** 0.5
+    _abst = (_t1**2 + _t2**2 + _t3**2)**0.5
     _s2m = uniform(spin_mag_min, spin_mag_max)
     s2x = _s2m * (_t1 / _abst)
     s2y = _s2m * (_t2 / _abst)
@@ -525,12 +586,14 @@ for idx in range(num_waves):
             print("\tCompressing (%d,%d) mode.." % (el, em))
         mode_array.append([el, em])
         spline_real, spline_imag, t0, t1 = compress_modes_to_splines(
-            hLM, m1 + m2,
+            hLM,
+            m1 + m2,
             to_amp_phase=to_amp_phase,
             to_modes=to_modes,
             func_one=np.array,
             func_two=np.array,
-            tol_one=sptol, tol_two=sptol,
+            tol_one=sptol,
+            tol_two=sptol,
             subsamp_fac_one_low=subsamp_n,
             subsamp_fac_two_low=subsamp_n,
             subsamp_fac_one_high=1,
@@ -549,24 +612,20 @@ for idx in range(num_waves):
 # WRITE THE LAST BATCH
 if compress_none:
     if 'ASCII' in output_mode:
-        write_raw_modes_to_ASCII(
-            waves,
-            subsamp_n=subsamp_n,
-            modes=write_amp_phase)
+        write_raw_modes_to_ASCII(waves,
+                                 subsamp_n=subsamp_n,
+                                 modes=write_amp_phase)
     elif 'HDF' in output_mode:
-        write_raw_modes_to_HDF5(
-            waves,
-            subsamp_n=subsamp_n,
-            modes=write_amp_phase)
+        write_raw_modes_to_HDF5(waves,
+                                subsamp_n=subsamp_n,
+                                modes=write_amp_phase)
     else:
-        write_raw_modes_to_HDF5(
-            waves,
-            subsamp_n=subsamp_n,
-            modes=write_amp_phase)
-        write_raw_modes_to_ASCII(
-            waves,
-            subsamp_n=subsamp_n,
-            modes=write_amp_phase)
+        write_raw_modes_to_HDF5(waves,
+                                subsamp_n=subsamp_n,
+                                modes=write_amp_phase)
+        write_raw_modes_to_ASCII(waves,
+                                 subsamp_n=subsamp_n,
+                                 modes=write_amp_phase)
 else:
     write_compressed_modes_to_HDF5(waves)
 

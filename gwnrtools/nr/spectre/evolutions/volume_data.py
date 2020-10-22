@@ -31,18 +31,25 @@ except ImportError:
 
 
 class HandleSpectreVolumeDatum(object):
-    def __init__(self, volume_data_file='', name='', dt=0.5,
-                 read_fields=['Psi'], xdmf_converter=None, verbose=True):
+    def __init__(self,
+                 volume_data_file='',
+                 name='',
+                 dt=0.5,
+                 read_fields=['Psi'],
+                 xdmf_converter=None,
+                 verbose=True):
         assert os.path.exists(volume_data_file),\
             "Cannot find data file: {0:s}".format(volume_data_file)
         self.verbose = verbose
         self.name = name
         self.volume_data_file = volume_data_file
         self.xdmf_converter = xdmf_converter
-        self.plotting_funcs = {'linlin': 'plot',
-                               'loglin': 'semilogx',
-                               'loglog': 'loglog',
-                               'linlog': 'semilogy'}
+        self.plotting_funcs = {
+            'linlin': 'plot',
+            'loglin': 'semilogx',
+            'loglog': 'loglog',
+            'linlog': 'semilogy'
+        }
         self.linestyles = ['-', '--', '--', '-.', ':']
         self.linecolors = ['r', 'g', 'b', 'k', 'm', 'y']
 
@@ -63,7 +70,7 @@ class HandleSpectreVolumeDatum(object):
         fp = h5py.File(self.volume_data_file, 'r')
         self.data = fp['element_data.vol']
         logging.info(".. read in a dataset with shape: {}".format(
-                     np.shape(self.data)))
+            np.shape(self.data)))
         return self.data
 
     def available_fields(self):
@@ -82,7 +89,7 @@ class HandleSpectreVolumeDatum(object):
         return np.sort(times), field_data
 
     def get_dt(self, times):
-        dt_vals = [times[i+1] - times[i] for i in range(len(times) - 1)]
+        dt_vals = [times[i + 1] - times[i] for i in range(len(times) - 1)]
         return dt_vals
 
     def downsample_fields_data(self, times, fields_data, dt=0.01):
@@ -128,13 +135,16 @@ result : list, set of arrays of all spatial fields as a function of
             fname = field_names[0]
             return np.array([f_fields[fname][t] for t in times])
 
-        return [np.array([f_fields[fname][t] for t in times])
-                for fname in field_names]
+        return [
+            np.array([f_fields[fname][t] for t in times])
+            for fname in field_names
+        ]
 
     def coords_from_spectre_data(self,
                                  dim_to_coord_map=[
                                      'InertialCoordinates_x',
-                                     'InertialCoordinates_y']):
+                                     'InertialCoordinates_y'
+                                 ]):
         '''
 Takes in a set of fields as a dictionary, as well as a list of times,
 and separates out spatial coordinates as a function of time.
@@ -162,16 +172,23 @@ result : list, set of arrays of all spatial coords as a function of
             "Xdmf converter utility {} not found!".format(exe)
 
         os.chdir(os.path.dirname(self.volume_data_file))
-        o = subprocess.getoutput('python3 {} --file-prefix {} --output {}'.format(
-            exe, os.path.split(self.volume_data_file)[-1].strip('.h5'),
-            os.path.split(self.volume_data_file)[-1].strip('.h5')))
+        o = subprocess.getoutput(
+            'python3 {} --file-prefix {} --output {}'.format(
+                exe,
+                os.path.split(self.volume_data_file)[-1].strip('.h5'),
+                os.path.split(self.volume_data_file)[-1].strip('.h5')))
 
         if self.verbose:
             logging.info(o)
 
-    def make_movie(self, field_name,
-                   dt=None, cmin=-1., cmax=1., ncolors=10,
-                   name="movie.mp4", **kwargs):
+    def make_movie(self,
+                   field_name,
+                   dt=None,
+                   cmin=-1.,
+                   cmax=1.,
+                   ncolors=10,
+                   name="movie.mp4",
+                   **kwargs):
         '''
 Make a movie
 
@@ -221,11 +238,19 @@ result : tuple, (camera object, animation object) that can be used to
             x, y, z = x_of_t[idx, :], y_of_t[idx, :], z_of_t[idx, :]
 
             # Draw a frame: FIXME: Use `contourf`
-            sc = ax.scatter(x, y, c=z,
-                            s=50, alpha=0.97, marker="s",
-                            cmap=cmap, norm=norm, edgecolors='none',
-                            vmin=cmin, vmax=cmax)
-            tx = ax.text(min(x), max(y) + 0.05 * (max(y) - min(y)),
+            sc = ax.scatter(x,
+                            y,
+                            c=z,
+                            s=50,
+                            alpha=0.97,
+                            marker="s",
+                            cmap=cmap,
+                            norm=norm,
+                            edgecolors='none',
+                            vmin=cmin,
+                            vmax=cmax)
+            tx = ax.text(min(x),
+                         max(y) + 0.05 * (max(y) - min(y)),
                          'Time: {0:06.03f}'.format(t))
 
             if idx >= 0:

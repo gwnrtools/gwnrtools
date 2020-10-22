@@ -27,7 +27,6 @@ import logging
 
 logging.getLogger().setLevel(logging.INFO)
 
-
 uniform_bound = np.random.uniform
 
 
@@ -39,9 +38,8 @@ def uniform_mass(N, comp_min, comp_max):
     return uniform_bound(comp_min, comp_max, N)
 
 
-def uniform_in_totalmass_massratio_masses(N,
-                                          mtotal_min, mtotal_max,
-                                          q_min, q_max):
+def uniform_in_totalmass_massratio_masses(N, mtotal_min, mtotal_max, q_min,
+                                          q_max):
     from pycbc.pnutils import mtotal_eta_to_mass1_mass2
     from gwnrtools.waveform.parameters import q_to_eta
 
@@ -67,7 +65,7 @@ def uniform_in_cos_angle(N, costheta_min=-1, costheta_max=1, offset=0.):
     return np.arccos(np.random.uniform(costheta_min, costheta_max, N)) + offset
 
 
-def uniform_in_angle(N, theta_min=0., theta_max=2.*np.pi, offset=0.):
+def uniform_in_angle(N, theta_min=0., theta_max=2. * np.pi, offset=0.):
     return uniform_bound(theta_min, theta_max, N) + offset
 
 
@@ -78,7 +76,7 @@ def cube_to_uniform_on_S2(u, v):
     """
     if np.any(u < 0) or np.any(u > 1) or np.any(v < 0) or np.any(v > 1):
         raise IOError("Both inputs should be in [0,1]")
-    return [2.*np.pi*u, np.arccos(2.*v - 1.)]
+    return [2. * np.pi * u, np.arccos(2. * v - 1.)]
 
 
 def uniform_on_S2(N):
@@ -87,7 +85,7 @@ def uniform_on_S2(N):
 
 
 def uniform_in_volume_distance(N, d_min, d_max):
-    return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1./3.)
+    return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1. / 3.)
 
 
 def uniform_in_choices(N, choices):
@@ -96,6 +94,8 @@ def uniform_in_choices(N, choices):
 
 def idempotence(N, x):
     return np.repeat(float(x), np.prod(N)).reshape(N)
+
+
 ####
 # **`OneDRandom`**:
 # Metaclass holding a dictionary of methods to draw random numbers
@@ -111,7 +111,6 @@ sampling_vars : pandas.DataFrame. It should have a column:
         - 'dist' that provides a distribution for it.
         - 'range' that provides the allowed numerical range for it.
     '''
-
     def __init__(self, sampling_vars=None):
         self.draw = {}
         self.draw['uniform'] = np.random.uniform
@@ -136,16 +135,18 @@ sampling_vars : pandas.DataFrame. It should have a column:
 
         if dist is not None:
             if dist not in self.available_distributions():
-                logging.info("Distribution {} not supported. See `available_distributions`.".format(
-                    dist))
+                logging.info(
+                    "Distribution {} not supported. See `available_distributions`."
+                    .format(dist))
                 dist = self.params[name].dist
         else:
             dist = self.params[name].dist
 
         # Final check on requested distribution
         if dist not in self.available_distributions():
-            logging.info("Distribution {} not supported. See `available_distributions`.".format(
-                dist))
+            logging.info(
+                "Distribution {} not supported. See `available_distributions`."
+                .format(dist))
             return None
 
         sampling_func = self.draw[dist]
@@ -168,5 +169,5 @@ sampling_vars : pandas.DataFrame. It should have a column:
         if dist == 'choices':
             return sampling_func(size, sampling_lims)
 
-        raise IOError(
-            "Failed to generate sample for {}, dist = {}.".format(name, dist))
+        raise IOError("Failed to generate sample for {}, dist = {}.".format(
+            name, dist))

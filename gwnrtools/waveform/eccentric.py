@@ -59,8 +59,9 @@ def get_q_m_e_from_filename(filename):
         print("filename received: %s" % filename)
         filename = filename.strip('bad_14Hz_').strip('good_14Hz_')
         print("filename trimmed: %s" % filename)
-        m1str, m2str, e0str = [s.split('-')[-1]
-                               for s in filename.split('/')[-1].split('_')]
+        m1str, m2str, e0str = [
+            s.split('-')[-1] for s in filename.split('/')[-1].split('_')
+        ]
         m1 = float(m1str)
         m2 = float(m2str)
         e0 = float(e0str)
@@ -74,10 +75,23 @@ def get_q_m_e_from_filename(filename):
 ########################################
 # USER-FACING FUNCTIONS
 
+
 def generate_eccentric_waveforms(
-        m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins,
-        e_min, e_max, e_nbins, f_lower, delta_t,
-        mean_anomaly=0, inclination=0, init_phase=0, tolerance=1e-12,
+        m1_min,
+        m1_max,
+        m1_nbins,
+        m2_min,
+        m2_max,
+        m2_nbins,
+        e_min,
+        e_max,
+        e_nbins,
+        f_lower,
+        delta_t,
+        mean_anomaly=0,
+        inclination=0,
+        init_phase=0,
+        tolerance=1e-12,
         EXE='export LD_LIBRARY_PATH=/home/prayush/src/EccIMR/code/MergerRingdownModel/C_implementation/bin/:${LD_LIBRARY_PATH} && /home/prayush/src/EccIMR/code/map_link_codes/bbhall',
         output_directory=None,
         verbose=False):
@@ -109,9 +123,9 @@ written to disk.
         sys.stdout.flush()
     ##
     # Call executable
-    cmd_output, cmd_error = subprocess.Popen(cmd_string, shell=True,
-                                             stdout=subprocess.PIPE,
-                                             stderr=subprocess.PIPE).communicate()
+    cmd_output, cmd_error = subprocess.Popen(
+        cmd_string, shell=True, stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE).communicate()
     if verbose:
         print(cmd_output, file=sys.stdout)
         sys.stdout.flush()
@@ -122,10 +136,22 @@ written to disk.
 
 
 def get_eccentric_waveform_and_dynamics(
-        m1_min, m1_max, m1_nbins, m2_min, m2_max, m2_nbins,
-        e_min, e_max, e_nbins, f_lower, delta_t,
+        m1_min,
+        m1_max,
+        m1_nbins,
+        m2_min,
+        m2_max,
+        m2_nbins,
+        e_min,
+        e_max,
+        e_nbins,
+        f_lower,
+        delta_t,
         EXE='export LD_LIBRARY_PATH=/home/prayush/src/EccIMR/code/MergerRingdownModel/C_implementation/bin/:${LD_LIBRARY_PATH} && /home/prayush/src/EccIMR/code/map_link_codes/bbhall -d',
-        mean_anomaly=0, inclination=0, init_phase=0, tolerance=1e-12,
+        mean_anomaly=0,
+        inclination=0,
+        init_phase=0,
+        tolerance=1e-12,
         verbose=False):
     """
 This function computes an eccentric inspiral, and returns both the coordinate
@@ -134,7 +160,8 @@ trajectory information as well as the GW polarizations.
     # {{{
     if m1_nbins != 1 or m2_nbins != 1 or e_nbins != 1:
         raise IOError(
-            "Function does not support generating multiple waveforms at present. Call `generate_eccentric_waveforms` instead.")
+            "Function does not support generating multiple waveforms at present. Call `generate_eccentric_waveforms` instead."
+        )
 
     from gwnrtools.nr.spec import ParseHeaderForSpECTabularOutputASCII
 
@@ -153,14 +180,14 @@ trajectory information as well as the GW polarizations.
         print(cmd_output, file=sys.stdout)
         sys.stdout.flush()
     ##
-    dynamics_filename = sorted(
-        glob.glob(output_file_tag + "*" + "Dynamics*"))[-1]
+    dynamics_filename = sorted(glob.glob(output_file_tag + "*" +
+                                         "Dynamics*"))[-1]
     if verbose:
         print("Reading dynamics from: %s" % dynamics_filename, file=sys.stdout)
         sys.stdout.flush()
     ##
-    dynamics_headers, _ = ParseHeaderForSpECTabularOutputASCII(dynamics_filename,
-                                                               separate_quantities_from_subdomains=False)
+    dynamics_headers, _ = ParseHeaderForSpECTabularOutputASCII(
+        dynamics_filename, separate_quantities_from_subdomains=False)
     dynamics_data = np.loadtxt(dynamics_filename)
     dynamics = {}
     for idx in dynamics_headers:
@@ -177,7 +204,8 @@ trajectory information as well as the GW polarizations.
     wave_data = np.loadtxt(wave_filename)
     if verbose:
         print("Reading polarization timeseries from OBJ of shape: ",
-              np.shape(wave_data), file=sys.stdout)
+              np.shape(wave_data),
+              file=sys.stdout)
     dynamics['h_Time'] = wave_data[:, 0]
     dynamics['hp'] = wave_data[:, 1]
     dynamics['hc'] = wave_data[:, 2]
@@ -188,7 +216,9 @@ trajectory information as well as the GW polarizations.
     # }}}
 
 
-def optimize_eccentricity(x1, y1, q,
+def optimize_eccentricity(x1,
+                          y1,
+                          q,
                           use_var="r",
                           EXE=None,
                           x_low_lim=None,
@@ -204,7 +234,8 @@ def optimize_eccentricity(x1, y1, q,
                           method='Nelder-Mead',
                           objective_scaling_fac=None,
                           num_retries=1,
-                          verbose=True, debug=False):
+                          verbose=True,
+                          debug=False):
     """
 Given a trajectory, this function computes the eccentricity and initial
 mean anomaly for a binary (at f_low Hz) that optimizes the agreement
@@ -250,13 +281,34 @@ over {x_offset, e0, anom0). This is done in two steps:-
             try:
                 if EXE is None:
                     retval = get_eccentric_waveform_and_dynamics(
-                        20 * q, 20 * q, 1, 20, 20, 1, e0, e0, 1,
-                        f_lower, 1./sample_rate, mean_anomaly=anom0,
+                        20 * q,
+                        20 * q,
+                        1,
+                        20,
+                        20,
+                        1,
+                        e0,
+                        e0,
+                        1,
+                        f_lower,
+                        1. / sample_rate,
+                        mean_anomaly=anom0,
                         verbose=debug)
                 else:
                     retval = get_eccentric_waveform_and_dynamics(
-                        20 * q, 20 * q, 1, 20, 20, 1, e0, e0, 1,
-                        f_lower, 1./sample_rate, mean_anomaly=anom0, EXE=EXE,
+                        20 * q,
+                        20 * q,
+                        1,
+                        20,
+                        20,
+                        1,
+                        e0,
+                        e0,
+                        1,
+                        f_lower,
+                        1. / sample_rate,
+                        mean_anomaly=anom0,
+                        EXE=EXE,
                         verbose=debug)
                 objective_function_eccentricity.waves[lbl] = retval
             except:
@@ -267,16 +319,20 @@ over {x_offset, e0, anom0). This is done in two steps:-
             used_var = retval['phidot']
         elif use_var == "r":
             used_var = retval['r']
-        shift, res = align_curves(x1, y1, retval['Time'], used_var,
+        shift, res = align_curves(x1,
+                                  y1,
+                                  retval['Time'],
+                                  used_var,
                                   x_low_lim=x_low_lim,
                                   x_high_lim=x_high_lim,
                                   offset_low_lim=-400,
                                   offset_high_lim=-100)
         if objective_function_eccentricity.counter % 1 == 0:
             print("trying out: e0 = %.12f, anom0 = %.12f, objective = %.12f" %
-                  (e0, anom0, objective_scaling_fac*res.fun))
+                  (e0, anom0, objective_scaling_fac * res.fun))
         objective_function_eccentricity.counter += 1
         return res.fun * objective_scaling_fac
+
     objective_function_eccentricity.counter = 0
     objective_function_eccentricity.waves = {}
     ###
@@ -286,13 +342,13 @@ over {x_offset, e0, anom0). This is done in two steps:-
     if debug:
         print("Testing objective function")
         print("Offset 0: ", objective_function_eccentricity([0, 0], *opt_args))
-        print("Offset 550: ", objective_function_eccentricity(
-            [np.pi, 0.01], *opt_args))
+        print("Offset 550: ",
+              objective_function_eccentricity([np.pi, 0.01], *opt_args))
 
     for idx in range(num_retries):
         if verbose:
-            print("\nTry %d to compute optimal eccentricity" %
-                  idx, file=sys.stdout)
+            print("\nTry %d to compute optimal eccentricity" % idx,
+                  file=sys.stdout)
             sys.stdout.flush()
         ##
         bnds = ((anom_low, anom_high), (ecc_low, ecc_high))
@@ -305,7 +361,8 @@ over {x_offset, e0, anom0). This is done in two steps:-
     ##
     if verbose:
         print("optimization took %d objective func evals" %
-              objective_function_eccentricity.counter, file=sys.stdout)
+              objective_function_eccentricity.counter,
+              file=sys.stdout)
         sys.stdout.flush()
     # 7) RETURN OPTIMIZED PARAMETERS
     return [retval.x, retval]

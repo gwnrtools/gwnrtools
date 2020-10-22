@@ -35,24 +35,28 @@ except ImportError:
 
 
 class HandleSpectreReductionDatum(object):
-    def __init__(self, reduction_data_file='', name='', hdf_path='element_data.dat'):
+    def __init__(self,
+                 reduction_data_file='',
+                 name='',
+                 hdf_path='element_data.dat'):
         assert os.path.exists(reduction_data_file),\
             "Cannot find data file: {0:s}".format(reduction_data_file)
         self.name = name
         self.reduction_data_file = reduction_data_file
         self.hdf_path = hdf_path
         self.read_data()
-        self.plotting_funcs = {'linlin': 'plot',
-                               'loglin': 'semilogx',
-                               'loglog': 'loglog',
-                               'linlog': 'semilogy'}
+        self.plotting_funcs = {
+            'linlin': 'plot',
+            'loglin': 'semilogx',
+            'loglog': 'loglog',
+            'linlog': 'semilogy'
+        }
         self.linestyles = ['-', '--', '--', '-.', ':']
         self.linecolors = ['r', 'g', 'b', 'k', 'm', 'y']
 
     def read_data(self):
         logging.info("Reading in: {0:s}".format(self.reduction_data_file))
-        self.data = h5py.File(self.reduction_data_file, 'r')[
-            self.hdf_path][()]
+        self.data = h5py.File(self.reduction_data_file, 'r')[self.hdf_path][()]
         logging.info(".. read in a dataset with shape: {}".format(
             np.shape(self.data)))
 
@@ -60,7 +64,11 @@ class HandleSpectreReductionDatum(object):
         return self.data
 
     def plot(self,
-             column_of_vars={2: '$\Pi$', 3: '$\Phi_i$', 4: '$\Psi$'},
+             column_of_vars={
+                 2: '$\Pi$',
+                 3: '$\Phi_i$',
+                 4: '$\Psi$'
+             },
              ax=None,
              xy_scales='linlog',
              lw_a=2.5,
@@ -74,7 +82,11 @@ class HandleSpectreReductionDatum(object):
              title=None,
              grid=False,
              legend=True,
-             legend_kwargs={'ncol': 3, 'fontsize': 14, 'frameon': False}):
+             legend_kwargs={
+                 'ncol': 3,
+                 'fontsize': 14,
+                 'frameon': False
+             }):
         '''
         With `idx` being the index_of_data_column, this function uses:
 
@@ -94,9 +106,9 @@ class HandleSpectreReductionDatum(object):
         plotting_func = getattr(ax, self.plotting_funcs[xy_scales])
 
         d = self.get_data()
-        logging.info(
-            "Plotting {0} of {1} columns".format(len(column_of_vars),
-                                                 np.shape(d)[-1]))
+        logging.info("Plotting {0} of {1} columns".format(
+            len(column_of_vars),
+            np.shape(d)[-1]))
         for i, idx in enumerate(column_of_vars):
             # formatting
             try:
@@ -128,8 +140,12 @@ class HandleSpectreReductionDatum(object):
                 label = label + " ({0:s})".format(self.name)
 
             logging.info("Plotting {0}".format(column_of_vars[idx]))
-            plotting_func(d[:, 0], d[:, idx], label=label,
-                          lw=linewidth, ls=linestyle, c=linecolor,
+            plotting_func(d[:, 0],
+                          d[:, idx],
+                          label=label,
+                          lw=linewidth,
+                          ls=linestyle,
+                          c=linecolor,
                           **plot_kwargs)
 
         if grid:

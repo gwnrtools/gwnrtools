@@ -14,7 +14,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 #
 # =============================================================================
 #
@@ -59,6 +58,7 @@ try:
     @lsctables.use_in
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
         pass
+
     from pycbc.waveform import *
     from pycbc.psd import from_txt
     from pycbc.filter import match
@@ -74,7 +74,8 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 #########################################################################
 
 
-def nextpow2(n): return 2**int(ceil(log2(n)))
+def nextpow2(n):
+    return 2**int(ceil(log2(n)))
 
 
 def getSec(s):
@@ -92,8 +93,13 @@ def get_uniform_mass_range(m_lower, m_upper, m_sep):
     # }}}
 
 
-def overlaps_vs_totalmass(wav1, wav2, psd=None, mf_lower=-1.,
-                          m_lower=-1., m_upper=100., m_delta=5.):
+def overlaps_vs_totalmass(wav1,
+                          wav2,
+                          psd=None,
+                          mf_lower=-1.,
+                          m_lower=-1.,
+                          m_upper=100.,
+                          m_delta=5.):
     # Need two wobjects of nr_waveform class.
     # Waveforms are rescaled to different total masses and their overlaps computed
     # Returns an array of total masses and overlaps
@@ -121,18 +127,10 @@ def overlaps_vs_totalmass(wav1, wav2, psd=None, mf_lower=-1.,
     for mtot in mass_range:
         #wav1.rescale_to_totalmass( mtot )
         #wav2.rescale_to_totalmass( mtot )
-        wav_blended1 = blend(
-            wav1,
-            mtot,
-            wav1.sample_rate,
-            wav1.time_length,
-            t_option)  # blending
-        wav_blended2 = blend(
-            wav2,
-            mtot,
-            wav1.sample_rate,
-            wav1.time_length,
-            t_option)  # blending
+        wav_blended1 = blend(wav1, mtot, wav1.sample_rate, wav1.time_length,
+                             t_option)  # blending
+        wav_blended2 = blend(wav2, mtot, wav1.sample_rate, wav1.time_length,
+                             t_option)  # blending
         if len(wav_blended1) != len(wav_blended2):
             raise RuntimeError(
                 "blending function return different sets of waveforms!!")
@@ -184,18 +182,16 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
     #amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
     amp_after_peak = amp[max_a_index:]
-    iA, vA = min(
-        enumerate(amp_after_peak), key=lambda x: abs(
-            x[1] - 0.01 * max_a))
+    iA, vA = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.01 * max_a))
     iA += max_a_index
     #iA, vA = min(enumerate(amp_after_peak),key=lambda x:abs(x[1]-0.01*max_a))
-    iB, vB = min(
-        enumerate(amp_after_peak), key=lambda x: abs(
-            x[1] - 0.1 * max_a))
+    iB, vB = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.1 * max_a))
     iB += max_a_index
     if iA <= max_a_index:
-        print("iA = %d, iB = %d, vA = %e, vB = %e" %
-              (iA, iB, vA, vB), file=sys.stdout)
+        print("iA = %d, iB = %d, vA = %e, vB = %e" % (iA, iB, vA, vB),
+              file=sys.stdout)
         sys.stdout.flush()
         raise RuntimeError("Couldnt find amplitude threshold time iA")
         # do something
@@ -214,9 +210,8 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
         print("Newfound iA = %d" % iA)
         # Yet another way
         amp_after_peak = amp[max_a_index:]
-        iA, vA = min(
-            enumerate(amp_after_peak), key=lambda x: abs(
-                x[1] - 0.01 * max_a))
+        iA, vA = min(enumerate(amp_after_peak),
+                     key=lambda x: abs(x[1] - 0.01 * max_a))
         iA += max_a_index
         print("Newfound iA another way = %d" % iA)
         raise RuntimeError("Had to find amplitude threshold the hard way")
@@ -239,11 +234,10 @@ def blend(hin, mm, sample, time, t_opt, WinID=-1):
             continue
         print("Testing window with t = ", t[i])
         hphc.append(
-            hin.blending_function(
-                hp0=hp0,
-                t=t[i],
-                sample_rate=sample,
-                time_length=time))
+            hin.blending_function(hp0=hp0,
+                                  t=t[i],
+                                  sample_rate=sample,
+                                  time_length=time))
     print("No of blending windows being tested = %d" % (len(hphc) - 1))
     return hphc
     # }}}
@@ -262,12 +256,10 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     amp_after_peak = amp
     amp_after_peak[:max_a_index] = 0
     mtsun = lal.MTSUN_SI
-    iA, vA = min(
-        enumerate(amp_after_peak), key=lambda x: abs(
-            x[1] - 0.01 * max_a))
-    iB, vB = min(
-        enumerate(amp_after_peak), key=lambda x: abs(
-            x[1] - 0.1 * max_a))
+    iA, vA = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.01 * max_a))
+    iB, vB = min(enumerate(amp_after_peak),
+                 key=lambda x: abs(x[1] - 0.1 * max_a))
     print(iA, iB)
     t = [[t_opt[0] * mm, 500 * mm, hp0.sample_times.data[iA] / mtsun, hp0.sample_times.data[iA] / mtsun + t_opt[3] * mm],  # Prayush's E
          [t_opt[0] * mm, t_opt[1] * mm, hp0.sample_times.data[iA] / \
@@ -281,8 +273,11 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
     # hphc.append(hp0)
     for i in range(len(t)):
         print(t[i])
-        hphc.append(nrtool.blending_function_Tukey(hp0=hp0, t=t[i],
-                                                   sample_rate=sample, time_length=time))
+        hphc.append(
+            nrtool.blending_function_Tukey(hp0=hp0,
+                                           t=t[i],
+                                           sample_rate=sample,
+                                           time_length=time))
     print("No of blending windows being tested = %d" % len(hphc))
     return hphc
     # }}}
@@ -293,12 +288,18 @@ def blendTimeSeries(hp0, hc0, mm, sample, time, t_opt):
 ###############################################################################
 class cce_run():
     # {{{
-    def __init__(self, datafile=None, datadir=None, outdir=None,
-                 pittnull='/home/p/pfeiffer/prayush/src/cactus_cce/Cactus/exe/cactus_pittnull',
-                 ccemodeldir='/home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/',
-                 cceparfile='highResCce700.par',
-                 nullnews_maxtimelevels=None, timestep=0.15,
-                 post_process_only=True, verbose=True):
+    def __init__(
+            self,
+            datafile=None,
+            datadir=None,
+            outdir=None,
+            pittnull='/home/p/pfeiffer/prayush/src/cactus_cce/Cactus/exe/cactus_pittnull',
+            ccemodeldir='/home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/',
+            cceparfile='highResCce700.par',
+            nullnews_maxtimelevels=None,
+            timestep=0.15,
+            post_process_only=True,
+            verbose=True):
         """
     ###############################################################################
     # #############################################################################
@@ -357,6 +358,7 @@ class cce_run():
         self.filetags = ['Psi4_scri.L0?M?0?.asc', 'NewsB_scri.L0?M?0?.asc']
         self.verbose = verbose
         # }}}
+
     #
 
     def get_datafile(self):
@@ -393,7 +395,8 @@ class cce_run():
         elif int(xx[-1].split('-')[-1]) != len(xx):
             print(xx, xx[-1])
             raise RuntimeError(
-                "Are not run directories sequentially numbered for %s" % self.prefix)
+                "Are not run directories sequentially numbered for %s" %
+                self.prefix)
         else:
             self.nn = len(xx) + 1
         #
@@ -770,8 +773,8 @@ r = ccerun.cce_run( datafile='%s', datadir='%s', outdir='%s', verbose=True )
 if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
 
 """ % (self.get_outdirname(), self.get_parfilename().strip('.par'),
-            self.get_parfilename().strip('.par'),
-            self.get_datafile(), self.get_datadirname(), self.get_outdirname())
+        self.get_parfilename().strip('.par'), self.get_datafile(),
+        self.get_datadirname(), self.get_outdirname())
         fout = open(self.get_continuationfilename(), "w+")
         fout.write(out)
         fout.close()
@@ -826,6 +829,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         # {{{
         return 'logs/' + self.prefix + '-%d.err' % (self.nn)
         # }}}
+
     #
 
     def get_recent_error_file(self):
@@ -833,6 +837,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         # {{{
         return 'logs/' + self.prefix + '-%d.err' % (self.nn - 1)
         # }}}
+
     #
 
     def get_recent_output_file(self):
@@ -840,6 +845,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         # {{{
         return 'logs/' + self.prefix + '-%d.out' % (self.nn - 1)
         # }}}
+
     #
 
     def is_to_be_continued(self, ofile=None, checkforuncopied=False):
@@ -872,9 +878,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
             odirname = odirname.split('/')[-1]
             print("Odirname = ", odirname)
             if os.path.exists(odirname) and os.path.getsize(odirname) > 1024:
-                print(
-                    "Run probably ongoing, output file not written.",
-                    file=sys.stdout)
+                print("Run probably ongoing, output file not written.",
+                      file=sys.stdout)
                 if os.path.getmtime('%s/Psi4_scri.L02Mp02.asc' % odirname) > \
                         (time.time() - 600):
                     print("Psi4 files freshly written.", file=sys.stdout)
@@ -899,47 +904,48 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         if usedtime < askedtime:
             if usedtime < 120:
                 if cmd.getoutput(
-                        r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file' % ofile):
+                        r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file'
+                        % ofile):
                     if self.verbose:
                         print("UseTime = ", usedtime, "\n", file=sys.stdout)
                         print(
-                            "Warning: %s stopped too soon, but the Run might have completed to begin with." %
-                            self.outdir, file=sys.stdout)
+                            "Warning: %s stopped too soon, but the Run might have completed to begin with."
+                            % self.outdir,
+                            file=sys.stdout)
                     os.chdir(pwd)
                     return False
                 elif self.verbose:
-                    print(
-                        "Warning: %s Run stopped too soon!" %
-                        (self.outdir), file=sys.stdout)
+                    print("Warning: %s Run stopped too soon!" % (self.outdir),
+                          file=sys.stdout)
                 os.chdir(pwd)
                 return False
-        if 'Requested' in cmd.getoutput(r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file' %
-                                        ofile) or 'Done' in cmd.getoutput('/bin/cat %s | grep Done' % ofile):
+        if 'Requested' in cmd.getoutput(
+                r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file'
+                % ofile) or 'Done' in cmd.getoutput(
+                    '/bin/cat %s | grep Done' % ofile):
             print("PASSED TEST FOR STRING IN ERR FILE", ofile)
-            print(
-                cmd.getoutput(
-                    r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file' %
-                    ofile) != '')
+            print(cmd.getoutput(
+                r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file'
+                % ofile) != '')
             print(cmd.getoutput('/bin/cat %s | grep Done' % ofile))  # != ''
             if self.verbose:
                 print(
-                    "Run %s either Done or requested for timestep not in worldtube data file\n" %
-                    (self.outdir), file=sys.stdout)
+                    "Run %s either Done or requested for timestep not in worldtube data file\n"
+                    % (self.outdir),
+                    file=sys.stdout)
             if checkforuncopied:
                 # Check if the output has been copied over
                 if not os.path.exists(self.prefix + '-%d' % (self.nn)):
-                    print(
-                        "..but data has not been copied over.",
-                        file=sys.stdout)
+                    print("..but data has not been copied over.",
+                          file=sys.stdout)
                     return True
             os.chdir(pwd)
             return False
         else:
             print("DID NOT PASS TEST FOR STRING IN ERR FILE", ofile)
-            print(
-                cmd.getoutput(
-                    r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file' %
-                    ofile) != '')
+            print(cmd.getoutput(
+                r'/bin/cat %s | grep Requested\ timestep\ not\ in\ worldtube\ data\ file'
+                % ofile) != '')
             print(cmd.getoutput('/bin/cat %s | grep Done' % ofile))  # != ''
         if self.verbose:
             print("Run needs to be restarted", file=sys.stdout)
@@ -957,9 +963,12 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         #  #qq = int(cmd.getoutput('tail %s | grep Killing | wc -l' % ofile))
         #  return False
         # }}}
+
     #
 
-    def is_to_be_continued_2(self, abs_eps=1.e-10, ofile='Psi4_scri.L02Mp02.asc',
+    def is_to_be_continued_2(self,
+                             abs_eps=1.e-10,
+                             ofile='Psi4_scri.L02Mp02.asc',
                              verbose=False):
         """
         Checks error/output files created for walltime used. If they are not
@@ -985,11 +994,14 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         #
         if abs(end_times[-1] - end_times[-2]) < abs_eps:
             if verbose:
-                print("Last two segments ended at the same time, must have completed")
+                print(
+                    "Last two segments ended at the same time, must have completed"
+                )
             return False
         else:
             return True
         # }}}
+
     #
 
     def setup_rerun(self, submit=False):
@@ -1020,6 +1032,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         self.submit_run()
         return
         # }}}
+
     #
 
     def combine_output(self, subdirs=None, redo=True):
@@ -1032,7 +1045,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         outdir = './' + self.prefix + '.joined'
         if os.path.exists(outdir):
             print("output for %s has been joined already.!" %
-                  cmd.getoutput('pwd'), file=sys.stderr)
+                  cmd.getoutput('pwd'),
+                  file=sys.stderr)
             if not self.redo:
                 os.chdir(pwd)
                 return
@@ -1050,9 +1064,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         if int(subdirs[0][-1]) == 0:
             subdirs = subdirs[1:]
         if subdirs is None or len(subdirs) == 0:
-            raise IOError(
-                "No directories of the form %s-?. Wrong tag?" %
-                self.prefix)
+            raise IOError("No directories of the form %s-?. Wrong tag?" %
+                          self.prefix)
         # subdirs.sort()
         # Append the most recent portion of the run
         #if os.path.exists(idir+'/highResCce'): subdirs.append(idir+'/highResCce')
@@ -1075,20 +1088,18 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 outfnam = outdir + '/' + fnam
                 if os.path.exists(outfnam) and os.path.getsize(
                         outfnam) and not self.redo:
-                    print(
-                        "\nNOT Joining: ",
-                        fnam,
-                        " in ",
-                        subdirs,
-                        file=sys.stderr)
+                    print("\nNOT Joining: ",
+                          fnam,
+                          " in ",
+                          subdirs,
+                          file=sys.stderr)
                     continue
                 if self.verbose:
-                    print(
-                        "\nJoining: ",
-                        fnam,
-                        " in ",
-                        subdirs,
-                        file=sys.stderr)
+                    print("\nJoining: ",
+                          fnam,
+                          " in ",
+                          subdirs,
+                          file=sys.stderr)
                 # Following convoluted way of reading data is for runs which die unsafely
                 # and might have partially flushed lines trailing as unprintable characters
                 # at the end of the data file.
@@ -1116,8 +1127,9 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                             data.append(np.array(tmp_data))
                 #
                 # Assume the data is in chronological order in the files
-                tarr, rearr, imarr = [data[0][:, 0],
-                                      data[0][:, 1], data[0][:, 2]]
+                tarr, rearr, imarr = [
+                    data[0][:, 0], data[0][:, 1], data[0][:, 2]
+                ]
                 for dd in data[1:]:
                     tmp_t = dd[:, 0]
                     try:
@@ -1131,18 +1143,18 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 # Write the joined data to disk
                 #
                 if self.verbose:
-                    print("Writing to: %s" %
-                          (outdir + '/' + fnam), file=sys.stderr)
+                    print("Writing to: %s" % (outdir + '/' + fnam),
+                          file=sys.stderr)
                 fout = open(outfnam, 'w')
                 for i in range(len(tarr)):
-                    fout.write(
-                        '%.16e\t%.16e\t%.16e\n' %
-                        (tarr[i], rearr[i], imarr[i]))
+                    fout.write('%.16e\t%.16e\t%.16e\n' %
+                               (tarr[i], rearr[i], imarr[i]))
                 fout.close()
             #
         os.chdir(pwd)
         return
         # }}}
+
     #
 
     def uniformly_sample_output(self, joineddir=None):
@@ -1191,13 +1203,23 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         #
         os.chdir(pwd)
         # }}}
+
     #
 
-    def integrate_psi4_to_hlm(self, joineddir=None, fstring=None,
-                              inputdir=None, datafile=None, datatype='ASCII',
-                              outputdir=None, outputtype='ASCII',
-                              resample=True, lmax=8, ffifreq=0.005, m0_time_domain=True,
-                              align_time_to_amax=False, align_time_to_psi4=True):
+    def integrate_psi4_to_hlm(self,
+                              joineddir=None,
+                              fstring=None,
+                              inputdir=None,
+                              datafile=None,
+                              datatype='ASCII',
+                              outputdir=None,
+                              outputtype='ASCII',
+                              resample=True,
+                              lmax=8,
+                              ffifreq=0.005,
+                              m0_time_domain=True,
+                              align_time_to_amax=False,
+                              align_time_to_psi4=True):
         """
     Integrate the PSi4 modes to strain modes
     using the FFI method from http://arxiv.org/abs/1006.1632
@@ -1281,7 +1303,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                     WF[l][m].Load(fnam)
                 elif 'HDF5' in datatype:
                     ccegrp = self.prefix + '.dir'
-                    WF[l][m].Load(datafin[ccegrp]['Y_l%d_m%d.dat' % (l, m)].value,
+                    WF[l][m].Load(datafin[ccegrp]['Y_l%d_m%d.dat' %
+                                                  (l, m)].value,
                                   datatype='HDFfp')
                 else:
                     raise IOError("datatype must be either ASCII or HDF5")
@@ -1308,15 +1331,14 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 if align_time_to_amax:
                     WFint[l][m].x -= tmerger
                 elif align_time_to_psi4:
-                    WFint[l][m].x = (
-                        WFint[l][m].x - WFint[l][m].x[0]) + WF[l][m].x[0]
+                    WFint[l][m].x = (WFint[l][m].x -
+                                     WFint[l][m].x[0]) + WF[l][m].x[0]
                 if m < 0:
                     mstr = 'm%02d' % abs(m)
                 else:
                     mstr = 'p%02d' % abs(m)
-                fnam = (
-                    "%s/h_from_Psi4_scri.L%02dM" %
-                    (outdir, l)) + mstr + ".dat"
+                fnam = ("%s/h_from_Psi4_scri.L%02dM" %
+                        (outdir, l)) + mstr + ".dat"
                 fout = open(fnam, 'w')
                 fout.write("# [1] = t/M\n")
                 fout.write("# [2] = Re{rhOverM(%d,%d)}\n" % (l, m))
@@ -1324,7 +1346,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 fout.write("# FFI cut-off: omega = " + str(f0 * pi * m) + "\n")
                 for ii in range(0, WFint[l][m].Length()):
                     fout.write("%.12e\t%.12e\t%.12e\n" %
-                               (WFint[l][m].x[ii], WFint[l][m].f[ii].real, WFint[l][m].f[ii].imag))
+                               (WFint[l][m].x[ii], WFint[l][m].f[ii].real,
+                                WFint[l][m].f[ii].imag))
                 fout.close()
         #
         # Take care of the (l, m=0) modes in time domain
@@ -1339,9 +1362,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 if fstring is not None:
                     fnam = initial_dir + '/' + fstring % (l, m)
                 else:
-                    fnam = (
-                        "%s/Psi4_scri.L%02dMp%02d" %
-                        (initial_dir, l, m)) + "_uform.asc"
+                    fnam = ("%s/Psi4_scri.L%02dMp%02d" %
+                            (initial_dir, l, m)) + "_uform.asc"
                     if self.verbose:
                         print("reading %s" % fnam)
                     data = np.loadtxt(fnam)
@@ -1351,12 +1373,16 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
             tarr -= (tarr[0] - WFint[2][2].x[0])
             parr = data[:, 1] + data[:, 2] * 1.0j
             # Get News by one time-integration
-            narr = np.array([simps(parr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
-                             for i in range(1, len(parr))])
+            narr = np.array([
+                simps(parr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
+                for i in range(1, len(parr))
+            ])
             narr = narr - narr[len(tarr) / 2]
             # Get strain by second time-integration
-            harr = np.array([simps(narr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
-                             for i in range(1, len(narr))])
+            harr = np.array([
+                simps(narr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
+                for i in range(1, len(narr))
+            ])
             harr = harr - harr[len(harr) / 2]
             #
             fnam = ("%s/h_from_Psi4_scri.L%02dM" % (outdir, l)) + "p00.dat"
@@ -1366,9 +1392,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
             fout.write("# [3] = Im{rhOverM(%d,%d)}\n" % (l, m))
             fout.write("# FFI cut-off: omega = " + str(f0 * pi * m) + "\n")
             for ii in range(0, len(harr)):
-                fout.write(
-                    "%.12e\t%.12e\t%.12e\n" %
-                    (tarr[ii], harr[ii].real, harr[ii].imag))
+                fout.write("%.12e\t%.12e\t%.12e\n" %
+                           (tarr[ii], harr[ii].real, harr[ii].imag))
             fout.close()
         #
         os.chdir(pwd)
@@ -1377,16 +1402,31 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 print("Writing Hlm to disk")
             print("outdir (joineddir) = ", outdir)
             print("outputdir (outdir) = ", outputdir)
-            self.write_to_hdf5(joineddir=outdir, outdir=outputdir, lmax=lmax,
-                               prefix='h_from_Psi4_scri', postfix='.dat',
-                               filename='rhOverM_FromPsi4_CcePITT_Asymptotic_GeometricUnits.h5')
+            self.write_to_hdf5(
+                joineddir=outdir,
+                outdir=outputdir,
+                lmax=lmax,
+                prefix='h_from_Psi4_scri',
+                postfix='.dat',
+                filename='rhOverM_FromPsi4_CcePITT_Asymptotic_GeometricUnits.h5'
+            )
         return
         # }}}
+
     #
 
-    def integrate_news_to_hlm(self, joineddir=None, fstring=None,
-                              inputdir=None, datafile=None, datatype='ASCII', outputdir='.', outputtype='HDF',
-                              resample=True, lmax=8, ffifreq=0.005, m0_time_domain=True):
+    def integrate_news_to_hlm(self,
+                              joineddir=None,
+                              fstring=None,
+                              inputdir=None,
+                              datafile=None,
+                              datatype='ASCII',
+                              outputdir='.',
+                              outputtype='HDF',
+                              resample=True,
+                              lmax=8,
+                              ffifreq=0.005,
+                              m0_time_domain=True):
         """
     Integrate the News modes to strain modes
     using the FFI method from http://arxiv.org/abs/1006.1632
@@ -1470,7 +1510,8 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                     WF[l][m].Load(fnam)
                 elif 'HDF5' in datatype:
                     ccegrp = self.prefix + '.dir'
-                    WF[l][m].Load(datafin[ccegrp]['Y_l%d_m%d.dat' % (l, m)].value,
+                    WF[l][m].Load(datafin[ccegrp]['Y_l%d_m%d.dat' %
+                                                  (l, m)].value,
                                   datatype='HDFfp')
                 else:
                     raise IOError("datatype must be either ASCII or HDF5")
@@ -1499,17 +1540,18 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                     mstr = 'm%02d' % abs(m)
                 else:
                     mstr = 'p%02d' % abs(m)
-                fnam = (
-                    "%s/h_from_News_scri.L%02dM" %
-                    (outdir, l)) + mstr + ".dat"
+                fnam = ("%s/h_from_News_scri.L%02dM" %
+                        (outdir, l)) + mstr + ".dat"
                 fout = open(fnam, 'w')
                 fout.write("# [1] = t/M\n")
                 fout.write("# [2] = Re{rhOverM(%d,%d)}\n" % (l, m))
                 fout.write("# [3] = Im{rhOverM(%d,%d)}\n" % (l, m))
                 fout.write("# FFI cut-off: omega = " + str(f0 * pi * m) + "\n")
                 for ii in range(0, WFint[l][m].Length()):
-                    fout.write(str(WFint[l][m].x[ii]) + " " + str(WFint[l][m].f[ii].real) +
-                               " " + str(WFint[l][m].f[ii].imag) + "\n")
+                    fout.write(
+                        str(WFint[l][m].x[ii]) + " " +
+                        str(WFint[l][m].f[ii].real) + " " +
+                        str(WFint[l][m].f[ii].imag) + "\n")
                 fout.close()
         #
         # Take care of the (l, m=0) modes in time domain
@@ -1524,8 +1566,10 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
             tarr -= (tarr[0] - WFint[2][2].x[0])
             narr = data[:, 1] + data[:, 2] * 1.0j
             # Get News by one time-integration
-            harr = np.array([simps(narr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
-                             for i in range(1, len(narr))])
+            harr = np.array([
+                simps(narr[:i], x=tarr[:i], dx=tarr[1] - tarr[0])
+                for i in range(1, len(narr))
+            ])
             harr = harr - harr[len(tarr) / 2]
             #
             fnam = ("%s/h_from_News_scri.L%02dM" % (outdir, l)) + "p00.dat"
@@ -1535,27 +1579,35 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
             fout.write("# [3] = Im{rhOverM(%d,%d)}\n" % (l, m))
             fout.write("# FFI cut-off: omega = " + str(f0 * pi * m) + "\n")
             for ii in range(0, len(harr)):
-                fout.write(
-                    "%.12e\t%.12e\t%.12e\n" %
-                    (tarr[ii], harr[ii].real, harr[ii].imag))
+                fout.write("%.12e\t%.12e\t%.12e\n" %
+                           (tarr[ii], harr[ii].real, harr[ii].imag))
             fout.close()
         #
         os.chdir(pwd)
         if 'HDF' in outputtype:
             if self.verbose:
                 print("Writing Hlm to disk")
-            self.write_to_hdf5(outdir=outputdir, joineddir=outdir, lmax=lmax,
-                               prefix='h_from_News_scri',
-                               filename='rhOverM_FromNews_CcePITT_Asymptotic_GeometricUnits_m00.h5')
+            self.write_to_hdf5(
+                outdir=outputdir,
+                joineddir=outdir,
+                lmax=lmax,
+                prefix='h_from_News_scri',
+                filename=
+                'rhOverM_FromNews_CcePITT_Asymptotic_GeometricUnits_m00.h5')
         return
         # }}}
+
     #
     # Note that the file postfix (not pre) needs a dot (.) in it explicitly.
 
-    def write_to_hdf5(self, prefix='h_from_Psi4_scri', postfix='.dat',
-                      outdir=None, joineddir=None,
+    def write_to_hdf5(self,
+                      prefix='h_from_Psi4_scri',
+                      postfix='.dat',
+                      outdir=None,
+                      joineddir=None,
                       filename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                      lmax=8, replace=False):
+                      lmax=8,
+                      replace=False):
         """
         Arguments:
         outdir     : string- PATH W.R.T. THE LEV DIRECTORY
@@ -1596,13 +1648,13 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
                 if joineddir is not None:
                     fname = os.path.join(joineddir, prefix)
                 else:
-                    fname = self.datafile.replace(
-                        'h5', 'joined') + '/' + prefix
+                    fname = self.datafile.replace('h5',
+                                                  'joined') + '/' + prefix
                 fname = fname + (".L%02dM" % l) + mstr + postfix
                 #
                 datasetname = 'Y_l%d_m%d.dat' % (l, m)
-                fin[grpname].create_dataset(
-                    datasetname, data=np.loadtxt(fname))
+                fin[grpname].create_dataset(datasetname,
+                                            data=np.loadtxt(fname))
                 print("Written dataset ", datasetname)
         #
         fin.flush()
@@ -1610,6 +1662,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         os.chdir(pwd)
         return
         # }}}
+
     #
 
     def tar_output(self, remove=True):
@@ -1632,10 +1685,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         if os.path.exists(self.prefix + '.tar.gz'):
             cmd.getoutput(
                 'mv %s %s' %
-                (self.prefix +
-                 '.tar.gz',
-                 self.prefix +
-                 '.tar.gz.old'))
+                (self.prefix + '.tar.gz', self.prefix + '.tar.gz.old'))
         to_run = 'tar -cvzf %s.tar.gz `/bin/ls | grep %s`' % \
             (self.prefix, self.prefix)
         if remove:
@@ -1645,6 +1695,7 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         os.chdir(pwd)
         return
         # }}}
+
     #
 
     def untar_output(self, to_be_extracted=None):
@@ -1669,7 +1720,9 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
         os.chdir(pwd)
         return
         # }}}
+
     # }}}
+
 
 #
 # Class that calculates basic quantities of Psi4 modes that are usually used
@@ -1683,8 +1736,13 @@ if r.is_to_be_continued_2(): r.setup_rerun(submit=True)
 
 class psi4_waveforms():
     # {{{
-    def __init__(self, indir='.', filename=None,
-                 inprefix='Psi4_scri.', inpostfix='_uform.asc', lmax=8, verbose=True):
+    def __init__(self,
+                 indir='.',
+                 filename=None,
+                 inprefix='Psi4_scri.',
+                 inpostfix='_uform.asc',
+                 lmax=8,
+                 verbose=True):
         #
         self.indir = indir
         self.infilename = filename
@@ -1693,6 +1751,7 @@ class psi4_waveforms():
         #
         self.lmax = lmax
         self.verbose = verbose
+
     #
 
     def read_psi4_waveforms(self):
@@ -1705,8 +1764,8 @@ class psi4_waveforms():
                     sgn = 'm'
                 else:
                     sgn = 'p'
-                fnam = (self.inprefix + 'L%02dM' + sgn +
-                        '%02d' + self.inpostfix) % (l, abs(m))
+                fnam = (self.inprefix + 'L%02dM' + sgn + '%02d' +
+                        self.inpostfix) % (l, abs(m))
                 fnam = self.indir + '/' + fnam
                 if self.verbose:
                     print("Reading Psi4 data from ", fnam)
@@ -1718,6 +1777,7 @@ class psi4_waveforms():
                 self.waveforms[l][m] = [hp, hc]
         return
         # }}}
+
     #
 
     def read_psi4_waveforms_hdf5(self, R=100):
@@ -1737,6 +1797,7 @@ class psi4_waveforms():
         fin.close()
         return
         # }}}
+
     #
 
     def get_psi4_phases(self):
@@ -1753,9 +1814,11 @@ class psi4_waveforms():
                     print("Calculating Phi(t) for (l,m) = ", l, m)
                 hp, hc = self.waveforms[l][m]
                 self.wavephases[l][m] = TimeSeries(arctan2(hp.data, hc.data),
-                                                   delta_t=hp.delta_t, copy=True)
+                                                   delta_t=hp.delta_t,
+                                                   copy=True)
         return
         # }}}
+
     #
 
     def get_psi4_amplitudes(self):
@@ -1775,6 +1838,7 @@ class psi4_waveforms():
                     hp, hc)
         return
         # }}}
+
     #
 
     def get_psi4_peaktimes(self):
@@ -1793,7 +1857,9 @@ class psi4_waveforms():
                 self.peaktimes[l][m] = am.max_loc()[-1] * am.delta_t
         return
         # }}}
+
     # }}}
+
 
 #
 # Class containing the information for ONE NR RUN. All Levs and All Extraction
@@ -1807,8 +1873,18 @@ class psi4_waveforms():
 
 class nr_run_cce():
     # {{{
-    def __init__(self, datadir=None, subdatadir='CceData', outdir=None, pittnull='/home/p/pfeiffer/prayush/src/cactus_cce/Cactus/exe/cactus_pittnull',
-                 ccemodeldir='/home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/', cceparfile='highResCce700.par', increasemaxtimelevels=False, sample_rate=16384, time_length=16, verbose=True):
+    def __init__(
+            self,
+            datadir=None,
+            subdatadir='CceData',
+            outdir=None,
+            pittnull='/home/p/pfeiffer/prayush/src/cactus_cce/Cactus/exe/cactus_pittnull',
+            ccemodeldir='/home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/',
+            cceparfile='highResCce700.par',
+            increasemaxtimelevels=False,
+            sample_rate=16384,
+            time_length=16,
+            verbose=True):
         # {{{
         if datadir is None:
             print("No CCE data file directory specified")
@@ -1832,7 +1908,8 @@ class nr_run_cce():
             self.levs = cmd.getoutput('/bin/ls %s/ | grep Lev' %
                                       (self.outdir)).split()
             return
-        elif not os.path.exists(str(datadir)) and not os.path.exists(str(outdir)):
+        elif not os.path.exists(str(datadir)) and not os.path.exists(
+                str(outdir)):
             raise IOError(
                 "Must specify either the data or the output directory")
         #
@@ -1843,20 +1920,24 @@ class nr_run_cce():
             self.cce_runs[ld], tmplist = {}, []
             # List of H5 files in alphabetical order -- which would coincide with
             # ordering in Extraction Radius
-            self.ccefiles[ld] = list(np.sort(glob.glob('%s/%s/%s/CceR*.h5' %
-                                                       (self.datadir, self.subdatadir, ld))))
+            self.ccefiles[ld] = list(
+                np.sort(
+                    glob.glob('%s/%s/%s/CceR*.h5' %
+                              (self.datadir, self.subdatadir, ld))))
             #
             for cc in self.ccefiles[ld]:
                 ccfnam = cc.split('/')[-1]
                 tmplist.append(ccfnam)
-                self.cce_runs[ld][ccfnam] = cce_run(datafile=ccfnam,
-                                                    datadir='%s/%s/%s' % (
-                                                        self.datadir, self.subdatadir, ld),
-                                                    outdir='%s/%s' % (self.outdir, ld), pittnull=pittnull,
-                                                    verbose=self.verbose)
+                self.cce_runs[ld][ccfnam] = cce_run(
+                    datafile=ccfnam,
+                    datadir='%s/%s/%s' % (self.datadir, self.subdatadir, ld),
+                    outdir='%s/%s' % (self.outdir, ld),
+                    pittnull=pittnull,
+                    verbose=self.verbose)
             #
             self.ccefiles[ld] = tmplist
         # }}}
+
     #
 
     def get_nrprefix(self):
@@ -1912,7 +1993,8 @@ class nr_run_cce():
     def setup_highestR_run_at_lev(self, ld, num_runs=1, submit=False):
         # {{{
         num_runs *= -1
-        self.setup_runs(ld, list([np.sort(self.ccefiles[ld])[num_runs]]),
+        self.setup_runs(ld,
+                        list([np.sort(self.ccefiles[ld])[num_runs]]),
                         submit=submit)
         return
         # }}}
@@ -1920,7 +2002,8 @@ class nr_run_cce():
     def setup_highestR_runs_at_lev(self, ld, num_runs=1, submit=False):
         # {{{
         num_runs *= -1
-        self.setup_runs(ld, list(np.sort(self.ccefiles[ld])[num_runs:]),
+        self.setup_runs(ld,
+                        list(np.sort(self.ccefiles[ld])[num_runs:]),
                         submit=submit)
         return
         # }}}
@@ -1966,10 +2049,11 @@ class nr_run_cce():
     def combine_output_highestR_runs_at_lev(self, ld, num_runs=1, redo=False):
         # {{{
         num_runs *= -1
-        self.combine_output_for_runs(ld,
-                                     list(np.sort(self.ccefiles[ld])[num_runs:]), redo=redo)
+        self.combine_output_for_runs(
+            ld, list(np.sort(self.ccefiles[ld])[num_runs:]), redo=redo)
         return
         # }}}
+
     #
     # Analysis Functios below
     #
@@ -1986,40 +2070,43 @@ class nr_run_cce():
         except BaseException:
             self.psd = from_txt(
                 '/home/p/pfeiffer/prayush/advLIGO_PSDs/ZERO_DET_high_P.dat',
-                N / 2 + 1, 1. / time_length, low_freq_cutoff=low_frequency_cutoff)
+                N / 2 + 1,
+                1. / time_length,
+                low_freq_cutoff=low_frequency_cutoff)
         return self.psd
         # }}}
+
     #
 
-    def read_waveforms_from_hdf5_files(self,
-                                       wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
+    def read_waveforms_from_hdf5_files(
+            self, wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
         # This assumes there is a file for EACH Lev with the same name, located in
         # outdir/LevN
         # {{{
         self.wavefiles, self.hwaveforms = {}, {}
         for ld in self.levs:
-            print(
-                "Reading from ",
-                self.outdir +
-                '/' +
-                ld +
-                '/' +
-                wavefilename,
-                file=sys.stdout)
+            print("Reading from ",
+                  self.outdir + '/' + ld + '/' + wavefilename,
+                  file=sys.stdout)
             sys.stdout.flush()
             self.wavefiles[ld] = h5py.File(
                 self.outdir + '/' + ld + '/' + wavefilename, 'r')
             self.hwaveforms[ld] = {}
             for kk in list(self.wavefiles[ld].keys()):
                 self.hwaveforms[ld][kk] = UseNRinDA.nr_waveform(
-                    filename=self.wavefiles[ld][kk]['Y_l2_m2.dat'].value, filetype='dataset',
-                    sample_rate=self.sample_rate, time_length=self.time_length)
+                    filename=self.wavefiles[ld][kk]['Y_l2_m2.dat'].value,
+                    filetype='dataset',
+                    sample_rate=self.sample_rate,
+                    time_length=self.time_length)
         return
         # }}}
+
     #
 
-    def read_extrapolated_waveforms_from_hdf5_files(self, dirname=None,
-                                                    wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
+    def read_extrapolated_waveforms_from_hdf5_files(
+            self,
+            dirname=None,
+            wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5'):
         # This assumes there is a file for EACH Lev with the same name, located in
         # outdir/LevN
         # {{{
@@ -2034,17 +2121,24 @@ class nr_run_cce():
             self.extrap_hwaveforms[ld] = {}
             for kk in list(self.extrap_wavefiles[ld].keys()):
                 self.extrap_hwaveforms[ld][kk] = UseNRinDA.nr_waveform(
-                    filename=self.extrap_wavefiles[ld][kk]['Y_l2_m2.dat'].value,
+                    filename=self.extrap_wavefiles[ld][kk]
+                    ['Y_l2_m2.dat'].value,
                     filetype='dataset',
-                    sample_rate=self.sample_rate, time_length=self.time_length)
+                    sample_rate=self.sample_rate,
+                    time_length=self.time_length)
         return
         # }}}
+
     #
 
-    def calculate_mismatch_between_levs_hdf5(self,
-                                             wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                                             outdir='matches', outputfile='OverlapsLevs.h5', catalogfile=None,
-                                             m_upper=100., m_delta=5.):
+    def calculate_mismatch_between_levs_hdf5(
+            self,
+            wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+            outdir='matches',
+            outputfile='OverlapsLevs.h5',
+            catalogfile=None,
+            m_upper=100.,
+            m_delta=5.):
         # {{{
         cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
         fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
@@ -2069,21 +2163,23 @@ class nr_run_cce():
                     ld2 = self.levs[i2]
                     if ccef not in list(self.hwaveforms[ld1].keys()) or \
                             ccef not in list(self.hwaveforms[ld2].keys()):
-                        print(
-                            ccef, " waveforms not found in both %s and %s" %
-                            (ld1, ld2))
+                        print(ccef, " waveforms not found in both %s and %s" %
+                              (ld1, ld2))
                         continue
                     # Create a group in output file for this ccefile
                     if ccef not in list(fout.keys()):
                         fout.create_group(ccef)
                     # Compute matches
                     if self.verbose:
-                        print(
-                            "\n\nOverlaps for %s Between %s and %s" %
-                            (ccef, ld1, ld2), file=sys.stderr)
-                    overlaps = overlaps_vs_totalmass(self.hwaveforms[ld1][ccef],
-                                                     self.hwaveforms[ld2][ccef], psd=self.psd,
-                                                     m_upper=m_upper, m_delta=m_delta)
+                        print("\n\nOverlaps for %s Between %s and %s" %
+                              (ccef, ld1, ld2),
+                              file=sys.stderr)
+                    overlaps = overlaps_vs_totalmass(
+                        self.hwaveforms[ld1][ccef],
+                        self.hwaveforms[ld2][ccef],
+                        psd=self.psd,
+                        m_upper=m_upper,
+                        m_delta=m_delta)
                     # Add matches and masses as a dataset to the group
                     dsetname = ld1 + '_' + ld2 + '.dat'
                     fout[ccef].create_dataset(dsetname, data=overlaps)
@@ -2092,12 +2188,17 @@ class nr_run_cce():
         fout.close()
         return
         # }}}
+
     #
 
-    def calculate_mismatch_between_extraction_radii_hdf5(self,
-                                                         wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                                                         outdir='matches', outputfile='OverlapsExtractionRadii.h5', catalogfile=None,
-                                                         m_upper=100., m_delta=5.):
+    def calculate_mismatch_between_extraction_radii_hdf5(
+            self,
+            wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+            outdir='matches',
+            outputfile='OverlapsExtractionRadii.h5',
+            catalogfile=None,
+            m_upper=100.,
+            m_delta=5.):
         # {{{
         cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
         fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
@@ -2122,21 +2223,23 @@ class nr_run_cce():
                     ccef2 = ccefiles[i2]
                     if ccef1 not in list(self.hwaveforms[ld].keys()) or \
                             ccef2 not in list(self.hwaveforms[ld].keys()):
-                        print(
-                            "%s and %s waveforms not found in %s" %
-                            (ccef1, ccef2, ld))
+                        print("%s and %s waveforms not found in %s" %
+                              (ccef1, ccef2, ld))
                         continue
                     # Create a group in output file for this ccefile
                     if ld + '.dir' not in list(fout.keys()):
                         fout.create_group(ld + '.dir')
                     # Compute matches
                     if self.verbose:
-                        print(
-                            "Overlaps for %s Between %s and %s" %
-                            (ld, ccef1, ccef2), file=sys.stderr)
-                    overlaps = overlaps_vs_totalmass(self.hwaveforms[ld][ccef1],
-                                                     self.hwaveforms[ld][ccef2], psd=self.psd,
-                                                     m_upper=m_upper, m_delta=m_delta)
+                        print("Overlaps for %s Between %s and %s" %
+                              (ld, ccef1, ccef2),
+                              file=sys.stderr)
+                    overlaps = overlaps_vs_totalmass(
+                        self.hwaveforms[ld][ccef1],
+                        self.hwaveforms[ld][ccef2],
+                        psd=self.psd,
+                        m_upper=m_upper,
+                        m_delta=m_delta)
                     # Add matches and masses as a dataset to the group
                     dsetname = ccef1 + '_' + ccef2 + '.dat'
                     if self.verbose:
@@ -2152,10 +2255,13 @@ class nr_run_cce():
         fout.close()
         return
         # }}}
+
     #
 
-    def plot_mismatches_from_hdf5(self, matchfilename='matches/OverlapsLevs.h5',
-                                  outdir='plots', prefix=None):
+    def plot_mismatches_from_hdf5(self,
+                                  matchfilename='matches/OverlapsLevs.h5',
+                                  outdir='plots',
+                                  prefix=None):
         # {{{
         cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
         #
@@ -2179,13 +2285,8 @@ class nr_run_cce():
         markers.extend(markers)  # cyclic
         line.extend(line)  # cyclic
         colors = [
-            "blue",
-            "red",
-            "green",
-            "magenta",
-            "cyan",
-            "gold",
-            "darkorange"]  # blending options
+            "blue", "red", "green", "magenta", "cyan", "gold", "darkorange"
+        ]  # blending options
         l_blend = ["A", "B", "C", "D", "E"]
         l_compare = []
         plot_lines = []
@@ -2206,20 +2307,21 @@ class nr_run_cce():
             l_compare = []
             for i in range(len(mismatch[list(mismatch.keys())[0]])):
                 for n in range(len(list(mismatch.keys()))):
-                    print("i = %d/%d, n = %d/%d" % (i,
-                                                    len(mismatch[list(
-                                                        mismatch.keys())[0]]),
-                                                    n,
-                                                    len(list(mismatch.keys()))))
+                    print("i = %d/%d, n = %d/%d" %
+                          (i, len(mismatch[list(mismatch.keys())[0]]), n,
+                           len(list(mismatch.keys()))))
                     var_key = var_keys[const_key][n]
                     #strs = var_key.split('_')
                     #strs[-1] = strs[-1].strip('.dat')
                     # print strs
                     # if strs[0] == strs[1]: continue
                     l_compare.append(var_key)
-                    pl, = plt.plot(mass[var_key], mismatch[var_key][i],
-                                   linestyle=line[n], marker=markers[n], color=colors[i])
-                    plot_lines[i].append(pl,)
+                    pl, = plt.plot(mass[var_key],
+                                   mismatch[var_key][i],
+                                   linestyle=line[n],
+                                   marker=markers[n],
+                                   color=colors[i])
+                    plot_lines[i].append(pl, )
             #
             #l_compare = var_keys[const_key]
             plt.yscale('log')
@@ -2228,21 +2330,19 @@ class nr_run_cce():
             plt.grid(b=True, which='major')
             legend_1 = plt.legend(plot_lines[0], l_compare, loc="lower left")
             if 'Lev' in var_keys[const_key][0]:
-                legend_2 = plt.legend(
-                    list(zip(*plot_lines))[0], l_blend, ncol=2, loc="lower right")
-                plt.title(
-                    "Mismatch with blended waveforms, at Fixed " +
-                    const_key +
-                    "\n" +
-                    self.get_nrprefix())
+                legend_2 = plt.legend(list(zip(*plot_lines))[0],
+                                      l_blend,
+                                      ncol=2,
+                                      loc="lower right")
+                plt.title("Mismatch with blended waveforms, at Fixed " +
+                          const_key + "\n" + self.get_nrprefix())
             if 'Cce' in var_keys[const_key][0]:
-                legend_2 = plt.legend(
-                    list(zip(*plot_lines))[0], l_blend, ncol=2, loc="lower right")
-                plt.title(
-                    "Mismatch with blended waveforms, at Fixed " +
-                    const_key +
-                    "\n" +
-                    self.get_nrprefix())
+                legend_2 = plt.legend(list(zip(*plot_lines))[0],
+                                      l_blend,
+                                      ncol=2,
+                                      loc="lower right")
+                plt.title("Mismatch with blended waveforms, at Fixed " +
+                          const_key + "\n" + self.get_nrprefix())
             plt.legend()
             plt.gca().add_artist(legend_1)
             plt.gca().add_artist(legend_2)
@@ -2252,14 +2352,20 @@ class nr_run_cce():
         #
         return
         # }}}
+
     #
 
-    def calculate_mismatch_with_extrapolated_hdf5(self,
-                                                  wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-                                                  extrap_dirname='/home/p/pfeiffer/pfeiffer/SimulationAnnex/Incoming/ChuAlignedRuns/',
-                                                  extrap_runname=None, extrap_filename='rhOverM_Asymptotic_GeometricUnits.h5',
-                                                  outdir='matches', outputfile='OverlapsExtrapolated.h5', catalogfile=None,
-                                                  m_upper=100., m_delta=5.):
+    def calculate_mismatch_with_extrapolated_hdf5(
+            self,
+            wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
+            extrap_dirname='/home/p/pfeiffer/pfeiffer/SimulationAnnex/Incoming/ChuAlignedRuns/',
+            extrap_runname=None,
+            extrap_filename='rhOverM_Asymptotic_GeometricUnits.h5',
+            outdir='matches',
+            outputfile='OverlapsExtrapolated.h5',
+            catalogfile=None,
+            m_upper=100.,
+            m_delta=5.):
         # {{{
         cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
         fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
@@ -2304,8 +2410,8 @@ class nr_run_cce():
             if lev not in list(self.hwaveforms.keys()) or lev not in list(
                     self.extrap_hwaveforms.keys()):
                 print(
-                    "No waveforms at %s in either the Cce or Extrapolated set" %
-                    lev)
+                    "No waveforms at %s in either the Cce or Extrapolated set"
+                    % lev)
                 continue
             if lev + '.dir' not in list(fout.keys()):
                 fout.create_group(lev + '.dir')
@@ -2324,12 +2430,14 @@ class nr_run_cce():
                     print("At ", extrap_order)
                     if extrap_order not in list(
                             self.extrap_hwaveforms[lev].keys()):
-                        print(
-                            "%s waveform not found at %s" %
-                            (extrap_order, lev))
+                        print("%s waveform not found at %s" %
+                              (extrap_order, lev))
                     hp1 = self.extrap_hwaveforms[lev][extrap_order]
-                    overlaps = overlaps_vs_totalmass(hp0, hp1, psd=self.psd,
-                                                     m_upper=m_upper, m_delta=m_delta)
+                    overlaps = overlaps_vs_totalmass(hp0,
+                                                     hp1,
+                                                     psd=self.psd,
+                                                     m_upper=m_upper,
+                                                     m_delta=m_delta)
                     # Add matches and masses as a dataset to the group
                     dsetname = ccef + '_' + extrap_order + '.dat'
                     fout[lev + '.dir'].create_dataset(dsetname, data=overlaps)
@@ -2338,6 +2446,7 @@ class nr_run_cce():
         fout.close()
         return
         # }}}
+
     # }}}
 
 
@@ -2373,8 +2482,8 @@ def extrapolated_outdir_from_cce_outdir(outdir):
         s2z = '0'
     else:
         s2z = '%.3f' % np.float128(s2z)
-    retdir = 'BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s' % (idtype, d, q,
-                                                       s1x, s1y, s1z, s2x, s2y, s2z)
+    retdir = 'BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s' % (idtype, d, q, s1x, s1y,
+                                                       s1z, s2x, s2y, s2z)
     return retdir
     # }}}
 

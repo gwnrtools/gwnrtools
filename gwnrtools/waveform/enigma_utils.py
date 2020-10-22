@@ -41,7 +41,7 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 2), "{} coeffs passed!".format(len(coeffs))
         a1, a2 = coeffs
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta ** 2)
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2)
 
     @classmethod
     def fit_cubic_poly(cls, eta, coeffs):
@@ -50,7 +50,7 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 3), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3 = coeffs
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta ** 2 + a3 * eta ** 3)
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2 + a3 * eta**3)
 
     @classmethod
     def fit_ratio_poly_44(cls, eta, coeffs):
@@ -59,7 +59,8 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 6), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2, b3 = coeffs
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta ** 2 + a3 * eta ** 3) / (1. + b1 * eta + b2 * eta ** 2 + b3 * eta ** 3)
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2 + a3 * eta**3) / (
+            1. + b1 * eta + b2 * eta**2 + b3 * eta**3)
 
     @classmethod
     def fit_ratio_sqrt_poly_44(cls, eta, coeffs):
@@ -68,8 +69,10 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 6), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2, b3 = coeffs
-        s_eta = eta ** 0.5
-        return (1. / 6**1.5) * (1. + a1 * s_eta + a2 * s_eta**2 + a3 * s_eta**3) / (1. + b1 * s_eta + b2 * s_eta**2 + b3 * s_eta**3)
+        s_eta = eta**0.5
+        return (1. /
+                6**1.5) * (1. + a1 * s_eta + a2 * s_eta**2 + a3 * s_eta**3) / (
+                    1. + b1 * s_eta + b2 * s_eta**2 + b3 * s_eta**3)
 
     @classmethod
     def fit_ratio_sqrt_hyb1_poly_44(cls, eta, coeffs):
@@ -78,8 +81,9 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 6), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2, b3 = coeffs
-        s_eta = eta ** 0.5
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2 + a3 * eta**3) / (1. + b1 * eta + b2 * eta**2 + b3 * eta**3)
+        s_eta = eta**0.5
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2 + a3 * eta**3) / (
+            1. + b1 * eta + b2 * eta**2 + b3 * eta**3)
 
     @classmethod
     def fit_ratio_poly_43(cls, eta, coeffs):
@@ -88,7 +92,8 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 5), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2 = coeffs
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta ** 2 + a3 * eta ** 3) / (1. + b1 * eta + b2 * eta ** 2)
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2 +
+                                a3 * eta**3) / (1. + b1 * eta + b2 * eta**2)
 
     @classmethod
     def fit_ratio_sqrt_poly_43(cls, eta, coeffs):
@@ -97,8 +102,9 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 5), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2 = coeffs
-        s_eta = eta ** 0.5
-        return (1. / 6**1.5) * (1. + a1 * s_eta + a2 * s_eta**2 + a3 * s_eta**3) / (1. + b1 * s_eta + b2 * s_eta**2)
+        s_eta = eta**0.5
+        return (1. / 6**1.5) * (1. + a1 * s_eta + a2 * s_eta**2 + a3 *
+                                s_eta**3) / (1. + b1 * s_eta + b2 * s_eta**2)
 
     @classmethod
     def fit_ratio_sqrt_hyb1_poly_43(cls, eta, coeffs):
@@ -107,8 +113,10 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 5), "{} coeffs passed!".format(len(coeffs))
         a1, a2, a3, b1, b2 = coeffs
-        s_eta = eta ** 0.5
-        return (1. / 6**1.5) * (1. + a1 * eta * s_eta + a2 * eta**2 * s_eta + a3 * eta**3 * s_eta) / (1. + b1 * eta + b2 * eta**2)
+        s_eta = eta**0.5
+        return (1. / 6**1.5) * (1. + a1 * eta * s_eta + a2 * eta**2 * s_eta +
+                                a3 * eta**3 * s_eta) / (1. + b1 * eta +
+                                                        b2 * eta**2)
 
     @classmethod
     def fit_ratio_poly_34(cls, eta, coeffs):
@@ -117,4 +125,5 @@ class FitMOmegaIMRAttachmentNonSpinning():
             cls.called_once = True
         assert (len(coeffs) == 5), "{} coeffs passed!".format(len(coeffs))
         a1, a2, b1, b2, b3 = coeffs
-        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta ** 2) / (1. + b1 * eta + b2 * eta ** 2 + b3 * eta ** 3)
+        return (1. / 6**1.5) * (1. + a1 * eta + a2 * eta**2) / (
+            1. + b1 * eta + b2 * eta**2 + b3 * eta**3)

@@ -28,7 +28,6 @@ from numpy import *
 import numpy as np
 import math
 
-
 verbose = True
 
 ######################################################################
@@ -49,23 +48,25 @@ def find_nearest(a, a0):
 
 
 def approx_equal(A, B, eps=1.e-4):
-    return np.abs(A-B)/(np.abs(A)+np.abs(B)) < eps
+    return np.abs(A - B) / (np.abs(A) + np.abs(B)) < eps
 
 
 def update_progress(progress):
-    print(('\r\r[{0}] {1:.2%}'.format('#'*(int(progress*100)/2)+' '*(50-int(progress*100)/2),
-                                      progress)))
+    print(('\r\r[{0}] {1:.2%}'.format(
+        '#' * (int(progress * 100) / 2) + ' ' * (50 - int(progress * 100) / 2),
+        progress)))
     if progress == 100:
         print("Done")
     sys.stdout.flush()
 
 
-def nextpow2(n): return 2**int(ceil(log2(n)))
+def nextpow2(n):
+    return 2**int(ceil(log2(n)))
 
 
 def nCr(n, r):
     f = math.factorial
-    return f(n) / f(r) / f(n-r)
+    return f(n) / f(r) / f(n - r)
 
 
 def area_inside_contour(vs):
@@ -73,7 +74,7 @@ def area_inside_contour(vs):
     enclosed by a given contour.'''
     x = vs[:, 0]
     y = vs[:, 1]
-    a = 0.5*np.sum(y[:-1]*np.diff(x) - x[:-1]*np.diff(y))
+    a = 0.5 * np.sum(y[:-1] * np.diff(x) - x[:-1] * np.diff(y))
     return np.abs(a)
 
 
@@ -94,10 +95,10 @@ def get_time(date, time):
 
 
 def trim_trailing_zeros(hp):
-    for i in np.arange(len(hp)-1, 0, -1):
+    for i in np.arange(len(hp) - 1, 0, -1):
         if hp[i] != 0:
             break
-    return hp[:i+1]
+    return hp[:i + 1]
 
 
 def trim_leading_zeros(hp):
@@ -120,10 +121,10 @@ def format_string(string_template, **string_kwargs):
     class FormatDict(dict):
         def __missing__(self, key):
             return "{" + key + "}"
+
     formatter = string.Formatter()
     mapping = FormatDict(**string_kwargs)
-    return formatter.vformat(string_template,
-                             (), mapping)
+    return formatter.vformat(string_template, (), mapping)
 
 
 def mkdir(dir_name):
@@ -155,6 +156,7 @@ def insert_min_max_into_array(arr, low, high):
     new_arr = np.append(new_arr[mask], high)
     return new_arr
     # }}}
+
 
 ######################################################################
 ######################################################################

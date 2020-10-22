@@ -41,11 +41,9 @@ from gwnrtools.nr.types import nr_data
 from gwnrtools.utils import zero_pad_beginning
 from gwnrtools.waveform.utils import get_time_at_frequency
 ######################################################################
-__author__   = "Prayush Kumar <prayush@astro.cornell.edu>"
+__author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
-verbose      = False
-
-
+verbose = False
 
 
 ## @nr_wave pyexample
@@ -251,7 +249,7 @@ The following do NOT change OR care about the state:
         # Datafile details
         self.modeLmax = modeLmax
         self.modeLmin = modeLmin
-        self.skipM0   = skipM0
+        self.skipM0 = skipM0
         self.which_modes = which_modes
 
         # Binary parameters
@@ -268,12 +266,13 @@ The following do NOT change OR care about the state:
         # Data analysis parameters
         self.sample_rate = sample_rate
         self.time_length = time_length
-        self.delta_t = 1./self.sample_rate
+        self.delta_t = 1. / self.sample_rate
         self.dimless_delta_t = 1.0 / dimless_sample_rate
-        self.df = 1./self.time_length
+        self.df = 1. / self.time_length
         self.n = int(self.sample_rate * self.time_length)
         if self.verbose > 1:
-            print("self.sample-rate & time_len = ", self.sample_rate, self.time_length)
+            print("self.sample-rate & time_len = ", self.sample_rate,
+                  self.time_length)
             print("self.n = ", self.n)
 
         ##################################################################
@@ -281,17 +280,22 @@ The following do NOT change OR care about the state:
         ##################################################################
         if self.verbose > 1:
             print("Init nr_wave: Reading data....")
-        self.data = nr_data(filename, filetype=filetype, wavetype=wavetype,
-                            ex_order=ex_order, group_name=group_name,
-                            modeLmin = self.modeLmin, modeLmax = self.modeLmax,
-                            skipM0 = self.skipM0,
-                            delta_t = 1.0 / dimless_sample_rate,
-                            verbose = self.verbose)
+        self.data = nr_data(filename,
+                            filetype=filetype,
+                            wavetype=wavetype,
+                            ex_order=ex_order,
+                            group_name=group_name,
+                            modeLmin=self.modeLmin,
+                            modeLmax=self.modeLmax,
+                            skipM0=self.skipM0,
+                            delta_t=1.0 / dimless_sample_rate,
+                            verbose=self.verbose)
         self.which_modes_to_read()
         self.rescaled_hp, self.rescaled_hc = None, None
         if self.verbose > 1:
             print("Init nr_wave: Data reading successful.")
-            if self.verbose > 2: print("\t\t Read in modes: ", self.which_modes)
+            if self.verbose > 2:
+                print("\t\t Read in modes: ", self.which_modes)
         ##################################################################
         #   3. Preprocessing
         ##################################################################
@@ -300,14 +304,16 @@ The following do NOT change OR care about the state:
         if self.verbose > 1:
             print("Init nr_wave: Successful.")
         return
+
     ##
     def which_modes_to_read(self):
         """[This function is agnostic to object's S1 state]"""
         if len(self.which_modes) == 0:
             for modeL in self.data.modes:
                 for modeM in self.data.modes[modeL]:
-                    self.which_modes.append( (modeL, modeM) )
+                    self.which_modes.append((modeL, modeM))
         return self.which_modes
+
     ##
     ####################################################################
     ####################################################################
@@ -316,7 +322,12 @@ The following do NOT change OR care about the state:
     ####################################################################
     #
     # Read mode amplitude as a function of t (in s or M)
-    def get_mode_amplitude(self, modeL=2, modeM=2, startIdx=0, stopIdx=-1, dimensionless=False):
+    def get_mode_amplitude(self,
+                           modeL=2,
+                           modeM=2,
+                           startIdx=0,
+                           stopIdx=-1,
+                           dimensionless=False):
         """
         **If dimensionless=True, object's S1 state is switched to "dimensionless"**
         **If dimensionless=False, object's state is NOT switched explicitly.     **
@@ -327,27 +338,43 @@ The following do NOT change OR care about the state:
         either in this function, or in the object earlier.
         """
         if dimensionless: self.make_modes_dimensionless()
-        return self.data.modes[modeL][modeM].amplitude(startIdx=startIdx, stopIdx=stopIdx)
+        return self.data.modes[modeL][modeM].amplitude(startIdx=startIdx,
+                                                       stopIdx=stopIdx)
+
     #
     # Returns frequency (in Hz or 1/M) as a function of t (in s or M)
-    def get_mode_frequency(self, modeL=2, modeM=2, startIdx=0, stopIdx=-1, dimensionless=False):
+    def get_mode_frequency(self,
+                           modeL=2,
+                           modeM=2,
+                           startIdx=0,
+                           stopIdx=-1,
+                           dimensionless=False):
         """
         **If dimensionless=True, object's S1 state is switched to "dimensionless"**
         **If dimensionless=False, object's state is NOT switched explicitly.     **
         **   You get results in whatever the object's current state is           **
         """
         if dimensionless: self.make_modes_dimensionless()
-        return self.data.modes[modeL][modeM].frequency(startIdx=startIdx, stopIdx=stopIdx)
+        return self.data.modes[modeL][modeM].frequency(startIdx=startIdx,
+                                                       stopIdx=stopIdx)
+
     #
     # Returns MODE PHASE (in radians) as a function of t (in s or M)
-    def get_mode_phase(self, modeL=2, modeM=2, startIdx=0, stopIdx=-1, dimensionless=False):
+    def get_mode_phase(self,
+                       modeL=2,
+                       modeM=2,
+                       startIdx=0,
+                       stopIdx=-1,
+                       dimensionless=False):
         """
         **If dimensionless=True, object's S1 state is switched to "dimensionless"**
         **If dimensionless=False, object's state is NOT switched explicitly.     **
         **   You get results in whatever the object's current state is           **
         """
         if dimensionless: self.make_modes_dimensionless()
-        return self.data.modes[modeL][modeM].phase(startIdx=startIdx, stopIdx=stopIdx)
+        return self.data.modes[modeL][modeM].phase(startIdx=startIdx,
+                                                   stopIdx=stopIdx)
+
     #
     ####################################################################
     # Functions related to wave-frequency
@@ -381,19 +408,23 @@ Returns t (time) in seconds. Or returns t (dimension-less) if dimless=True.
         ## Find time and use correct units
         if self.data.modes[2][2].dimLess:
             if not f_is_dimless and totalmass is None:
-                raise IOError("Since you haven't rescaled this wave yet, provide dimensionless frequency instead of {}".format(f))
+                raise IOError(
+                    "Since you haven't rescaled this wave yet, provide dimensionless frequency instead of {}"
+                    .format(f))
             elif not f_is_dimless:
-                f *= (totalmass * lal.MTSUN_SI) # Make frequency dimensionless
-            t = get_time_at_frequency(freq, f)  # This will give dimensionless time
+                f *= (totalmass * lal.MTSUN_SI)  # Make frequency dimensionless
+            t = get_time_at_frequency(freq,
+                                      f)  # This will give dimensionless time
             if not dimless and totalmass != None:
                 t *= (totalmass * lal.MTSUN_SI)
         else:
             if f_is_dimless:
                 f /= (totalmass * lal.MTSUN_SI)
-            t = get_time_at_frequency(freq, f) # This will be time in seconds
+            t = get_time_at_frequency(freq, f)  # This will be time in seconds
             if dimless:
                 t /= (totalmass * lal.MTSUN_SI)
         return t
+
     #
     # Get 2,2-mode GW_frequency in Hz at a given time (M)
     #
@@ -440,11 +471,12 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
             Time provided = {} and times of frequencyTimeSEries: {},{}
             Request to use Dimless Units: {}.
             Are these consistent?
-            """.format(t, freq.sample_times[0], freq.sample_times[-1], dimless))
+            """.format(t, freq.sample_times[0], freq.sample_times[-1],
+                       dimless))
 
         if self.verbose > 1:
             print("\tget_frequency_t: t = {}, freq = {}".format(t, fvalue))
-        
+
         if dimless:
             if not f_is_dimless:
                 if totalmass is not None:
@@ -457,7 +489,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
                     fvalue /= (totalmass * lal.MTSUN_SI)
                 else:
                     pass
-        
+
         return fvalue
 
     ###################################################################
@@ -473,9 +505,12 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
         """
         if amp is None:
             amp = self.data.modes[2][2].amplitude()
-        iMax = np.where(np.abs(amp.sample_times.data) == np.min(np.abs(amp.sample_times.data)))[0][0]
+        iMax = np.where(
+            np.abs(amp.sample_times.data) == np.min(
+                np.abs(amp.sample_times.data)))[0][0]
         aMax = amp[iMax]
         return [aMax, iMax]
+
     #
     # Get the amplitude of + x polarizations
     def amplitude(self):
@@ -486,6 +521,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
             raise IOError("Please call `get_polarizations` first. ")
         #return np.abs(self.rescaled_hp**2 + self.rescaled_hc**2)**0.5
         return amplitude_from_polarizations(self.rescaled_hp, self.rescaled_hc)
+
     #
     # Get the phase of + x polarizations
     def phase(self):
@@ -495,6 +531,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
         if self.rescaled_hp is None or self.rescaled_hc is None:
             raise IOError("Please call `get_polarizations` first. ")
         return phase_from_polarizations(self.rescaled_hp, self.rescaled_hc)
+
     #
     # Get the frequency of + x polarizations
     def frequency(self):
@@ -504,14 +541,20 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
         if self.rescaled_hp is None or self.rescaled_hc is None:
             raise IOError("Please call `get_polarizations` first. ")
         return frequency_from_polarizations(self.rescaled_hp, self.rescaled_hc)
+
     #
     def orbital_frequency(self):
         """
         ** Object's S1 state is NOT CHANGED. **
         """
         return self.data.modes[2][2].frequency() / 2.0
+
     #
-    def get_lowest_binary_mass(self, f_lower, t_start, totalmass=None, dimless=True):
+    def get_lowest_binary_mass(self,
+                               f_lower,
+                               t_start,
+                               totalmass=None,
+                               dimless=True):
         """
 Gives the Lowest possible binary total mass that the waveform can/should be
 scaled to to start at **f_lower** at the time-sample at **t_start**
@@ -541,21 +584,26 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         if dimless:
             t_start *= (totalmass * lal.MTSUN_SI)
 
-        orbit_freq = self.get_frequency_t(t_start, totalmass=totalmass, dimless=False)
+        orbit_freq = self.get_frequency_t(t_start,
+                                          totalmass=totalmass,
+                                          dimless=False)
 
         if f_lower < 1.0:
             f_lower /= (totalmass * lal.MTSUN_SI)
 
         if self.verbose > 1:
-            print("\t orbit_freq found: {}, f_lower = {}".format(orbit_freq, f_lower))
+            print("\t orbit_freq found: {}, f_lower = {}".format(
+                orbit_freq, f_lower))
 
         if UNDO_SCALING:
             self.make_modes_dimensionless()
             if self.verbose > 3:
-                print("WARNING: Waveform were rescaled to M={}, Now UNSCALED.".format(totalmass))
+                print("WARNING: Waveform were rescaled to M={}, Now UNSCALED.".
+                      format(totalmass))
         ##
         return (orbit_freq / f_lower) * totalmass
         ##}}}
+
     # ##################################################################
     # Basic waveform manipulation & State Changing
     # ##################################################################
@@ -569,6 +617,7 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         self.rescaled_hp = None
         self.rescaled_hc = None
         return self
+
     ##
     def rescale_modes(self, delta_t=None, M=None, distance=None):
         """
@@ -589,11 +638,13 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         else: self.distance = distance
 
         if self.verbose > 1:
-            print("\tRescaling modes to: delta_t={}, M={}, dist={}".format(delta_t, M, distance))
+            print("\tRescaling modes to: delta_t={}, M={}, dist={}".format(
+                delta_t, M, distance))
 
         if delta_t is None or M is None or distance is None:
             raise IOError("One of delta_t={}, M={}, dist={} is None.\
-            Please provide valid parameters to rescale modes".format(delta_t, M, distance))
+            Please provide valid parameters to rescale modes".format(
+                delta_t, M, distance))
 
         which_modes = self.which_modes_to_read()
         if self.verbose > 2:
@@ -602,9 +653,10 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         for (modeL, modeM) in which_modes:
             self.data.modes[modeL][modeM].resample_to_Hz(delta_t,
                                                          M,
-                                                         distance = distance)
+                                                         distance=distance)
         return
         ##}}}
+
     ##
     ####################################################################
     ####################################################################
@@ -613,7 +665,12 @@ t_start is dimensionless IFF dimless = True, else its in seconds
     ####################################################################
     #
     ##
-    def get_polarizations(self, delta_t=None, M=None, distance=None, inclination=None, phi=None):
+    def get_polarizations(self,
+                          delta_t=None,
+                          M=None,
+                          distance=None,
+                          inclination=None,
+                          phi=None):
         """
 Return plus and cross polarizations.
 
@@ -639,12 +696,10 @@ Return plus and cross polarizations.
         else: self.inclination = inclination
 
         if delta_t is None or M is None or distance is None or inclination is None or phi is None:
-            raise IOError("One of delta_t={}, M={}, dist={}, incl={}, phi={} is None.\
-            Please provide valid parameters to obtain polarizations".format(delta_t,
-                                                                            M,
-                                                                            distance,
-                                                                            inclination,
-                                                                            phi))
+            raise IOError(
+                "One of delta_t={}, M={}, dist={}, incl={}, phi={} is None.\
+            Please provide valid parameters to obtain polarizations".format(
+                    delta_t, M, distance, inclination, phi))
         if self.verbose > 1:
             print("\tComputing polarizations for: delta_t={}, M={}, dist={}, incl={}, phi={}".format(\
                         delta_t, M, distance, inclination, phi))
@@ -652,7 +707,7 @@ Return plus and cross polarizations.
         #### RESCALE AND RESAMPLE INDIVIDUAL MODES
         #########################################################
         # First rescale all modes to required physical parameters
-        self.rescale_modes(delta_t = delta_t, M = M, distance = distance)
+        self.rescale_modes(delta_t=delta_t, M=M, distance=distance)
 
         #########################################################
         #### ENSURE CORRECTNESS OF COALESCENCE-PHASE !!!!
@@ -660,32 +715,38 @@ Return plus and cross polarizations.
         # Orbital phase at the time of merger (time of amplitude peak for (2,2) mode)
         aPeak, iPeak = self.get_amplitude_peak_h22()
         if self.verbose > 3:
-            print("\t\t\tFound peak of amplitude of h22 at (index, ampl): {}, {}".format(iPeak, aPeak))
+            print(
+                "\t\t\tFound peak of amplitude of h22 at (index, ampl): {}, {}"
+                .format(iPeak, aPeak))
         phase22 = self.get_mode_phase(2, 2)
         #phiOrbMerger = phase22[iPeak] / 2.
-        phiOrbMerger = np.angle(self.data.modes[2][2].data()[iPeak])/-2
+        phiOrbMerger = np.angle(self.data.modes[2][2].data()[iPeak]) / -2
 
         #########################################################
         #### COMBINE MODES TO GET POLARIZATIONS
         #########################################################
         # Create an empty complex array for (+ , x) polarizations
-        hpols = TimeSeries(np.zeros(self.n, dtype=float) + np.zeros(self.n, dtype=float) * 1.0j,
-                           delta_t = delta_t,
-                           epoch = phase22._epoch)
+        hpols = TimeSeries(np.zeros(self.n, dtype=float) +
+                           np.zeros(self.n, dtype=float) * 1.0j,
+                           delta_t=delta_t,
+                           epoch=phase22._epoch)
         curr_h22 = self.data.modes[2][2].data()
         # Loop over all modes to be included
         for (modeL, modeM) in self.which_modes_to_read():
-            if self.skipM0 and modeM==0: continue
+            if self.skipM0 and modeM == 0: continue
             #phiOrbMerger = np.angle(self.data.modes[modeL][modeM].data()[iPeak]) * (1.0 / modeM) ## FIXME!!
             #print type(hpols), hpols.dtype
             # Compute spin -2 weighted Ylm for (inclination, PHI??)
-            curr_ylm_lal = lal.SpinWeightedSphericalHarmonic(inclination,
-                                                             phiOrbMerger - 0*np.pi/4. - phi,
-                                                             #phiOrbMerger  - phi,
-                                                             -2,
-                                                             modeL, modeM)
+            curr_ylm_lal = lal.SpinWeightedSphericalHarmonic(
+                inclination,
+                phiOrbMerger - 0 * np.pi / 4. - phi,
+                #phiOrbMerger  - phi,
+                -2,
+                modeL,
+                modeM)
             #print type(curr_ylm_lal)
-            curr_ylm = np.complex128(curr_ylm_lal.real + curr_ylm_lal.imag * 1.0j)
+            curr_ylm = np.complex128(curr_ylm_lal.real +
+                                     curr_ylm_lal.imag * 1.0j)
             #print np.abs(curr_ylm)
             #print "Difference: {}",format(np.abs(curr_ylm_lal - curr_ylm))
 
@@ -693,28 +754,37 @@ Return plus and cross polarizations.
             tmp_hlm = self.data.modes[modeL][modeM].data()
             ## FIXME DELME
             if self.verbose > 2:
-                null_ylm = np.exp(1 * (phiOrbMerger - 0*np.pi/4. - phi) * modeM * 1.0j)
+                null_ylm = np.exp(1 * (phiOrbMerger - 0 * np.pi / 4. - phi) *
+                                  modeM * 1.0j)
                 print("\t\t\tPhaseRemovalTerm: ", null_ylm)
-                print("\t\t\tUSENR mode at peak: {}, after removing phase: {} ({})".format(
-                                                          tmp_hlm[iPeak],
-                                                          null_ylm * tmp_hlm[iPeak],
-                                                          np.angle(null_ylm * tmp_hlm[iPeak]) ))
+                print(
+                    "\t\t\tUSENR mode at peak: {}, after removing phase: {} ({})"
+                    .format(tmp_hlm[iPeak], null_ylm * tmp_hlm[iPeak],
+                            np.angle(null_ylm * tmp_hlm[iPeak])))
 
             curr_hlm = TimeSeries(tmp_hlm * curr_ylm,
                                   epoch=curr_h22._epoch,
                                   dtype=hpols.dtype,
                                   copy=True)
             if self.verbose > 1:
-                print("\tShifted ({},{}) in time by {} units ({} samples)".format(
-                    modeL, modeM, float(curr_hlm._epoch - tmp_hlm._epoch),
-                    float(curr_hlm._epoch - tmp_hlm._epoch)/curr_hlm.delta_t))
+                print("\tShifted ({},{}) in time by {} units ({} samples)".
+                      format(
+                          modeL, modeM,
+                          float(curr_hlm._epoch - tmp_hlm._epoch),
+                          float(curr_hlm._epoch - tmp_hlm._epoch) /
+                          curr_hlm.delta_t))
             hpols[:len(curr_hlm)] += curr_hlm
         # h+ - \ii hx = \Sum Ylm * hlm
-        self.rescaled_hp = TimeSeries(   hpols.real(), delta_t=hpols.delta_t, epoch=hpols._epoch)
-        self.rescaled_hc = TimeSeries(-1*hpols.imag(), delta_t=hpols.delta_t, epoch=hpols._epoch)
+        self.rescaled_hp = TimeSeries(hpols.real(),
+                                      delta_t=hpols.delta_t,
+                                      epoch=hpols._epoch)
+        self.rescaled_hc = TimeSeries(-1 * hpols.imag(),
+                                      delta_t=hpols.delta_t,
+                                      epoch=hpols._epoch)
         # Return polarizations
         return [self.rescaled_hp, self.rescaled_hc]
         ##}}}
+
     ##
     def rescale_to_totalmass(self, M):
         """ Rescales the waveform to a different total-mass than currently. The
@@ -725,16 +795,19 @@ Return plus and cross polarizations.
         """
         ##{{{
         if not hasattr(self, 'inclination') or self.inclination is None:
-            raise RuntimeError("Cannot rescale total-mass without setting inclination")
+            raise RuntimeError(
+                "Cannot rescale total-mass without setting inclination")
         elif not hasattr(self, 'phi') or self.phi is None:
             raise RuntimeError("Cannot rescale total-mass without setting phi")
         elif not hasattr(self, 'distance') or self.distance is None:
-            raise RuntimeError("Cannot rescale total-mass without setting distance")
+            raise RuntimeError(
+                "Cannot rescale total-mass without setting distance")
         return self.get_polarizations(M=M,
                                       inclination=self.inclination,
                                       phi=self.phi,
                                       distance=self.distance)
         ##}}}
+
     ##
     def rescale_to_distance(self, distance):
         """ Rescales the waveform to a different distance than currently. The
@@ -745,16 +818,19 @@ Return plus and cross polarizations.
         """
         ##{{{
         if not hasattr(self, 'inclination') or self.inclination is None:
-            raise RuntimeError("Cannot rescale distance without setting inclination")
+            raise RuntimeError(
+                "Cannot rescale distance without setting inclination")
         elif not hasattr(self, 'phi') or self.phi is None:
             raise RuntimeError("Cannot rescale distance without setting phi")
         elif not hasattr(self, 'totalmass') or self.totalmass is None:
-            raise RuntimeError("Cannot rescale distance without setting total-mass")
+            raise RuntimeError(
+                "Cannot rescale distance without setting total-mass")
         return self.get_polarizations(M=self.totalmass,
                                       inclination=self.inclination,
                                       phi=self.phi,
                                       distance=distance)
         ##}}}
+
     ##
     def rotate(self, inclination=None, phi=None):
         """ Rotates waveforms to different inclination and initial-phase angles,
@@ -767,7 +843,8 @@ Return plus and cross polarizations.
         if not hasattr(self, 'totalmass') or self.totalmass is None:
             raise RuntimeError("Cannot rotate without setting total mass")
         elif not hasattr(self, 'distance') or self.distance is None:
-            raise RuntimeError("Cannot rescale total-mass without setting distance")
+            raise RuntimeError(
+                "Cannot rescale total-mass without setting distance")
         if inclination is None: inclination = self.inclination
         else: self.inclination = inclination
         if phi is None: phi = self.phi
@@ -777,6 +854,7 @@ Return plus and cross polarizations.
                                       phi=phi,
                                       distance=self.distance)
         ##}}}
+
     ###################################################################
     ####################################################################
     # Strain conditioning
@@ -809,33 +887,50 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         ## Choose polarizations: Either User inputs here or use the objects internal polz.
         if hpsamp and hcsamp:
             hp0, hc0 = [hpsamp, hcsamp]
-            if totalmass is None: raise IOError("If providing polarizations, also provide total mass!")
+            if totalmass is None:
+                raise IOError(
+                    "If providing polarizations, also provide total mass!")
         elif self.rescaled_hp is not None and self.rescaled_hc is not None:
             totalmass = self.totalmass
             hp0, hc0 = self.rescaled_hp, self.rescaled_hc
-        else: raise IOError("Please call `get_polarizations` first. Or provide polarizations as input.")
+        else:
+            raise IOError(
+                "Please call `get_polarizations` first. Or provide polarizations as input."
+            )
 
         ## Check windowing extents
-        if (ttaper1+ttaper2+ttaper4) > (len(hp0)*hp0.delta_t/self.totalmass/lal.MTSUN_SI):
+        if (ttaper1 + ttaper2 + ttaper4) > (len(hp0) * hp0.delta_t /
+                                            self.totalmass / lal.MTSUN_SI):
             raise IOError("Invalid window configuration with [%f,%f,%f,%f] for wave of length %fM" %\
                             (ttaper1, ttaper2, ftaper3, ttaper4, (len(hp0)*hp0.delta_t/self.totalmass/lal.MTSUN_SI)))
 
         ## Copy over polarizations to fresh memory
-        hp = TimeSeries( hp0.data, dtype=hp0.dtype, delta_t=hp0.delta_t, epoch=hp0._epoch, copy=True )
-        hc = TimeSeries( hc0.data, dtype=hc0.dtype, delta_t=hc0.delta_t, epoch=hc0._epoch, copy=True )
+        hp = TimeSeries(hp0.data,
+                        dtype=hp0.dtype,
+                        delta_t=hp0.delta_t,
+                        epoch=hp0._epoch,
+                        copy=True)
+        hc = TimeSeries(hc0.data,
+                        dtype=hc0.dtype,
+                        delta_t=hc0.delta_t,
+                        epoch=hc0._epoch,
+                        copy=True)
 
         ## Get actual waveform length (minus padding at the end)
-        N = np.minimum(np.where(hp.data == 0)[0][0], np.where(hc.data == 0)[0][0])
+        N = np.minimum(
+            np.where(hp.data == 0)[0][0],
+            np.where(hc.data == 0)[0][0])
 
         ## Check if npad can be inserted at the start of the polarization TimeSeries.
         ## If there is no space ignore the pad completely
         if abs(len(hp) - N) < npad:
-            print("WARNING: Cannot pad {} zeros at the end. len(hp)={} & N={}".format(npad,len(hp),N))
+            print("WARNING: Cannot pad {} zeros at the end. len(hp)={} & N={}".
+                  format(npad, len(hp), N))
             npad = 0
         else:
             # Prepend some zeros to the waveform (assuming there are ''npad'' zeros at the end)
-            hp = zero_pad_beginning( hp, steps=npad )
-            hc = zero_pad_beginning( hc, steps=npad )
+            hp = zero_pad_beginning(hp, steps=npad)
+            hc = zero_pad_beginning(hc, steps=npad)
 
         ##########################################################
         # ########   Construct the taper window configuration ####
@@ -850,7 +945,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
 
         # First get the starting-half indices
         ttapers = np.array([ttaper1, ttaper2], dtype=np.float128)
-        ntaper1, ntaper2 = np.int64( np.round(ttapers * totalmass * lal.MTSUN_SI / hp.delta_t) )
+        ntaper1, ntaper2 = np.int64(
+            np.round(ttapers * totalmass * lal.MTSUN_SI / hp.delta_t))
         ntaper2 += ntaper1
 
         if ntaper2 < ntaper1:
@@ -858,7 +954,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
 
         ## Get the itime/index where the polarization amplitude = `ftaper3` x peakAmplitude
         amp_after_peak = amp[nPeak:]
-        iA, vA = min(enumerate(amp_after_peak),key=lambda x:abs(x[1] - ftaper3*max_a))
+        iA, vA = min(enumerate(amp_after_peak),
+                     key=lambda x: abs(x[1] - ftaper3 * max_a))
         ntaper3 = nPeak + iA
         #iB, vB = min(enumerate(amp_after_peak),key=lambda x:abs(x[1] - 0.01*max_a))
         #iB = iA + ntaper4
@@ -871,17 +968,18 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         ## If the above minimization to find the RD window fails, try brute force!
         if ntaper3 <= nPeak or ntaper4 < ntaper3:
             tmp_data = amp_after_peak.data
-            for idx in range( len(amp_after_peak) ):
-                if tmp_data[idx] < ftaper3*max_a: break
+            for idx in range(len(amp_after_peak)):
+                if tmp_data[idx] < ftaper3 * max_a: break
             ntaper3 = nPeak + idx
-            for idx in range( len(amp_after_peak) ):
-                if tmp_data[idx] < ftaper4*max_a: break
+            for idx in range(len(amp_after_peak)):
+                if tmp_data[idx] < ftaper4 * max_a: break
             ntaper4 = nPeak + idx
 
         ## If the RD window is STILL NOT CONFIGURED, FAIL!
         if ntaper3 <= nPeak or ntaper4 < ntaper3 or ntaper3 < ntaper2 or ntaper2 < ntaper1:
-            raise RuntimeError("Could not configure ringdown tapering window: {},{},{},{}".format(
-                  ntaper1, ntaper2, ntaper3, ntaper4))
+            raise RuntimeError(
+                "Could not configure ringdown tapering window: {},{},{},{}".
+                format(ntaper1, ntaper2, ntaper3, ntaper4))
 
         #######################################################################
         # ################  Make final tapering window ########################
@@ -891,7 +989,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         #######################################################################
         #
         # Combine window configuration
-        ntapers = np.array([ntaper1, ntaper2, ntaper3, ntaper4], dtype=np.int64)
+        ntapers = np.array([ntaper1, ntaper2, ntaper3, ntaper4],
+                           dtype=np.int64)
         ttapers = np.float128(ntapers) * hp.delta_t
         time_array = hp.sample_times.data - np.float(hp._epoch)
 
@@ -902,14 +1001,19 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         # Windowing function time-series
         #
         region1 = np.zeros(ntaper1)
-        region2 = np.zeros(ntaper2 - ntaper1) ## Modified later to chosen taperfunction
+        region2 = np.zeros(ntaper2 -
+                           ntaper1)  ## Modified later to chosen taperfunction
         region3 = np.ones(ntaper3 - ntaper2)
-        region4 = np.zeros(ntaper4 - ntaper3) ## Modified later to chosen taperfunction
+        region4 = np.zeros(ntaper4 -
+                           ntaper3)  ## Modified later to chosen taperfunction
         region5 = np.zeros(len(hp) - ntaper4)
         #
         ## Modify region2 and region3 to chosen taperfunction
         if 'planck' in tapermethod:
-            np.seterr(divide='raise',over='raise',under='ignore',invalid='raise')
+            np.seterr(divide='raise',
+                      over='raise',
+                      under='ignore',
+                      invalid='raise')
             t1, t2, t3, t4 = ttapers
             i1, i2, i3, i4 = ntapers
             if self.verbose > 2:
@@ -924,8 +1028,12 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
                     region2[i] = 1./(np.exp( ((t2-t1)/(time_array[i+i1]-t1)) + \
                                       ((t2-t1)/(time_array[i+i1]-t2)) ) + 1)
                 except:
-                    if time_array[i+i1]>0.9*t1 and time_array[i+i1]<1.1*t1: region2[i] = 0
-                    if time_array[i+i1]>0.9*t2 and time_array[i+i1]<1.1*t2: region2[i] = 1.
+                    if time_array[i + i1] > 0.9 * t1 and time_array[
+                            i + i1] < 1.1 * t1:
+                        region2[i] = 0
+                    if time_array[i + i1] > 0.9 * t2 and time_array[
+                            i + i1] < 1.1 * t2:
+                        region2[i] = 1.
             #
             for i in range(len(region4)):
                 if i == 0:
@@ -935,22 +1043,29 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
                     region4[i] = 1./(np.exp( ((t3-t4)/(time_array[i+i3]-t3)) + \
                                       ((t3-t4)/(time_array[i+i3]-t4)) ) + 1)
                 except:
-                    if time_array[i+i3]>0.9*t3 and time_array[i+i3]<1.1*t3: region4[i] = 1.
-                    if time_array[i+i3]>0.9*t4 and time_array[i+i3]<1.1*t4: region4[i] = 0
+                    if time_array[i + i3] > 0.9 * t3 and time_array[
+                            i + i3] < 1.1 * t3:
+                        region4[i] = 1.
+                    if time_array[i + i3] > 0.9 * t4 and time_array[
+                            i + i3] < 1.1 * t4:
+                        region4[i] = 0
             #
             if self.verbose > 3:
                 import matplotlib.pyplot as plt
-                plt.plot(np.arange(len(region1))*hp.delta_t, region1)
+                plt.plot(np.arange(len(region1)) * hp.delta_t, region1)
                 offset = len(region1)
-                plt.plot((offset+np.arange(len(region2)))*hp.delta_t, region2)
+                plt.plot((offset + np.arange(len(region2))) * hp.delta_t,
+                         region2)
                 offset += len(region2)
-                plt.plot((offset+np.arange(len(region3)))*hp.delta_t, region3)
+                plt.plot((offset + np.arange(len(region3))) * hp.delta_t,
+                         region3)
                 offset += len(region3)
-                plt.plot((offset+np.arange(len(region4)))*hp.delta_t, region4)
+                plt.plot((offset + np.arange(len(region4))) * hp.delta_t,
+                         region4)
                 plt.grid()
                 plt.savefig('DEBUG-TaperingWindow.png')
             #
-            win = np.concatenate((region1,region2,region3,region4,region5))
+            win = np.concatenate((region1, region2, region3, region4, region5))
         elif 'cos' in tapermethod:
             win = region1
             win12 = 0.5 + 0.5*np.array([np.cos( np.pi*(float(j-ntaper1)/float(ntaper2-\
@@ -961,7 +1076,8 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
                                   ntaper3) - 1)) for j in np.arange(ntaper3,ntaper4)])
             win = np.append(win, win34)
             win = np.append(win, region5)
-        else: raise IOError("Please specify valid taper-method")
+        else:
+            raise IOError("Please specify valid taper-method")
         ##########################################################
         # ##########   Taper & Filter the waveform   #############
         ##########################################################
@@ -970,15 +1086,16 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
         #
         # High pass filter the waveform
         if f_filter > 0:
-            hplal = convert_TimeSeries_to_lalREAL8TimeSeries( hp )
-            hclal = convert_TimeSeries_to_lalREAL8TimeSeries( hc )
-            lal.HighPassREAL8TimeSeries( hplal, f_filter, 0.9, 8 )
-            lal.HighPassREAL8TimeSeries( hclal, f_filter, 0.9, 8 )
-            hp = convert_lalREAL8TimeSeries_to_TimeSeries( hplal )
-            hc = convert_lalREAL8TimeSeries_to_TimeSeries( hclal )
+            hplal = convert_TimeSeries_to_lalREAL8TimeSeries(hp)
+            hclal = convert_TimeSeries_to_lalREAL8TimeSeries(hc)
+            lal.HighPassREAL8TimeSeries(hplal, f_filter, 0.9, 8)
+            lal.HighPassREAL8TimeSeries(hclal, f_filter, 0.9, 8)
+            hp = convert_lalREAL8TimeSeries_to_TimeSeries(hplal)
+            hc = convert_lalREAL8TimeSeries_to_TimeSeries(hclal)
 
         return hp, hc
         #}}}
+
     #
     ###################################################################
     ####################################################################
@@ -987,7 +1104,7 @@ Currently supported tapermethods: 'planck' [default], 'cosine'
     #
     ####################################################################
     ###################################################################
-    #    
+    #
     def get_strain_modes_amplitudes(self, recalculate=False):
         """
 Precompute amplitudes of all waveform modes.
@@ -997,11 +1114,13 @@ Precompute amplitudes of all waveform modes.
         self.amplitudes = {}
         # Loop over all modes to be included
         for (modeL, modeM) in self.which_modes_to_read():
-            if self.skipM0 and modeM==0: continue
+            if self.skipM0 and modeM == 0: continue
             if modeL not in self.amplitudes: self.amplitudes[modeL] = {}
             if modeM in self.amplitudes[modeL] and not recalculate: continue
-            self.amplitudes[modeL][modeM] = self.get_mode_amplitude(modeL, modeM)
+            self.amplitudes[modeL][modeM] = self.get_mode_amplitude(
+                modeL, modeM)
         return self.amplitudes
+
     #
     def get_bondi_news_modes(self, recalculate=True):
         """
@@ -1013,21 +1132,24 @@ Compute (l,m) modes of Bondi's News function: N_lm = \dot{h}
         self.News = {}
         # Loop over all modes to be included
         for (modeL, modeM) in self.which_modes_to_read():
-            if self.skipM0 and modeM==0: continue
+            if self.skipM0 and modeM == 0: continue
             if modeL not in self.News: self.News[modeL] = {}
             if modeM in self.News[modeL] and not recalculate: continue
             h_ = self.data.modes[modeL][modeM].data()
             h_re = h_.real()
             h_im = h_.imag()
             # Here, we could use the interpolant created for each mode object
-            Nre = TimeSeries(np.gradient( h_re.data, h_re.delta_t ),
-                             delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re),
+            Nre = TimeSeries(np.gradient(h_re.data, h_re.delta_t),
+                             delta_t=h_re.delta_t,
+                             dtype=real_same_precision_as(h_re),
                              epoch=h_._epoch)
-            Nim = TimeSeries(np.gradient( h_im.data, h_im.delta_t ),
-                             delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im),
-                             epoch=h_._epoch )
+            Nim = TimeSeries(np.gradient(h_im.data, h_im.delta_t),
+                             delta_t=h_im.delta_t,
+                             dtype=real_same_precision_as(h_im),
+                             epoch=h_._epoch)
             self.News[modeL][modeM] = Nre + Nim * 1.0j
         return self.News
+
     #
     def get_psi4_modes(self, recalculate=False):
         """
@@ -1039,21 +1161,24 @@ Compute (l,m) modes of Psi4 from: \Psi_4 = - \ddot{h}
         self.Psi4 = {}
         # Loop over all modes to be included
         for (modeL, modeM) in self.which_modes_to_read():
-            if self.skipM0 and modeM==0: continue
+            if self.skipM0 and modeM == 0: continue
             if modeL not in self.Psi4: self.Psi4[modeL] = {}
             if modeM in self.Psi4[modeL] and not recalculate: continue
             h_ = self.News[modeL][modeM]
             h_re = h_.real()
             h_im = h_.imag()
             # Here, we could use the interpolant created for each mode object
-            Pre = TimeSeries(np.gradient( h_re.data, h_re.delta_t ),
-                             delta_t=h_re.delta_t, dtype=real_same_precision_as(h_re),
+            Pre = TimeSeries(np.gradient(h_re.data, h_re.delta_t),
+                             delta_t=h_re.delta_t,
+                             dtype=real_same_precision_as(h_re),
                              epoch=h_._epoch)
-            Pim = TimeSeries( np.gradient( h_im.data, h_im.delta_t ),
-                             delta_t=h_im.delta_t, dtype=real_same_precision_as(h_im),
+            Pim = TimeSeries(np.gradient(h_im.data, h_im.delta_t),
+                             delta_t=h_im.delta_t,
+                             dtype=real_same_precision_as(h_im),
                              epoch=h_._epoch)
             self.Psi4[modeL][modeM] = -1 * (Pre + Pim * 1.0j)
         return self.Psi4
+
     #
     def dEdt(self, lMax=8, recalculate=True):
         """
@@ -1061,23 +1186,28 @@ Compute dE/dt = \Sum_{l,m} ||h_lm||^2
 
 ** Does not change the S1 state of the object **
         """
-        if not recalculate and hasattr(aelf, "ValuedEdt"): return self.ValuedEdt
-        lMax   = min(lMax, self.modeLmax)
-        _      = self.get_strain_modes_amplitudes()
+        if not recalculate and hasattr(aelf, "ValuedEdt"):
+            return self.ValuedEdt
+        lMax = min(lMax, self.modeLmax)
+        _ = self.get_strain_modes_amplitudes()
         momega = self.orbital_frequency()
-        dEdt   = np.zeros( len(momega) )
+        dEdt = np.zeros(len(momega))
         # Loop over all modes to be included
         for (modeL, modeM) in self.which_modes_to_read():
-            if self.skipM0 and modeM==0: continue
+            if self.skipM0 and modeM == 0: continue
             if self.verbose > 1:
-                print("Adding contribution to dEdt from mode ({},{})".format(modeL,modeM))
-            dEdt += modeM * modeM * self.amplitudes[modeL][modeM].data * self.amplitudes[modeL][modeM].data
+                print("Adding contribution to dEdt from mode ({},{})".format(
+                    modeL, modeM))
+            dEdt += modeM * modeM * self.amplitudes[modeL][
+                modeM].data * self.amplitudes[modeL][modeM].data
         dEdt *= momega.data * momega.data / 8. / np.pi
-        dEdt = TimeSeries(-1 * dEdt, delta_t = momega.delta_t,
-                              dtype=real_same_precision_as(momega),
-                              epoch=momega._epoch)
+        dEdt = TimeSeries(-1 * dEdt,
+                          delta_t=momega.delta_t,
+                          dtype=real_same_precision_as(momega),
+                          epoch=momega._epoch)
         self.ValuedEdt = dEdt
         return dEdt
+
     #
     def dEdtfunc(self):
         """
@@ -1086,8 +1216,10 @@ Return a interpolant-function that computes dE/dt = \Sum_{l,m} ||h_lm||^2
 ** Does not change the S1 state of the object **
         """
         dEdt = self.dEdt()
-        self.FuncdEdt = InterpolatedUnivariateSpline(dEdt.sample_times.data, dEdt.data)
+        self.FuncdEdt = InterpolatedUnivariateSpline(dEdt.sample_times.data,
+                                                     dEdt.data)
         return self.FuncdEdt
+
     #
     def E(self, discrete=True, lMax=8, useNews=False):
         """
@@ -1098,30 +1230,37 @@ Compute E = \int_0^T (dE/dt) dt, from start to end, as a function of time.
         lMax = min(lMax, self.modeLmax)
         if discrete:
             dEdt = self.dEdt(lMax=lMax)
-            Edisc = cumtrapz( dEdt.data, dEdt.sample_times.data, initial=0 )
-            Edisc = TimeSeries(Edisc, delta_t=dEdt.delta_t,
-                              dtype=real_same_precision_as(dEdt),
-                              epoch=dEdt._epoch)
+            Edisc = cumtrapz(dEdt.data, dEdt.sample_times.data, initial=0)
+            Edisc = TimeSeries(Edisc,
+                               delta_t=dEdt.delta_t,
+                               dtype=real_same_precision_as(dEdt),
+                               epoch=dEdt._epoch)
         elif useNews:
             Nlm = self.get_bondi_news_modes()
             Edisc = None
             # Loop over all modes to be included
             for (modeL, modeM) in self.which_modes_to_read():
-                if self.skipM0 and modeM==0: continue
+                if self.skipM0 and modeM == 0: continue
                 AbsNlm = abs(Nlm[modeL][modeM])
                 if Edisc is None:
-                    Edisc = cumtrapz( AbsNlm.data, AbsNlm.sample_times.data, initial=0 )
+                    Edisc = cumtrapz(AbsNlm.data,
+                                     AbsNlm.sample_times.data,
+                                     initial=0)
                 else:
-                    Edisc += cumtrapz( AbsNlm.data, AbsNlm.sample_times.data, initial=0 )
-            Edisc = TimeSeries(Edisc, delta_t=AbsNlm.delta_t,
+                    Edisc += cumtrapz(AbsNlm.data,
+                                      AbsNlm.sample_times.data,
+                                      initial=0)
+            Edisc = TimeSeries(Edisc,
+                               delta_t=AbsNlm.delta_t,
                                dtype=real_same_precision_as(AbsNlm),
                                epoch=dEdt._epoch)
         else:
             raise IOError("supply an integration method..?")
         self.ValueE = Edisc / 16. / np.pi
         return self.ValueE
+
     #
-    def J(self, discrete=False, lMax=8, useNews=True ):
+    def J(self, discrete=False, lMax=8, useNews=True):
         """
 Compute J = [FIXME], from start to end, as a function of time.
 
@@ -1135,20 +1274,25 @@ Compute J = [FIXME], from start to end, as a function of time.
             Jdisc = None
             # Loop over all modes to be included
             for (modeL, modeM) in self.which_modes_to_read():
-                if self.skipM0 and modeM==0: continue
-                prodJh = self.data.modes[modeL][modeM].data() * Nlm[modeL][modeM].conj()
+                if self.skipM0 and modeM == 0: continue
+                prodJh = self.data.modes[modeL][modeM].data(
+                ) * Nlm[modeL][modeM].conj()
                 prodJh = prodJh.imag()
                 if Jdisc is None:
-                    Jdisc = modeM * cumtrapz( prodJh.data, prodJh.sample_times.data, initial=0 )
+                    Jdisc = modeM * cumtrapz(
+                        prodJh.data, prodJh.sample_times.data, initial=0)
                 else:
-                    Jdisc +=  modeM * cumtrapz( prodJh.data, prodJh.sample_times.data, initial=0 )
-            Jdisc = TimeSeries(Jdisc, delta_t=Nlm[2][2].delta_t,
-                              dtype=real_same_precision_as(Nlm[2][2]),
-                              epoch=Nlm[2][2]._epoch)
+                    Jdisc += modeM * cumtrapz(
+                        prodJh.data, prodJh.sample_times.data, initial=0)
+            Jdisc = TimeSeries(Jdisc,
+                               delta_t=Nlm[2][2].delta_t,
+                               dtype=real_same_precision_as(Nlm[2][2]),
+                               epoch=Nlm[2][2]._epoch)
         else:
             raise IOError("supply an integration method..?")
         self.ValueJ = Jdisc / 16. / np.pi
         return self.ValueJ
+
     #}}}
 
 
@@ -1164,67 +1308,71 @@ nr_wave = nr_strain
 ######################################################################
 ######################################################################
 class strain():
-  #{{{
-  def __init__(self, filename=None, filetype='HDF', nogroup=False,\
-                modeLmin=2, modeLmax=8, modeM=2,\
-                sample_rate=8192, time_length=256, ex_order=-1, cce=True,
-                totalmass=None, verbose=True):
-    self.filename = filename
-    self.filetype = filetype
-    self.modeLmin = modeLmin
-    self.modeLmax = modeLmax
-    self.sample_rate = sample_rate
-    self.time_length = time_length
-    self.cce = cce
-    self.ex_order = ex_order
-    self.nogroup = nogroup
-    self.totalmass = totalmass
-    self.verbose = True
+    #{{{
+    def __init__(self, filename=None, filetype='HDF', nogroup=False,\
+                  modeLmin=2, modeLmax=8, modeM=2,\
+                  sample_rate=8192, time_length=256, ex_order=-1, cce=True,
+                  totalmass=None, verbose=True):
+        self.filename = filename
+        self.filetype = filetype
+        self.modeLmin = modeLmin
+        self.modeLmax = modeLmax
+        self.sample_rate = sample_rate
+        self.time_length = time_length
+        self.cce = cce
+        self.ex_order = ex_order
+        self.nogroup = nogroup
+        self.totalmass = totalmass
+        self.verbose = True
+        #
+        self.amplitudes = None
+        self.momega = None
+        self.Ederiv = None
+        self.Nlm = None
+        return
+
     #
-    self.amplitudes = None
-    self.momega = None
-    self.Ederiv = None
-    self.Nlm = None
-    return
-  #
-  def read_strain_modes( self ):
-    self.rawmodes, self.modes = {}, {}
-    for ll in range(self.modeLmin, self.modeLmax+1):
-      self.modes[ll], self.rawmodes[ll] = {}, {}
-      for mm in range( -1*ll, ll+1 ):
-        if self.verbose: print("Reading mode (%d,%d)" % (ll,mm), file=sys.stdout)
-        self.modes[ll][mm] = nr_waveform( filename=self.filename,\
-                              filetype=self.filetype,\
-                              nogroup=self.nogroup, modeL=ll, modeM=mm,\
-                              sample_rate=self.sample_rate,\
-                              time_length=self.time_length,\
-                              ex_order=self.ex_order, cce=self.cce,\
-                              totalmass=self.totalmass,\
-                              rawdelta_t=-1 )
-        self.rawmodes[ll][mm] = self.modes[ll][mm].rawhp + self.modes[ll][mm].rawhc * 1j
-        self.modes[ll][mm].rescale_to_totalmass(1)
-    return
-  #
-  def good_indices( self ):
-    self.get_strain_modes_amplitudes()
-    ap = self.amplitudes[2][2]
-    mask = ap[ap.max_loc()[-1]:].data > 0.1 * ap.max_loc()[0]
-    for i in range(len(mask)):
-      if not mask[i]: break
-    iend = ap.max_loc()[-1] + i
-    return 500, iend
-  #
-  def peak_time( self, ll=2, mm=2 ):
-    self.get_strain_modes_amplitudes()
-    ap = self.amplitudes[ll][mm]
-    return ap.sample_times[ap.max_loc()[-1]]
-  #
-  def peak_amplitude( self, ll=2, mm=2 ):
-    self.get_strain_modes_amplitudes()
-    ap = self.amplitudes[ll][mm]
-    return ap.max_loc()[0]
-  #
-  #}}}
+    def read_strain_modes(self):
+        self.rawmodes, self.modes = {}, {}
+        for ll in range(self.modeLmin, self.modeLmax + 1):
+            self.modes[ll], self.rawmodes[ll] = {}, {}
+            for mm in range(-1 * ll, ll + 1):
+                if self.verbose:
+                    print("Reading mode (%d,%d)" % (ll, mm), file=sys.stdout)
+                self.modes[ll][mm] = nr_waveform( filename=self.filename,\
+                                      filetype=self.filetype,\
+                                      nogroup=self.nogroup, modeL=ll, modeM=mm,\
+                                      sample_rate=self.sample_rate,\
+                                      time_length=self.time_length,\
+                                      ex_order=self.ex_order, cce=self.cce,\
+                                      totalmass=self.totalmass,\
+                                      rawdelta_t=-1 )
+                self.rawmodes[ll][mm] = self.modes[ll][
+                    mm].rawhp + self.modes[ll][mm].rawhc * 1j
+                self.modes[ll][mm].rescale_to_totalmass(1)
+        return
 
+    #
+    def good_indices(self):
+        self.get_strain_modes_amplitudes()
+        ap = self.amplitudes[2][2]
+        mask = ap[ap.max_loc()[-1]:].data > 0.1 * ap.max_loc()[0]
+        for i in range(len(mask)):
+            if not mask[i]: break
+        iend = ap.max_loc()[-1] + i
+        return 500, iend
 
+    #
+    def peak_time(self, ll=2, mm=2):
+        self.get_strain_modes_amplitudes()
+        ap = self.amplitudes[ll][mm]
+        return ap.sample_times[ap.max_loc()[-1]]
 
+    #
+    def peak_amplitude(self, ll=2, mm=2):
+        self.get_strain_modes_amplitudes()
+        ap = self.amplitudes[ll][mm]
+        return ap.max_loc()[0]
+
+    #
+    #}}}

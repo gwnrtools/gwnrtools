@@ -56,29 +56,30 @@ for d in dirs:
                     ofile = ff
             print("Checking outfile = %s" % ofile, file=sys.stderr)
             try:
-                asked, used = cmd.getoutput(
-                    'cat %s | grep walltime=' %
-                    ofile).split('\n')
+                asked, used = cmd.getoutput('cat %s | grep walltime=' %
+                                            ofile).split('\n')
                 usedtime = int(getSec(used.split('=')[-1]))
                 askedtime = int(getSec(asked.split('=')[-1]))
                 if usedtime < askedtime:
                     #qq = int(cmd.getoutput('tail *_%s.o* | grep Killing | wc -l' % ld))
-                    print(
-                        "Warning: %s/%s run might not have stopped yet!" %
-                        (d, ld), file=sys.stdout)
+                    print("Warning: %s/%s run might not have stopped yet!" %
+                          (d, ld),
+                          file=sys.stdout)
                     askuser = eval(
                         input('Should we re-submit this run ([y]/n): '))
                     if 'y' not in askuser:
                         continue
                 else:
-                    print(
-                        "%s run is incomplete. Execution time=%d" %
-                        (ld, usedtime), file=sys.stderr)
+                    print("%s run is incomplete. Execution time=%d" %
+                          (ld, usedtime),
+                          file=sys.stderr)
             except BaseException:
                 print("Check did not work.Restarting anyway", file=sys.stderr)
         except BaseException:
             askuser = eval(
-                input('Check indeterminate. Should we re-submit this run ([y]/n):'))
+                input(
+                    'Check indeterminate. Should we re-submit this run ([y]/n):'
+                ))
             # if 'y' not in askuser: continue
         # Determine which is the next number
         nn = len(glob.glob('highResCce-*.par')) + 1
@@ -88,7 +89,8 @@ for d in dirs:
         #
         print("Copying highResCce-resubmit.par to highResCce.par")
         cmd.getoutput(
-            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par')
+            'cp /home/p/pfeiffer/prayush/scratch/projects/CCE_modeldir/highResCce700-resubmit.par highResCce.par'
+        )
         #
         print("Moving highResCce to highResCce-%d" % nn)
         cmd.getoutput('mv highResCce highResCce-%d' % nn)

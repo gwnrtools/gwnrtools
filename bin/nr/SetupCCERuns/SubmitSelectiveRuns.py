@@ -74,15 +74,16 @@ for ld in levdirs:
     else:
         ld_datadir = os.path.join(datadir, dir, ld)
         ld_outdir = os.path.join(outdir, dir, ld)
-        datafile = cmd.getoutput(
-            '/bin/ls %s/ | grep .h5 | grep CceR' %
-            ld_outdir)
+        datafile = cmd.getoutput('/bin/ls %s/ | grep .h5 | grep CceR' %
+                                 ld_outdir)
         #
         print(ld_datadir, "\n", ld_outdir, "\n", datafile)
-        crun[ld] = CC.cce_run(datafile=datafile, datadir=ld_datadir,
+        crun[ld] = CC.cce_run(datafile=datafile,
+                              datadir=ld_datadir,
                               pittnull=os.path.join(ld_datadir, datafile),
                               outdir=ld_outdir,
-                              post_process_only=True, verbose=True)
+                              post_process_only=True,
+                              verbose=True)
         print("%s for run %s has completed first segment already" % (dir, ld))
         if len(glob('*-?')) == 1:
             print("ONLY ONE segment has run.. CONTINUING")

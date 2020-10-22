@@ -36,41 +36,38 @@ parser = OptionParser(
     this information in an xml file.""")
 
 parser.add_option("-i", "--input-tags", help="Names of the tags")
-parser.add_option(
-    "-x",
-    "--input-catalog",
-    help="Names of the xml file to append the information to",
-    type=str,
-    default=None)
-parser.add_option(
-    "-t",
-    "--output-catalog",
-    metavar='file',
-    help='output file name')
+parser.add_option("-x",
+                  "--input-catalog",
+                  help="Names of the xml file to append the information to",
+                  type=str,
+                  default=None)
+parser.add_option("-t",
+                  "--output-catalog",
+                  metavar='file',
+                  help='output file name')
 parser.add_option(
     "--nr-input-dir",
     metavar='DIR',
     help='Main dir with nr sim',
     default='/mnt/raid-project/nr/tonyc/next100Runs/confg_AlignedSpinning/')
 
-parser.add_option(
-    '-n',
-    '--num',
-    metavar='SAMPLES',
-    help='number of templates in the output banks',
-    type=int)
-parser.add_option(
-    "-V",
-    "--verbose",
-    action="store_true",
-    help="print extra debugging information",
-    default=False)
+parser.add_option('-n',
+                  '--num',
+                  metavar='SAMPLES',
+                  help='number of templates in the output banks',
+                  type=int)
+parser.add_option("-V",
+                  "--verbose",
+                  action="store_true",
+                  help="print extra debugging information",
+                  default=False)
 
 options, argv_frame_files = parser.parse_args()
 
 if options.input_catalog is not None:
     indoc = ligolw_utils.load_filename(options.input_catalog,
-                                       contenthandler=LIGOLWContentHandler, verbose=options.verbose)
+                                       contenthandler=LIGOLWContentHandler,
+                                       verbose=options.verbose)
     #
     try:
         input_table = lsctables.SnglInspiralTable.get_table(indoc)
@@ -88,40 +85,24 @@ else:
 # create a blank xml document and add the process id
 outdoc = ligolw.Document()
 outdoc.appendChild(ligolw.LIGO_LW())
-proc_id = ligolw_process.register_to_xmldoc(outdoc,
-                                            PROGRAM_NAME, options.__dict__, ifos=[
-                                                "G1"],
-                                            version=git_version.id, cvs_repository=git_version.branch,
-                                            cvs_entry_time=git_version.date).process_id
+proc_id = ligolw_process.register_to_xmldoc(
+    outdoc,
+    PROGRAM_NAME,
+    options.__dict__,
+    ifos=["G1"],
+    version=git_version.id,
+    cvs_repository=git_version.branch,
+    cvs_entry_time=git_version.date).process_id
 
 out_table = lsctables.New(
     inputtabletype,
     columns=[
-        'mass1',
-        'mass2',
-        'mchirp',
-        'eta',
-        'spin1x',
-        'spin1y',
-        'spin1z',
-        'spin2x',
-        'spin2y',
-        'spin2z',
-        'inclination',
-        'polarization',
-        'latitude',
-        'longitude',
-        'bandpass',
-        'alpha',
-        'alpha1',
-        'alpha2',
-        'process_id',
-        'waveform',
-        'numrel_data',
-        'numrel_mode_min',
-        'numrel_mode_max',
-        't_end_time',
-        'f_lower'])
+        'mass1', 'mass2', 'mchirp', 'eta', 'spin1x', 'spin1y', 'spin1z',
+        'spin2x', 'spin2y', 'spin2z', 'inclination', 'polarization',
+        'latitude', 'longitude', 'bandpass', 'alpha', 'alpha1', 'alpha2',
+        'process_id', 'waveform', 'numrel_data', 'numrel_mode_min',
+        'numrel_mode_max', 't_end_time', 'f_lower'
+    ])
 outdoc.childNodes[0].appendChild(out_table)
 
 # Copy the INPUT table
@@ -148,11 +129,8 @@ if options.input_catalog is not None:
 
 
 def get_metadatafiles(nr_tag):
-    levdirs = glob.glob(
-        options.nr_input_dir +
-        '/' +
-        nr_tag +
-        '/Production/BBH*/Lev?')
+    levdirs = glob.glob(options.nr_input_dir + '/' + nr_tag +
+                        '/Production/BBH*/Lev?')
     levstrs, metadatafiles = [], {}
     for levdir in levdirs:
         levname = levdir.split('/')[-1]
@@ -247,7 +225,6 @@ for tag in options.input_tags.split():
             (npoint.mass1 + npoint.mass2)**2
         npoint.mchirp = (npoint.mass1 + npoint.mass2) * npoint.eta**0.6
         out_table.append(npoint)
-
 
 # write the xml doc to disk
 proctable = lsctables.ProcessTable.get_table(outdoc)
