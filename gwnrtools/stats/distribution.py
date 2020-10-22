@@ -44,14 +44,13 @@ plt.rcParams.update({'text.usetex': True})
 
 logging.getLogger().setLevel(logging.INFO)
 
-
 ######################################################
 # Constants
 
 quantiles_68 = [0.16, 0.5, 0.84]  # 1-sigma
 quantiles_95 = [0.0228, 0.5, 0.9772]  # 2-sigma ~ 95.4%
-percentiles_68 = 100*np.array(quantiles_68)
-percentiles_95 = 100*np.array(quantiles_95)
+percentiles_68 = 100 * np.array(quantiles_68)
+percentiles_95 = 100 * np.array(quantiles_95)
 perc_int_95 = [2.28, 97.72]
 perc_int_99_7 = [0.13, 99.87]  # 3 sigma
 
@@ -61,35 +60,42 @@ perc_int_99_7 = [0.13, 99.87]  # 3 sigma
 linestyles = ['-', '--', '-.', '-x', '--o']
 linecolors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
 plotdir = 'plots/'
-gmean = (5**0.5 + 1)/2.
+gmean = (5**0.5 + 1) / 2.
 
 # Figure settings
 ppi = 72.0
 aspect = (5.**0.5 - 1) * 0.5
 size = 4.0 * 2  # was 6
-figsize = (size, aspect*size)
-
+figsize = (size, aspect * size)
 
 ######################################################################
 #     UTILITIES FOR 1D / ND DISTRIBUTIONS
+
 
 def KDEMeanOverRange(kde_func, x_range):
     total_area = si.quad(kde_func, low, high)
     low = np.min(x_range)
     high = np.max(x_range)
-    def give_integrand(xval): return kde_func(xval) * xval
+
+    def give_integrand(xval):
+        return kde_func(xval) * xval
+
     return si.quad(give_integrand, low, high) / total_area
 
 
 def KDEMedianOverRange(kde_func, x_range):
     low = np.min(x_range)
     high = np.max(x_range)
-    def give_pdf(xval): return -1.0 * kde_func(xval)
+
+    def give_pdf(xval):
+        return -1.0 * kde_func(xval)
+
     return so.minimize(give_pdf, H0).x[0]
 
 
 #######################################################
 # CONTAINER and CALCULATION CLASSES
+
 
 class OneDDistribution:
     '''
@@ -107,13 +113,15 @@ data_kde - if provided, must be a KDE estimator class with a member
             function called "evaluate". E.g. use KDEUnivariate class from
             [] from statsmodels.nonparametric.kde import KDEUnivariate
     '''
-
-    def __init__(self, data, data_kde=None,
+    def __init__(self,
+                 data,
+                 data_kde=None,
                  kernel='gau',
                  bw_method='scott',
                  kernel_cut=3.0,
                  xlimits=None,
-                 verbose=True, debug=False):
+                 verbose=True,
+                 debug=False):
         if debug:
             logging.info("Initializing OneDDistribution object..")
         self.input_data = np.array(data)
@@ -123,23 +131,28 @@ data_kde - if provided, must be a KDE estimator class with a member
         if xlimits:
             self.xllimit, self.xulimit = xlimits
         else:
-            self.xllimit, self.xulimit = min(
-                self.input_data), max(self.input_data)
+            self.xllimit, self.xulimit = min(self.input_data), max(
+                self.input_data)
         if data_kde != None:
             self.kde = data_kde
-            logging.warn("""WARNING: Be careful when providing a kernel density estimator directly.
-                              We assume, but not check, that it matches the input sample set..""")
+            logging.warn(
+                """WARNING: Be careful when providing a kernel density estimator directly.
+                              We assume, but not check, that it matches the input sample set.."""
+            )
         self.verbose = verbose
         self.debug = debug
         return
+
     ###
 
     def data(self):
         return self.input_data
+
     ###
 
     def xlimits(self):
         return [self.xllimit, self.xulimit]
+
     ##
 
     def normalization(self, xllimit=None, xulimit=None):
@@ -152,10 +165,14 @@ data_kde - if provided, must be a KDE estimator class with a member
             xllimit, _ = self.xlimits()
         if xulimit == None:
             _, xulimit = self.xlimits()
-        input_data_norm = si.quad(input_kde_func, xllimit, xulimit,
-                                  epsabs=1.e-16, epsrel=1.e-16)[0]
+        input_data_norm = si.quad(input_kde_func,
+                                  xllimit,
+                                  xulimit,
+                                  epsabs=1.e-16,
+                                  epsrel=1.e-16)[0]
         self.norm = input_data_norm
         return input_data_norm
+
     ###
 
     def mean(self, xllimit=None, xulimit=None):
@@ -181,6 +198,7 @@ data_kde - if provided, must be a KDE estimator class with a member
         if xulimit is not None:
             tmp_data = tmp_data[tmp_data >= xllimit]
         return np.percentile(tmp_data, perc)
+
     ###
 
     def kde(self):
@@ -190,31 +208,40 @@ data_kde - if provided, must be a KDE estimator class with a member
             logging.info("INITALIZING 1D KDE")
         kde = KDEUnivariate(self.input_data)
         try:
-            kde.fit(kernel=self.kernel, bw=self.bw_method,
-                    fft=True, cut=self.kernel_cut)
+            kde.fit(kernel=self.kernel,
+                    bw=self.bw_method,
+                    fft=True,
+                    cut=self.kernel_cut)
         except:
-            kde.fit(kernel=self.kernel, bw=self.bw_method,
-                    fft=False, cut=self.kernel_cut)
+            kde.fit(kernel=self.kernel,
+                    bw=self.bw_method,
+                    fft=False,
+                    cut=self.kernel_cut)
         self.evaluate_kde = kde.evaluate
         self.kde_object = kde
         return self.evaluate_kde
+
     ###
 
     def sliced(self, i):
         if i != 0:
             raise RuntimeError(
-                "One-D data has only one slice, indexed by 0 (asked for %d)" % i)
+                "One-D data has only one slice, indexed by 0 (asked for %d)" %
+                i)
         return self
+
     # oneD_
 
     def pdf_over_range(self, x_range):
         self.kde()
         return self.evaluate_kde(x_range)
+
     ###
 
     def mean_in_range(self, x_range):
         kde_func = self.kde()
         return KDEMeanOverRange(kde_func, x_range)
+
     ##
 
     def median_in_range(self, x_range):
@@ -253,9 +280,7 @@ data_kde: KDE estimator class object with a member function called "evaluate".
 
 xlimits: iterable of two arrays, one for lower limit and one for uppe
     '''
-
-    def __init__(self, datadir, result_tag, event_ids, var_type,
-                 verbose=True):
+    def __init__(self, datadir, result_tag, event_ids, var_type, verbose=True):
         ### =======         INPUT CHECKING/HANDLING              ======= ###
         if not os.path.exists(datadir):
             raise IOError("DATA Directory %s does not exist.." % datadir)
@@ -274,6 +299,7 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         self.pdf_cum_events = {}
         ##
         return
+
     ###
 
     def read_distributions(self):
@@ -291,6 +317,7 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
             res_file = os.path.join(datadir, result_tag % event_id_pattern)
             data[event_id] = np.loadtxt(res_file)
         return data
+
     ###
 
     def process_oned_slices(self, kernel_cut=3.0, reprocess=False):
@@ -300,10 +327,12 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
             if self.verbose:
                 logging.info("\n READING EVENT %d" % (id))
 
-            self.event[id] = MultiDDistribution(self.data[id], self.var_type,
+            self.event[id] = MultiDDistribution(self.data[id],
+                                                self.var_type,
                                                 oneD_kernel_cut=kernel_cut)
             self.pdf_norm_event[id] = self.event[id].sliced(0).normalization()
         return self.event
+
     ###
 
     def combine_oned_slices(self, x_range, prior_func, event_ids=None):
@@ -317,16 +346,16 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         self.XRANGE = x_range
         self.PRIORDATA = prior_func(x_range)
         for id_cnt, id in enumerate(event_ids):
-            self.pdf_norm_event[id] = self.event[id].sliced(0).normalization(xllimit=x_range.min(),
-                                                                             xulimit=x_range.max())
-            self.pdf_event[id] = self.event[id].sliced(
-                0).kde()(x_range) / self.pdf_norm_event[id]
+            self.pdf_norm_event[id] = self.event[id].sliced(0).normalization(
+                xllimit=x_range.min(), xulimit=x_range.max())
+            self.pdf_event[id] = self.event[id].sliced(0).kde()(
+                x_range) / self.pdf_norm_event[id]
             if id_cnt != 0:
-                self.pdf_cum_events[id] = self.pdf_cum_events[event_ids[id_cnt-1]
-                                                              ] * self.pdf_event[id]
+                self.pdf_cum_events[id] = self.pdf_cum_events[event_ids[
+                    id_cnt - 1]] * self.pdf_event[id]
                 self.pdf_cum_events[id] /= self.PRIORDATA**2
-                AREA = np.sum(
-                    self.pdf_cum_events[id]) * (x_range.max() - x_range.min()) / len(x_range)
+                AREA = np.sum(self.pdf_cum_events[id]) * (
+                    x_range.max() - x_range.min()) / len(x_range)
                 self.pdf_cum_events[id] /= AREA
             else:
                 self.pdf_cum_events[id] = self.pdf_event[id] / \
@@ -336,9 +365,13 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         #    AREA = np.sum(self.pdf_cum_events[id]) * (x_range.max() - x_range.min()) / len(x_range)
         #    self.pdf_cum_events[id] /= AREA
         return self.pdf_cum_events[id]
+
     ###
 
-    def plot_combined_oned_slices(self, x_range, prior_func, event_ids=None,
+    def plot_combined_oned_slices(self,
+                                  x_range,
+                                  prior_func,
+                                  event_ids=None,
                                   labels_per_column=15,
                                   label_every_nth_curve=1,
                                   cum_pdf_ylim=[0, 1.2],
@@ -356,40 +389,64 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         label_cnt = 0
         for id_cnt, id in enumerate(event_ids):
             label_txt = None
-            if label_every_nth_curve > 1 and ((id_cnt+1) % label_every_nth_curve) == 0:
-                label_txt = '%d' % (id_cnt+1)
+            if label_every_nth_curve > 1 and ((id_cnt + 1) %
+                                              label_every_nth_curve) == 0:
+                label_txt = '%d' % (id_cnt + 1)
                 label_cnt += 1
-            ax0.plot(x_range, self.pdf_cum_events[id], 'k', lw=2,
-                     alpha=0.1+id_cnt*0.7/len(event_ids), label=label_txt)
+            ax0.plot(x_range,
+                     self.pdf_cum_events[id],
+                     'k',
+                     lw=2,
+                     alpha=0.1 + id_cnt * 0.7 / len(event_ids),
+                     label=label_txt)
 
             label_txt = None
-            if label_every_nth_curve > 1 and ((id_cnt+1) % label_every_nth_curve) == 0:
-                label_txt = '%d' % (id_cnt+1)
-            ax2.plot(x_range, self.pdf_event[id] / self.pdf_norm_event[id],
-                     label=label_txt, color='k', lw=2,
-                     alpha=0.1+id_cnt*0.7/len(event_ids))
-            _ = ax2.hist(self.event[id].sliced(
-                0).input_data, bins=50, normed=True, alpha=0.03)
+            if label_every_nth_curve > 1 and ((id_cnt + 1) %
+                                              label_every_nth_curve) == 0:
+                label_txt = '%d' % (id_cnt + 1)
+            ax2.plot(x_range,
+                     self.pdf_event[id] / self.pdf_norm_event[id],
+                     label=label_txt,
+                     color='k',
+                     lw=2,
+                     alpha=0.1 + id_cnt * 0.7 / len(event_ids))
+            _ = ax2.hist(self.event[id].sliced(0).input_data,
+                         bins=50,
+                         normed=True,
+                         alpha=0.03)
 
             ax0.axvline(self.event[id].sliced(0).mean(),
-                        color='g', alpha=0.5, ls='--')
+                        color='g',
+                        alpha=0.5,
+                        ls='--')
             ax0.axvline([self.event[id].sliced(0).median()],
-                        color='r', alpha=0.6, ls='--')
-            ax0.axvline(KDEMedianOverRange(UnivariateSpline(x_range, self.pdf_cum_events[id]), x_range),
-                        color='k', alpha=0.1+id_cnt*0.7/len(event_ids), ls='--')
+                        color='r',
+                        alpha=0.6,
+                        ls='--')
+            ax0.axvline(KDEMedianOverRange(
+                UnivariateSpline(x_range, self.pdf_cum_events[id]), x_range),
+                        color='k',
+                        alpha=0.1 + id_cnt * 0.7 / len(event_ids),
+                        ls='--')
 
             ax2.axvline(self.event[id].sliced(0).mean(),
-                        color='g', alpha=0.5, ls='--')
+                        color='g',
+                        alpha=0.5,
+                        ls='--')
             ax2.axvline([self.event[id].sliced(0).median()],
-                        color='r', alpha=0.6, ls='--')
+                        color='r',
+                        alpha=0.6,
+                        ls='--')
         ####
         ax0.set_title(cum_pdf_title)
         ax2.set_title(pdf_title)
 
-        ax0.legend(loc="upper left", bbox_to_anchor=(
-            1, 1), ncol=label_cnt/labels_per_column+1)
-        ax2.legend(loc="upper left", bbox_to_anchor=(
-            1, 1), ncol=label_cnt/labels_per_column+1)
+        ax0.legend(loc="upper left",
+                   bbox_to_anchor=(1, 1),
+                   ncol=label_cnt / labels_per_column + 1)
+        ax2.legend(loc="upper left",
+                   bbox_to_anchor=(1, 1),
+                   ncol=label_cnt / labels_per_column + 1)
 
         ax0.set_ylim(cum_pdf_ylim)
         ax2.set_ylim(pdf_ylim)
@@ -436,26 +493,32 @@ data_kde: KDE estimator class object with a member function called "evaluate".
 
 xlimits: iterable of two arrays, one for lower limit and one for upper
     '''
-
-    def __init__(self, data, var_type, var_names=[], data_kde=None,
+    def __init__(self,
+                 data,
+                 var_type,
+                 var_names=[],
+                 data_kde=None,
                  oneD_kernel='gau',
                  oneD_kernel_cut=3.0,
                  oneD_bw_method='normal_reference',
                  mulD_kernel='gau',
                  mulD_bw_method='normal_reference',
                  xlimits=None,
-                 verbose=True, debug=False):
+                 verbose=True,
+                 debug=False):
         # CHECK INPUTS
         self.verbose = verbose
         self.debug = debug
         if len(np.shape(np.array(data))) == 1:
             logging.info(
                 "WARNING: Returning OneDDistribution for 1-D distributions")
-            return OneDDistribution(data, data_kde=data_kde,
+            return OneDDistribution(data,
+                                    data_kde=data_kde,
                                     kernel=oneD_kernel,
                                     kernel_cut=oneD_kernel_cut,
                                     bw_method=oneD_bw_method,
-                                    verbose=verbose, debug=debug)
+                                    verbose=verbose,
+                                    debug=debug)
 
         # ENSURE DATA SHAPE, EXTRACT DIMENSION
         if verbose:
@@ -471,9 +534,10 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         # PROCESS 1-D SLICES (assuming independently sampled variables)
         if verbose:
             logging.info("PROCESSING 1-D SLICES ..")
-        self.slices = [OneDDistribution(self.sliced(i),
-                                        kernel_cut=oneD_kernel_cut
-                                        ) for i in range(self.dim)]
+        self.slices = [
+            OneDDistribution(self.sliced(i), kernel_cut=oneD_kernel_cut)
+            for i in range(self.dim)
+        ]
 
         # UPPER AND LOWER LIMITS IN 1-D SLICES
         if verbose:
@@ -491,9 +555,12 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
         if data_kde:
             self.kde = data_kde
-            logging.info("""WARNING: Be careful when providing a kernel density estimator directly.
-                              We assume, but not check, that it matches the input sample set..""")
+            logging.info(
+                """WARNING: Be careful when providing a kernel density estimator directly.
+                              We assume, but not check, that it matches the input sample set.."""
+            )
         return
+
     ###
 
     def structured_data(self):
@@ -503,14 +570,17 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
                          np.shape(self.structured_data))
         if len(var_names) == np.shape(self.input_data)[-1]:
             self.structured_data = np.array(self.structured_data,
-                                            dtype=[(h, '<f8') for h in var_names])
+                                            dtype=[(h, '<f8')
+                                                   for h in var_names])
         return self.structured_data
+
     ###
 
     def index_of_name(self, name):
         if name in self.var_names:
             return np.where([n == name for n in self.var_names])[0][0]
         raise IOError("Could not find column variable named: {}".format(name))
+
     ###
 
     def sliced(self, i):
@@ -526,28 +596,57 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         elif type(i) == str and i in self.var_names:
             return self.slices[self.index_of_name(i)]
         else:
-            raise IOError("Could not find slice labelled "+str(i))
+            raise IOError("Could not find slice labelled " + str(i))
+
     ###
 
-    def mean(self):
+    def mean(self, name=None):
+        if name in self.var_names:
+            return self.sliced(self.index_of_name(name)).mean()
         return np.array([self.sliced(i).mean() for i in range(self.dim)])
 
-    def median(self):
+    def median(self, name=None):
+        if name in self.var_names:
+            return self.sliced(self.index_of_name(name)).median()
         return np.array([self.sliced(i).median() for i in range(self.dim)])
+
+    def percentile(self, perc, name=None):
+        if name in self.var_names:
+            return self.sliced(self.index_of_name(name)).percentile(perc)
+        return np.array(
+            [self.sliced(i).percentile(perc) for i in range(self.dim)])
+
+    def credible_interval(self, credible_level, name=None):
+        perc_int_low = (100.0 - credible_level) * 0.5
+        perc_int_high = 100.0 - perc_int_low
+
+        def _get_credible_interval(i):
+            return [
+                self.sliced(i).percentile(perc_int_low),
+                self.sliced(i).percentile(perc_int_high)
+            ]
+
+        if name in self.var_names:
+            return np.array(_get_credible_interval(self.index_of_name(name)))
+        return np.array([_get_credible_interval(i) for i in range(self.dim)])
+
     ###
 
     def kde(self):
         if hasattr(self, "kde"):
             return self.kde
-        kde = KDEMultivariate(
-            self.input_data, var_type=self.var_type, bw=self.bw_method)
+        kde = KDEMultivariate(self.input_data,
+                              var_type=self.var_type,
+                              bw=self.bw_method)
         self.kde = kde
         self.evaluate_kde = kde.pdf
         return kde
+
     ##
 
     def xlimits(self):
         return [self.xllimit, self.xulimit]
+
     ##
 
     def normalization(self):
@@ -558,28 +657,33 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         for i in range(self.dim):
             self.norm *= self.sliced(i).normalization()
         return self.norm
+
     ##
 
-    def plot_twod_slice(self, params_plot,
-                        fig=None,  # CAN PLOT ON EXISTING FIGURE
-                        label='',  # LABEL THAT GOES ON EACH PANEL
-                        color=None,
-                        params_labels=None,
-                        nhbins=30,  # NO OF BINS IN HISTOGRAMS
-                        plim_low=None, plim_high=None,
-                        legend_fontsize=12,
-                        plot_type='scatter',  # SCATTER OR CONTOUR
-                        scatter_alpha=0.2,  # Transparency of scatter points
-                        param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
-                        param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
-                        color_max=None, color_min=None, cmap=cm.plasma_r,
-                        contour_levels=[90.0],
-                        contour_lstyles=[
-                            "solid", "dashed", "dashdot", "dotted"],
-                        return_areas_in_contours=False,
-                        npixels=50,
-                        debug=False, verbose=None
-                        ):
+    def plot_twod_slice(
+            self,
+            params_plot,
+            fig=None,  # CAN PLOT ON EXISTING FIGURE
+            label='',  # LABEL THAT GOES ON EACH PANEL
+            color=None,
+            params_labels=None,
+            nhbins=30,  # NO OF BINS IN HISTOGRAMS
+            plim_low=None,
+            plim_high=None,
+            legend_fontsize=12,
+            plot_type='scatter',  # SCATTER OR CONTOUR
+            scatter_alpha=0.2,  # Transparency of scatter points
+            param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
+            param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
+            color_max=None,
+            color_min=None,
+            cmap=cm.plasma_r,
+            contour_levels=[90.0],
+            contour_lstyles=["solid", "dashed", "dashdot", "dotted"],
+            return_areas_in_contours=False,
+            npixels=50,
+            debug=False,
+            verbose=None):
         # {{{
         """
 Generates a corner plot for given parameters. 2D panels can have data points
@@ -619,7 +723,8 @@ Input:
 
         if param_color is not None and "scatter" not in plot_type:
             raise IOError(
-                "Since you passed a 3rd dimension, only plot_type=scatter is allowed")
+                "Since you passed a 3rd dimension, only plot_type=scatter is allowed"
+            )
 
         # Local verbosity level takes precedence, else the class's is used
         if verbose == None:
@@ -644,7 +749,7 @@ Input:
         no_of_cols = len(params_plot)
 
         if type(fig) != matplotlib.figure.Figure:
-            fig = plt.figure(figsize=(6*no_of_cols, 4*no_of_rows))
+            fig = plt.figure(figsize=(6 * no_of_cols, 4 * no_of_rows))
 
         fig.hold(True)
 
@@ -663,12 +768,13 @@ Input:
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
                     logging.info("Making plot (%d,%d,%d)" %
-                                 (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
+                                 (no_of_rows, no_of_cols,
+                                  (nr * no_of_cols) + nc))
 
                 # If user asks for scatter-point colors to be a 3rd dimension
                 if param_color in self.var_names:
-                    ax = fig.add_subplot(
-                        no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
+                    ax = fig.add_subplot(no_of_rows, no_of_cols,
+                                         (nr * no_of_cols) + nc + 1)
                     p1 = params_plot[nc]
                     p2 = params_plot[nr]
                     p1label = get_param_label(p1)
@@ -678,15 +784,20 @@ Input:
                         logging.info("Scatter plot w color: %s vs %s vs %s" %
                                      (p1, p2, param_color))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
+                    im = ax.scatter(_d1,
+                                    _d2,
+                                    c=self.sliced(param_color).data(),
                                     alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
-                                    vmin=color_min, vmax=color_max, cmap=cmap,
+                                    edgecolors=None,
+                                    linewidths=0,
+                                    vmin=color_min,
+                                    vmax=color_max,
+                                    cmap=cmap,
                                     label=label)
                     cb = fig.colorbar(im, ax=ax)
-                    if nc == (no_of_cols-1):
+                    if nc == (no_of_cols - 1):
                         cb.set_label(cblabel)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -700,11 +811,11 @@ Input:
                     ax.legend(loc='best', fontsize=legend_fontsize)
                     ax.grid()
                 elif param_color is not None:
-                    raise IOError(
-                        "Could not find parameter %s to show" % param_color)
+                    raise IOError("Could not find parameter %s to show" %
+                                  param_color)
                 elif plot_type == 'scatter':
-                    ax = fig.add_subplot(
-                        no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
+                    ax = fig.add_subplot(no_of_rows, no_of_cols,
+                                         (nr * no_of_cols) + nc + 1)
                     p1 = params_plot[nc]
                     p2 = params_plot[nr]
                     p1label = get_param_label(p1)
@@ -712,11 +823,14 @@ Input:
                     if verbose:
                         logging.info("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=rand_color,
+                    im = ax.scatter(_d1,
+                                    _d2,
+                                    c=rand_color,
                                     alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
+                                    edgecolors=None,
+                                    linewidths=0,
                                     label=label)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -729,8 +843,8 @@ Input:
                     ax.legend(loc='best', fontsize=legend_fontsize)
                     ax.grid()
                 elif plot_type == 'contour':
-                    ax = fig.add_subplot(
-                        no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
+                    ax = fig.add_subplot(no_of_rows, no_of_cols,
+                                         (nr * no_of_cols) + nc + 1)
                     p1 = params_plot[nc]
                     p2 = params_plot[nr]
                     p1label = get_param_label(p1)
@@ -745,53 +859,63 @@ Input:
                         logging.info(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
-                    zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
-                               for lev in contour_levels]
-                    x11vals = np.linspace(
-                        dd[:, 0].min(), dd[:, 0].max(), npixels)
-                    x12vals = np.linspace(
-                        dd[:, 1].min(), dd[:, 1].max(), npixels)
+                    zlevels = [
+                        np.percentile(pdf(dd.T), 100.0 - lev)
+                        for lev in contour_levels
+                    ]
+                    x11vals = np.linspace(dd[:, 0].min(), dd[:, 0].max(),
+                                          npixels)
+                    x12vals = np.linspace(dd[:, 1].min(), dd[:, 1].max(),
+                                          npixels)
                     q, w = np.meshgrid(x11vals, x12vals)
                     r1 = pdf([q.flatten(), w.flatten()])
                     r1.shape = q.shape
                     # Draw contours
-                    im = ax.contour(x11vals, x12vals, r1, zlevels,
-                                    colors=rand_color,
-                                    linestyles=contour_lstyles[:len(
-                                        contour_levels)],
-                                    label=label)
+                    im = ax.contour(
+                        x11vals,
+                        x12vals,
+                        r1,
+                        zlevels,
+                        colors=rand_color,
+                        linestyles=contour_lstyles[:len(contour_levels)],
+                        label=label)
 
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
                             logging.info("Computing area inside contours.")
-                        contour_areas[p1+p2] = []
+                        contour_areas[p1 + p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
                             # Add areas inside all independent contours, in case
                             # there are multiple disconnected ones
-                            contour_areas[p1+p2].append(
-                                np.sum([area_inside_contour(vs.vertices)
-                                        for vs in contour.get_paths()]))
+                            contour_areas[p1 + p2].append(
+                                np.sum([
+                                    area_inside_contour(vs.vertices)
+                                    for vs in contour.get_paths()
+                                ]))
                             if verbose:
                                 logging.info("Total area = %.9f, %.9f" %
-                                             (contour_areas[p1+p2][-1]))
+                                             (contour_areas[p1 + p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    logging.info("sub-area %d: %.8e" %
-                                                 (_i, area_inside_contour(vs.vertices)))
-                        contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
+                                    logging.info(
+                                        "sub-area %d: %.8e" %
+                                        (_i, area_inside_contour(vs.vertices)))
+                        contour_areas[p1 + p2] = np.array(contour_areas[p1 +
+                                                                        p2])
 
                     # BEAUTIFY contour labeling..!
                     # Define a class that forces representation of float to look
                     # a certain way. This remove trailing zero so '1.0' becomes '1'
                     class nf(float):
                         def __repr__(self):
-                            str = '%.1f' % (self.__float__(),)
+                            str = '%.1f' % (self.__float__(), )
                             if str[-1] == '0':
                                 return '%.0f' % self.__float__()
                             else:
                                 return '%.1f' % self.__float__()
+
                     # Recast levels to new class
                     im.levels = [nf(val) for val in contour_levels]
                     # Label levels with specially formatted floats
@@ -801,7 +925,7 @@ Input:
                         fmt = '%r %%'
                     ax.clabel(im, im.levels, inline=True, fmt=fmt, fontsize=10)
 
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -822,49 +946,53 @@ Input:
             return fig, contour_areas
         else:
             return fig
+
     # }}}
     ##
 
-    def corner_plot(self, params_plot,
-                    params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
-                    params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
-                    fig=None,  # CAN PLOT ON EXISTING FIGURE
-                    axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
-                    panel_size=(6, 4),
-                    # Histogram type (bar / step / barstacked)
-                    histogram_type='bar',
-                    priors_histogram_type='stepfilled',
-                    nhbins=30,  # NO OF BINS IN HISTOGRAMS
-                    projection='rectilinear',
-                    label='',  # LABEL THAT GOES ON EACH PANEL
-                    params_labels=None,
-                    plim_low=None, plim_high=None,
-                    legend_fontsize=18,
-                    plot_type='scatter',  # SCATTER OR CONTOUR
-                    color=None,
-                    hist_alpha=0.3,  # Transparency of histograms
-                    scatter_alpha=0.2,  # Transparency of scatter points
-                    npixels=50,
-                    param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
-                    param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
-                    color_max=None,
-                    color_min=None,
-                    cmap=cm.plasma_r,
-                    contour_levels=[90.0],
-                    contour_lstyles=["solid", "dashed", "dashdot", "dotted"],
-                    label_contours=True,  # Whether or not to label individuals
-                    contour_labels_inline=True,
-                    contour_labels_loc="upper center",
-                    return_areas_in_contours=False,
-                    label_oned_hists=-1,  # Which one-d histograms to label?
-                    skip_oned_hists=False,
-                    rotate_last_oned_hist=True,
-                    label_oned_loc='outside',
-                    label_oned_bbox=[(1.3, 0.9)],
-                    show_oned_median=False,
-                    grid_oned_on=False,
-                    debug=False, verbose=None
-                    ):
+    def corner_plot(
+            self,
+            params_plot,
+            params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
+            params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
+            fig=None,  # CAN PLOT ON EXISTING FIGURE
+            axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
+            panel_size=(6, 4),
+            # Histogram type (bar / step / barstacked)
+            histogram_type='bar',
+            priors_histogram_type='stepfilled',
+            nhbins=30,  # NO OF BINS IN HISTOGRAMS
+            projection='rectilinear',
+            label='',  # LABEL THAT GOES ON EACH PANEL
+            params_labels=None,
+            plim_low=None,
+            plim_high=None,
+            legend_fontsize=18,
+            plot_type='scatter',  # SCATTER OR CONTOUR
+            color=None,
+            hist_alpha=0.3,  # Transparency of histograms
+            scatter_alpha=0.2,  # Transparency of scatter points
+            npixels=50,
+            param_color=None,  # 3RD DIMENSION SHOWN AS COLOR
+            param_color_label=None,  # LABEL of 3RD DIMENSION SHOWN AS COLOR
+            color_max=None,
+            color_min=None,
+            cmap=cm.plasma_r,
+            contour_levels=[90.0],
+            contour_lstyles=["solid", "dashed", "dashdot", "dotted"],
+            label_contours=True,  # Whether or not to label individuals
+            contour_labels_inline=True,
+            contour_labels_loc="upper center",
+            return_areas_in_contours=False,
+            label_oned_hists=-1,  # Which one-d histograms to label?
+            skip_oned_hists=False,
+            rotate_last_oned_hist=True,
+            label_oned_loc='outside',
+            label_oned_bbox=[(1.3, 0.9)],
+            show_oned_median=False,
+            grid_oned_on=False,
+            debug=False,
+            verbose=None):
         # {{{
         """
 Generates a corner plot for given parameters. 2D panels can have data points
@@ -906,7 +1034,8 @@ Input:
 
         if param_color is not None and "scatter" not in plot_type:
             raise IOError(
-                "Since you passed a 3rd dimension, only plot_type=scatter is allowed")
+                "Since you passed a 3rd dimension, only plot_type=scatter is allowed"
+            )
 
         # Local verbosity level takes precedence, else the class's is used
         if verbose == None:
@@ -934,12 +1063,12 @@ Input:
             if no_of_rows == 2:
                 import matplotlib.gridspec as gridspec
                 _nrows = _ncols = 3
-                fig = plt.figure(
-                    figsize=(panel_size[0]*_ncols, panel_size[1]*_nrows))
-                gs = gridspec.GridSpec(2, 2,
+                fig = plt.figure(figsize=(panel_size[0] * _ncols,
+                                          panel_size[1] * _nrows))
+                gs = gridspec.GridSpec(2,
+                                       2,
                                        width_ratios=[2, 1],
-                                       height_ratios=[1, 2]
-                                       )
+                                       height_ratios=[1, 2])
                 gs.update(hspace=0, wspace=0)
                 ax1 = fig.add_subplot(gs[0])
                 ax2 = fig.add_subplot(gs[1])
@@ -947,10 +1076,15 @@ Input:
                 ax4 = fig.add_subplot(gs[3])
                 axes_array = [[ax1, ax2], [ax3, ax4]]
             else:
-                fig, axes_array = plt.subplots(no_of_rows, no_of_cols,
-                                               figsize=(
-                                                   panel_size[0]*no_of_cols, panel_size[1]*no_of_rows),
-                                               gridspec_kw={'wspace': 0, 'hspace': 0})
+                fig, axes_array = plt.subplots(
+                    no_of_rows,
+                    no_of_cols,
+                    figsize=(panel_size[0] * no_of_cols,
+                             panel_size[1] * no_of_rows),
+                    gridspec_kw={
+                        'wspace': 0,
+                        'hspace': 0
+                    })
 
         fig.hold(True)
 
@@ -994,36 +1128,58 @@ Input:
                     if params_true_vals != None:
                         p_true_val = params_true_vals[nc]
                         if p_true_val != None:
-                            if rotate_last_oned_hist and nc == (no_of_cols - 1):
+                            if rotate_last_oned_hist and nc == (no_of_cols -
+                                                                1):
                                 ax.axhline(p_true_val,
-                                           lw=0.5, ls='solid', color=rand_color)
+                                           lw=0.5,
+                                           ls='solid',
+                                           color=rand_color)
                             else:
                                 ax.axvline(p_true_val,
-                                           lw=0.5, ls='solid', color=rand_color)
+                                           lw=0.5,
+                                           ls='solid',
+                                           color=rand_color)
                     # Plot one-d posterior
                     _data = self.sliced(p1).data()
-                    im = ax.hist(_data, bins=nhbins,
+                    im = ax.hist(_data,
+                                 bins=nhbins,
                                  histtype=histogram_type,
-                                 normed=True, alpha=hist_alpha,
-                                 color=rand_color, label=label,
+                                 normed=True,
+                                 alpha=hist_alpha,
+                                 color=rand_color,
+                                 label=label,
                                  orientation=hist_orientation)
                     if rotate_last_oned_hist and nc == (no_of_cols - 1):
-                        ax.axhline(np.percentile(_data, 5), lw=1, ls='dashed',
-                                   color=rand_color, alpha=1)
-                        ax.axhline(np.percentile(_data, 95), lw=1, ls='dashed',
-                                   color=rand_color, alpha=1)
+                        ax.axhline(np.percentile(_data, 5),
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
+                        ax.axhline(np.percentile(_data, 95),
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
                     else:
-                        ax.axvline(np.percentile(_data, 5), lw=1,
-                                   ls='dashed', color=rand_color, alpha=1)
-                        ax.axvline(np.percentile(_data, 95), lw=1,
-                                   ls='dashed', color=rand_color, alpha=1)
+                        ax.axvline(np.percentile(_data, 5),
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
+                        ax.axvline(np.percentile(_data, 95),
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
                     if show_oned_median:
                         if rotate_last_oned_hist and nc == (no_of_cols - 1):
                             ax.axhline(np.median(_data),
-                                       ls='-', color=rand_color)
+                                       ls='-',
+                                       color=rand_color)
                         else:
                             ax.axvline(np.median(_data),
-                                       ls='-', color=rand_color)
+                                       ls='-',
+                                       color=rand_color)
                     try:
                         if label_oned_hists == -1 or nc in label_oned_hists:
                             if label_oned_loc is not 'outside' and label_oned_loc is not '':
@@ -1040,30 +1196,35 @@ Input:
                             _prior_xrange = (plim_low[nc], plim_high[nc])
                         else:
                             _prior_xrange = None
-                        im = ax.hist(_data, bins=nhbins,
-                                     histtype=priors_histogram_type, color='k', alpha=0.25,
-                                     range=_prior_xrange, normed=True,
-                                     orientation=hist_orientation
-                                     )
+                        im = ax.hist(_data,
+                                     bins=nhbins,
+                                     histtype=priors_histogram_type,
+                                     color='k',
+                                     alpha=0.25,
+                                     range=_prior_xrange,
+                                     normed=True,
+                                     orientation=hist_orientation)
                     if plim_low is not None and plim_high is not None:
                         if rotate_last_oned_hist and nc == (no_of_cols - 1):
                             ax.set_ylim(plim_low[nc], plim_high[nc])
                         else:
                             ax.set_xlim(plim_low[nc], plim_high[nc])
                     ax.grid(grid_oned_on)
-                    if nr == (no_of_rows-1) and (no_of_cols > 2 or no_of_rows > 2):
+                    if nr == (no_of_rows - 1) and (no_of_cols > 2
+                                                   or no_of_rows > 2):
                         ax.set_xlabel(p1label)
                     if nc == 0 and (no_of_cols > 2 or no_of_rows > 2):
                         ax.set_ylabel(p1label)
                     ax.set_yticklabels([])
-                    if nr < (no_of_rows-1) or rotate_last_oned_hist:
+                    if nr < (no_of_rows - 1) or rotate_last_oned_hist:
                         ax.set_xticklabels([])
                     continue
 
                 # If execution reaches here, the current panel is in the lower diagonal half
                 if verbose:
                     logging.info("Making plot (%d,%d,%d)" %
-                                 (no_of_rows, no_of_cols, (nr*no_of_cols) + nc))
+                                 (no_of_rows, no_of_cols,
+                                  (nr * no_of_cols) + nc))
 
                 # Get plot for this panel
                 # ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
@@ -1076,13 +1237,18 @@ Input:
                     pr_true_val = params_true_vals[nr]
                     if pc_true_val != None:
                         ax.axvline(pc_true_val,
-                                   lw=0.5, ls='solid', color=rand_color)
+                                   lw=0.5,
+                                   ls='solid',
+                                   color=rand_color)
                     if pr_true_val != None:
                         ax.axhline(pr_true_val,
-                                   lw=0.5, ls='solid', color=rand_color)
+                                   lw=0.5,
+                                   ls='solid',
+                                   color=rand_color)
                     if pc_true_val != None and pr_true_val != None:
                         ax.plot([pc_true_val], [pr_true_val],
-                                's', color=rand_color)
+                                's',
+                                color=rand_color)
 
                 # Now plot what the user requested
                 # If user asks for scatter-point colors to be a 3rd dimension
@@ -1096,15 +1262,20 @@ Input:
                         logging.info("Scatter plot w color: %s vs %s vs %s" %
                                      (p1, p2, param_color))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=self.sliced(param_color).data(),
+                    im = ax.scatter(_d1,
+                                    _d2,
+                                    c=self.sliced(param_color).data(),
                                     alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
-                                    vmin=color_min, vmax=color_max, cmap=cmap,
+                                    edgecolors=None,
+                                    linewidths=0,
+                                    vmin=color_min,
+                                    vmax=color_max,
+                                    cmap=cmap,
                                     label=label)
                     cb = fig.colorbar(im, ax=ax)
-                    if nc == (no_of_cols-1):
+                    if nc == (no_of_cols - 1):
                         cb.set_label(cblabel)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -1118,8 +1289,8 @@ Input:
                     ax.legend(loc='best', fontsize=legend_fontsize)
                     ax.grid()
                 elif param_color is not None:
-                    raise IOError(
-                        "Could not find parameter %s to show" % param_color)
+                    raise IOError("Could not find parameter %s to show" %
+                                  param_color)
                 # If user asks for scatter plot without 3rd Dimension info
                 elif plot_type == 'scatter':
                     p1 = params_plot[nc]
@@ -1129,11 +1300,14 @@ Input:
                     if verbose:
                         logging.info("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
-                    im = ax.scatter(_d1, _d2, c=rand_color,
+                    im = ax.scatter(_d1,
+                                    _d2,
+                                    c=rand_color,
                                     alpha=scatter_alpha,
-                                    edgecolors=None, linewidths=0,
+                                    edgecolors=None,
+                                    linewidths=0,
                                     label=label)
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -1161,42 +1335,51 @@ Input:
                         logging.info(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
-                    zlevels = [np.percentile(pdf(dd.T), 100.0 - lev)
-                               for lev in contour_levels]
-                    x11vals = np.linspace(
-                        dd[:, 0].min(), dd[:, 0].max(), npixels)
-                    x12vals = np.linspace(
-                        dd[:, 1].min(), dd[:, 1].max(), npixels)
+                    zlevels = [
+                        np.percentile(pdf(dd.T), 100.0 - lev)
+                        for lev in contour_levels
+                    ]
+                    x11vals = np.linspace(dd[:, 0].min(), dd[:, 0].max(),
+                                          npixels)
+                    x12vals = np.linspace(dd[:, 1].min(), dd[:, 1].max(),
+                                          npixels)
                     q, w = np.meshgrid(x11vals, x12vals)
                     r1 = pdf([q.flatten(), w.flatten()])
                     r1.shape = q.shape
                     # Draw contours
-                    im = ax.contour(x11vals, x12vals, r1, zlevels,
-                                    colors=rand_color,
-                                    linestyles=contour_lstyles[:len(
-                                        contour_levels)],
-                                    label=label)
+                    im = ax.contour(
+                        x11vals,
+                        x12vals,
+                        r1,
+                        zlevels,
+                        colors=rand_color,
+                        linestyles=contour_lstyles[:len(contour_levels)],
+                        label=label)
 
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
                             logging.info("Computing area inside contours.")
-                        contour_areas[p1+p2] = []
+                        contour_areas[p1 + p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
                             # Add areas inside all independent contours, in case
                             # there are multiple disconnected ones
-                            contour_areas[p1+p2].append(
-                                np.sum([area_inside_contour(vs.vertices)
-                                        for vs in contour.get_paths()]))
+                            contour_areas[p1 + p2].append(
+                                np.sum([
+                                    area_inside_contour(vs.vertices)
+                                    for vs in contour.get_paths()
+                                ]))
                             if verbose:
                                 logging.info("Total area = %.9f, %.9f" %
-                                             (contour_areas[p1+p2][-1]))
+                                             (contour_areas[p1 + p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    logging.info("sub-area %d: %.8e" %
-                                                 (_i, area_inside_contour(vs.vertices)))
-                        contour_areas[p1+p2] = np.array(contour_areas[p1+p2])
+                                    logging.info(
+                                        "sub-area %d: %.8e" %
+                                        (_i, area_inside_contour(vs.vertices)))
+                        contour_areas[p1 + p2] = np.array(contour_areas[p1 +
+                                                                        p2])
 
                     ####
                     # BEAUTIFY contour labeling..!
@@ -1204,11 +1387,12 @@ Input:
                     # a certain way. This remove trailing zero so '1.0' becomes '1'
                     class nf(float):
                         def __repr__(self):
-                            str = '%.1f' % (self.__float__(),)
+                            str = '%.1f' % (self.__float__(), )
                             if str[-1] == '0':
                                 return '%.0f' % self.__float__()
                             else:
                                 return '%.1f' % self.__float__()
+
                     # Recast levels to new class
                     im.levels = [nf(val) for val in contour_levels]
                     # Label levels with specially formatted floats
@@ -1219,22 +1403,26 @@ Input:
                     ####
                     if label_contours:
                         if contour_labels_inline:
-                            ax.clabel(im, im.levels,
+                            ax.clabel(im,
+                                      im.levels,
                                       inline=False,
                                       use_clabeltext=True,
-                                      fmt=fmt, fontsize=10)
+                                      fmt=fmt,
+                                      fontsize=10)
                         else:
                             for zdx, _ in enumerate(zlevels):
-                                _ = ax.plot([], [], color=rand_color,
-                                            ls=contour_lstyles[:len(
-                                                contour_levels)][zdx],
-                                            label=im.levels[zdx])
+                                _ = ax.plot(
+                                    [], [],
+                                    color=rand_color,
+                                    ls=contour_lstyles[:len(contour_levels)]
+                                    [zdx],
+                                    label=im.levels[zdx])
                             ax.legend(loc=contour_labels_loc,
                                       fontsize=legend_fontsize)
                     else:
                         pass
                     #
-                    if nr == (no_of_rows-1):
+                    if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0:
                         ax.set_ylabel(p2label)
@@ -1251,12 +1439,12 @@ Input:
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
                 if nc != 0:
-                    logging.info(
-                        "removing Yticklabels for (%d, %d)" % (nr, nc))
+                    logging.info("removing Yticklabels for (%d, %d)" %
+                                 (nr, nc))
                     ax.set_yticklabels([])
                 if nr != (no_of_rows - 1):
-                    logging.info(
-                        "removing Xticklabels for (%d, %d)" % (nr, nc))
+                    logging.info("removing Xticklabels for (%d, %d)" %
+                                 (nr, nc))
                     ax.set_xticklabels([])
         ##
         for nc in range(1, no_of_cols):
@@ -1274,4 +1462,5 @@ Input:
             return fig, axes_array, contour_areas
         else:
             return fig, axes_array
+
     # }}}
