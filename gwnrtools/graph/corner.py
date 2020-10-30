@@ -85,11 +85,14 @@ dimension
                 "evaluate". E.g. use KDEUnivariate class from
                 `statsmodels.nonparametric.kde`
     '''
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data, var_type='', *args, **kwargs):
+        if var_type == '':
+            n_vars = min(np.shape(data))
+            var_type = 'c' * n_vars
         try:
-            super(CornerPlot, self).__init__(*args, **kwargs)
+            super(CornerPlot, self).__init__(data, var_type, *args, **kwargs)
         except TypeError:
-            MultiDDistribution.__init__(self, *args, **kwargs)
+            MultiDDistribution.__init__(self, data, var_type, *args, **kwargs)
 
     def draw(
             self,
@@ -100,11 +103,13 @@ dimension
             axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
             histogram_type='bar',  # Histogram type (bar / step / barstacked)
             nhbins=30,  # NO OF BINS IN HISTOGRAMS
+            fontsize=18,
             projection='rectilinear',
             label='',  # LABEL THAT GOES ON EACH PANEL
-            params_labels=None,
+            params_labels={},
             plim_low=None,
             plim_high=None,
+            legend=False,
             legend_fontsize=18,
             plot_type='scatter',  # SCATTER OR CONTOUR
             color=None,
@@ -117,7 +122,7 @@ dimension
             color_min=None,
             cmap=cm.plasma_r,
             contour_args={},
-            contour_levels=[90.0],
+            contour_levels=[68.27, 90.0, 95.45],
             contour_lstyles=[
                 "solid", "dashed", "dashdot", "dotted", "solid", "dashed",
                 "dashdot", "dotted"
@@ -126,10 +131,12 @@ dimension
             contour_labels_inline=True,
             contour_labels_loc="upper center",
             return_areas_in_contours=False,
+            grid_twod_on=True,
             label_oned_hists=-1,  # Which one-d histograms to label?
             skip_oned_hists=False,
             label_oned_loc='outside',
             show_oned_median=False,
+            show_oned_percentiles=90.0,
             grid_oned_on=False,
             figure_title='',
             debug=False,
@@ -176,9 +183,14 @@ Input:
         if verbose == None:
             verbose = self.verbose
 
+        # Set all fonts on figure
+        plt.rcParams.update({'font.size': fontsize})
+
         # IF no labels are provided by User, use default Latex labels for CBCs
-        if params_labels is None:
-            params_labels = ParamLatexLabels()
+        cbc_labels = ParamLatexLabels()
+        for p in cbc_labels:
+            if p not in params_labels:
+                params_labels[p] = cbc_labels[p]
 
         def get_param_label(pp):
             if params_labels is not None and pp in params_labels:
@@ -194,6 +206,20 @@ Input:
         no_of_rows = len(params_plot)
         no_of_cols = len(params_plot)
 
+        def get_current_axis(_nr, _nc):
+            if no_of_rows == 1 and no_of_cols == 1:
+                return axes_array
+            return axes_array[_nr][_nc]
+
+        # Assign impossible limits
+        old_xaxis_lims = np.empty((no_of_rows, no_of_cols, 2))
+        old_xaxis_lims[:, :, 0] = 1.e99
+        old_xaxis_lims[:, :, 1] = -1.e99
+        old_yaxis_lims = np.empty((no_of_rows, no_of_cols, 2))
+        old_yaxis_lims[:, :, 0] = 1.e99
+        old_yaxis_lims[:, :, 1] = -1.e99
+
+        reusing_figure = False
         if type(fig) != matplotlib.figure.Figure or axes_array is None:
             fig, axes_array = plt.subplots(no_of_rows,
                                            no_of_cols,
@@ -203,6 +229,18 @@ Input:
                                                'wspace': 0,
                                                'hspace': 0
                                            })
+        else:
+            reusing_figure = True
+            for nr in range(no_of_rows):
+                for nc in range(no_of_cols):
+                    if nc > nr:
+                        continue
+                    old_xaxis_lims[nr,
+                                   nc, :] = get_current_axis(nr,
+                                                             nc).get_xlim()
+                    old_yaxis_lims[nr,
+                                   nc, :] = get_current_axis(nr,
+                                                             nc).get_ylim()
 
         fig.hold(True)
 
@@ -211,19 +249,22 @@ Input:
         if color != None:
             rand_color = color
 
+        # Will store teh colorbar axis in this, if needed
+        token_cb_ax = None
+
         if return_areas_in_contours:
             contour_areas = {}
         contour_levels = sorted(contour_levels, reverse=True)
 
-        token_cb_ax = None
-
         # Start drawing panels
         for nr in range(no_of_rows):
             for nc in range(no_of_cols):
+                # Get current axis
+                ax = get_current_axis(nr, nc)
+
                 # We keep the upper diagonal half of the figure empty.
                 # FIXME: Could we use it for same data, different visualization?
                 if nc > nr:
-                    ax = axes_array[nr][nc]
                     try:
                         fig.delaxes(ax)
                     except:
@@ -234,13 +275,10 @@ Input:
                 if nc == nr:
                     if skip_oned_hists:
                         continue
+
                     p1 = params_plot[nc]
                     p1label = get_param_label(p1)
-                    #ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1)
-                    if no_of_rows == 1 and no_of_cols == 1:
-                        ax = axes_array
-                    else:
-                        ax = axes_array[nr][nc]
+
                     # Plot known / injected / true value if given
                     if params_true_vals != None:
                         p_true_val = params_true_vals[nc]
@@ -249,6 +287,7 @@ Input:
                                        lw=0.5,
                                        ls='solid',
                                        color=rand_color)
+
                     # Plot one-d posterior
                     _data = self.sliced(p1).data()
                     im = ax.hist(_data,
@@ -258,30 +297,36 @@ Input:
                                  alpha=hist_alpha,
                                  color=rand_color,
                                  label=label)
-                    # 5%ile
-                    percentile_5 = np.percentile(_data, 5)
-                    ax.axvline(percentile_5,
-                               lw=1,
-                               ls='dashed',
-                               color=rand_color,
-                               alpha=1)
-                    ax.text(percentile_5,
-                            ax.get_ylim()[-1],
-                            '{:0.02f}'.format(percentile_5),
-                            rotation=45,
-                            rotation_mode='anchor')
-                    # 95%ile
-                    percentile_95 = np.percentile(_data, 95)
-                    ax.axvline(percentile_95,
-                               lw=1,
-                               ls='dashed',
-                               color=rand_color,
-                               alpha=1)
-                    ax.text(percentile_95,
-                            ax.get_ylim()[-1],
-                            '{:0.02f}'.format(percentile_95),
-                            rotation=45,
-                            rotation_mode='anchor')
+
+                    # Plot percentiles
+                    if show_oned_percentiles and show_oned_percentiles > 0. and show_oned_percentiles < 100.:
+                        low_perc = (100. - show_oned_percentiles) * 0.5
+                        high_perc = 100. - low_perc
+                        percentile_5 = np.percentile(_data, low_perc)
+                        ax.axvline(percentile_5,
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
+                        ax.text(percentile_5,
+                                ax.get_ylim()[-1],
+                                '{:0.02f}'.format(percentile_5),
+                                rotation=45,
+                                rotation_mode='anchor')
+                        # 95%ile
+                        percentile_95 = np.percentile(_data, high_perc)
+                        ax.axvline(percentile_95,
+                                   lw=1,
+                                   ls='dashed',
+                                   color=rand_color,
+                                   alpha=1)
+                        ax.text(percentile_95,
+                                ax.get_ylim()[-1],
+                                '{:0.02f}'.format(percentile_95),
+                                rotation=45,
+                                rotation_mode='anchor')
+
+                    # Plot median
                     if show_oned_median:
                         ax.axvline(np.median(_data), ls='-', color=rand_color)
                         ax.text(np.median(_data),
@@ -289,8 +334,11 @@ Input:
                                 '{:0.02f}'.format(np.median(_data)),
                                 rotation=45,
                                 rotation_mode='anchor')
+
+                    # Add legends to 1D panels
                     try:
-                        if label_oned_hists == -1 or nc in label_oned_hists:
+                        if legend and (label_oned_hists == -1
+                                       or nc in label_oned_hists):
                             if label_oned_loc is not 'outside' and label_oned_loc is not '':
                                 ax.legend(loc=label_oned_loc,
                                           fontsize=legend_fontsize)
@@ -298,7 +346,9 @@ Input:
                                 ax.legend(fontsize=legend_fontsize,
                                           bbox_to_anchor=(1.3, 0.9))
                     except TypeError:
-                        raise TypeError("Pass a list for label_oned_hists")
+                        raise TypeError(
+                            "Pass a list of labels using `label_oned_hists`")
+
                     if params_oned_priors is not None and p1 in params_oned_priors:
                         _data = params_oned_priors[p1]
                         if plim_low is not None and plim_high is not None:
@@ -311,9 +361,14 @@ Input:
                                      color='k',
                                      range=_prior_xrange,
                                      normed=True)
+
                     if plim_low is not None and plim_high is not None:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
+                    else:
+                        ax.set_xlim(auto=True)
+
                     ax.grid(grid_oned_on)
+
                     if nr == (no_of_rows - 1):
                         ax.set_xlabel(p1label)
                     if nc == 0 and (no_of_cols > 1 or no_of_rows > 1):
@@ -323,15 +378,7 @@ Input:
                     ax.set_yticklabels([])
                     continue
 
-                # If execution reaches here, the current panel is in the lower diagonal half
-                if verbose:
-                    print("Making plot (%d,%d,%d)" % (no_of_rows, no_of_cols,
-                                                      (nr * no_of_cols) + nc))
-
-                # Get plot for this panel
-                # ax = fig.add_subplot(no_of_rows, no_of_cols, (nr*no_of_cols) + nc + 1,
-                #                          projection=projection)
-                ax = axes_array[nr][nc]
+                # The following draws 2D panels
 
                 # Plot known / injected / true value if given
                 if params_true_vals != None:
@@ -362,8 +409,9 @@ Input:
                         p2label = get_param_label(p2)
                         cblabel = get_param_label(param_color)
                         if verbose:
-                            print("Scatter plot w color: %s vs %s vs %s" %
-                                  (p1, p2, param_color))
+                            logging.info(
+                                "Scatter plot w color: %s vs %s vs %s" %
+                                (p1, p2, param_color))
                         _d1, _d2 = self.sliced(p1).data(), self.sliced(
                             p2).data()
                         im = ax.scatter(_d1,
@@ -390,8 +438,9 @@ Input:
                         else:
                             ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
                             ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-                        ax.legend(loc='best', fontsize=legend_fontsize)
-                        ax.grid()
+                        if legend:
+                            ax.legend(loc='best', fontsize=legend_fontsize)
+                        ax.grid(grid_twod_on)
                     elif 'contour' in plot_type:
                         p1 = params_plot[nc]
                         p2 = params_plot[nr]
@@ -424,7 +473,8 @@ Input:
                             ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
                             ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
 
-                        ax.legend(loc='best', fontsize=legend_fontsize)
+                        if legend:
+                            ax.legend(loc='best', fontsize=legend_fontsize)
 
                 elif param_color is not None:
                     raise IOError("Could not find parameter %s to show" %
@@ -436,7 +486,7 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Scatter plot: %s vs %s" % (p1, p2))
+                        logging.info("Scatter plot: %s vs %s" % (p1, p2))
                     _d1, _d2 = self.sliced(p1).data(), self.sliced(p2).data()
                     im = ax.scatter(_d1,
                                     _d2,
@@ -455,8 +505,9 @@ Input:
                     else:
                         ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
                         ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-                    ax.legend(loc='best', fontsize=legend_fontsize)
-                    ax.grid()
+                    if legend:
+                        ax.legend(loc='best', fontsize=legend_fontsize)
+                    ax.grid(grid_twod_on)
                 # If user asks for contour plot without 3rd Dimension info
                 elif plot_type == 'contour':
                     p1 = params_plot[nc]
@@ -464,13 +515,11 @@ Input:
                     p1label = get_param_label(p1)
                     p2label = get_param_label(p2)
                     if verbose:
-                        print("Contour plot: %s vs %s" % (p1, p2))
+                        logging.info("Contour plot: {} vs {}".format(p1, p2))
                     # Get data
                     d1 = self.sliced(p1).data()
                     d2 = self.sliced(p2).data()
                     dd = np.column_stack([d1, d2])
-                    if verbose:
-                        print(np.shape(d1), np.shape(d2), np.shape(dd))
                     pdf = gaussian_kde(dd.T)
                     # Get contour levels
                     zlevels = [
@@ -497,7 +546,7 @@ Input:
                     # Get area inside contour
                     if return_areas_in_contours:
                         if verbose:
-                            print("Computing area inside contours.")
+                            logging.info("Computing area inside contours.")
                         contour_areas[p1 + p2] = []
                         for ii in range(len(zlevels)):
                             contour = im.collections[ii]
@@ -509,13 +558,12 @@ Input:
                                     for vs in contour.get_paths()
                                 ]))
                             if verbose:
-                                print("Total area = %.9f, %.9f" %
-                                      (contour_areas[p1 + p2][-1]))
+                                logging.info("Total area = {}, {}".format(
+                                    contour_areas[p1 + p2][-1]))
                             if debug:
                                 for _i, vs in enumerate(contour.get_paths()):
-                                    print(
-                                        "sub-area %d: %.8e" %
-                                        (_i, area_inside_contour(vs.vertices)))
+                                    logging.info("sub-area {}: {}".format(
+                                        _i, area_inside_contour(vs.vertices)))
                         contour_areas[p1 + p2] = np.array(contour_areas[p1 +
                                                                         p2])
 
@@ -555,8 +603,9 @@ Input:
                                     ls=contour_lstyles[:len(contour_levels)]
                                     [zdx],
                                     label=im.levels[zdx])
-                            ax.legend(loc=contour_labels_loc,
-                                      fontsize=legend_fontsize)
+                            if legend:
+                                ax.legend(loc=contour_labels_loc,
+                                          fontsize=legend_fontsize)
                     else:
                         pass
                     #
@@ -572,16 +621,15 @@ Input:
                         ax.set_ylim(0.95 * np.min(d2), 1.05 * np.max(d2))
                     else:
                         pass
-                    ax.grid(True)
+                    ax.grid(grid_twod_on)
                 else:
                     raise IOError("plot type %s not supported.." % plot_type)
                 if nc != 0:
-                    print("removing Yticklabels for (%d, %d)" % (nr, nc))
                     ax.set_yticklabels([])
                 if nr != (no_of_rows - 1):
-                    print("removing Xticklabels for (%d, %d)" % (nr, nc))
                     ax.set_xticklabels([])
         ##
+        # Draw colorbar on its own axis
         if token_cb_ax is not None:
             im, ax = token_cb_ax
             fig.subplots_adjust(right=0.8)
@@ -589,14 +637,46 @@ Input:
             cb = fig.colorbar(im, cax=cbar_ax)
             cb.set_label(cblabel)
         ##
+        # Now, adjust axis limits
+        final_xlims = np.empty((no_of_cols, 2))
+        for nc in range(no_of_cols):
+            final_xlims[nc, :] = (np.min(old_xaxis_lims[:, nc, 0]),
+                                  np.max(old_xaxis_lims[:, nc, 1]))
+
+        for nr in range(no_of_rows):
+            for nc in range(no_of_cols):
+                if nc > nr:
+                    continue
+                ax = get_current_axis(nr, nc)
+
+                curr_xlim = ax.get_xlim()
+                final_xlims[nc, :] = (np.min([
+                    final_xlims[nc, 0], curr_xlim[0]
+                ]), np.max([final_xlims[nc, 1], curr_xlim[1]]))
+
+        # Impose axis limits, y axis' limits are imposed by symmetry
+        for nr in range(no_of_rows):
+            for nc in range(no_of_cols):
+                if nc > nr:
+                    continue
+                ax = get_current_axis(nr, nc)
+                ax.set_xlim(*final_xlims[nc, :])
+                if nc < nr:
+                    ax.set_ylim(*final_xlims[nr, :])
+
+        # Adjust figure title
         if len(figure_title) > 0:
             fig.suptitle(figure_title)
+
+        # Adjust xticklabels to remove the leftmost tick
         for nc in range(1, no_of_cols):
             ax = axes_array[no_of_rows - 1][nc]
             #new_xticklabels = [ll.get_text() for ll in ax.get_xticklabels()]
             new_xticklabels = ax.get_xticks().tolist()
             new_xticklabels[0] = ''
             ax.set_xticklabels(new_xticklabels)
+
+        # Conditionally return objects
         if plot_type == 'contour' and return_areas_in_contours and debug:
             return fig, axes_array, contour_areas, contour.get_paths(), im
         elif plot_type == 'contour' and return_areas_in_contours:
