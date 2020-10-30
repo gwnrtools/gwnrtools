@@ -120,7 +120,7 @@ data_kde - if provided, must be a KDE estimator class with a member
                  bw_method='scott',
                  kernel_cut=3.0,
                  xlimits=None,
-                 verbose=True,
+                 verbose=False,
                  debug=False):
         if debug:
             logging.info("Initializing OneDDistribution object..")
@@ -280,7 +280,12 @@ data_kde: KDE estimator class object with a member function called "evaluate".
 
 xlimits: iterable of two arrays, one for lower limit and one for uppe
     '''
-    def __init__(self, datadir, result_tag, event_ids, var_type, verbose=True):
+    def __init__(self,
+                 datadir,
+                 result_tag,
+                 event_ids,
+                 var_type,
+                 verbose=False):
         ### =======         INPUT CHECKING/HANDLING              ======= ###
         if not os.path.exists(datadir):
             raise IOError("DATA Directory %s does not exist.." % datadir)
@@ -504,7 +509,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
                  mulD_kernel='gau',
                  mulD_bw_method='normal_reference',
                  xlimits=None,
-                 verbose=True,
+                 verbose=False,
                  debug=False):
         # CHECK INPUTS
         self.verbose = verbose
@@ -524,12 +529,27 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         if verbose:
             logging.info("..initializing MultiDDistribution object")
         data = np.array(data)
-        # if np.shape(data)[0] < np.shape(data)[1]:
-        #    logging.info "WARNING: FEWER ROWS than COLUMNS, assuming its a row-wise distribution"
-        #    data = np.transpose(data)
+
+        if len(np.shape(data)) == 1:
+            data = data.reshape(np.shape(data)[0], 1)
+        elif len(np.shape(data)) == 2:
+            if np.shape(data)[0] < np.shape(data)[1]:
+                if np.shape(data)[1] != len(var_names):
+                    logging.info(
+                        "Warning: Found fewer rows than columns in input data. We assume data is in a row-major form."
+                    )
+                    data = np.transpose(data)
+        else:
+            raise IOError(
+                "Input data has {} dimensions. We only support 1D and 2D data."
+                .format(len(np.shape(data))))
+
         self.input_data = np.array(data)
-        self.var_names = var_names
         self.dim = np.shape(data)[-1]
+
+        if len(var_names) != self.dim:
+            var_names = [str(_i) for _i in range(self.dim)]
+        self.var_names = var_names
 
         # PROCESS 1-D SLICES (assuming independently sampled variables)
         if verbose:
@@ -565,9 +585,11 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
 
     def structured_data(self):
         self.structured_data = cp.deepcopy(self.input_data)
+
         if self.debug:
             logging.info("Shape of structured_data: ",
                          np.shape(self.structured_data))
+
         if len(var_names) == np.shape(self.input_data)[-1]:
             self.structured_data = np.array(self.structured_data,
                                             dtype=[(h, '<f8')
