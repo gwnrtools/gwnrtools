@@ -97,7 +97,8 @@ dimension
     def draw(
             self,
             params_plot,
-            params_true_vals=None,  # TRUE / KNOWN values of PARAMETERS
+            true_params_vals=None,  # TRUE / KNOWN values of PARAMETERS
+            true_params_color='r',
             params_oned_priors=None,  # PRIOR DISTRIBUTION FOR PARAMETERS
             fig=None,  # CAN PLOT ON EXISTING FIGURE
             axes_array=None,  # NEED ARRAY OF AXES IF PLOTTING ON EXISTING FIGURE
@@ -132,7 +133,7 @@ dimension
             contour_labels_loc="upper center",
             return_areas_in_contours=False,
             grid_twod_on=True,
-            label_oned_hists=-1,  # Which one-d histograms to label?
+            label_oned_hists=[0],  # Which one-d histograms to label?
             skip_oned_hists=False,
             label_oned_loc='outside',
             show_oned_median=False,
@@ -280,13 +281,13 @@ Input:
                     p1label = get_param_label(p1)
 
                     # Plot known / injected / true value if given
-                    if params_true_vals != None:
-                        p_true_val = params_true_vals[nc]
+                    if true_params_vals != None:
+                        p_true_val = true_params_vals[nc]
                         if p_true_val != None:
                             ax.axvline(p_true_val,
                                        lw=0.5,
                                        ls='solid',
-                                       color=rand_color)
+                                       color=true_params_color)
 
                     # Plot one-d posterior
                     _data = self.sliced(p1).data()
@@ -365,7 +366,11 @@ Input:
                     if plim_low is not None and plim_high is not None:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
                     else:
-                        ax.set_xlim(auto=True)
+                        ax.set_xlim(
+                            np.min(_data) - 0.1 *
+                            (np.max(_data) - np.min(_data)),
+                            np.max(_data) + 0.1 *
+                            (np.max(_data) - np.min(_data)))
 
                     ax.grid(grid_oned_on)
 
@@ -381,23 +386,23 @@ Input:
                 # The following draws 2D panels
 
                 # Plot known / injected / true value if given
-                if params_true_vals != None:
-                    pc_true_val = params_true_vals[nc]
-                    pr_true_val = params_true_vals[nr]
+                if true_params_vals != None:
+                    pc_true_val = true_params_vals[nc]
+                    pr_true_val = true_params_vals[nr]
                     if pc_true_val != None:
                         ax.axvline(pc_true_val,
                                    lw=0.5,
                                    ls='solid',
-                                   color=rand_color)
+                                   color=true_params_color)
                     if pr_true_val != None:
                         ax.axhline(pr_true_val,
                                    lw=0.5,
                                    ls='solid',
-                                   color=rand_color)
+                                   color=true_params_color)
                     if pc_true_val != None and pr_true_val != None:
                         ax.plot([pc_true_val], [pr_true_val],
                                 's',
-                                color=rand_color)
+                                color=true_params_color)
 
                 # Now plot what the user requested
                 # If user asks for scatter-point colors to be a 3rd dimension
@@ -436,10 +441,17 @@ Input:
                             ax.set_xlim(plim_low[nc], plim_high[nc])
                             ax.set_ylim(plim_low[nr], plim_high[nr])
                         else:
-                            ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
-                            ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-                        if legend:
-                            ax.legend(loc='best', fontsize=legend_fontsize)
+                            ax.set_xlim(
+                                np.min(_d1) - 0.1 *
+                                (np.max(_d1) - np.min(_d1)),
+                                np.max(_d1) + 0.1 *
+                                (np.max(_d1) - np.min(_d1)))
+                            ax.set_ylim(
+                                np.min(_d2) - 0.1 *
+                                (np.max(_d2) - np.min(_d2)),
+                                np.max(_d2) + 0.1 *
+                                (np.max(_d2) - np.min(_d2)))
+
                         ax.grid(grid_twod_on)
                     elif 'contour' in plot_type:
                         p1 = params_plot[nc]
@@ -470,11 +482,16 @@ Input:
                             ax.set_xlim(plim_low[nc], plim_high[nc])
                             ax.set_ylim(plim_low[nr], plim_high[nr])
                         else:
-                            ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
-                            ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-
-                        if legend:
-                            ax.legend(loc='best', fontsize=legend_fontsize)
+                            ax.set_xlim(
+                                np.min(_d1) - 0.1 *
+                                (np.max(_d1) - np.min(_d1)),
+                                np.max(_d1) + 0.1 *
+                                (np.max(_d1) - np.min(_d1)))
+                            ax.set_ylim(
+                                np.min(_d2) - 0.1 *
+                                (np.max(_d2) - np.min(_d2)),
+                                np.max(_d2) + 0.1 *
+                                (np.max(_d2) - np.min(_d2)))
 
                 elif param_color is not None:
                     raise IOError("Could not find parameter %s to show" %
@@ -503,10 +520,13 @@ Input:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
                         ax.set_ylim(plim_low[nr], plim_high[nr])
                     else:
-                        ax.set_xlim(0.95 * np.min(_d1), 1.05 * np.max(_d1))
-                        ax.set_ylim(0.95 * np.min(_d2), 1.05 * np.max(_d2))
-                    if legend:
-                        ax.legend(loc='best', fontsize=legend_fontsize)
+                        ax.set_xlim(
+                            np.min(_d1) - 0.1 * (np.max(_d1) - np.min(_d1)),
+                            np.max(_d1) + 0.1 * (np.max(_d1) - np.min(_d1)))
+                        ax.set_ylim(
+                            np.min(_d2) - 0.1 * (np.max(_d2) - np.min(_d2)),
+                            np.max(_d2) + 0.1 * (np.max(_d2) - np.min(_d2)))
+
                     ax.grid(grid_twod_on)
                 # If user asks for contour plot without 3rd Dimension info
                 elif plot_type == 'contour':
@@ -617,8 +637,12 @@ Input:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
                         ax.set_ylim(plim_low[nr], plim_high[nr])
                     elif projection != "mollweide":
-                        ax.set_xlim(0.95 * np.min(d1), 1.05 * np.max(d1))
-                        ax.set_ylim(0.95 * np.min(d2), 1.05 * np.max(d2))
+                        ax.set_xlim(
+                            np.min(d1) - 0.1 * (np.max(d1) - np.min(d1)),
+                            np.max(d1) + 0.1 * (np.max(d1) - np.min(d1)))
+                        ax.set_ylim(
+                            np.min(d2) - 0.1 * (np.max(d2) - np.min(d2)),
+                            np.max(d2) + 0.1 * (np.max(d2) - np.min(d2)))
                     else:
                         pass
                     ax.grid(grid_twod_on)
