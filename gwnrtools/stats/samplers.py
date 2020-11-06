@@ -14,6 +14,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import os
 from gwnrtools.stats import OneDRandom
 import numpy as np
 import emcee
@@ -124,15 +125,17 @@ all_samples       : dict
                     with param names as keys.
     """
     try:
-        _log_prob = sampler.get_log_prob(discard=burnin, thin=thin).flatten()
+        _log_prob = sampler.get_log_prob(discard=burnin, thin=thin, flat=True)
+        _chain = sampler.get_chain(discard=burnin, thin=thin, flat=True)
     except AttributeError:
         _log_prob = sampler.lnprobability.flatten()
+        _chain = sampler.chain.T.flatten()
     mask_not_failed = np.isfinite(_log_prob)
     all_samples = {
-        str(c): sampler.chain[..., idx].T.flatten()[mask_not_failed]
+        str(c): _chain[..., idx][mask_not_failed]
         for idx, c in enumerate(params_to_sample)
     }
-    all_samples['log_prob'] = _log_prob[mask_not_failed]
+    all_samples['log-prob'] = _log_prob[mask_not_failed]
     return all_samples
 
 
