@@ -38,6 +38,64 @@ from gwnrtools.utils import make_padded_frequency_series
 from gwnrtools.stats import OneDRandom
 from gwnrtools.waveform.enigma_utils import FitMOmegaIMRAttachmentNonSpinning
 
+# TAGS for available fits
+__available_fits__ = [
+    'fit_quadratic_poly', 'fit_cubic_poly', 'fit_ratio_poly_44',
+    'fit_ratio_sqrt_poly_44', 'fit_ratio_sqrt_hyb1_poly_44',
+    'fit_ratio_poly_43', 'fit_ratio_sqrt_poly_43',
+    'fit_ratio_sqrt_hyb1_poly_43', 'fit_ratio_poly_34'
+]
+
+# TAGGED list of sampled (free) parameters, in specific order
+__order_of_sampled_params__ = {}
+
+# TAGGED dicts of prior ranges for the sampled (free) parameters
+# of all available fits
+__ranges_of_sampled_params__ = {}
+
+# TAG : fit_quadratic_poly
+tmp = 'fit_quadratic_poly'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+# TAG : fit_cubic_poly
+tmp = 'fit_cubic_poly'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_poly_44'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_sqrt_poly_44'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_sqrt_hyb1_poly_44'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_poly_43'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_sqrt_poly_43'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_sqrt_hyb1_poly_43'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+tmp = 'fit_ratio_poly_34'
+__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'b1', 'b2', 'b3']
+__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
+
+# Set priors on coefficients used in all TAGGED fits
+for tag in __available_fits__:
+    for p in __order_of_sampled_params__[tag][1:]:  # exclude PNO
+        __ranges_of_sampled_params__[tag][p] = [-30., 30.]
+
 
 def log_prior_enigma(q,
                      total_mass,
@@ -45,12 +103,18 @@ def log_prior_enigma(q,
                      coeffs,
                      omega_attach,
                      sp_info,
+                     omega_fit_tag,
                      verbose=False):
     '''
 Priors:
 -------
 
     '''
+    # all_params has ordered sampler_params
+    # __ranges_of_sampled_params__ [omega_fit_tag] has ALL ordered sampler params
+    sampler_params = sp_info['sampler_params']
+    ordered_fit_params = __ranges_of_sampled_params__[omega_fit_tag]
+
     if np.any(coeffs < -30.) or np.any(coeffs > 30.):
         if verbose:
             logging.info(
@@ -243,7 +307,7 @@ def log_prob_enigma(theta,
 
     # prior probability
     log_prior = log_prior_enigma(q, total_mass, PNO, coeffs, m_omega_attach,
-                                 sampling_params)
+                                 sampling_params, 'fit_ratio_poly_44')
     if not np.isfinite(log_prior):
         return log_prior
 
@@ -311,6 +375,7 @@ def log_prob_enigma_fixed_masses(theta,
                                  coeffs,
                                  m_omega_attach,
                                  sampling_params,
+                                 omega_fit_tag,
                                  verbose=verbose)
     if not np.isfinite(log_prior):
         return log_prior
@@ -345,6 +410,9 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta,
     psd: pycbc.FrequencySeries
 
     '''
+    # all_params has ordered sampler_params
+    # __ranges_of_sampled_params__ [omega_fit_tag] has ALL ordered sampler params
+
     # Ordering is enforced here
     PNO = theta[0]
     coeffs = theta[1:]
@@ -382,6 +450,7 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta,
                                  coeffs,
                                  m_omega_attach,
                                  all_params,
+                                 omega_fit_tag,
                                  verbose=debug)
 
     if not np.isfinite(log_prior):
@@ -399,72 +468,34 @@ def log_prob_enigma_fixed_total_mass_hidden_q(theta,
         dilation_map_match=dilation_map_match) + log_prior
 
 
-# TAGS for available fits
-__available_fits__ = [
-    'fit_quadratic_poly', 'fit_cubic_poly', 'fit_ratio_poly_44',
-    'fit_ratio_sqrt_poly_44', 'fit_ratio_sqrt_hyb1_poly_44',
-    'fit_ratio_poly_43', 'fit_ratio_sqrt_poly_43',
-    'fit_ratio_sqrt_hyb1_poly_43', 'fit_ratio_poly_34'
-]
-
 # TAGGED list of log(probability) functions
 __log_prob_funcs__ = {}
-
-# TAGGED list of sampled (free) parameters, in specific order
-__order_of_sampled_params__ = {}
-
-# TAGGED dicts of prior ranges for the sampled (free) parameters
-# of all available fits
-__ranges_of_sampled_params__ = {}
 
 # TAG : fit_quadratic_poly
 tmp = 'fit_quadratic_poly'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 # TAG : fit_cubic_poly
 tmp = 'fit_cubic_poly'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_hyb1_poly_44'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_sqrt_hyb1_poly_43'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'a3', 'b1', 'b2']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
 
 tmp = 'fit_ratio_poly_34'
 __log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
-__order_of_sampled_params__[tmp] = ['PNO', 'a1', 'a2', 'b1', 'b2', 'b3']
-__ranges_of_sampled_params__[tmp] = {'PNO': [6, 7, 8, 9, 10, 11, 12]}
-
-# Set priors on coefficients used in all TAGGED fits
-for tag in __available_fits__:
-    for p in __order_of_sampled_params__[tag][1:]:  # exclude PNO
-        __ranges_of_sampled_params__[tag][p] = [-30., 30.]
