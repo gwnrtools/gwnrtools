@@ -209,10 +209,10 @@ class InjectionInferenceAnalysis(OneInferenceAnalysis):
         # Make the analysis directory
         if self.verbose:
             logging.info("Making {0} in {1}".format(self.run_dir, os.getcwd()))
-        mkdir(self.run_dir)
-        mkdir(os.path.join(self.run_dir, 'scripts'))
-        mkdir(os.path.join(self.run_dir, 'log'))
-        mkdir(os.path.join(self.run_dir, 'plots'))
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'scripts'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'log'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'plots'), exist_ok=True)
 
         # Copy over the relevant configuration files
         if self.verbose:
@@ -448,10 +448,10 @@ psd-segment-stride = 4
         # Make the analysis directory
         if self.verbose:
             logging.info("Making {0} in {1}".format(self.run_dir, os.getcwd()))
-        mkdir(self.run_dir)
-        mkdir(os.path.join(self.run_dir, 'scripts'))
-        mkdir(os.path.join(self.run_dir, 'log'))
-        mkdir(os.path.join(self.run_dir, 'plots'))
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'scripts'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'log'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'plots'), exist_ok=True)
 
         # Setup formatting options for data.ini for this event
         myargs = {
