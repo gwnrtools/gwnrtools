@@ -18,8 +18,8 @@ import shutil
 import subprocess
 import numpy
 
-from gwnrtools.utils import mkdir
-from gwnrtools.analysis import (get_unique_hex_tag, Merger)
+from gwnrtools.analysis.utils import get_unique_hex_tag
+from gwnrtools.analysis.gw_transient_catalog import Merger
 from gwnrtools.stats.pycbc_inference_utils import InferenceConfigs
 
 

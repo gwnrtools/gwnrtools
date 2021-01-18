@@ -29,6 +29,8 @@ import copy as cp
 import lal
 import lalsimulation as ls
 
+from gwnrtools.waveform.utils import get_detector_response
+from gwnrtools.utils.types import extend_waveform_FrequencySeries, extend_waveform_TimeSeries
 try:
     from glue.ligolw import ligolw, lsctables
 
@@ -66,8 +68,8 @@ def get_header_data_from_posterior_samples_file(filename, no_of_samples=-1):
             data[idx] = data[idx].split()
         data = np.array(np.float64(np.array(data)))
         if no_of_samples > 0 and no_of_samples <= np.shape(data)[0]:
-            if verbose:
-                print("Keeping only the first %d samples" % no_of_samples)
+            # if verbose:
+            #     print("Keeping only the first %d samples" % no_of_samples)
             data = data[:no_of_samples]
     return [header, data]
 

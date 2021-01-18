@@ -10,7 +10,7 @@ import argparse
 import numpy as np
 
 import gwnrtools.analysis as DA
-import gwnrtools.waveform as WF
+import gwnrtools.waveform.waveform as WF
 
 import lal
 from glue.ligolw import ligolw
@@ -24,6 +24,7 @@ from pycbc.waveform import td_approximants, fd_approximants
 from pycbc.types import FrequencySeries, TimeSeries, zeros
 from pycbc.filter import make_frequency_series, match
 from pycbc.detector import overhead_antenna_pattern
+import pycbc.pnutils as pnutils
 import pycbc.psd
 
 #ctx = CUDAScheme()
@@ -132,7 +133,7 @@ options = parser.parse_args()
 # Miscellaneous
 #outside_mchirp_window = DA.outside_mchirp_window
 generate_fplus_fcross = overhead_antenna_pattern
-generate_detector_strain = WF.generate_detector_strain
+from gwnrtools.waveform.utils import generate_detector_strain
 
 
 #############################
@@ -292,7 +293,7 @@ def get_waveform(wav, approximant, f_min, dt, N):
 
 def get_sim_hash(N=1, num_digits=10):
     return ilwd.ilwdchar(":%s:0" %
-                         DA.get_unique_hex_tag(N=N, num_digits=num_digits))
+                         DA.utils.get_unique_hex_tag(N=N, num_digits=num_digits))
 
 
 def get_tag(wav):

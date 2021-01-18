@@ -28,6 +28,7 @@ import glob
 import subprocess
 import numpy as np
 from scipy.optimize import minimize
+from gwnrtools.waveform.align import align_curves
 
 os.environ['LD_LIBRARY_PATH'] =\
     '/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/'

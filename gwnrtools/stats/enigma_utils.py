@@ -34,8 +34,8 @@ from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.psd import from_string
 from pycbc.filter import match
 
-from gwnrtools.utils import make_padded_frequency_series
-from gwnrtools.stats import OneDRandom
+from gwnrtools.utils.types import make_padded_frequency_series
+from gwnrtools.stats.sampling import OneDRandom
 from gwnrtools.waveform.enigma_utils import FitMOmegaIMRAttachmentNonSpinning
 
 # TAGS for available fits

@@ -32,6 +32,8 @@ from pycbc.filter import match, make_frequency_series
 import pycbc.pnutils as pnutils
 import pycbc.waveform.generator as pywfg
 import pycbc.waveform as pywf
+from gwnrtools.waveform.waveform import get_waveform
+from gwnrtools.utils.types import extend_waveform_FrequencySeries
 
 from glue.ligolw import lsctables
 from glue.ligolw import ligolw

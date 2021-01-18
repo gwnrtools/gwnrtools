@@ -31,7 +31,7 @@ import numpy as np
 
 import lal
 from pycbc.types import TimeSeries
-from utils import amplitude_from_polarizations
+from pycbc.waveform import amplitude_from_polarizations
 
 from glue.ligolw import ligolw
 from glue.ligolw import lsctables

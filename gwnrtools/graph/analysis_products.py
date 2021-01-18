@@ -32,6 +32,9 @@ import os
 import sys
 import subprocess
 import matplotlib as mp
+from gwnrtools.graph.misc import make_scatter_plot, make_scatter_plot3D, make_scatter_plot3D_mult, make_scatter_plot3D_multrow, make_contourf_mult, make_2Dplot_errorbars
+from gwnrtools.waveform.parameters import spins_to_PNeffective_spin, eta_to_q
+
 mp.rc('text', usetex=True)
 plt.rcParams.update({'text.usetex': True})
 
@@ -456,7 +459,7 @@ class plot_mismatches_sim():
 
 
 class plot_mismatches_sims():
-    """ 
+    """
     This class makes population plots. This is done to find patterns between
     NR errors based on binary parameters."""
     def __init__(self,

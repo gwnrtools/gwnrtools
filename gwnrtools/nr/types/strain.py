@@ -37,9 +37,10 @@ from pycbc.waveform import *
 from pycbc.types import *
 from pycbc.filter import *
 
-from gwnrtools.nr.types import nr_data
-from gwnrtools.utils import zero_pad_beginning
+from gwnrtools.nr.types.data_sxs import nr_data
+from gwnrtools.utils.support import zero_pad_beginning
 from gwnrtools.waveform.utils import get_time_at_frequency
+from gwnrtools.utils.types import convert_TimeSeries_to_lalREAL8TimeSeries, convert_lalREAL8TimeSeries_to_TimeSeries
 ######################################################################
 __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
@@ -173,12 +174,12 @@ None then the object is in the "dimensionless" state. In this state:
     of Solar Mass. Sampling rate will be set by "dimless_sample_rate".
 (c) Frequency is generally expected in the dimensionless units of (1/M), while
     time in the dimensionless units of (M).
-If "totalmass" is a floating point number the object's S1 state is 
+If "totalmass" is a floating point number the object's S1 state is
 "dimensionfull". In this state:
 (a) Amplitude is scaled by (M/R), where the ratio is dimensionless.
 (b) Time scale is scaled by (1/M), where M is in units of seconds.
 (c) Frequencies in general are expected in Hz and time in seconds
-  
+
 ======= SWITCHING BETWEEN STATES =======
 There are two methods designed to switch to each of the two states. They are:
 
@@ -187,14 +188,14 @@ There are two methods designed to switch to each of the two states. They are:
 
 Function (a) switches the object to "dimensionless" state. It sets "totalmass"
 to None, etc. Here one can change the "dimless_sample_rate" provided at object
-creation. 
+creation.
 
 Function (b) switches the object to "dimensionfull" state. To do so,
-it needs variables (delta_t, M, distance) that define the state. 
+it needs variables (delta_t, M, distance) that define the state.
 
 ======= AUTO-SWITCHING BETWEEN STATES =======
-In addition, there are many other functions that switch between states. The 
-general philosophy is that member functions should now allow switching to 
+In addition, there are many other functions that switch between states. The
+general philosophy is that member functions should now allow switching to
 the "dimensionfull" state, that has to be done explicitly. They can allow
 switching to "dimensionless" state though.
 
@@ -332,7 +333,7 @@ The following do NOT change OR care about the state:
         **If dimensionless=True, object's S1 state is switched to "dimensionless"**
         **If dimensionless=False, object's state is NOT switched explicitly.     **
         **   You get results in whatever the object's current state is           **
-        
+
         Compute the amplitude of a given mode. If dimensionless amplitude as a
         function of dimensionless time is not needed, make sure totalmass is set
         either in this function, or in the object earlier.
@@ -384,7 +385,7 @@ The following do NOT change OR care about the state:
         """
 ** Object's S1 state is NOT CHANGED. "dimless" flag sets the units of output**
 ** Will not work for f < 1Hz **
-        
+
 Provide f (frequency) in Hz. Or provide f (dimension-less) if dimless=True.
 Returns t (time) in seconds. Or returns t (dimension-less) if dimless=True.
         """
@@ -438,7 +439,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
 ** Must provide "totalmass" if trying to get output in "dimensionfull" units from **
 ** an object in "dimensionless" state, or vice-versa.                             **
 
-** Will not work for f < 1Hz **        
+** Will not work for f < 1Hz **
         """
         if totalmass is None:
             totalmass = self.totalmass
@@ -500,7 +501,7 @@ Get 2,2-mode GW_frequency in Hz at a given time (in M)
     def get_amplitude_peak_h22(self, amp=None):
         """
         Get the 2,2-mode GW amplitude at the peak of |h22|.
-        
+
         ** Object's S1 state is NOT CHANGED. **
         """
         if amp is None:
@@ -674,7 +675,7 @@ t_start is dimensionless IFF dimless = True, else its in seconds
         """
 Return plus and cross polarizations.
 
-** Object's S1 state is CHANGED to "dimensionfull. **        
+** Object's S1 state is CHANGED to "dimensionfull. **
         """
         ##{{{
         #########################################################
@@ -790,7 +791,7 @@ Return plus and cross polarizations.
         """ Rescales the waveform to a different total-mass than currently. The
         values for different angles are set to internal values provided earlier, e.g.
         during object initialization.
-        
+
         ** Object's S1 state is CHANGED to "dimensionfull. **
         """
         ##{{{
@@ -813,7 +814,7 @@ Return plus and cross polarizations.
         """ Rescales the waveform to a different distance than currently. The
         values for different angles, masses are set to internal values provided
         earlier, e.g. during object initialization.
-        
+
         ** Object's S1 state is CHANGED to "dimensionfull. **
         """
         ##{{{
@@ -836,7 +837,7 @@ Return plus and cross polarizations.
         """ Rotates waveforms to different inclination and initial-phase angles,
         with the total-mass and distance set to internal values, provided earlier,
         e.g. during object initialization.
-        
+
         ** Object's S1 state is CHANGED to "dimensionfull. **
         """
         ##{{{

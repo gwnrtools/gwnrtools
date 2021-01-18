@@ -30,8 +30,9 @@ import matplotlib
 from scipy.stats import gaussian_kde
 
 from gwnrtools.graph import make_filled_contour_plot, ParamLatexLabels
-from gwnrtools.stats import MultiDDistribution
+from gwnrtools.stats.distribution import MultiDDistribution
 from matplotlib import cm
+from gwnrtools.utils.support import area_inside_contour
 
 import logging
 logging.getLogger().setLevel(logging.INFO)
@@ -340,7 +341,7 @@ Input:
                     try:
                         if legend and (label_oned_hists == -1
                                        or nc in label_oned_hists):
-                            if label_oned_loc is not 'outside' and label_oned_loc is not '':
+                            if label_oned_loc != 'outside' and label_oned_loc != '':
                                 ax.legend(loc=label_oned_loc,
                                           fontsize=legend_fontsize)
                             else:

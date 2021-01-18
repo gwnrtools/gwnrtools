@@ -29,7 +29,7 @@ from __future__ import print_function
 from numpy import *
 import numpy as np
 
-from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as
+from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as, real_same_precision_as
 from pycbc.pnutils import nearest_larger_binary_number
 
 
