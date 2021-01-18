@@ -396,7 +396,7 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
 
         if opts.get('workflow', 'psd-estimation') == 'download':
             self.psd_options = '''\
-psd-inverse-length = 8 ; not sure why, but we need this for now!
+psd-inverse-length = 8
 psd-file ='''
             for ifo in self.merger.operating_ifos():
                 self.psd_options += ' {0}:{1}'.format(
