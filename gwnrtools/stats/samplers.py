@@ -15,7 +15,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
-from gwnrtools.stats import OneDRandom
+from gwnrtools.stats.sampling import OneDRandom
 import numpy as np
 import emcee
 import logging
@@ -61,7 +61,7 @@ Outputs:
 --------
 sampler         : emcee.EnsembleSampler object
 state           : current state of sampler
-p0              : 
+p0              :
     """
     # Setup hyper-parameters for the sampler
     ndim = params_to_sample.shape[-1]
@@ -144,7 +144,7 @@ def emcee_samples_from_checkpoint(checkpoint_file,
                                   burnin=1000,
                                   thin=10):
     """
-Retrieves a sampler object from emcee's checkpoint file, 
+Retrieves a sampler object from emcee's checkpoint file,
 retrieves samples for all parameters from it. It returns
 a dictionary with parameter names as keys.
 

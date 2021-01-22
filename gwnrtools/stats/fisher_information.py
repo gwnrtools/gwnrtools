@@ -29,8 +29,12 @@ import scipy as sp
 import time
 
 from pycbc.detector import *
-from pycbc.waveform import get_td_waveform, get_fd_waveform
+from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
+from pycbc.filter import overlap_cplx
 from pycbc.types import FrequencySeries, TimeSeries
+from pycbc.psd import from_string
+from gwnrtools.waveform.utils import generate_detector_strain
+from gwnrtools.utils.types import extend_waveform_TimeSeries,  extend_waveform_FrequencySeries, convert_numpy_to_pycbc_type
 
 _itime = time.time()
 verbose = True

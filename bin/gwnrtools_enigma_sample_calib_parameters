@@ -30,7 +30,7 @@ from multiprocessing import Pool
 import pandas as pd
 
 from gwnrtools import __version__
-from gwnrtools.utils import make_padded_frequency_series
+from gwnrtools.utils.types import make_padded_frequency_series
 from gwnrtools.stats.priors import (__all_cbc_parameters__, default_bbh_params)
 from gwnrtools.stats.samplers import (get_emcee_ensemble_sampler,
                                       write_output_from_emcee_sampler)

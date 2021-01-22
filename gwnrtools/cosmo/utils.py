@@ -99,7 +99,7 @@ def make_z_cosmo_inverseCDF(z_max, R0, H0, Omega_m, Omega_Lambda, Omega_k, w0,
         (H0, Omega_m, Omega_Lambda, Omega_k, w0, w1, R_0))[0]
 
     prob_z = np.zeros_like(z_arr)
-    for i in xrange(z_arr.shape[0]):
+    for i in range(z_arr.shape[0]):
         prob_z[i] = probability_density_Uniform_comoving_volume(
             z_arr[i], H0, Omega_m, Omega_Lambda, Omega_k, w0, w1, R_0, R_zmax)
     z_CDF = np.cumsum(prob_z * dz)

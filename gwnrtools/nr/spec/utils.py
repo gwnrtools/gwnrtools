@@ -27,7 +27,7 @@ import h5py
 import glob
 import numpy as np
 import re
-from gwnrtools.utils import find_nearest
+from gwnrtools.utils.support import find_nearest
 
 verbose = False
 

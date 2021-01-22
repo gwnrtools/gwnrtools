@@ -18,8 +18,8 @@ import shutil
 import subprocess
 import numpy
 
-from gwnrtools.utils import mkdir
-from gwnrtools.analysis import (get_unique_hex_tag, Merger)
+from gwnrtools.analysis.utils import get_unique_hex_tag
+from gwnrtools.analysis.gw_transient_catalog import Merger
 from gwnrtools.stats.pycbc_inference_utils import InferenceConfigs
 
 
@@ -209,10 +209,10 @@ class InjectionInferenceAnalysis(OneInferenceAnalysis):
         # Make the analysis directory
         if self.verbose:
             logging.info("Making {0} in {1}".format(self.run_dir, os.getcwd()))
-        mkdir(self.run_dir)
-        mkdir(os.path.join(self.run_dir, 'scripts'))
-        mkdir(os.path.join(self.run_dir, 'log'))
-        mkdir(os.path.join(self.run_dir, 'plots'))
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'scripts'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'log'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'plots'), exist_ok=True)
 
         # Copy over the relevant configuration files
         if self.verbose:
@@ -396,7 +396,7 @@ class EventInferenceAnalysis(OneInferenceAnalysis):
 
         if opts.get('workflow', 'psd-estimation') == 'download':
             self.psd_options = '''\
-psd-inverse-length = 8 ; not sure why, but we need this for now!
+psd-inverse-length = 8
 psd-file ='''
             for ifo in self.merger.operating_ifos():
                 self.psd_options += ' {0}:{1}'.format(
@@ -448,10 +448,10 @@ psd-segment-stride = 4
         # Make the analysis directory
         if self.verbose:
             logging.info("Making {0} in {1}".format(self.run_dir, os.getcwd()))
-        mkdir(self.run_dir)
-        mkdir(os.path.join(self.run_dir, 'scripts'))
-        mkdir(os.path.join(self.run_dir, 'log'))
-        mkdir(os.path.join(self.run_dir, 'plots'))
+        os.makedirs(self.run_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'scripts'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'log'), exist_ok=True)
+        os.makedirs(os.path.join(self.run_dir, 'plots'), exist_ok=True)
 
         # Setup formatting options for data.ini for this event
         myargs = {

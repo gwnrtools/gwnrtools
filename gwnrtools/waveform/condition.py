@@ -36,7 +36,7 @@ from pycbc.types import TimeSeries
 from pycbc.pnutils import *
 from glue.ligolw import ligolw, lsctables
 
-from gwnrtools.nr.types import nr_wave
+from gwnrtools.nr.analysis.UseNRinDA_V1_08162018 import nr_wave
 
 os.environ['LD_LIBRARY_PATH'] =\
     '/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/'
@@ -128,6 +128,7 @@ def planck_window(N=None, eps=None, one_sided=True, winstart=0):
     if N is None or eps is None:
         raise IOError("Please provide the window length and smoothness")
     #
+    from numpy import *
     N = N - winstart
     win = ones(N)
     N1 = int(eps * (N - 1.)) + 1

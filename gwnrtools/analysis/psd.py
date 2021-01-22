@@ -24,6 +24,7 @@
 
 import numpy
 import scipy
+import scipy.interpolate
 from pycbc.types import FrequencySeries
 
 

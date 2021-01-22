@@ -17,13 +17,6 @@ gwnrtools is a toolkit for gravitational-wave physics
 """
 from __future__ import absolute_import
 
-from . import (analysis, cosmo, data, graph, nr, utils, waveform, workflow)
-try:
-    from . import stats
-except:
-    pass
-from gwnrtools.utils import *
-
 
 def get_version_information():
     import os

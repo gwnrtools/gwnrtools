@@ -293,7 +293,7 @@ H5Py File pointer to reduction or volume observer output
         assert os.path.exists(exe) and os.path.getsize(exe) > 0,\
             "Xdmf converter utility {} not found!".format(exe)
 
-        from gwnrtools.nr.spectre.evolutions import HandleSpectreVolumeDatum
+        from gwnrtools.nr.spectre.evolutions.volume_data import HandleSpectreVolumeDatum
         out_file = self.output_file(test, which='volume')
         out_handler = HandleSpectreVolumeDatum(volume_data_file=out_file,
                                                name='TMP',

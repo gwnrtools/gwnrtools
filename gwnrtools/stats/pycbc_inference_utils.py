@@ -30,8 +30,8 @@ class ConfigWriter():
         ----------
 
         name : string
-            The name that configuration file will be written to. 
-            This does not depend on the available options 
+            The name that configuration file will be written to.
+            This does not depend on the available options
         configs : dict
             Has key:value pairs for different ini file texts
         run_dir : string
@@ -43,7 +43,7 @@ class ConfigWriter():
 
     def write(self, name, **formatting_kwargs):
         '''
-        Config file string may have some blanks that need to 
+        Config file string may have some blanks that need to
         be filled, especially for data configs for GW events.
         '''
         out_str = self.configs[name]
@@ -125,7 +125,7 @@ class InferenceConfigs():
         '''
         self.run_dir = run_dir
         # Make this >>
-        assert (isinstance(configs, dict))
+        assert isinstance(configs, dict)
         self.configs = configs
 
         # Add data configs
@@ -178,7 +178,7 @@ class InferenceConfigs():
         return self.configs[config_name]
 
     def set(self, config_name, config):
-        self.configs[config_name] = configs
+        self.configs[config_name] = config
 
     def add_data_configs(self, event_name=None):
         # Events
@@ -245,8 +245,8 @@ analysis-start-time = -6
 analysis-end-time = 2
 {psd_options}
 ; The frame files must be downloaded from GWOSC before running.
-frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file} 
-channel-name = {H1_channel} {L1_channel} {V1_channel} 
+frame-files = H1:{H1_frame_file} L1:{L1_frame_file} V1:{V1_frame_file}
+channel-name = {H1_channel} {L1_channel} {V1_channel}
 ; this will cause the data to be resampled to 2048 Hz:
 sample-rate = {sample_rate}
 ; We'll use a high-pass filter so as not to get numerical errors from the large
@@ -494,7 +494,7 @@ min_num_live_points = {n_live}
 ; update_interval_iter_fraction, update_interval_ncall
 ; log_interval, show_status, dKL, frac_remain,
 ; Lepsilon, min_ess, max_iters, max_ncalls,
-; max_num_improvement_loops, 
+; max_num_improvement_loops,
 ; cluster_num_live_points
 """.format(n_live=n_live, d_logz=d_logz)
         self.configs['sampler']['multinest'] = """\
@@ -539,7 +539,7 @@ name = mass1_mass2_to_mchirp_q
 """.format(n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc)
 
     def add_inference_configs(self):
-        self.configs['inference']['bbh_precessing'] = """\
+        self.configs['inference']['bbh_precessing'] = """
 [model]
 name = gaussian_noise
 low-frequency-cutoff = 20.0

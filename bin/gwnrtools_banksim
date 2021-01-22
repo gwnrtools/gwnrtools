@@ -131,10 +131,10 @@ if options.psd_estimation:
 ####################### Functions to generate waveform ##################
 #########################################################################
 generate_fplus_fcross    = overhead_antenna_pattern
-generate_detector_strain = WF.generate_detector_strain
-outside_mchirp_window    = DA.outside_mchirp_window
-outside_tau0_window      = DA.outside_tau0_window
-get_sim_hash             = DA.get_sim_hash
+generate_detector_strain = WF.utils.generate_detector_strain
+outside_mchirp_window    = DA.utils.outside_mchirp_window
+outside_tau0_window      = DA.utils.outside_tau0_window
+get_sim_hash             = DA.utils.get_sim_hash
 
 #############################
 # def get_tag(wav): return str(wav.simulation_id.column_name)
@@ -155,7 +155,7 @@ def outside_ecc_window(bank, sim, w, key = 'alpha'):
 def get_waveform(wav, approximant, f_min, dt, N):
     """This function will generate the waveform corresponding to the point
     taken as input.
-    Note: If waveform generation fails, the function will return None if 
+    Note: If waveform generation fails, the function will return None if
             --tolerate-waveform-failures is specified."""
     #{{{
     m1 = wav.mass1
@@ -273,10 +273,10 @@ try:
 except ValueError:
     try:
         bank_table = lsctables.SnglInspiralTable.get_table(bank_doc)
-        # We need to assign unique tags to all rows in this 
-        # table as we won't have those available under the 
+        # We need to assign unique tags to all rows in this
+        # table as we won't have those available under the
         # `simulation_id` column. We also addtionally include
-        # sensible values for `inclination`, `distance`, 
+        # sensible values for `inclination`, `distance`,
         # `latitude`, `longitude` and `polarization` fields!
         for row in bank_table:
             row.simulation_id = get_sim_hash()
@@ -422,7 +422,7 @@ with ctx:
                                 "\t Skipped (o, {}) due to TAG".format(k))
                         append_one_match(pb, pp, 1, 1, 1)
                         continue
-                    
+
                     ## Now, we really need to get both of these waveforms!
                     # first the template
                     if waveform_exists(pb, waveforms): stilde = waveforms[get_tag(pb)]

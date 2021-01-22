@@ -45,7 +45,7 @@ import h5py
 
 from math import pow
 
-from utils import phase_from_polarizations, frequency_from_polarizations, amplitude_from_polarizations
+from pycbc.waveform.utils import phase_from_polarizations, frequency_from_polarizations, amplitude_from_polarizations
 from pycbc.types import FrequencySeries, TimeSeries, real_same_precision_as, complex_same_precision_as, Array
 import lal
 
