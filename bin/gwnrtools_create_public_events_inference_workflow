@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 """Setup workflow to perform Bayesian parameter estimation runs on a
 custom set of public gravitational-wave events using open data"""
 
@@ -29,41 +28,56 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from gwnrtools.workflow.inference import InferenceOnEventBatch
+from gwnrtools.workflow.inference import PycbcInferenceOnEventBatch
 from gwnrtools.workflow.condor import InferenceJob
 from gwnrtools.utils.support import (mkdir, rmdir)
 from gwnrtools import __version__
-
 
 ############################################################
 # command line usage
 parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
                                  description=__doc__)
-parser.add_argument("--version", action="version", version=__version__,
+parser.add_argument("--version",
+                    action="version",
+                    version=__version__,
                     help="Prints version information.")
-parser.add_argument("--verbose", action="store_true", default=False,
+parser.add_argument("--verbose",
+                    action="store_true",
+                    default=False,
                     help="Print logging messages.")
 # workflow options
 
 # output options
-parser.add_argument("--output-dir", type=str, required=False, default='',
+parser.add_argument("--output-dir",
+                    type=str,
+                    required=False,
+                    default='',
                     help="Output directory path.")
-parser.add_argument("--force", action="store_true", default=False,
+parser.add_argument("--force",
+                    action="store_true",
+                    default=False,
                     help="If the output-dir already exists, overwrite it. "
-                         "Otherwise, an OSError is raised.")
-parser.add_argument("--do-not-fetch-data", action="store_true",
+                    "Otherwise, an OSError is raised.")
+parser.add_argument("--do-not-fetch-data",
+                    action="store_true",
                     default=False,
                     help="Don't fetch GWOSC data.")
 
 # parallelization options
-parser.add_argument("--nprocesses", type=int, default=0,
+parser.add_argument("--nprocesses",
+                    type=int,
+                    default=0,
                     help="Number of processes to use. If not given then only "
-                         "a single core will be used.")
-parser.add_argument("--use-mpi", action='store_true', default=False,
+                    "a single core will be used.")
+parser.add_argument("--use-mpi",
+                    action='store_true',
+                    default=False,
                     help="Use MPI to parallelize the sampler")
-parser.add_argument("--seed", type=int, default=0,
+parser.add_argument("--seed",
+                    type=int,
+                    default=0,
                     help="Seed to use for the random number generator that "
-                         "initially distributes the walkers. Default is 0.")
+                    "initially distributes the walkers. Default is 0.")
 # add config options
 configuration.add_workflow_command_line_group(parser)
 # add module pre-defined options
@@ -108,21 +122,24 @@ if True:
 # override options based on CLI
 override_opts = [('seed', str(opts.seed))]
 try:
-    confs.add_options_to_section('inference', override_opts,
+    confs.add_options_to_section('inference',
+                                 override_opts,
                                  overwrite_options=False)
 except:
     pass
 if opts.nprocesses >= 1:
     override_opts = [('nprocesses', str(opts.nprocesses))]
     try:
-        confs.add_options_to_section('inference', override_opts,
+        confs.add_options_to_section('inference',
+                                     override_opts,
                                      overwrite_options=False)
     except:
         pass
 if opts.use_mpi:
     override_opts = [('use-mpi', '')]
     try:
-        confs.add_options_to_section('inference', override_opts,
+        confs.add_options_to_section('inference',
+                                     override_opts,
                                      overwrite_options=False)
     except:
         pass
@@ -139,7 +156,6 @@ numpy.seterr(divide='ignore', invalid='ignore')
 ctx = scheme.from_cli(opts)
 fft.from_cli(opts)
 
-
 with ctx:
 
     # Sort out the directory where all analyses are to be run
@@ -149,7 +165,8 @@ with ctx:
     if os.path.exists(analyses_dir):
         if not opts.force:
             raise IOError(
-                "Output directory {} exists. Use --force to overwrite it.".format(analyses_dir))
+                "Output directory {} exists. Use --force to overwrite it.".
+                format(analyses_dir))
     else:
         mkdir(analyses_dir)
     os.chdir(analyses_dir)
@@ -173,8 +190,9 @@ with ctx:
         accounting_group = confs.get('workflow', 'accounting-group')
     except:
         accounting_group = None
-        logging.warn('Warning: accounting-group not specified, LDG clusters may'
-                     ' reject this workflow!')
+        logging.warn(
+            'Warning: accounting-group not specified, LDG clusters may'
+            ' reject this workflow!')
 
     logging.info("Creating DAG")
     dag = CondorDAG(logfile)
@@ -182,7 +200,9 @@ with ctx:
     dag.set_dag_file("pycbc_inference_events")
     dag.set_dax_file("pycbc_inference_events")
 
-    analyses = InferenceOnEventBatch(confs, analyses_dir, verbose=opts.verbose)
+    analyses = PycbcInferenceOnEventBatch(confs,
+                                          analyses_dir,
+                                          verbose=opts.verbose)
     # analyses.setup_runs()
     all_event_runs = analyses.get_runs()
 
@@ -197,7 +217,8 @@ with ctx:
         run.setup()
 
         # Procure GWOSC data
-        if not opts.do_not_fetch_data and run.get_event_name() not in events_already_setup:
+        if not opts.do_not_fetch_data and run.get_event_name(
+        ) not in events_already_setup:
             run.fetch_all_data()
             if confs.get('workflow', 'psd-estimation') == 'download':
                 run.fetch_all_psds()
@@ -206,7 +227,10 @@ with ctx:
         # Configure inference job
         req_mem = confs.get('workflow', 'inference-request-memory')
         req_cpus = int(confs.get('workflow', 'inference-request-cpus'))
-        inf_job = InferenceJob('log', run.get_inf_exe_path(), None, None,
+        inf_job = InferenceJob('log',
+                               run.get_inf_exe_path(),
+                               None,
+                               None,
                                accounting_group=accounting_group,
                                request_memory=req_mem,
                                request_cpus=req_cpus)
@@ -221,7 +245,9 @@ with ctx:
             for ss in confs.get_subsections('plot'):
                 plt_job = InferenceJob('log',
                                        run.get_plt_exe_path() +
-                                       '_{0}'.format(ss), None, None,
+                                       '_{0}'.format(ss),
+                                       None,
+                                       None,
                                        accounting_group=accounting_group,
                                        request_memory=req_mem,
                                        request_cpus=req_cpus)
