@@ -35,6 +35,7 @@ run_dir : string
         self.name = name
         self.configs = configs
         self.run_dir = run_dir
+        raise NotImplementedError()
 
     def write(self, name, **formatting_kwargs):
         '''
@@ -94,26 +95,42 @@ class BilbyScriptWriterBase(object):
                 raise IOError("Please provide {} in inference_opts".format(f))
 
         # Use derived settings if explicit not provided
+        # 1. check for various marker frequencies
         if 'upper_frequency_cutoff' not in self.inference_opts:
             self.inference_opts[
                 'upper_frequency_cutoff'] = self.inference_opts[
                     'sample_rate'] // 2  # Nyquist
+        elif self.inference_opts['upper_frequency_cutoff'] < 0:
+            self.inference_opts[
+                'upper_frequency_cutoff'] = self.inference_opts[
+                    'sample_rate'] // 2  # Nyquist
+
         if 'reference_frequency' not in self.inference_opts:
             self.inference_opts['reference_frequency'] = self.inference_opts[
-                'lower_frequency_opts']
+                'lower_frequency_cutoff']
+        elif self.inference_opts['reference_frequency'] < 0:
+            self.inference_opts['reference_frequency'] = self.inference_opts[
+                'lower_frequency_cutoff']
+
+        # 2. Disable marginalizations of phase/time/distance by default
         for f in [
                 'phase_marginalization', 'distance_marginalization',
                 'time_marginalization'
         ]:
             if f not in self.inference_opts:
                 self.inference_opts[f] = False
+
+        # 3. Set the same marker frequencies in template arguments
         for f in [
                 'lower_frequency_cutoff', 'upper_frequency_cutoff',
                 'reference_frequency'
         ]:
             if f not in self.template_opts:
                 self.template_opts[f] = self.inference_opts[f]
+            elif self.template_opts[f] < 0:
+                self.template_opts[f] = self.inference_opts[f]
 
+        # Enable checkpointing by default
         if 'n_check_point' not in self.sampler_opts:
             self.sampler_opts['n_check_point'] = 10000
 
@@ -155,6 +172,7 @@ logger = bilby.core.utils.logger
 bilby.core.utils.setup_logger(outdir=outdir, label=label)
 bilby.core.utils.check_directory_exists_and_if_not_mkdir(outdir)
 
+# Analysis settings
 duration = {1}
 sampling_frequency = {2}
 psd_duration = 32 * duration
@@ -172,15 +190,16 @@ post_trigger_duration = 2 # conservatively, ringdown cannot be longer than 2 sec
         tmpls = [
             '''\
 
-
+# OVERVIEW OF APPROXIMANTS:
+# https://www.lsc-group.phys.uwm.edu/ligovirgo/cbcnote/Waveforms/Overview
 template_arguments = dict(waveform_approximant="{0}",
-                           reference_frequency={1}, minimum_frequency={2})
-
+                          reference_frequency={1}, minimum_frequency={2})
+conversion = bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters
 
 template_generator = bilby.gw.WaveformGenerator(
     duration=duration, sampling_frequency=sampling_frequency,
     frequency_domain_source_model={3},
-    parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
+    parameter_conversion=conversion,
     waveform_arguments=template_arguments)
 
 
@@ -195,9 +214,14 @@ template_generator = bilby.gw.WaveformGenerator(
         return tmpls
 
     def add_prior_lines(self):
-        if len(self.priors) > 0:
+        if len(self.priors) == 0:
+            if self.verbosity > 0:
+                print("Using default priors for {}".format(self.source_type))
             if self.source_type == 'bbh':
-                priors = ['', '', 'priors = bilby.gw.prior.BBHPriorDict()']
+                priors = [
+                    '', '# Setup priors: the best way is to use a file',
+                    'priors = bilby.gw.prior.BBHPriorDict()'
+                ]
             elif self.source_type == 'bns':
                 priors = ['', '', 'priors = bilby.gw.prior.BNSPriorDict()']
             else:
@@ -238,6 +262,7 @@ priors["geocent_time"] = bilby.core.prior.Uniform(
         liks = [
             '''\
 
+# Setup the likelihood calculator
 likelihood = bilby.gw.GravitationalWaveTransient(
     interferometers=ifos, waveform_generator=template_generator, priors=priors,
     distance_marginalization={0}, phase_marginalization={1}, time_marginalization={2})
@@ -255,6 +280,7 @@ likelihood = bilby.gw.GravitationalWaveTransient(
         smpl = [
             '''\
 
+# Run the sampler
 result = bilby.run_sampler(
     likelihood=likelihood, priors=priors, outdir=outdir, label=label,
     check_point_plot=True, 
@@ -283,6 +309,7 @@ result = bilby.run_sampler(
     def add_post_processing_lines(self):
         ppl = ['''\
 
+# Make final figures
 result.plot_corner()
 
 ''']
@@ -302,8 +329,12 @@ result.plot_corner()
         self.add_import_lines()
         self.add_initialization_lines()
         if self.analysis_type == 'event':
+            if self.verbosity > 0:
+                print("Writing script for event data")
             self.add_data_lines()
         elif self.analysis_type == 'injection':
+            if self.verbosity > 0:
+                print("Writing script for injection data")
             self.add_injection_lines()
         self.add_template_lines()
         self.add_prior_lines()
@@ -333,6 +364,165 @@ result.plot_corner()
                 raise RuntimeError("Script has not been completed yet!")
             for line in lines:
                 f.write(line + '\n')
+
+
+class BilbyScriptWriterInjection(BilbyScriptWriterBase):
+    def __init__(
+            self,
+            tag,
+            source_type,
+            injection_opts=dict(
+                approximant='IMRPhenomPv2',
+                source_model='bilby.gw.source.lal_binary_black_hole',
+                parameters=dict(),
+                noise_type='zero',  # or 'gaussian'
+                asd=dict(),
+                psd=dict(),
+                sample_rate=2048,
+                lower_frequency_cutoff=30.0,
+                upper_frequency_cutoff=-1,
+                reference_frequency=-1,
+            ),
+            interferometer_list=['H1'],
+            inference_opts=dict(duration=4,
+                                sample_rate=2048,
+                                lower_frequency_cutoff=30.0,
+                                upper_frequency_cutoff=-1,
+                                reference_frequency=-1,
+                                phase_marginalization=True,
+                                distance_marginalization=True,
+                                time_marginalization=True),
+            template_opts=dict(
+                approximant='IMRPhenomPv2',
+                source_model='bilby.gw.source.lal_binary_black_hole',
+                sample_rate=2048,
+                lower_frequency_cutoff=30.0,
+                upper_frequency_cutoff=-1,
+                reference_frequency=-1),
+            sampler_opts=dict(name='dynesty', npoints=2000, maxmcmc=2000),
+            priors=[],
+            priors_file="priors.prior",
+            verbosity=0) -> None:
+        self.analysis_type = 'injection'
+        self.injection_opts = injection_opts
+
+        # Check for compulsary input args
+        for p in ['approximant', 'source_model', 'parameters']:
+            if p not in self.injection_opts:
+                raise IOError(
+                    "Please provide {} as part of `injection_opts`".format(p))
+        self.set_default_injection_parameters()
+
+        # Initialize
+        super(BilbyScriptWriterInjection,
+              self).__init__(tag,
+                             source_type,
+                             interferometer_list=interferometer_list,
+                             inference_opts=inference_opts,
+                             template_opts=template_opts,
+                             sampler_opts=sampler_opts,
+                             priors=priors,
+                             priors_file=priors_file,
+                             verbosity=verbosity)
+        # Set the same marker frequencies in template arguments
+        for f in [
+                'lower_frequency_cutoff', 'upper_frequency_cutoff',
+                'reference_frequency'
+        ]:
+            if f not in self.injection_opts:
+                self.injection_opts[f] = self.inference_opts[f]
+            elif self.injection_opts[f] < 0:
+                self.injection_opts[f] = self.inference_opts[f]
+
+        # Check and set the choice of noise type for signal injection
+        if 'noise_type' in self.injection_opts:
+            if (self.injection_opts['noise_type'] != 'gaussian') and (
+                    'zero' not in self.injection_opts['noise_type']):
+                raise IOError(
+                    "Injection noise_type must be either `gaussian` or `zero'")
+        else:
+            self.injection_opts['noise_type'] = 'zero'
+
+    def set_default_injection_parameters(self):
+        non_defaultable_parameters = ['mass_1', 'mass_2']
+        for p in non_defaultable_parameters:
+            if p not in self.injection_opts['parameters']:
+                raise IOError(
+                    "You must provide at least the mass_1 and mass_2 of the injection"
+                )
+        # And use default values when not provided by user
+        injection_parameter_defaults = dict(a_1=0.,
+                                            a_2=0.,
+                                            tilt_1=0.,
+                                            tilt_2=0.,
+                                            phi_12=0.,
+                                            phi_jl=0.,
+                                            luminosity_distance=1000.,
+                                            theta_jn=0.,
+                                            psi=0.,
+                                            phase=0.,
+                                            geocent_time=1126259642.413,
+                                            ra=0.,
+                                            dec=0.)
+        for p in injection_parameter_defaults:
+            if p not in self.injection_opts['parameters']:
+                self.injection_opts['parameters'][
+                    p] = injection_parameter_defaults[p]
+
+    def add_injection_lines(self):
+        injs = ['# Injection parameters', 'injection_parameters = dict(']
+        for p in self.injection_opts['parameters']:
+            injs.append('    {}={},'.format(
+                p, self.injection_opts['parameters'][p]))
+        injs[-1] = injs[-1][:-1] + ')'
+
+        injs.extend([
+            '''\
+merger_time = injection_parameters["geocent_time"]
+
+# Setup the injection, starting with basic arguments
+injection_arguments = dict(waveform_approximant="{0}",
+                           reference_frequency={1}, minimum_frequency={2})
+
+'''.format(self.injection_opts['approximant'],
+           self.injection_opts['reference_frequency'],
+           self.injection_opts['lower_frequency_cutoff']),
+            '''\
+
+injection_generator = bilby.gw.WaveformGenerator(
+    duration=duration, sampling_frequency=sampling_frequency,
+    frequency_domain_source_model={0},
+    parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_black_hole_parameters,
+    waveform_arguments=injection_arguments)
+
+
+# GET DATA FROM INTERFEROMETER
+interferometer_names = {1}
+
+ifos = bilby.gw.detector.InterferometerList(interferometer_names)
+
+'''.format(self.injection_opts['source_model'], self.ifo_list),
+        ])
+        gaussian_or_zero_noise = self.injection_opts['noise_type']
+        if gaussian_or_zero_noise == 'gaussian':
+            injs.append('ifos.set_strain_data_from_power_spectral_densities(')
+        elif 'zero' in gaussian_or_zero_noise:
+            injs.append('ifos.set_strain_data_from_zero_noise(')
+        injs.extend([
+            '''\
+   sampling_frequency=sampling_frequency, duration=duration,
+   start_time=injection_parameters[
+        "geocent_time"] - duration + post_trigger_duration)
+ifos.inject_signal(waveform_generator=injection_generator,
+                   parameters=injection_parameters)
+
+'''
+        ])
+
+        if 'data' not in self._lines_added:
+            self._script_lines.extend(injs)
+            self._lines_added.append('data')
+        return injs
 
 
 class BilbyScriptWriterEvent(BilbyScriptWriterBase):
