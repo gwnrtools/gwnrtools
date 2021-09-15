@@ -346,6 +346,11 @@ result.plot_corner()
         return self._script_lines
 
     def show_script(self):
+        lines = self.script_lines
+        for line in lines:
+            print(line)
+
+    def show_script_so_far(self):
         lines = self._script_lines
         for line in lines:
             print(line)

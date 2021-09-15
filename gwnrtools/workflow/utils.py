@@ -13,6 +13,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from pycbc.workflow import configuration
+
 
 def get_ini_opts(confs, section):
     op_str = ""
@@ -20,3 +22,8 @@ def get_ini_opts(confs, section):
         val = confs.get(section, opt)
         op_str += "--" + opt + " " + val + " \\" + "\n"
     return op_str
+
+
+class ConfigParser(configuration.InterpolatingConfigParser):
+    def __init__(self, *args, **kwargs) -> None:
+        super(ConfigParser, self).__init__(args, **kwargs)
