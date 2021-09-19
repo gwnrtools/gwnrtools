@@ -20,13 +20,13 @@ import h5py
 
 from gwnrtools.utils import mkdir
 from gwnrtools.analysis import Merger
-from gwnrtools.stats.bilby_utils import BilbyScriptWriterInjection
+from gwnrtools.stats.bilby_utils import BilbyScriptWriterEvent, BilbyScriptWriterInjection
 from gwnrtools.workflow.inference import (OneInferenceAnalysis,
                                           BatchInferenceAnalyses)
-from gwnrtools.workflow.utils import ConfigParser
+from gwnrtools.workflow.utils import WorkflowConfigParserBase
 
 
-class BilbyInferenceConfigParser(ConfigParser):
+class BilbyInferenceConfigParser(WorkflowConfigParserBase):
     def __init__(self, *args, **kwargs) -> None:
         super(BilbyInferenceConfigParser, self).__init__(*args, **kwargs)
 
@@ -121,7 +121,7 @@ Setup and run inference on one single injection:
 
 Parameters
 ----------
-opts : ConfigParser object
+opts : WorkflowConfigParserBase object
     Configuration options
 run_dir : string
     Path to directory in which the analysis is to be run
@@ -139,12 +139,12 @@ config_files : dict
 
     def write_prior(self):
         script_name = self.get_inf_exe_path()
+        temp = self.script_writer_obj.priors_filename
         self.script_writer_obj.priors_filename = os.path.join(
             os.path.dirname(script_name),
             os.path.basename(self.script_writer_obj.priors_filename))
         self.script_writer_obj.write_prior_file()
-        self.script_writer_obj.priors_filename = os.path.basename(
-            self.script_writer_obj.priors_filename)
+        self.script_writer_obj.priors_filename = temp
 
     def write_run_script(self):
         script_name = self.get_inf_exe_path()
@@ -158,7 +158,67 @@ config_files : dict
                                                     os.getcwd()))
         mkdir(self.get_analysis_dir())
         mkdir(os.path.join(self.get_analysis_dir(), 'log'))
-        mkdir(os.path.join(self.get_analysis_dir(), 'plots'))
+
+        # Write bilby priors file
+        self.write_prior()
+
+        # Write bilby run script
+        self.write_run_script()
+
+
+class BilbyInferenceEventAnalysis(OneInferenceAnalysis):
+    def __init__(self,
+                 opts,
+                 script_writer,
+                 run_dir,
+                 config_files,
+                 verbose=False):
+        '''
+Setup and run inference on one single GW event using public data:
+- setup individual analysis dir
+- setup all analysis dirs
+- start / stop / restart individual analysis
+- check status of individual analysis
+
+Parameters
+----------
+opts : WorkflowConfigParserBase object
+    Configuration options
+run_dir : string
+    Path to directory in which the analysis is to be run
+config_files : dict
+    Dictionary with names and locations of ini files needed
+        '''
+        self.script_writer_obj = script_writer
+        super(BilbyInferenceEventAnalysis, self).__init__(opts,
+                                                          run_dir,
+                                                          config_files,
+                                                          inj_exe_name='',
+                                                          inf_exe_name='',
+                                                          plt_exe_name='',
+                                                          verbose=verbose)
+
+    def write_prior(self):
+        script_name = self.get_inf_exe_path()
+        temp = self.script_writer_obj.priors_filename
+        self.script_writer_obj.priors_filename = os.path.join(
+            os.path.dirname(script_name),
+            os.path.basename(self.script_writer_obj.priors_filename))
+        self.script_writer_obj.write_prior_file()
+        self.script_writer_obj.priors_filename = temp
+
+    def write_run_script(self):
+        script_name = self.get_inf_exe_path()
+        self.script_writer_obj.write_script(script_name)
+        os.chmod(script_name, 0o0777)
+
+    def setup(self):
+        # Make the analysis directory
+        if self.verbose:
+            logging.info("Making {0} in {1}".format(self.get_analysis_dir(),
+                                                    os.getcwd()))
+        mkdir(self.get_analysis_dir())
+        mkdir(os.path.join(self.get_analysis_dir(), 'log'))
 
         # Write bilby priors file
         self.write_prior()
@@ -174,7 +234,7 @@ Thin wrapper class that encapsulates a suite of injection runs
 
 Parameters
 ----------
-opts : workflow.ConfigParser object
+opts : WorkflowConfigParserBase object
     Options for the workflow
 run_dir : string
     Path to the main directory where all analyses are to be run
@@ -245,7 +305,7 @@ run_dir : string
 
             # Create script writer
             obj = BilbyScriptWriterInjection(
-                'injection_{}'.format(i),
+                'injection_{0:03d}'.format(i),
                 opts.get_source_type(),
                 injection_opts=inj_opts,
                 interferometer_list=opts.get_interferometer_list(),
@@ -278,3 +338,65 @@ run_dir : string
     def name_run_dir(self, inj_num):
         return os.path.join(self.get_analyses_dir(),
                             'injection{0:03d}'.format(inj_num))
+
+
+class BilbyOnEventBatch(BatchInferenceAnalyses):
+    def __init__(self, opts, run_dir, config_files={}, verbose=False):
+        '''
+Thin wrapper class that encapsulates a suite of event runs
+
+Parameters
+----------
+opts : WorkflowConfigParserBase object
+    Options for the workflow
+run_dir : string
+    Path to the main directory where all analyses are to be run
+        '''
+        super(BilbyOnEventBatch, self).__init__(opts,
+                                                run_dir,
+                                                inj_exe_name='',
+                                                inf_exe_name='',
+                                                plt_exe_name='',
+                                                verbose=verbose)
+        self.event_names = opts.get_section_opts('data')['event_names'].split(
+            ',')
+
+        logging.info("--- creating script writer objects for events")
+        template_opts = opts.get_section_opts('template')
+
+        objs = []
+        for i, event_name in enumerate(self.event_names):
+
+            # Create script writer
+            obj = BilbyScriptWriterEvent(
+                event_name,
+                opts.get_source_type(),
+                interferometer_list=opts.get_interferometer_list(),
+                inference_opts=opts.get_inference_opts(),
+                template_opts=template_opts,
+                sampler_opts=opts.get_section_opts('sampler', int),
+                priors=opts.get_prior_lines(),
+                priors_file="priors.prior",
+                verbosity=1)
+            logging.info(
+                "--- script writer object created for event {}".format(
+                    event_name))
+
+            run_tag = self.get_run_tag()
+            self.runs[run_tag] = BilbyInferenceEventAnalysis(
+                opts,
+                obj,
+                self.name_run_dir(event_name),
+                config_files,
+                verbose=self.verbose)
+            logging.info("--- analysis objects created for event {}".format(i))
+
+            objs.append(obj)
+        self.script_writers = objs
+
+    def setup_runs(self):
+        for r in self.runs:
+            self.runs[r].setup()
+
+    def name_run_dir(self, event_name):
+        return os.path.join(self.get_analyses_dir(), event_name)

@@ -13,44 +13,467 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import os
+import glob
+import logging
+
+from gwnrtools.stats.config_utils import ConfigBase
 
 
-class ConfigWriter():
-    def __init__(self, name, configs, run_dir):
+class InferenceConfigs(ConfigBase):
+    def __init__(self, run_dir, configs={}):
         '''
-Writer class for configuration files
+        Stores config files for pycbc_inference runs
 
-Parameters
-----------
+        Parameters
+        ----------
 
-name : string
-    The name that configuration file will be written to. 
-    This does not depend on the available options 
-configs : dict
-    Has key:value pairs for different ini file texts
-run_dir : string
-    Run directory where the configuration files are to be written
+        run_dir : string
+        configs : dict
+
+
+        Usage Notes
+        -----------
+
+        [1] Compatible with `ConfigWriter`.
+        This class is easiest used with the writer it returns.
+
+        [2] Arguments for `sampler.ini` and `inference.ini`
+            are formatted in the initialization of this class
+
+        Therefore, when configuring for Injections
+        ------------------------------------------
+        No special notes
+
+        [3] Arguments for `data.ini` are not formatted in this class,
+        but can be when writing it through its ConfigWriter.
+
+        Therefore, when configuring for Events
+        --------------------------------------
+        Need the following named variables to be provided to the
+        ConfigWriter's `write` function:
+
+        gpstime       : int
+        H1_frame_file : str
+        H1_channel    : str
+        L1_frame_file : str
+        L1_channel    : str
+        V1_frame_file : str
+        V1_channel    : str
+        sample_rate   : int (power of 2)
+
         '''
-        self.name = name
-        self.configs = configs
-        self.run_dir = run_dir
-        raise NotImplementedError()
+        super(InferenceConfigs, self).__init__(run_dir, configs)
 
-    def write(self, name, **formatting_kwargs):
-        '''
-        Config file string may have some blanks that need to 
-        be filled, especially for data configs for GW events.
-        '''
-        out_str = self.configs[name]
-        with open(os.path.join(self.run_dir, name + '.ini'), 'w') as fout:
-            if len(formatting_kwargs) > 0:
-                fout.write(out_str.format(**formatting_kwargs))
-            else:
-                fout.write(out_str)
+        # Add prior configs
+        if 'prior' not in self.configs:
+            self.configs['prior'] = {}
+        self.add_default_bbh_prior_config()
+        self.add_bilby_prior_files_configs()
 
-    def types(self):
-        return self.configs.keys()
+        # Add configs for injections
+        if 'injection' not in self.configs:
+            self.configs['injection'] = {}
+        self.add_injection_configs()
+
+        # Add event configs
+        if 'event' not in self.configs:
+            self.configs['event'] = {}
+        from pycbc.catalog import Catalog
+        self.event_names = Catalog().names
+        for event_name in self.event_names:
+            self.add_event_configs(event_name)
+
+        # Initialize their config writers
+        self.update_config_writers()
+
+    def add_default_bbh_prior_config(self):
+        self.set(
+            'prior', 'default', '''\
+mass_ratio = Uniform(name='mass_ratio', minimum=0.125, maximum=1, boundary='reflective')
+chirp_mass = Uniform(name='chirp_mass', minimum=25, maximum=35, unit='$M_{\odot}$', boundary='reflective')
+mass_1 = Constraint(name='mass_1', minimum=5, maximum=80)
+mass_2 = Constraint(name='mass_2', minimum=5, maximum=80)
+a_1 = Uniform(name='a_1', minimum=0, maximum=0.99, boundary='reflective')
+a_2 = Uniform(name='a_2', minimum=0, maximum=0.99, boundary='reflective')
+tilt_1 = Sine(name='tilt_1', boundary='reflective')
+tilt_2 = Sine(name='tilt_2', boundary='reflective')
+phi_12 = Uniform(name='phi_12', minimum=0, maximum=2 * np.pi, boundary='periodic')
+phi_jl = Uniform(name='phi_jl', minimum=0, maximum=2 * np.pi, boundary='periodic')
+luminosity_distance = PowerLaw(alpha=2, name='luminosity_distance', minimum=50, maximum=2000, unit='Mpc', latex_label='$d_L$')
+dec = Cosine(name='dec', boundary='reflective')
+ra = Uniform(name='ra', minimum=0, maximum=2 * np.pi, boundary='periodic')
+theta_jn = Sine(name='theta_jn', boundary='reflective')
+psi = Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
+phase = Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
+geocent_time = Uniform(name='geocent_time', minimum =1126259460.4, maximum=1126259464.4)'''
+        )
+        self.set(
+            'prior', 'eccentric-nonspin', '''\
+eccentricity = Uniform(name='eccentricity', minimum=0, maximum=0.2, boundary='periodic')
+mass_ratio = Uniform(name='mass_ratio', minimum=0.125, maximum=1, boundary='reflective')
+chirp_mass = Uniform(name='chirp_mass', minimum=25, maximum=35, unit='$M_{\odot}$', boundary='reflective')
+mass_1 = Constraint(name='mass_1', minimum=5, maximum=80)
+mass_2 = Constraint(name='mass_2', minimum=5, maximum=80)
+luminosity_distance = PowerLaw(alpha=2, name='luminosity_distance', minimum=50, maximum=2000, unit='Mpc', latex_label='$d_L$')
+dec = Cosine(name='dec', boundary='reflective')
+ra = Uniform(name='ra', minimum=0, maximum=2 * np.pi, boundary='periodic')
+theta_jn = Sine(name='theta_jn', boundary='reflective')
+psi = Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
+phase = Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
+geocent_time = Uniform(name='geocent_time', minimum =1126259460.4, maximum=1126259464.4)'''
+        )
+
+    def add_bilby_prior_files_configs(self):
+        try:
+            import bilby
+            self.bilby_prior_files = {
+                os.path.basename(f).split('.')[0]: f
+                for f in glob.glob(
+                    os.path.join(bilby.gw.prior.DEFAULT_PRIOR_DIR, '*.prior'))
+            }
+
+            for f in self.bilby_prior_files:
+                self.set('prior', f,
+                         ''.join(open(self.bilby_prior_files[f]).readlines()))
+        except:
+            logging.info("Failed to add priors from bilby repository")
+
+    def add_event_configs(self, event_name):
+        priors = self.get('prior')
+        for pt in priors:
+            self.set(
+                'event', 'bbh-event-prior-{}'.format(pt), '''\
+
+[workflow]
+tag = test
+accounting-group = ligo.dev.o3.cbc.explore.test
+log-path = log
+request-memory = 2G
+request-cpus = 1
+
+[inference]
+duration = 4
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+phase_marginalization =
+time_marginalization =
+;distance_marginalization =
+
+[sampler]
+name = dynesty
+npoints = 2000
+maxmcmc = 2000
+n_check_point = 1000
+
+[data]
+analysis_type = event
+source_type = bbh
+event_names = GW150914,GW170104
+interferometers = H1,L1
+
+
+[template]
+source_model = bilby.gw.source.lal_binary_black_hole
+approximant = IMRPhenomPv2
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+
+
+[prior]
+{0}
+
+
+
+'''.format(priors[pt]))
+
+    def add_injection_configs(self):
+        priors = self.get('prior')
+        for pt in priors:
+            self.set(
+                'injection', 'bbh-prior-{}'.format(pt), '''\
+
+[workflow]
+tag = test
+accounting-group = ligo.dev.o3.cbc.explore.test
+log-path = log
+request-memory = 2G
+request-cpus = 1
+
+[inference]
+duration = 4
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+phase_marginalization =
+time_marginalization =
+;distance_marginalization =
+
+[sampler]
+name = dynesty
+npoints = 2000
+maxmcmc = 2000
+n_check_point = 1000
+
+
+[data]
+analysis_type = event
+source_type = bbh
+event_name = GW150914
+interferometers = H1,L1
+
+
+[injection]
+noise_type = zero
+;noise_type = gaussian
+asd-file = H1:PATH,L1:PATH
+approximant = IMRPhenomPv2
+taper = start
+num_injections = 10
+
+
+[injection-static_params]
+geocent_time = 1126259462.420
+;mass_1 = 37
+mass_2 = 32
+a_1 = 0
+a_2 = 0
+tilt_1 = 0
+tilt_2 = 0
+phi_12 = 0
+phi_jl = 0
+ra = 2.2
+dec = -1.25
+theta_jn = 2.5
+phase = 1.5
+psi = 1.75
+luminosity_distance = 1000
+
+
+[injection-variable_params]
+mass_1 =
+eccentricity =
+mean_per_ano =
+
+
+[injection-prior_mass_1]
+name = uniform
+min-mass_1 = 10.
+max-mass_1 = 80.
+
+[injection-prior_eccentricity]
+name = uniform
+min-eccentricity = 0.
+max-eccentricity = 0.2
+
+[injection-prior_mean_per_ano]
+name = uniform
+min-mean_per_ano = 0.
+max-mean_per_ano = 3.1416
+
+
+[template]
+source_model = bilby.gw.source.lal_binary_black_hole
+approximant = IMRPhenomPv2
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+
+
+[prior]
+{0}
+
+
+
+'''.format(priors[pt]))
+
+            # Add configs for aligned-spin injections
+            self.set(
+                'injection', 'bbh-alignedspin-prior-{}'.format(pt), '''\
+
+[workflow]
+tag = test
+accounting-group = ligo.dev.o3.cbc.explore.test
+log-path = log
+request-memory = 2G
+request-cpus = 1
+
+[inference]
+duration = 4
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+phase_marginalization =
+time_marginalization =
+;distance_marginalization =
+
+[sampler]
+name = dynesty
+npoints = 2000
+maxmcmc = 2000
+n_check_point = 1000
+
+
+[data]
+analysis_type = event
+source_type = bbh
+event_name = GW150914
+interferometers = H1,L1
+
+
+[injection]
+noise_type = gaussian
+asd-file = H1:PATH,L1:PATH
+approximant = IMRPhenomPv2
+taper = start
+num_injections = 10
+
+
+[injection-static_params]
+geocent_time = 1126259462.420
+;mass_1 = 37
+mass_2 = 32
+chi_1 = 0
+;chi_2 = 0
+ra = 2.2
+dec = -1.25
+theta_jn = 2.5
+phase = 1.5
+psi = 1.75
+luminosity_distance = 1000
+
+[injection-variable_params]
+mass_1 =
+chi_2 =
+
+
+[injection-prior_mass_1]
+name = uniform
+min-mass_1 = 10.
+max-mass_1 = 80.
+
+
+[injection-prior_chi_2]
+name = uniform
+min-chi_2 = -0.2
+max-chi_2 = 0.2
+
+
+[template]
+source_model = bilby.gw.source.lal_binary_black_hole
+approximant = IMRPhenomPv2
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+
+
+[prior]
+{0}
+
+
+
+'''.format(priors[pt]))
+
+            # Add configs for eccentric non-spin injections
+            self.set(
+                'injection', 'bbh-eccentric-nonspin-prior-{}'.format(pt), '''\
+
+[workflow]
+tag = test
+accounting-group = ligo.dev.o3.cbc.explore.test
+log-path = log
+request-memory = 2G
+request-cpus = 1
+
+[inference]
+duration = 4
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+phase_marginalization =
+time_marginalization =
+;distance_marginalization =
+
+[sampler]
+name = dynesty
+npoints = 2000
+maxmcmc = 2000
+n_check_point = 1000
+
+
+[data]
+analysis_type = event
+source_type = bbh
+event_name = GW150914
+interferometers = H1,L1
+
+
+[injection]
+noise_type = gaussian
+asd-file = H1:PATH,L1:PATH
+approximant = EccentricFD
+source_model = bilby.gw.source.lal_eccentric_binary_black_hole_no_spins
+taper = start
+num_injections = 10
+
+
+[injection-static_params]
+geocent_time = 1126259462.420
+;mass_1 = 37
+mass_2 = 32
+mean_per_ano = 0
+chi_1 = 0
+;chi_2 = 0
+ra = 2.2
+dec = -1.25
+theta_jn = 2.5
+phase = 1.5
+psi = 1.75
+luminosity_distance = 1000
+
+[injection-variable_params]
+mass_1 =
+eccentricity =
+
+
+[injection-prior_mass_1]
+name = uniform
+min-mass_1 = 10.
+max-mass_1 = 80.
+
+
+[injection-prior_eccentricity]
+name = uniform
+min-eccentricity = 0.0
+max-eccentricity = 0.2
+
+
+[template]
+source_model = bilby.gw.source.lal_binary_black_hole
+approximant = EccentricFD
+sample_rate = 2048
+lower_frequency_cutoff = 30
+upper_frequency_cutoff = 1024
+reference_frequency = 30
+
+
+[prior]
+{0}
+
+
+
+
+'''.format(priors[pt]))
 
 
 class BilbyScriptWriterBase(object):
