@@ -122,11 +122,6 @@ os.chdir(analyses_dir)
 logging.info("Will setup analyses in {0}".format(analyses_dir))
 
 # ------------------------------
-# Workspace dirs
-logging.info("Making workspace directories")
-for d in ['scripts', 'log', 'plots']:
-    mkdir(d)
-
 # Get logdir
 try:
     log_path = conf.get("workflow", 'log-path')
