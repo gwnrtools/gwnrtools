@@ -14,7 +14,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import os
 
-from gwnrtools.analysis import get_unique_hex_tag
+from gwnrtools.utils import get_unique_hex_tag
 
 
 def get_ini_opts(confs, section):
