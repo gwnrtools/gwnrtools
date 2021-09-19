@@ -13,59 +13,52 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import os
 
-####
-# **`ConfigWriter`**:
-# - takes in a dictionary of `configs` that contains different ini files
-# - writes them to desired output file
+from gwnrtools.stats.config_utils import ConfigBase
 
 
-class ConfigWriter():
-    def __init__(self, name, configs, run_dir):
-        '''
-        Writer class for configuration files
+class InferenceConfigs(ConfigBase):
+    '''
+    Stores config files for pycbc_inference runs
 
-        Parameters
-        ----------
+    Parameters
+    ----------
 
-        name : string
-            The name that configuration file will be written to. 
-            This does not depend on the available options 
-        configs : dict
-            Has key:value pairs for different ini file texts
-        run_dir : string
-            Run directory where the configuration files are to be written
-        '''
-        self.name = name
-        self.configs = configs
-        self.run_dir = run_dir
-
-    def write(self, name, **formatting_kwargs):
-        '''
-        Config file string may have some blanks that need to 
-        be filled, especially for data configs for GW events.
-        '''
-        out_str = self.configs[name]
-        with open(os.path.join(self.run_dir, name + '.ini'), 'w') as fout:
-            if len(formatting_kwargs) > 0:
-                fout.write(out_str.format(**formatting_kwargs))
-            else:
-                fout.write(out_str)
-
-    def types(self):
-        return self.configs.keys()
+    run_dir : string
+    configs : dict
 
 
-####
+    Usage Notes
+    -----------
 
-####
-# **`InferenceConfigs`**:
-# - stores all `config.ini` files
-# - returns on demand. Compatible with ConfigWriter
+    [1] Compatible with `ConfigWriter`.
+    This class is easiest used with the writer it returns.
 
+    [2] Arguments for `sampler.ini` and `inference.ini`
+        are formatted in the initialization of this class
 
-class InferenceConfigs():
+    Therefore, when configuring for Injections
+    ------------------------------------------
+    No special notes
+
+    [3] Arguments for `data.ini` are not formatted in this class,
+    but can be when writing it through its ConfigWriter.
+
+    Therefore, when configuring for Events
+    --------------------------------------
+    Need the following named variables to be provided to the
+    ConfigWriter's `write` function:
+
+    gpstime       : int
+    H1_frame_file : str
+    H1_channel    : str
+    L1_frame_file : str
+    L1_channel    : str
+    V1_frame_file : str
+    V1_channel    : str
+    sample_rate   : int (power of 2)
+
+    '''
     def __init__(
             self,
             run_dir,
@@ -82,51 +75,7 @@ class InferenceConfigs():
             n_temperatures=20,
             n_maxsamps_per_walker=1000,
             n_eff_samples=4000):
-        '''
-        Stores config files for pycbc_inference runs
-
-        Parameters
-        ----------
-
-        run_dir : string
-        configs : dict
-
-
-        Usage Notes
-        -----------
-
-        [1] Compatible with `ConfigWriter`.
-        This class is easiest used with the writer it returns.
-
-        [2] Arguments for `sampler.ini` and `inference.ini`
-            are formatted in the initialization of this class
-
-        Therefore, when configuring for Injections
-        ------------------------------------------
-        No special notes
-
-        [3] Arguments for `data.ini` are not formatted in this class,
-        but can be when writing it through its ConfigWriter.
-
-        Therefore, when configuring for Events
-        --------------------------------------
-        Need the following named variables to be provided to the
-        ConfigWriter's `write` function:
-
-        gpstime       : int
-        H1_frame_file : str
-        H1_channel    : str
-        L1_frame_file : str
-        L1_channel    : str
-        V1_frame_file : str
-        V1_channel    : str
-        sample_rate   : int (power of 2)
-
-        '''
-        self.run_dir = run_dir
-        # Make this >>
-        assert (isinstance(configs, dict))
-        self.configs = configs
+        super(InferenceConfigs, self).__init__(run_dir, configs)
 
         # Add data configs
         if 'data' not in self.configs:
@@ -157,28 +106,8 @@ class InferenceConfigs():
             self.configs['inference'] = {}
         self.add_inference_configs()
 
-        self.config_names = self.configs.keys()
-
         # Initialize their config writers
-        self.config_writers = {}
-        for config_name in self.config_names:
-            self.config_writers[config_name] = ConfigWriter(
-                config_name + '.ini', self.configs[config_name], run_dir)
-
-    def available_configs(self):
-        return self.config_names
-
-    def get_config_writer(self, name):
-        assert (name in self.available_configs())
-        return self.config_writers[name]
-
-    def get(self, config_name, type_name=None):
-        if type_name in self.configs[config_name]:
-            return self.configs[config_name][type_name]
-        return self.configs[config_name]
-
-    def set(self, config_name, config):
-        self.configs[config_name] = configs
+        self.update_config_writers()
 
     def add_data_configs(self, event_name=None):
         # Events
@@ -659,8 +588,6 @@ name = uniform_sky
 ; polarization prior
 name = uniform_angle
 """
-
-    def add_inference_configs(self):
         self.configs['inference']['bbh_alignedspin'] = """\
 [model]
 name = gaussian_noise

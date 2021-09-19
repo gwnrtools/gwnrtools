@@ -24,6 +24,6 @@ def get_ini_opts(confs, section):
     return op_str
 
 
-class ConfigParser(configuration.InterpolatingConfigParser):
+class WorkflowConfigParserBase(configuration.InterpolatingConfigParser):
     def __init__(self, *args, **kwargs) -> None:
-        super(ConfigParser, self).__init__(args, **kwargs)
+        super(WorkflowConfigParserBase, self).__init__(args, **kwargs)
