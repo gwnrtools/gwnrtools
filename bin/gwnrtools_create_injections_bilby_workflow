@@ -20,6 +20,7 @@ custom set of simulated signals"""
 import os
 import argparse
 import logging
+import subprocess
 import tempfile
 import numpy
 
@@ -120,6 +121,8 @@ if os.path.exists(analyses_dir):
                 analyses_dir))
 else:
     mkdir(analyses_dir)
+subprocess.call("cp -r {} {}/".format(opts.config_file, analyses_dir),
+                shell=True)
 os.chdir(analyses_dir)
 logging.info("Will setup analyses in {0}".format(analyses_dir))
 
@@ -165,11 +168,11 @@ for tag in all_injection_runs:
 
     # Configure inference job
     req_mem = None
-    if conf.has_option('workflow', 'inference-request-memory'):
-        req_mem = conf.get('workflow', 'inference-request-memory')
+    if conf.has_option('workflow', 'request-memory'):
+        req_mem = conf.get('workflow', 'request-memory')
     req_cpus = 1
-    if conf.has_option('workflow', 'inference-request-cpus'):
-        req_cpus = int(conf.get('workflow', 'inference-request-cpus'))
+    if conf.has_option('workflow', 'request-cpus'):
+        req_cpus = int(conf.get('workflow', 'request-cpus'))
     inf_job = InferenceJob('log',
                            run.get_inf_exe_path(),
                            None,
