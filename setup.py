@@ -140,7 +140,7 @@ if __name__ == "__main__":
             'bin/gwnrtools_create_public_events_pycbc_inference_workflow',
             'bin/gwnrtools_write_bilby_configs',
             'bin/gwnrtools_create_injections_bilby_workflow',
-            'bin/gwnrtools_create_public_events__bilby_workflow',
+            'bin/gwnrtools_create_public_events_bilby_workflow',
             'bin/gwnrtools_banksim', 'bin/gwnrtools_faithsim',
             'bin/gwnrtools_force_success_from_condor_sub',
             'bin/gwnrtools_sample_parameter_space',
