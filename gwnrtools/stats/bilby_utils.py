@@ -17,6 +17,7 @@
 import os
 import glob
 import logging
+import numpy as np
 
 from gwnrtools.stats.config_utils import ConfigBase
 
@@ -460,7 +461,7 @@ max-eccentricity = 0.2
 
 [template]
 source_model = bilby.gw.source.lal_binary_black_hole
-approximant = EccentricFD
+approximant = IMRPhenomPv2
 sample_rate = 2048
 lower_frequency_cutoff = 30
 upper_frequency_cutoff = 1024
@@ -688,7 +689,8 @@ priors["geocent_time"] = bilby.core.prior.Uniform(
 # Setup the likelihood calculator
 likelihood = bilby.gw.GravitationalWaveTransient(
     interferometers=ifos, waveform_generator=template_generator, priors=priors,
-    distance_marginalization={0}, phase_marginalization={1}, time_marginalization={2})
+    distance_marginalization={0}, phase_marginalization={1},
+    time_marginalization={2})
 
 '''.format(self.inference_opts['distance_marginalization'],
            self.inference_opts['phase_marginalization'],
@@ -706,8 +708,7 @@ likelihood = bilby.gw.GravitationalWaveTransient(
 # Run the sampler
 result = bilby.run_sampler(
     likelihood=likelihood, priors=priors, outdir=outdir, label=label,
-    check_point_plot=True, 
-'''
+    check_point_plot=True,'''
         ]
         for f in self.sampler_opts:
             v = str(self.sampler_opts[f])
@@ -879,7 +880,9 @@ class BilbyScriptWriterInjection(BilbyScriptWriterBase):
                     "You must provide at least the mass_1 and mass_2 of the injection"
                 )
         # And use default values when not provided by user
-        injection_parameter_defaults = dict(a_1=0.,
+        injection_parameter_defaults = dict(chi_1=0.,
+                                            chi_2=0.,
+                                            a_1=0.,
                                             a_2=0.,
                                             tilt_1=0.,
                                             tilt_2=0.,
@@ -892,10 +895,23 @@ class BilbyScriptWriterInjection(BilbyScriptWriterBase):
                                             geocent_time=1126259642.413,
                                             ra=0.,
                                             dec=0.)
+        prececessing_spin_params = [
+            'a_1', 'a_2', 'tilt_1', 'tilt_2', 'phi_12', 'phi_jl'
+        ]
+        aligned_spin_params = ['chi_1', 'chi_2']
         for p in injection_parameter_defaults:
-            if p not in self.injection_opts['parameters']:
-                self.injection_opts['parameters'][
-                    p] = injection_parameter_defaults[p]
+            if (p not in prececessing_spin_params
+                    and p not in aligned_spin_params) or (
+                        p in prececessing_spin_params and np.all([
+                            ap not in self.injection_opts['parameters']
+                            for ap in aligned_spin_params
+                        ])) or (p in aligned_spin_params and np.all([
+                            ap not in self.injection_opts['parameters']
+                            for ap in prececessing_spin_params
+                        ])):
+                if p not in self.injection_opts['parameters']:
+                    self.injection_opts['parameters'][
+                        p] = injection_parameter_defaults[p]
 
     def add_injection_lines(self):
         injs = ['# Injection parameters', 'injection_parameters = dict(']
