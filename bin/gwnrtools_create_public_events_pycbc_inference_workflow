@@ -28,7 +28,7 @@ import pycbc
 from pycbc import fft, opt, scheme
 from pycbc.workflow import configuration
 
-from gwnrtools.workflow.inference import PycbcInferenceOnEventBatch
+from gwnrtools.workflow.pycbc_inference import PycbcInferenceOnEventBatch
 from gwnrtools.workflow.condor import InferenceJob
 from gwnrtools.utils.support import (mkdir, rmdir)
 from gwnrtools import __version__
