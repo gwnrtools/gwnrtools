@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2018, Prayush Kumar
-# See LICENSE file for details: <https://github.com/prayush/gwnrtools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE>
 
 from __future__ import print_function
 
@@ -9,7 +9,7 @@ from os import environ, path
 import subprocess
 from pathlib import Path
 
-NAME = 'gwnrtools'
+NAME = 'gwnr'
 VERSION = 'v2021.09.20'
 
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         'A collection of tools for academic research in gravitational-wave astronomy & astrophysics',
         long_description=get_long_description(),
         license="GPL",
-        url='https://github.com/prayush/gwnrtools',
+        url='https://github.com/gwnrtools/gwnrtools',
         author='Prayush Kumar',
         author_email='prayush.kumar@gmail.com',
         packages=find_packages(),
@@ -102,8 +102,7 @@ if __name__ == "__main__":
         package_data={
             # version info
             NAME: [write_version_file(VERSION)],
-            'gwnrtools.data':
-            ['gw_noise_curves/*.txt', 'gw_noise_curves/*.dat']
+            'gwnr.data': ['gw_noise_curves/*.txt', 'gw_noise_curves/*.dat']
         },
         install_requires=[
             'astropy>=2.0.16',
@@ -132,20 +131,19 @@ if __name__ == "__main__":
             'bin/choose_testpoints.py', 'bin/choose_best_testpoints.py',
             'bin/remove_eliminated_testpoints.py',
             'bin/split_table_geometrically.py',
-            'bin/gwnrtools_create_bank_workflow',
-            'bin/gwnrtools_create_banksim_workflow',
-            'bin/gwnrtools_create_faithsim_workflow',
-            'bin/gwnrtools_write_pycbc_inference_configs',
-            'bin/gwnrtools_create_injections_pycbc_inference_workflow',
-            'bin/gwnrtools_create_public_events_pycbc_inference_workflow',
-            'bin/gwnrtools_write_bilby_configs',
-            'bin/gwnrtools_create_injections_bilby_workflow',
-            'bin/gwnrtools_create_public_events_bilby_workflow',
-            'bin/gwnrtools_banksim', 'bin/gwnrtools_faithsim',
-            'bin/gwnrtools_force_success_from_condor_sub',
-            'bin/gwnrtools_sample_parameter_space',
-            'bin/gwnrtools_enigma_plan_calib_grid_and_make_dag',
-            'bin/gwnrtools_enigma_sample_calib_parameters',
+            'bin/gwnr_create_bank_workflow',
+            'bin/gwnr_create_banksim_workflow',
+            'bin/gwnr_create_faithsim_workflow',
+            'bin/gwnr_write_pycbc_inference_configs',
+            'bin/gwnr_create_injections_pycbc_inference_workflow',
+            'bin/gwnr_create_public_events_pycbc_inference_workflow',
+            'bin/gwnr_write_bilby_configs',
+            'bin/gwnr_create_injections_bilby_workflow',
+            'bin/gwnr_create_public_events_bilby_workflow', 'bin/gwnr_banksim',
+            'bin/gwnr_faithsim', 'bin/gwnr_force_success_from_condor_sub',
+            'bin/gwnr_sample_parameter_space',
+            'bin/gwnr_enigma_plan_calib_grid_and_make_dag',
+            'bin/gwnr_enigma_sample_calib_parameters',
             'bin/utils/toggle_lsctable_type', 'bin/utils/ConvertHTMLToIpynb',
             'bin/analysis/ComputeOptimalSNRForGWSignals.py',
             'bin/nr/JoinDatainHDF',

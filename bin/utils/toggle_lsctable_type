@@ -16,7 +16,7 @@ from glue.ligolw import ilwd
 
 from pycbc.waveform import parameters as default_parameters
 
-import gwnrtools.analysis as DA
+import gwnr.analysis as DA
 
 __author__ = "Prayush Kumar <prayush.kumar@gmail.com>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])

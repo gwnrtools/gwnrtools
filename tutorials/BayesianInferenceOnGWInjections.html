@@ -14073,7 +14073,7 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs -h
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs -h
 </pre></div>
 
      </div>
@@ -14137,7 +14137,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs --show-available-configs
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs --show-available-configs
 </pre></div>
 
      </div>
@@ -14176,7 +14176,7 @@ inference: [&#39;bbh_precessing&#39;, &#39;bbh_alignedspin&#39;]
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs --verbose<span class="err">\</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs --verbose<span class="err">\</span>
   <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">sampler</span><span class="o">-</span><span class="n">config</span> <span class="n">emcee_pt</span>\
   <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">inference</span><span class="o">-</span><span class="n">config</span> <span class="n">bbh_precessing</span>\
   <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">data</span><span class="o">-</span><span class="n">config</span> <span class="n">gw150914</span><span class="o">-</span><span class="n">like</span><span class="o">-</span><span class="n">zeronoise</span>
@@ -14848,7 +14848,7 @@ plot-prior = inference.ini data.ini
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_injections_pycbc_inference_workflow -h
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_injections_pycbc_inference_workflow -h
 </pre></div>
 
      </div>
@@ -14979,7 +14979,7 @@ Options for selecting the processing scheme in this program.:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_injections_inference_workflow --config-files config.ini<span class="err">\</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_injections_inference_workflow --config-files config.ini<span class="err">\</span>
     <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">.</span> <span class="o">--</span><span class="n">force</span> <span class="o">--</span><span class="n">verbose</span>
 </pre></div>
 
@@ -15559,7 +15559,7 @@ bbh_precessing.ini			     gw150914-like-zeronoise.ini
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --help
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --help
 </pre></div>
 
      </div>
@@ -15615,7 +15615,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --show-available-configs
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --show-available-configs
 </pre></div>
 
      </div>
@@ -15654,7 +15654,7 @@ event: [&#39;bbh-event-prior-default&#39;, &#39;bbh-event-prior-eccentric-nonspi
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --write-config injection,bbh-alignedspin-prior-aligned_spins_bbh
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --write-config injection,bbh-alignedspin-prior-aligned_spins_bbh
 </pre></div>
 
      </div>
@@ -15845,7 +15845,7 @@ chi_2 = bilby.gw.prior.AlignedSpin(name=&#39;chi_2&#39;, a_prior=Uniform(minimum
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_injections_bilby_workflow --help
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_injections_bilby_workflow --help
 </pre></div>
 
      </div>
@@ -15943,7 +15943,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_injections_bilby_workflow --config-file bbh-alignedspin-prior-aligned_spins_bbh.ini<span class="err">\</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_injections_bilby_workflow --config-file bbh-alignedspin-prior-aligned_spins_bbh.ini<span class="err">\</span>
     <span class="o">--</span><span class="n">output</span><span class="o">-</span><span class="nb">dir</span> <span class="o">.</span> <span class="o">--</span><span class="n">force</span> <span class="o">--</span><span class="n">verbose</span>
 </pre></div>
 

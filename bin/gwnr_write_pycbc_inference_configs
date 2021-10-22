@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+"""Get and write configuration files for generating a workflow to perform
+Bayesian parameter estimation runs on a set of signals with Pycbc inference"""
+
+import sys
+import logging
+import argparse
+
+import pycbc
+
+from gwnr.stats.pycbc_inference_utils import InferenceConfigs
+from gwnr import __version__
+
+############################################################
+# command line usage
+parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
+                                 description=__doc__)
+parser.add_argument("--version",
+                    action="version",
+                    version=__version__,
+                    help="Prints version information.")
+parser.add_argument("--verbose",
+                    action="store_true",
+                    default=False,
+                    help="Print logging messages.")
+# workflow options
+parser.add_argument("--write-data-config",
+                    type=str,
+                    required=False,
+                    default='',
+                    help="Write data config files and exit.")
+parser.add_argument("--write-sampler-config",
+                    type=str,
+                    required=False,
+                    default='',
+                    help="Write sampler config files and exit.")
+parser.add_argument("--write-inference-config",
+                    type=str,
+                    required=False,
+                    default='',
+                    help="Write inference config files and exit.")
+
+parser.add_argument("--n-cpus", type=int, required=False, default=10)
+parser.add_argument("--checkpoint-interval",
+                    type=int,
+                    required=False,
+                    default=2000)
+
+# sampler options
+parser.add_argument("--n-live", type=int, required=False, default=2000)
+parser.add_argument("--n-maxmcmc", type=int, required=False, default=8000)
+parser.add_argument("--dlogz", type=float, required=False, default=0.1)
+
+parser.add_argument("--n-walkers", type=int, required=False, default=1000)
+parser.add_argument("--n-temperatures", type=int, required=False, default=20)
+parser.add_argument("--n-maxsamps-per-walker",
+                    type=int,
+                    required=False,
+                    default=1000)
+parser.add_argument("--n-eff-samples", type=int, required=False, default=4000)
+
+# output options
+parser.add_argument("--show-available-configs",
+                    action="store_true",
+                    default=False,
+                    help="Show available options for all configurations.")
+
+parser.add_argument("--output-dir",
+                    type=str,
+                    required=False,
+                    default='.',
+                    help="Output directory path.")
+
+# parse command line
+opts = parser.parse_args()
+pycbc.init_logging(opts.verbose)
+
+analyses_dir = opts.output_dir
+
+############################################################
+# write configs and exit!
+if __name__ == '__main__':
+
+    configs = InferenceConfigs(
+        analyses_dir,
+        # workflow opts
+        n_cpus=opts.n_cpus,
+        checkpoint_interval=opts.checkpoint_interval,
+        # nested samplers opts
+        n_live=opts.n_live,
+        n_maxmcmc=opts.n_maxmcmc,
+        d_logz=opts.dlogz,
+        # parallel mcmc opts
+        n_walkers=opts.n_walkers,
+        n_temperatures=opts.n_temperatures,
+        n_maxsamps_per_walker=opts.n_maxsamps_per_walker,
+        n_eff_samples=opts.n_eff_samples)
+
+    if opts.show_available_configs:
+        for name in configs.available_configs():
+            writer = configs.get_config_writer(name)
+            print("{0}: {1}".format(name, writer.types()))
+        sys.exit(0)
+
+    if len(opts.write_data_config) > 0:
+        data_writer = configs.get_config_writer('data')
+        assert (opts.write_data_config in data_writer.types())
+        logging.info('Writing config file for data settings..')
+        data_writer.write(opts.write_data_config)
+
+    if len(opts.write_sampler_config) > 0:
+        smpl_writer = configs.get_config_writer('sampler')
+        assert (opts.write_sampler_config in smpl_writer.types())
+        logging.info('Writing config file for sampler settings..')
+        smpl_writer.write(opts.write_sampler_config)
+
+    if len(opts.write_inference_config) > 0:
+        inf_writer = configs.get_config_writer('inference')
+        assert (opts.write_inference_config in inf_writer.types())
+        logging.info('Writing config file for inference settings..')
+        inf_writer.write(opts.write_inference_config)
+
+logging.info('Done')

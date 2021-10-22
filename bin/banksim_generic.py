@@ -4,13 +4,14 @@ import os, logging
 logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
                      level=logging.INFO, stream=sys.stdout)
 import time
+
 _itime = time.time()
 
 import argparse
 import numpy as np
 
-import gwnrtools.analysis as DA
-import gwnrtools.waveform as WF
+import gwnr.analysis as DA
+import gwnr.waveform as WF
 
 import lal
 from glue.ligolw import ligolw

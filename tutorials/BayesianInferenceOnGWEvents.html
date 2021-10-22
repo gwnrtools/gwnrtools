@@ -14071,7 +14071,7 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs -h
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs -h
 </pre></div>
 
      </div>
@@ -14135,7 +14135,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs --show-available-configs
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs --show-available-configs
 </pre></div>
 
      </div>
@@ -14174,7 +14174,7 @@ inference: [&#39;bbh_precessing&#39;, &#39;bbh_alignedspin&#39;]
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_pycbc_inference_configs --verbose<span class="err">\</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_pycbc_inference_configs --verbose<span class="err">\</span>
   <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">sampler</span><span class="o">-</span><span class="n">config</span> <span class="n">emcee_pt</span> <span class="o">--</span><span class="n">write</span><span class="o">-</span><span class="n">inference</span><span class="o">-</span><span class="n">config</span> <span class="n">bbh_precessing</span>
 </pre></div>
 
@@ -14573,7 +14573,7 @@ parameters = &#39;mass1 mass2&#39;
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_pycbc_inference_workflow -h
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_public_events_pycbc_inference_workflow -h
 </pre></div>
 
      </div>
@@ -14691,7 +14691,7 @@ Options for selecting the processing scheme in this program.:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_pycbc_inference_workflow --config-files config.ini --output-dir . --force --verbose
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_public_events_pycbc_inference_workflow --config-files config.ini --output-dir . --force --verbose
 </pre></div>
 
      </div>
@@ -15105,7 +15105,7 @@ Downloading https://www.gw-openscience.org/catalog/GWTC-1-confident/data/GW15091
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --help
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --help
 </pre></div>
 
      </div>
@@ -15161,7 +15161,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --show-available-configs
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --show-available-configs
 </pre></div>
 
      </div>
@@ -15200,7 +15200,7 @@ event: [&#39;bbh-event-prior-default&#39;, &#39;bbh-event-prior-eccentric-nonspi
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_write_bilby_configs --write-config event,bbh-event-prior-GW150914 --verbose
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_write_bilby_configs --write-config event,bbh-event-prior-GW150914 --verbose
 </pre></div>
 
      </div>
@@ -15372,7 +15372,7 @@ phase =  Uniform(name=&#39;phase&#39;, minimum=0, maximum=2 * np.pi, boundary=&#
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_bilby_workflow --help
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_public_events_bilby_workflow --help
 </pre></div>
 
      </div>
@@ -15432,7 +15432,7 @@ optional arguments:
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnrtools_create_public_events_bilby_workflow --config-file bbh-event-prior-GW150914.ini --output-dir bbh-events --verbose
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>gwnr_create_public_events_bilby_workflow --config-file bbh-event-prior-GW150914.ini --output-dir bbh-events --verbose
 </pre></div>
 
      </div>

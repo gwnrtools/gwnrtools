@@ -1,0 +1,677 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+"""Setup workflow to calculate fitting factors for a given template bank
+against a custom set of simulated signals"""
+
+import logging
+import os
+import shutil
+from six.moves import configparser as ConfigParser
+import subprocess
+import glob
+import tempfile
+from optparse import OptionParser
+from glue.pipeline import CondorDAGNode, CondorDAG
+from gwnr.workflow.condor import (BaseJob, BanksimNode, BanksimCombineNode as
+                                  CombineNode)
+
+
+def get_ini_opts(confs, section):
+    op_str = ""
+    for opt in confs.options(section):
+        val = confs.get(section, opt)
+        op_str += "--" + opt + " " + val + " \\" + "\n"
+    return op_str
+
+
+def mkdir(dir_name):
+    try:
+        os.mkdir(dir_name)
+    except OSError:
+        pass
+
+
+def mc_min_max_from_sorted_file(fname):
+    from glue.ligolw import lsctables
+    from glue.ligolw.ligolw import LIGOLWContentHandler
+
+    class mycontenthandler(LIGOLWContentHandler):
+        pass
+
+    lsctables.use_in(mycontenthandler)
+    from glue.ligolw.utils import load_filename
+    from glue.ligolw.table import get_table
+    from pycbc.pnutils import mass1_mass2_to_mchirp_eta
+    try:
+        t = get_table(
+            load_filename(fname, False, contenthandler=mycontenthandler),
+            "sngl_inspiral")
+    except:
+        t = get_table(
+            load_filename(fname, False, contenthandler=mycontenthandler),
+            "sim_inspiral")
+    mc_max, et = mass1_mass2_to_mchirp_eta(t[0].mass1, t[0].mass2)
+    mc_min, et = mass1_mass2_to_mchirp_eta(t[-1].mass1, t[-1].mass2)
+    return mc_min, mc_max
+
+
+bf_mchirps = {}
+sf_mchirps = {}
+
+
+def check_outside_mchirp(bf, sf, w):
+    if bf not in bf_mchirps:
+        bf_mchirps[bf] = mc_min_max_from_sorted_file(bf)
+    if sf not in sf_mchirps:
+        sf_mchirps[sf] = mc_min_max_from_sorted_file(sf)
+
+    mc_min, mc_max = bf_mchirps[bf]
+    mc2_min, mc2_max = sf_mchirps[sf]
+
+    if (mc_min <= mc2_max * (1 + w)) and (mc_max * (1 + w) >= mc2_min):
+        return False
+    else:
+        return True
+
+
+parser = OptionParser()
+parser.add_option('--config', type=str)
+(options, args) = parser.parse_args()
+
+if options.config is None:
+    raise ValueError("Config file is required")
+
+logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
+
+confs = ConfigParser.ConfigParser()
+confs.read(options.config)
+
+banksim_prog = confs.get("executables", "banksim")
+bank_file = confs.get("workflow", "bank-file")
+inspinj_prog = confs.get("executables", "inspinj")
+injections_per_job = confs.get("workflow", "injections-per-job")
+templates_per_job = confs.get("workflow", "templates-per-job")
+
+log_path = confs.get("workflow", 'log-path')
+
+tempfile.tempdir = log_path
+tempfile.template = 'banksim.dag.log.'
+logfile = tempfile.mktemp()
+
+mchirp_window = None
+if confs.has_option("banksim", "mchirp-window"):
+    if ',' in confs.get("banksim", "mchirp-window"):
+        mchirp_window = max([
+            float(x) for x in confs.get("banksim", "mchirp-window").split(",")
+        ])
+    else:
+        mchirp_window = float(confs.get("banksim", "mchirp-window"))
+
+gpu = False
+try:
+    gpu = confs.get("workflow", "use-gpus")
+    if gpu is not None:
+        gpu = True
+except:
+    pass
+
+try:
+    accounting_group = confs.get('workflow', 'accounting-group')
+except:
+    accounting_group = None
+    logging.warn('Warning: accounting-group not specified, LDG clusters may'
+                 ' reject this workflow!')
+
+try:
+    bs_request_memory = confs.get('workflow', 'banksim-request-memory')
+except:
+    bs_request_memory = None
+    logging.warn('Warning: workflow specific memory allocation has not'
+                 'been requested. Some jobs may be put on Hold as they'
+                 'are likely to need more memory than the default 2G'
+                 'allocation on the LDG.')
+
+logging.info("Making workspace directories")
+mkdir('scripts')
+mkdir('bank')
+mkdir('match')
+mkdir('injection')
+mkdir('match-part')
+mkdir('log')
+mkdir('plots')
+
+logging.info("Copying scripts")
+shutil.copy(banksim_prog, 'scripts/gwnr_banksim')
+os.chmod('scripts/gwnr_banksim', 0o0777)
+
+logging.info("Creating injection file")
+inj_str = inspinj_prog + " " + \
+    get_ini_opts(confs, "inspinj") + "--output-prefix inj"
+os.system(inj_str)
+
+logging.info("Splitting template bank")
+subprocess.call([
+    'pycbc_splitbank', '--templates-per-bank',
+    str(templates_per_job), '-t', bank_file, '-o', 'bank/bank', '--sort-mchirp'
+])
+
+logging.info("Splitting injection file")
+subprocess.call([
+    'pycbc_splitbank', '--templates-per-bank',
+    str(injections_per_job), '-t', "inj.xml", '-o', 'injection/injection',
+    '--sort-mchirp'
+])
+
+num_banks = len(glob.glob("bank/bank*"))
+num_injs = len(glob.glob("injection/injection*"))
+
+logging.info("Creating DAG")
+f = open("banksim.dag", "w")
+
+do_count = 0
+skip_count = 0
+
+dag = CondorDAG(logfile)
+dag.set_dag_file("banksim")
+dag.set_dax_file("banksim")
+
+bsjob = BaseJob("log",
+                "scripts/gwnr_banksim",
+                confs,
+                "banksim",
+                gpu=gpu,
+                accounting_group=accounting_group,
+                request_memory=bs_request_memory)
+cjob = BaseJob("log",
+               "scripts/gwnr_banksim_match_combine",
+               None,
+               None,
+               accounting_group=accounting_group)
+rjob = BaseJob("log",
+               "scripts/gwnr_banksim_collect_results",
+               None,
+               None,
+               accounting_group=accounting_group)
+pjob = BaseJob("log",
+               "scripts/gwnr_banksim_plots",
+               None,
+               None,
+               accounting_group=accounting_group)
+rnode = CondorDAGNode(rjob)
+pnode = CondorDAGNode(pjob)
+
+for inj_num in range(num_injs):
+    num = str(inj_num)
+    combine_has_jobs = False
+    cnode = CombineNode(cjob, inj_num)
+    for bank_num in range(num_banks):
+        if mchirp_window is not None:
+            bank_part = "bank/bank" + str(bank_num) + ".xml"
+            sim_part = "injection/injection" + str(inj_num) + ".xml"
+            if check_outside_mchirp(bank_part, sim_part, mchirp_window):
+                skip_count += 1
+                continue
+            else:
+                do_count += 1
+        part_num = str(bank_num)
+        mfn = 'match-part/match' + num + 'part' + part_num + '.dat'
+        sn = 'injection/injection' + num + '.xml'
+        bn = 'bank/bank' + part_num + '.xml'
+        bsnode = BanksimNode(bsjob,
+                             sn,
+                             bn,
+                             mfn,
+                             gpu=gpu,
+                             gpu_postscript="scripts/diff_match.sh",
+                             inj_per_job=injections_per_job)
+        cnode.add_parent(bsnode)
+        dag.add_node(bsnode)
+        combine_has_jobs = True
+    if combine_has_jobs:
+        rnode.add_parent(cnode)
+        dag.add_node(cnode)
+dag.add_node(rnode)
+pnode.add_parent(rnode)
+dag.add_node(pnode)
+
+logging.info("DO : %d SKIP %d" % (do_count, skip_count))
+f.close()
+
+f = open("scripts/gwnr_banksim_match_combine", "w")
+f.write("""#!/usr/bin/env python
+import os
+from optparse import OptionParser
+from numpy import *
+from glob import glob
+
+def parse_match_file(mfile_name,
+                     mvals_for_each_bank_point = {},
+                     mvals_for_each_test_point = {}):
+    if not os.path.exists(mfile_name):
+        raise IOError("Provided file {} not found.".format(mfile_name))
+    with open(mfile_name, 'r') as mfile:
+        for line in mfile.readlines():
+            line = line.split()
+            btag, ptag = line[:2]
+            if btag not in mvals_for_each_bank_point:
+                mvals_for_each_bank_point[btag] = {}
+            if ptag not in mvals_for_each_bank_point[btag]:
+                mvals_for_each_bank_point[btag][ptag] = list([float(line[2]), float(line[3]), float(line[4])])
+            if ptag not in mvals_for_each_test_point:
+                mvals_for_each_test_point[ptag] = {}
+            if btag not in mvals_for_each_test_point[ptag]:
+                mvals_for_each_test_point[ptag][btag] = list([float(line[2]), float(line[3]), float(line[4])])
+    return mvals_for_each_bank_point, mvals_for_each_test_point
+
+parser = OptionParser()
+
+parser.add_option('--inj-num',help="index of the injection set for the match files",type=int)
+parser.add_option('-o','--output-file',help="output file with the maximized values")
+options, argv_frame_files = parser.parse_args()
+
+fils = glob("match-part/match"+str(options.inj_num)+"part*.dat")
+
+# Read in results from sub-parts
+m_vals_for_bank_points = {}
+m_vals_for_inj_points = {}
+
+for f in fils:
+    m_vals_for_bank_points, m_vals_for_inj_points = \\
+        parse_match_file(f, m_vals_for_bank_points, m_vals_for_inj_points)
+
+with open(options.output_file, 'a') as fout:
+    for inj in m_vals_for_inj_points:
+        m_vals = array(m_vals_for_inj_points[inj].values())
+        max_m_idx = m_vals[:,0].argmax(0) # maximum match
+        max_m_tmplt = m_vals_for_inj_points[inj].keys()[max_m_idx]
+        out_string = "{0}\\t{1}\\t{2:.12e}\\t{3:.12e}\\t{4:.12e}\\n".format(\\
+            inj, max_m_tmplt, m_vals[max_m_idx, 0], m_vals[max_m_idx, 1], m_vals[max_m_idx, 2])
+        fout.write(out_string)
+
+#dtypef={'names': ('match', 'bank', 'bank_i', 'sim', 'sim_i', 'sigmasq'),\\
+#        'formats': ('f8', 'S256', 'i4', 'S256', 'i4', 'f8')}
+#
+#matches=[]
+#maxmatch = []
+#for fil in fils:
+#    matches.append(loadtxt(fil, dtype=dtypef))
+#   
+#indices = array(matches, dtype=dtypef)['match'].argmax(0)
+#for i, j in enumerate(indices):
+#    maxmatch.append(matches[j][i])
+#    
+#maxmatch=array(maxmatch, dtype =dtypef)
+#savetxt(options.output_file, maxmatch,fmt=('%5.5f', '%s', '%i', '%s', '%i', '%5.5f'), delimiter=' ')
+""")
+os.chmod('scripts/gwnr_banksim_match_combine', 0o0777)
+
+f = open("scripts/gwnr_banksim_collect_results", "w")
+f.write("""#!/usr/bin/env python
+import os
+from numpy import *
+from glue.ligolw import utils as ligolw_utils, table
+import glob
+
+from glue.ligolw import ligolw
+from glue.ligolw.ligolw import LIGOLWContentHandler
+from glue.ligolw import lsctables
+class mycontenthandler(LIGOLWContentHandler):
+    pass
+lsctables.use_in(mycontenthandler)
+
+def parse_match_file(mfile_name,
+                     mvals_for_each_test_point = {},
+                     mvals_for_each_bank_point = {}):
+    if not os.path.exists(mfile_name):
+        raise IOError("Provided file {} not found.".format(mfile_name))
+    with open(mfile_name, 'r') as mfile:
+        for line in mfile.readlines():
+            line = line.split()
+            btag, ptag = line[:2]
+            if btag not in mvals_for_each_bank_point:
+                mvals_for_each_bank_point[btag] = {}
+            if ptag not in mvals_for_each_bank_point[btag]:
+                mvals_for_each_bank_point[btag][ptag] = list([float(line[2]), float(line[3]), float(line[4])])
+            if ptag not in mvals_for_each_test_point:
+                mvals_for_each_test_point[ptag] = {}
+            if btag not in mvals_for_each_test_point[ptag]:
+                mvals_for_each_test_point[ptag][btag] = list([float(line[2]), float(line[3]), float(line[4])])
+    return mvals_for_each_test_point, mvals_for_each_bank_point
+
+
+fils = glob.glob("match/match*.dat")
+
+m_vals_for_bank_points = {}
+m_vals_for_inj_points = {}
+
+for f in fils:
+    m_vals_for_bank_points, m_vals_for_inj_points =\\
+        parse_match_file(f, m_vals_for_bank_points, m_vals_for_inj_points)
+
+# Collect the results:
+# Take m_vals_for_inj_points and get SimINspiral row for all the templates
+# that best match the injection, and get the SimInspiral row for the 
+# injection template as well
+
+# Store this information in a dictionary. What should be the keys?
+# the keys should be the injection keys... So we can cross reference
+# between raw data and this dictionary easily.
+all_xmls = {}
+for inj in m_vals_for_inj_points:
+    inj_bank_name, inj_row_idx = inj.split(':')
+    max_m_tmplt_idx = array([m_vals_for_inj_points[inj][k][0] for k in m_vals_for_inj_points[inj]]).argmax()
+    max_m_tag = m_vals_for_inj_points[inj].keys()[max_m_tmplt_idx]
+    max_m_bank_name, max_m_row_idx = max_m_tag.split(':')
+    #print(inj_bank_name)
+    # Get SimInspiral row for this injection
+    if inj_bank_name not in all_xmls:
+        indoc = ligolw_utils.load_filename(inj_bank_name,\\
+                                           contenthandler=table.use_in(ligolw.LIGOLWContentHandler))
+        try: all_xmls[inj_bank_name] = lsctables.SimInspiralTable.get_table(indoc)
+        except: all_xmls[inj_bank_name] = lsctables.SnglInspiralTable.get_table(indoc)
+    # Get SimInspiral row for the template that best matches it
+    if max_m_bank_name not in all_xmls:
+        indoc = ligolw_utils.load_filename(max_m_bank_name,\\
+                                           contenthandler=table.use_in(ligolw.LIGOLWContentHandler))
+        try: all_xmls[max_m_bank_name] = lsctables.SimInspiralTable.get_table(indoc)
+        except: all_xmls[max_m_bank_name] = lsctables.SnglInspiralTable.get_table(indoc)
+
+# Write results
+header = "# "
+with open('results.dat', 'w') as fout:
+    for inj in m_vals_for_inj_points:
+        inj_bank_name, inj_row_idx = inj.split(':')
+        max_m_tmplt_idx = array([m_vals_for_inj_points[inj][k][0] for k in m_vals_for_inj_points[inj]]).argmax()
+        max_m_tag = m_vals_for_inj_points[inj].keys()[max_m_tmplt_idx]
+        max_m_bank_name, max_m_row_idx = max_m_tag.split(':')
+        max_m, max_m_sigmasq, _ = m_vals_for_inj_points[inj][max_m_tag][:]
+        inj_row   = all_xmls[inj_bank_name][int(inj_row_idx)]
+        max_m_row = all_xmls[max_m_bank_name][int(max_m_row_idx)]
+        
+        outstr = ""
+        outstr += str(max_m) + " "
+        outstr += str(max_m_row.mass1) + " "
+        outstr += str(max_m_row.mass2) + " "
+        outstr += str(max_m_row.spin1x) + " "
+        outstr += str(max_m_row.spin1y) + " "
+        outstr += str(max_m_row.spin1z) + " "
+        outstr += str(max_m_row.spin2x) + " "
+        outstr += str(max_m_row.spin2y) + " " 
+        outstr += str(max_m_row.spin2z) + " "
+
+        header += "ff bmass1 bmass2 bspin1x bspin1y bspin1z bspin2x bspin2y bspin2z "
+
+        if hasattr(max_m_row, "inclination"):
+            outstr += str(max_m_row.inclination) + " "
+            header += "binclination "
+        if hasattr(max_m_row, "alpha"):
+            outstr += str(max_m_row.alpha) + " "
+            header += "beccentricity "
+        if hasattr(max_m_row, "alpha1"):
+            outstr += str(max_m_row.alpha1) + " "
+            header += "bmean_per_ano "
+        if hasattr(max_m_row, "alpha2"):
+            outstr += str(max_m_row.alpha2) + " "
+            header += "blong_asc_nodes "
+        if hasattr(max_m_row, "coa_phase"):
+            outstr += str(max_m_row.coa_phase) + " "
+            header += "bcoa_phase "
+
+        outstr += str(inj_row.mass1) + " "
+        outstr += str(inj_row.mass2) + " "
+        outstr += str(inj_row.spin1x) + " "
+        outstr += str(inj_row.spin1y) + " "
+        outstr += str(inj_row.spin1z) + " "
+        outstr += str(inj_row.spin2x) + " "
+        outstr += str(inj_row.spin2y) + " " 
+        outstr += str(inj_row.spin2z) + " "
+
+        header += "imass1 imass2 ispin1x ispin1y ispin1z ispin2x ispin2y ispin2z "
+
+        if hasattr(inj_row, "alpha"):
+            outstr += str(inj_row.alpha) + " "
+            header += "ieccentricity "
+        if hasattr(inj_row, "alpha1"):
+            outstr += str(inj_row.alpha1) + " "
+            header += "imean_per_ano "
+        if hasattr(inj_row, "alpha2"):
+            outstr += str(inj_row.alpha2) + " "
+            header += "ilong_asc_nodes "
+
+        outstr += str(inj_row.coa_phase) + " "
+        outstr += str(inj_row.inclination) + " "
+        outstr += str(inj_row.latitude) + " " 
+        outstr += str(inj_row.longitude) + " "
+        outstr += str(inj_row.polarization) + " "
+
+        outstr += str(max_m_sigmasq) + " "
+
+        header += "icoa_phase iinclination ilatitude ilongitude ipolarization bsigmasq \\n"
+        outstr += "\\n"
+        
+        fout.write(outstr)
+
+# Add header
+with open("results.dat", "r+") as fout:
+    s = fout.read()
+    fout.seek(0)
+    fout.write(header + s)
+""")
+os.chmod('scripts/gwnr_banksim_collect_results', 0o0777)
+
+if gpu:
+    f = open("cconfig", "w")
+    f.write("""
+    DAGMAN_PROHIBIT_MULTI_JOBS = False
+    """)
+
+    f = open("scripts/diff_match.sh", "w")
+    f.write("""#!/bin/bash
+
+    len=`cat $1 | wc -l`
+    len2=`cat $2 | wc -l`
+
+    if [ $len -eq $len2 ] && [ $len -ne 0 ] ; then
+       echo "correct length"
+    else
+       echo "wrong length file"
+        exit 1
+    fi  
+
+    function fuzzy_diff {
+       echo  " ($3>($1-$2)) && ($3>($2-$1)) " | bc  
+    }
+
+    exec 3<$1
+    exec 4<$2
+
+    while IFS= read -r line1 <&3
+    IFS= read -r line2 <&4
+    do
+        line1=`echo "$line1" | cut --delimiter=' ' -f 1`
+        line2=`echo "$line2" | cut --delimiter=' ' -f 1` 
+
+        if ! [[ "$line1" =~ ^[0-9]+([.][0-9]+)?$ ]] ; then
+           exec >&2; echo "error: Not a number"; exit 1
+        fi
+        
+        if ! [[ "$line2" =~ ^[0-9]+([.][0-9]+)?$ ]] ; then
+           exec >&2; echo "error: Not a number"; exit 1
+        fi
+
+        ok=`fuzzy_diff $line1 $line2 $3`
+
+        if  [ $ok -eq 0 ] ; then
+           echo "Files do not match"
+           exit 1
+        fi 
+       
+    done
+
+
+    cp $1 $4
+    cp $1.found $4.found
+    echo "The files are close enough"
+
+    exit 0
+    """)
+    os.chmod('scripts/diff_match.sh', 0o0777)
+
+logging.info("Creating submit script")
+f = open("submit.sh", "w")
+if gpu:
+    f.write("""#!/bin/bash
+    condor_submit_dag -config cconfig banksim.dag
+    """)
+else:
+    f.write("""#!/bin/bash
+    condor_submit_dag banksim.dag
+    """)
+os.chmod('submit.sh', 0o0777)
+
+f = open("partial_results.sh", "w")
+f.write("""#!/bin/bash
+scripts/gwnr_banksim_collect_results
+""")
+os.chmod('partial_results.sh', 0o0777)
+
+dag.write_sub_files()
+dag.write_script()
+dag.write_dag()
+
+f = open("scripts/gwnr_banksim_plots", "w")
+f.write("""#!/usr/bin/env python
+import matplotlib
+matplotlib.use('agg')
+from matplotlib import pyplot
+from pycbc import pnutils
+import numpy
+import pylab
+
+goldenratio = 2 / (1 + 5**.5)
+#matplotlib.rcParams.update({
+#        "font.size": 8.0,
+#        "axes.titlesize": 8.0,
+#        "axes.labelsize": 8.0,
+#        "xtick.labelsize": 8.0,
+#        "ytick.labelsize": 8.0,
+#        "legend.fontsize": 8.0,
+#	"figure.figsize": (3.3,3.3*goldenratio),
+#        "figure.dpi": 200,
+#	"subplots.left": 0.2, 
+#	"subplots.right": 0.75, 
+#	"subplots.bottom": 0.15,
+#	"subplots.top": 0.75,
+#        "savefig.dpi": 600,
+#        "text.verticalalignment": "center",
+#        "text.usetex": True     # render all text with TeX
+#})
+
+res = numpy.loadtxt("results.dat")
+match = res[:,0]
+
+tmass1 = res[:,1]
+tmass2 = res[:,2]
+tspin1x = res[:,3] 
+tspin1y = res[:,4]
+tspin1z = res[:,5]
+tspin2x = res[:,6]
+tspin2y = res[:,7]
+tspin2z = res[:,8]
+tmchirp, teta = pnutils.mass1_mass2_to_mchirp_eta(tmass1, tmass2)
+
+imass1 = res[:,9]
+imass2 = res[:,10]
+ispin1x = res[:,11]
+ispin1y = res[:,12]
+ispin1z = res[:,13]
+ispin2x = res[:,14]
+ispin2y = res[:,15]
+ispin2z = res[:,16]
+imchirp, ieta = pnutils.mass1_mass2_to_mchirp_eta(imass1, imass2)
+
+coa_phase = res[:,17]
+inclination = res[:,18]
+latitude  = res[:,19]
+longitude = res[:,20]
+polarization = res[:,21]
+
+sigmasq = res[:,22]
+
+q = numpy.maximum(imass1/imass2, imass2/imass1)
+s1m = (ispin1x**2+ispin1y**2+ispin1z**2)**0.5
+s2m = (ispin2x**2+ispin2y**2+ispin2z**2)**0.5
+
+def mhist(c1, name, cum=False, normed=True, log=False, bins=100, xl="", yl=""):
+    pylab.figure()
+    pylab.xlabel(xl)
+    pylab.ylabel(yl)
+    if log:
+        pylab.yscale('log')
+    pylab.hist(c1, bins=bins, normed=normed, histtype='step', cumulative=cum)
+    pylab.savefig(name)
+
+def mplot(c1, c2, c, name, xl="", yl="", vmin=None, vmax=None):
+    pylab.figure()
+    pylab.axes((0.15, 0.15, 0.8, 0.8))
+    pylab.scatter(c1, c2, c=c, linewidth=0, s=3, vmin=vmin, vmax=vmax)
+    cb = pylab.colorbar()
+    cb.set_clim(vmin, vmax)
+    pylab.xlim(min(c1), max(c1))
+    pylab.ylim(min(c2), max(c2))
+    pylab.xlabel(xl)
+    pylab.ylabel(yl)
+    pylab.savefig(name)
+
+mhist(imchirp-tmchirp, "plots/hist-mchirp-diff.png")
+mhist((imchirp-tmchirp)/imchirp, "plots/hist-mchirp-reldiff.png")
+mhist(match, "plots/hist-match.png")
+mhist(match, "plots/hist-match-cum.png", cum=1, log=True, bins=10000, xl = "Match", yl="Fraction of injections < Match")
+    
+pylab.figure(102)
+pylab.ylabel('Fraction of Injections')
+pylab.xlabel('Fitting factor')
+pylab.yscale('log') 
+pylab.xlim(0.95, 1.0)
+pylab.ylim(1e-4, 1)
+hBins = pylab.arange(0.,1.,0.0005,dtype=float)
+n, bins,patches=pylab.hist(match,cumulative=1,bins=hBins,normed=True)
+pylab.grid()
+pylab.savefig("plots/cum_hist.png")
+    
+mplot(imass1, imass2, match, "plots/m1-m2-match.png", "Mass1", "Mass2", 0.9, 1.0)
+mplot(tmass1, tmass2, match, "plots/tm1-tm2-match.png", "Template Mass1", "Template Mass2", 0.9, 1.0)
+mplot(q, s1m, match, "plots/q-s1m-match.png", "Mass Ratio", "mag(spin1)", 0.9, 1.0)
+mplot(q, s2m, match, "plots/q-s2m-match.png", "Mass Ratio", "mag(spin2)", 0.9, 1.0)
+mplot(q, ispin1z, match, "plots/q-s1z-match.png", "Mass Ratio", "Spin1z", 0.9, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match.png", "Mass Ratio", "Spin2z", 0.9, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match97.png", "Mass Ratio", "Spin2z", 0.97, 1.0)
+mplot(q, ispin2z, match, "plots/q-s2z-match90.png", "Mass Ratio", "Spin2z", 0.90, 1.0)
+mplot(q, inclination, match, "plots/q-inc-match.png", "Mass Ratio", "Orbital Inclination", 0.9, 1.0)
+mplot(inclination, match, match, "plots/inc-match.png", "Orbital Inclination", "Match", 0.9, 1.0)
+
+mplot(imass1, imass2, imchirp-tmchirp, "plots/m1-m2-mchirpdiff.png", "Mass1", "Mass2")
+mplot(q, ispin1z, imchirp-tmchirp, "plots/q-s1z-mchirpdiff.png", "Mass Ratio", "Spin1z")
+mplot(q, ispin2z, imchirp-tmchirp, "plots/q-s2z-mchirpdiff.png", "Mass Ratio", "Spin2z")
+
+mplot(imass1, imass2, (imchirp-tmchirp)/imchirp, "plots/m1-m2-mchirpreldiff.png", "Mass1", "Mass2")
+mplot(q, ispin1z, (imchirp-tmchirp)/imchirp, "plots/q-s1z-mchirpreldiff.png", "Mass Ratio", "Spin1z")
+mplot(q, ispin2z, (imchirp-tmchirp)/imchirp, "plots/q-s2z-mchirpreldiff.png", "Mass Ratio", "Spin2z")
+""")
+os.chmod("scripts/gwnr_banksim_plots", 0o0777)
+
+logging.info("Done")

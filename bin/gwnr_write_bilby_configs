@@ -1,0 +1,117 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2020 Prayush Kumar
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+"""Get and write configuration files for generating a workflow to perform
+Bayesian parameter estimation runs on a custom set of signals with Bilby"""
+
+import sys
+import logging
+import argparse
+
+import pycbc
+
+from gwnr.stats.bilby_utils import InferenceConfigs
+from gwnr import __version__
+
+############################################################
+# command line usage
+parser = argparse.ArgumentParser(usage=__file__ + " [--options]",
+                                 description=__doc__)
+parser.add_argument("--version",
+                    action="version",
+                    version=__version__,
+                    help="Prints version information.")
+parser.add_argument("--verbose",
+                    action="store_true",
+                    default=False,
+                    help="Print logging messages.")
+# workflow options
+parser.add_argument(
+    "--write-config",
+    type=str,
+    required=False,
+    default='',
+    help="Comma-separated name of config-type,config-subtype, e.g."
+    "'prior,precessing_spins_bbh'")
+
+parser.add_argument("--write-injection-config",
+                    type=str,
+                    required=False,
+                    default='',
+                    help="Write config files for injections and exit.")
+parser.add_argument("--write-event-config",
+                    type=str,
+                    required=False,
+                    default='',
+                    help="Write config files for events and exit.")
+
+# output options
+parser.add_argument("--show-available-configs",
+                    action="store_true",
+                    default=False,
+                    help="Show available options for all configurations.")
+
+parser.add_argument("--output-dir",
+                    type=str,
+                    required=False,
+                    default='.',
+                    help="Output directory path.")
+
+# parse command line
+opts = parser.parse_args()
+pycbc.init_logging(opts.verbose)
+
+analyses_dir = opts.output_dir
+
+############################################################
+# write configs and exit!
+if __name__ == '__main__':
+
+    configs = InferenceConfigs(analyses_dir)
+
+    if opts.show_available_configs:
+        for name in configs.available_configs():
+            writer = configs.get_config_writer(name)
+            print("{0}: {1}".format(name, writer.types()))
+        sys.exit(0)
+
+    if len(opts.write_config) > 0:
+        if ',' not in opts.write_config:
+            raise IOError("Invalid use of `--write-config`, see help.")
+        config_type, config_subtype = opts.write_config.split(',')
+        if config_type in configs.available_configs():
+            writer = configs.get_config_writer(config_type)
+        else:
+            raise IOError(
+                'Config type {} not valid.'
+                ' Use `--show-available-configs` for help'.format(config_type))
+        writer.write(config_subtype)
+
+    if len(opts.write_event_config) > 0:
+        inj_writer = configs.get_config_writer('data')
+        assert (opts.write_event_config in inj_writer.types())
+        logging.info('Writing config file {} for event analyses..'.format(
+            opts.write_event_config + '.ini'))
+        inj_writer.write(opts.write_event_config)
+
+    if len(opts.write_injection_config) > 0:
+        inj_writer = configs.get_config_writer('injection')
+        assert (opts.write_injection_config in inj_writer.types())
+        logging.info('Writing config file {} for injection analyses..'.format(
+            opts.write_injection_config + '.ini'))
+        inj_writer.write(opts.write_injection_config)
+
+logging.info('Done')
