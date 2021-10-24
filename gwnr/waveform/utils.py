@@ -22,36 +22,17 @@
 #
 from __future__ import (absolute_import, print_function)
 
-from pycbc.types import FrequencySeries
-from pycbc.waveform import amplitude_from_polarizations, phase_from_polarizations
-from pycbc.detector import overhead_antenna_pattern as generate_fplus_fcross
-from pycbc.pnutils import *
-from glue.ligolw import ligolw, lsctables
-import time
 import os
-
 import numpy as np
-
-try:
-    pass
-except ImportError:
-    pass
+from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize_scalar
 
-os.environ['LD_LIBRARY_PATH'] =\
-    '/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/'
-
-
-class ContentHandler(ligolw.LIGOLWContentHandler):
-    pass
-
-
-lsctables.use_in(ContentHandler)
-
-_starting_time = time.time()
-########################################
-# Other FUNCTIONS
-########################################
+import lal
+from pycbc.types import FrequencySeries
+from pycbc.waveform import (amplitude_from_polarizations,
+                            phase_from_polarizations)
+from pycbc.detector import overhead_antenna_pattern as generate_fplus_fcross
+from pycbc.pnutils import *
 
 
 def get_detector_response(ra, dec, psi, detector_tag, gmst=0):
@@ -117,7 +98,6 @@ def get_time_at_frequency_from_polarizations(hp, hc, fvalue):
     for idx in range(id_start, len(fr)):
         if fr[idx] > 2 * fvalue and fr[idx + 1] > 2 * fvalue:
             break
-    #
     frI = InterpolatedUnivariateSpline(fr.sample_times, obj_func)
     tmp = minimize_scalar(frI,
                           fr.sample_times[id_start],
@@ -131,10 +111,37 @@ def get_time_at_frequency(fr, fvalue):
     return get_time_at_y(fr, fvalue)
 
 
+def get_freq_crossings(freq, f0, df_threshold=0.4):
+    '''
+    Inputs
+    ------
+    freq: Array of similar iterable of frequency values
+    f0:   Frequency value that one needs the crossing times for
+
+    Output
+    ------
+    crossing_times: numpy.array
+        Array of crossing times
+    crossing_freqs: numpy.array
+        Array of precise crossing frequencies. These may be slightly different
+        from f0 given that the `freq` is discretely sampled
+    '''
+    f0_crossing_times, f0_crossing_freqs = [], []
+    for idx, finst in enumerate(freq):
+        if idx == 0 or idx == len(freq) - 1:
+            continue
+        if (np.abs(freq[idx - 1] - f0) > np.abs(finst - f0)) and (
+                np.abs(freq[idx + 1] - f0) >
+                np.abs(finst - f0)) and (np.abs(finst - f0) < df_threshold):
+            f0_crossing_freqs.append(finst)
+            f0_crossing_times.append(freq.sample_times[idx])
+    return (np.array(f0_crossing_times), np.array(f0_crossing_freqs))
+
+
 def get_time_at_y(fr, fvalue):
     """
-Finds the closest match to `fvalue` in a TimeSeries.
-Input a TimeSeries with epoch set correctly.
+    Finds the closest match to `fvalue` in a TimeSeries.
+    Input a TimeSeries with epoch set correctly.
     """
     # Define time interval to be searched
     idx_first = int(len(fr) * 0.2)  # 20% margin for junk - TOO MUCH?
