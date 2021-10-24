@@ -21,6 +21,8 @@
 #
 # =============================================================================
 #
+"""General Utilities"""
+
 from __future__ import (absolute_import, print_function)
 
 import sys
@@ -28,27 +30,25 @@ from numpy import *
 import numpy as np
 import math
 
-verbose = True
-
-######################################################################
-#    GENERAL Utilities
-
 
 def add_strings(strlist):
-    out = ''
-    for s in strlist:
-        out = out + s
-    return out
+    """Concatenate a list of strings"""
+    return "".join(strlist)
+
+
+def join_list_of_strings(lt):
+    """Concatenate a list of strings with space in between"""
+    return " ".join(lt)
 
 
 def find_nearest(a, a0):
-    "Element in nd array `a` closest to the scalar value `a0`"
+    """Element in nd array `a` closest to the scalar value `a0`"""
     idx = np.abs(np.array(a) - a0).argmin()
     return idx, np.array(a).flat[idx]
 
 
 def approx_equal(A, B, eps=1.e-4):
-    return np.abs(A - B) / (np.abs(A) + np.abs(B)) < eps
+    return (np.abs(A - B) / (np.abs(A) + np.abs(B)) < eps)
 
 
 def update_progress(progress):
@@ -83,14 +83,14 @@ def zero_pad_beginning(h, steps=1):
     return h
 
 
-def getSec(s):
+def get_sec(s):
     l = s.split(':')
     return int(l[0]) * 3600 + int(l[1]) * 60 + int(l[2])
 
 
 def get_time(date, time):
     date_contrib = int(date.split('/')[-1]) * 24 * 60 * 60
-    time_contrib = getsec(time)
+    time_contrib = get_sec(time)
     return date_contrib + time_contrib
 
 
@@ -106,13 +106,6 @@ def trim_leading_zeros(hp):
         if hp[i] != 0:
             break
     return hp[i:]
-
-
-def join_list_of_strings(lt):
-    out_string = ""
-    for s in lt:
-        out_string = out_string + "    " + s
-    return out_string
 
 
 def format_string(string_template, **string_kwargs):
@@ -155,23 +148,11 @@ def insert_min_max_into_array(arr, low, high):
     mask = new_arr < high
     new_arr = np.append(new_arr[mask], high)
     return new_arr
-    # }}}
-
-
-######################################################################
-######################################################################
-#
-#      OVERLAP CALCULATIONS
-#
-######################################################################
-######################################################################
 
 
 def get_uniform_mass_range(m_lower, m_upper, m_sep):
-    # {{{
     mlist = [m_lower]
     for m in np.arange(np.ceil(m_lower), np.floor(m_upper), m_sep):
         mlist.append(m)
     mlist.append(m_upper)
     return np.array(mlist)
-    # }}}
