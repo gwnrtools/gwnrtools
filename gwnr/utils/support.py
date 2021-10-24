@@ -43,8 +43,8 @@ def add_strings(strlist):
 
 def find_nearest(a, a0):
     "Element in nd array `a` closest to the scalar value `a0`"
-    idx = np.abs(a - a0).argmin()
-    return idx, a.flat[idx]
+    idx = np.abs(np.array(a) - a0).argmin()
+    return idx, np.array(a).flat[idx]
 
 
 def approx_equal(A, B, eps=1.e-4):

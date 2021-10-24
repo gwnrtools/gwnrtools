@@ -27,19 +27,9 @@ Functions to align waveforms
 from __future__ import (absolute_import, print_function)
 
 import sys
-
 import numpy as np
-
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize_scalar
-
-try:
-    pass
-except ImportError:
-    pass
-from scipy.optimize import minimize_scalar
-
-from pycbc.types import TimeSeries
 
 from pycbc.filter import make_frequency_series
 from pycbc.types import TimeSeries
@@ -47,13 +37,14 @@ from pycbc.waveform import amplitude_from_polarizations, phase_from_polarization
 from pycbc.pnutils import *
 from glue.ligolw import ligolw, lsctables
 
+from gwnr.utils import find_nearest
+
 
 class ContentHandler(ligolw.LIGOLWContentHandler):
     pass
 
 
 lsctables.use_in(ContentHandler)
-######################################################################
 
 
 def shift_waveform_phase_time(hp,
@@ -539,81 +530,87 @@ def align_curves(x1,
                  y1,
                  x2,
                  y2,
-                 delta_x=1.0,
+                 delta_x=None,
                  x_low_lim=None,
                  x_high_lim=None,
                  offset_low_lim=None,
                  offset_high_lim=None,
-                 num_retries=1,
+                 num_retries=10,
+                 eps_solution=1e-6,
                  verbose=False,
                  debug=False):
     """
-This function maximizes the alignment between two 1D functions, varying the
-x coordinate alone.
+    This function maximizes the alignment between two 1D functions, varying the
+    x coordinate alone. It minimizes:
 
-[Goal]
-To minimize:
     f(x_offset) := \int_{x_low_lim}^{x_high_lim} |y2(x + x_offset) - y1(x)| dx
-over x_offset.
 
-[Notes
-1) [x_low_lim, x_high_lim] are with respect to the (x1, y1) pair.
-   The other pair (x1, y2) is the one effectively shifted.
-2) Not specifying [x_low_lim, x_high_lim] is equivalent to integrating
-   the mean-square difference over the complete (x2) vector.
+    over x_offset.
+
+    Notes:
+    ------
+
+    1) [x_low_lim, x_high_lim] are with respect to the (x1, y1) pair.
+       The other pair (x1, y2) is the one effectively shifted.
+
+    2) Not specifying [x_low_lim, x_high_lim] is equivalent to integrating
+       the mean-square difference over the complete (x2) vector.
     """
+    if delta_x is None: delta_x = x1[1] - x1[0]
+    if x_low_lim is None: x_low_lim = np.min(x1)
+    if x_high_lim is None: x_high_lim = np.max(x1)
 
-    # {{{
-    # 4) DEFINE AN OBJECTIVE FUNCTION FOR PSO TO MINIMIZE
+    def multiple_of_dx(x_):
+        return int(np.round(x_ / delta_x)) * delta_x
+
     def objective_function_alignment(x, *args):
         objective_function_alignment.counter += 1
+
         # Get offset for this iteration
-        x_offset = x
-        # Get original x1 and x2 values, as well as splines for y1(x2) and y2(x2)
-        x1, y1, x2tmp, y2, x_low_lim, x_high_lim = args
-        x2 = x2tmp + x_offset
+        x_offset = multiple_of_dx(x)
+
+        # Get original x1 and x2 values, as well as splines
+        # for y1(x2) and y2(x2)
+        x1, y1, x2_, y2, low_lim, high_lim = args
+        x2 = x2_ + x_offset
+
         s = 0
         for idx1, x1val in enumerate(x1):
-            if x1val < x_low_lim or x1val > x_high_lim:
+            if x1val < low_lim or x1val > high_lim:
                 continue
             idx2, x2val = find_nearest(x2, x1val)
             if np.abs(x2val - x1val) > delta_x:
                 if objective_function_alignment.counter % 100 == 0 and verbose:
                     print(np.abs(x2val - x1val))
-                #raise RuntimeError("""Cannot solve the problem without either a) INcreasing delta_x, or b) interpolation. Vectors are not sampled finely enough.""")
             s += (y2[idx2] - y1[idx1])**2
-        #s = s ** 0.5
+
         if objective_function_alignment.counter % 100 == 0:
             print("Objective function for offset = %.3f is %.6f" % (x, s))
+
         return s
 
     objective_function_alignment.counter = 0
-    ###
-    if x_low_lim is None:
-        x_low_lim = np.min(x1)
-    if x_high_lim is None:
-        x_high_lim = np.max(x1)
+
     opt_args = (x1, y1, x2, y2, x_low_lim, x_high_lim)
 
     if debug:
         print("Testing objective function")
         print("Offset 0: ", objective_function_alignment(0, *opt_args))
-        print("Offset 550: ", objective_function_alignment(-550, *opt_args))
+        print("Offset 550: ", objective_function_alignment(-0.5, *opt_args))
 
-    # NOW SET THE RANGE OF OFFSETS TO BE PROBED
+    # SET THE RANGE OF OFFSETS TO BE PROBED
     xd1, xd2 = x1[-1] - x2[0], x1[0] - x2[-1]
-    if offset_low_lim is None:
-        x_min = np.min([xd1, xd2])
-    else:
-        x_min = offset_low_lim
-    if offset_high_lim is None:
-        x_max = np.max([xd1, xd2])
-    else:
-        x_max = offset_high_lim
-    #
+
+    if offset_low_lim is None: x_min = np.min([xd1, xd2])
+    else: x_min = offset_low_lim
+
+    if offset_high_lim is None: x_max = np.max([xd1, xd2])
+    else: x_max = offset_high_lim
+
     if verbose:
         print("Searching for optimal offset in range:", x_min, " to ", x_max)
-    ##
+
+    # Minimize the objective function
     for idx in range(num_retries):
         if verbose:
             print("\nTry %d to compute alignment" % idx, file=sys.stdout)
@@ -621,24 +618,23 @@ over x_offset.
         retval = minimize_scalar(objective_function_alignment,
                                  args=opt_args,
                                  bounds=(x_min, x_max))
-    ##
-    if verbose:
-        print("optimization took %d objective func evals" %
-              objective_function_alignment.counter,
-              file=sys.stdout)
-        sys.stdout.flush()
-    # RETURN OPTIMIZED PARAMETERS
-    return [retval.x, retval]
-    # }}}
+        if objective_function_alignment(retval.x, *opt_args) < eps_solution:
+            if verbose:
+                print("optimization took {} objective func evals".format(
+                    objective_function_alignment.counter))
+                sys.stdout.flush()
+            return [multiple_of_dx(retval.x), retval]
+
+    raise RuntimeError("""Cannot solve the problem without either
+         a) INcreasing delta_x, or
+         b) interpolation.
+        Vectors are not sampled finely enough.""")
 
 
-######################################################################
 ######################################################################
 #
 #       DEPRECATED FUNCTIONS
 #
-######################################################################
-######################################################################
 
 
 def align_waveforms_suboptimally(hplus1,
