@@ -1,6 +1,6 @@
 # gwnrtools
 
-A collection of tools for academic research in gravitational-wave astronomy & astrophysics
+A collection of tools for academic research in gravitational-wave astronomy & astrophysics, and numerical relativity
 
 ## Tutorials
 
