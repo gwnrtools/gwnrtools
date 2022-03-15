@@ -37,7 +37,7 @@ from pycbc.waveform import amplitude_from_polarizations, phase_from_polarization
 from pycbc.pnutils import *
 from glue.ligolw import ligolw, lsctables
 
-from gwnr.utils import find_nearest
+from gwnr.utils import (find_nearest, trim_leading_zeros, trim_trailing_zeros)
 
 
 class ContentHandler(ligolw.LIGOLWContentHandler):
@@ -51,6 +51,7 @@ def shift_waveform_phase_time(hp,
                               hc,
                               t_shift,
                               ph_shift,
+                              shift_epochs_only=True,
                               trim_leading=False,
                               trim_trailing=True,
                               verbose=False):
@@ -84,25 +85,46 @@ def shift_waveform_phase_time(hp,
                            delta_t=hcnew.delta_t,
                            dtype=hcnew.dtype)
     # Now apply time shift
-    if t_shift != 0:
-        id_shift = int(np.round(np.abs(t_shift) / hpnew.delta_t))
-        if verbose:
-            print(("shifting by %d (%f)" % (id_shift, t_shift)))
-        if t_shift > 0:
-            hpnew.append_zeros(id_shift)
-            hcnew.append_zeros(id_shift)
-        else:
-            hpnew.prepend_zeros(id_shift)
-            hcnew.prepend_zeros(id_shift)
-        hpnew.roll(id_shift * np.sign(t_shift))
-        hcnew.roll(id_shift * np.sign(t_shift))
+    # Only positive time shifts can be applied by rolling forward data
+    # if negative time shifts are asked for, we can only shift epochs
+    if shift_epochs_only or t_shift <= 0:
+        hpnew._epoch += t_shift
+        hcnew._epoch += t_shift
+    else:
+        hpnewI = InterpolatedUnivariateSpline(hpnew.get_sample_times(),
+                                              hpnew.data)
+        hcnewI = InterpolatedUnivariateSpline(hcnew.get_sample_times(),
+                                              hcnew.data)
+
+        time_vals = hpnew.get_sample_times()
+        shifted_time_vals = np.arange(
+            time_vals[0],  # start of new timeseries
+            time_vals[-1] + t_shift + 0 * hpnew.delta_t,  # end of it
+            hpnew.delta_t)
+        mask_times_to_reevaluate = [
+            (shifted_time_vals - t_shift >= time_vals[0]) &
+            (shifted_time_vals - t_shift <= time_vals[-1])
+        ]
+        hp_shifted = np.zeros(len(shifted_time_vals))
+        hp_shifted[mask_times_to_reevaluate] = hpnewI(
+            shifted_time_vals[mask_times_to_reevaluate] - t_shift)
+        hpnew = TimeSeries(hp_shifted,
+                           epoch=hpnew._epoch + t_shift,
+                           delta_t=hpnew.delta_t)
+
+        hc_shifted = np.zeros(len(shifted_time_vals))
+        hc_shifted[mask_times_to_reevaluate] = hcnewI(
+            shifted_time_vals[mask_times_to_reevaluate] - t_shift)
+        hcnew = TimeSeries(hc_shifted,
+                           epoch=hcnew._epoch + t_shift,
+                           delta_t=hcnew.delta_t)
+
     if trim_trailing:
         hpnew = trim_trailing_zeros(hpnew)
         hcnew = trim_trailing_zeros(hcnew)
     if trim_leading:
         hpnew = trim_leading_zeros(hpnew)
         hcnew = trim_leading_zeros(hcnew)
-    # RETURN
     return hpnew, hcnew
 
 
@@ -110,6 +132,7 @@ def align_waveforms_amplitude_peak(hplus1,
                                    hcross1,
                                    hplus2,
                                    hcross2,
+                                   shift_epochs_only=True,
                                    trim_leading=False,
                                    trim_trailing=True,
                                    verbose=False):
@@ -117,15 +140,26 @@ def align_waveforms_amplitude_peak(hplus1,
     Align the two waveforms, shifting only one of the two.
         - AT the Amplitude PEAK
     """
-    hp1, hc1 = TimeSeries(hplus1), TimeSeries(hcross1)
-    hp2, hc2 = TimeSeries(hplus2), TimeSeries(hcross2)
+    _dt = 1.0
+    if type(hplus1) == TimeSeries:
+        _dt = hplus1.delta_t
+    elif type(hplus2) == TimeSeries:
+        _dt = hplus2.delta_t
+    if type(hcross1) != TimeSeries:
+        _dt = hcross1.delta_t
+    if type(hcross2) != TimeSeries:
+        _dt = hcross2.delta_t
+
+    hp1 = TimeSeries(hplus1, delta_t=_dt, copy=True)
+    hc1 = TimeSeries(hcross1, delta_t=_dt, copy=True)
+    hp2 = TimeSeries(hplus2, delta_t=_dt, copy=True)
+    hc2 = TimeSeries(hcross2, delta_t=_dt, copy=True)
+
+    # Get amplitude peak for 1st set of polarizations
     amp1 = amplitude_from_polarizations(hp1, hc1)
-    amp2 = amplitude_from_polarizations(hp2, hc2)
-    # Get amplitude peaks
     amp1I = InterpolatedUnivariateSpline(amp1.sample_times, -1 * amp1.data)
     x0 = np.float64(
-        np.where(amp1.data == max(amp1.data))[0][0] * amp1.delta_t +
-        amp1._epoch)
+        amp1.sample_times[np.where(amp1.data == max(amp1.data))[0][0]])
     tmp = minimize_scalar(amp1I,
                           x0,
                           method='bounded',
@@ -133,10 +167,12 @@ def align_waveforms_amplitude_peak(hplus1,
                                   x0 + 10 * amp1.delta_t))
     h1_max_amp_time = tmp['x']
     h1_max_amp = -1 * tmp['fun']
+
+    # Get amplitude peak for 1st set of polarizations
+    amp2 = amplitude_from_polarizations(hp2, hc2)
     amp2I = InterpolatedUnivariateSpline(amp2.sample_times, -1 * amp2.data)
     x0 = np.float64(
-        np.where(amp2.data == max(amp2.data))[0][0] * amp2.delta_t +
-        amp2._epoch)
+        amp2.sample_times[(np.where(amp2.data == max(amp2.data))[0][0])])
     tmp = minimize_scalar(amp2I,
                           x0,
                           method='bounded',
@@ -154,11 +190,11 @@ def align_waveforms_amplitude_peak(hplus1,
     t1 = h1_max_amp_time
     t2 = h2_max_amp_time
     t_shift = t1 - t2
+
     if verbose:
         print(("time shift = %f to be added to waveform 2" % t_shift))
-    #
+
     # Find phase shift
-    #
     phs1 = phase_from_polarizations(hp1, hc1)
     phs2 = phase_from_polarizations(hp2, hc2)
     phs1I = InterpolatedUnivariateSpline(phs1.sample_times, phs1.data)
@@ -177,30 +213,61 @@ def align_waveforms_amplitude_peak(hplus1,
     #
     # Shift whichever needs to be shifted to future time.
     # Shifting back in time is tricky.
-    if t_shift >= 0:
+    if shift_epochs_only:
         hp2, hc2 = shift_waveform_phase_time(hp2,
                                              hc2,
                                              t_shift,
                                              ph_shift,
+                                             shift_epochs_only=True,
                                              verbose=verbose)
+        # Finally, shift everything's peak to t=0
+        hp1._epoch -= h1_max_amp_time
+        hc1._epoch -= h1_max_amp_time
+        hp2._epoch -= h1_max_amp_time
+        hc2._epoch -= h1_max_amp_time
+        # Trim leading zeros. If time shifts are actual shifts of data along the
+        # array, the leading zeros have meaning and cannot be trimmed.
+        if trim_leading and shift_epochs_only:
+            hp1 = trim_leading_zeros(hp1)
+            hc1 = trim_leading_zeros(hc1)
+            hp2 = trim_leading_zeros(hp2)
+            hc2 = trim_leading_zeros(hc2)
     else:
-        hp2, hc2 = shift_waveform_phase_time(hp2,
-                                             hc2,
-                                             t_shift,
-                                             ph_shift,
-                                             verbose=verbose)
-    #
+        t_shift += (amp2.sample_times[0] - amp1.sample_times[0])
+        if verbose:
+            print("phase shift is actually = {}, time shift = {}".format(
+                ph_shift, t_shift))
+
+        if t_shift >= 0:
+            hp2, hc2 = shift_waveform_phase_time(hp2,
+                                                 hc2,
+                                                 t_shift,
+                                                 ph_shift,
+                                                 shift_epochs_only=False,
+                                                 verbose=verbose)
+            hp1._epoch -= h1_max_amp_time
+            hc1._epoch -= h1_max_amp_time
+            hp2._epoch = hp1._epoch
+            hc2._epoch = hc1._epoch
+        else:
+            hp1, hc1 = shift_waveform_phase_time(hp1,
+                                                 hc1,
+                                                 -1 * t_shift,
+                                                 ph_shift,
+                                                 shift_epochs_only=False,
+                                                 verbose=verbose)
+            hp2._epoch -= h2_max_amp_time
+            hc2._epoch -= h2_max_amp_time
+            hp1._epoch = hp2._epoch
+            hc1._epoch = hc2._epoch
+
+    # Trim any trailing zeros
     if trim_trailing:
         hp1 = trim_trailing_zeros(hp1)
         hc1 = trim_trailing_zeros(hc1)
         hp2 = trim_trailing_zeros(hp2)
         hc2 = trim_trailing_zeros(hc2)
-    if trim_leading:
-        hp1 = trim_leading_zeros(hp1)
-        hc1 = trim_leading_zeros(hc1)
-        hp2 = trim_leading_zeros(hp2)
-        hc2 = trim_leading_zeros(hc2)
-    #
+
     return hp1, hc1, hp2, hc2
 
 
