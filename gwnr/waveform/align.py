@@ -31,9 +31,11 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import minimize_scalar
 
-from pycbc.filter import make_frequency_series
+from pycbc.filter import (make_frequency_series, match, matched_filter_core,
+                          overlap_cplx)
 from pycbc.types import TimeSeries
-from pycbc.waveform import amplitude_from_polarizations, phase_from_polarizations
+from pycbc.waveform import (amplitude_from_polarizations,
+                            phase_from_polarizations)
 from pycbc.pnutils import *
 from glue.ligolw import ligolw, lsctables
 
