@@ -17,21 +17,18 @@
 from __future__ import (absolute_import, print_function)
 
 import os
-
 import numpy as np
 from numpy import any, isinf, isnan
 
-try:
-    pass
-except ImportError:
-    pass
-
+import lal
 from pycbc.filter import make_frequency_series
-from pycbc.types import FrequencySeries, TimeSeries
+from pycbc import (inject, types, waveform)
 from pycbc import DYN_RANGE_FAC
-from pycbc.waveform import get_td_waveform, get_fd_waveform, td_approximants, fd_approximants
 from pycbc.pnutils import *
 from glue.ligolw import ligolw, lsctables
+
+from gwnr.utils.types import (extend_waveform_TimeSeries,
+                              extend_waveform_FrequencySeries)
 
 os.environ['LD_LIBRARY_PATH'] =\
     '/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/'
@@ -54,31 +51,33 @@ def get_waveform(approximant,
                  length,
                  datafile=None,
                  verbose=False):
-    # {{{
-    print("IN hERE")
     delta_t = 1. / sample_rate
     delta_f = 1. / length
     filter_N = int(length)
     filter_n = filter_N / 2 + 1
-    if approximant in fd_approximants() and 'Eccentric' not in approximant:
+    if approximant in waveform.fd_approximants(
+    ) and 'Eccentric' not in approximant:
         print("NORMAL FD WAVEFORM for", approximant)
         delta_f = sample_rate / length
-        hplus, hcross = get_fd_waveform(template_params,
-                                        approximant=approximant,
-                                        spin_order=spin_order,
-                                        phase_order=phase_order,
-                                        delta_f=delta_f,
-                                        f_lower=start_frequency,
-                                        amplitude_order=amplitude_order)
-    elif approximant in td_approximants() and 'Eccentric' not in approximant:
+        hplus, hcross = waveform.get_fd_waveform(
+            template_params,
+            approximant=approximant,
+            spin_order=spin_order,
+            phase_order=phase_order,
+            delta_f=delta_f,
+            f_lower=start_frequency,
+            amplitude_order=amplitude_order)
+    elif approximant in waveform.td_approximants(
+    ) and 'Eccentric' not in approximant:
         print("NORMAL TD WAVEFORM for", approximant)
-        hplus, hcross = get_td_waveform(template_params,
-                                        approximant=approximant,
-                                        spin_order=spin_order,
-                                        phase_order=phase_order,
-                                        delta_t=1.0 / sample_rate,
-                                        f_lower=start_frequency,
-                                        amplitude_order=amplitude_order)
+        hplus, hcross = waveform.get_td_waveform(
+            template_params,
+            approximant=approximant,
+            spin_order=spin_order,
+            phase_order=phase_order,
+            delta_t=1.0 / sample_rate,
+            f_lower=start_frequency,
+            amplitude_order=amplitude_order)
     elif 'EccentricIMR' in approximant:
         # {{{
         # Legacy support
@@ -188,12 +187,12 @@ def get_waveform(approximant,
             0, delta_f, mass1 * lal.MSUN_SI, mass2 * lal.MSUN_SI, 0, 0, 0, 0,
             0, 0, fmin, fmax, 0, 1.e6 * lal.PC_SI, inc, 0, 0, None, eccPar, -1,
             7, ls.EccentricFD)
-        hplus = FrequencySeries(thp.data.data[:],
-                                delta_f=thp.deltaF,
-                                epoch=thp.epoch)
-        hcross = FrequencySeries(thc.data.data[:],
-                                 delta_f=thc.deltaF,
-                                 epoch=thc.epoch)
+        hplus = types.FrequencySeries(thp.data.data[:],
+                                      delta_f=thp.deltaF,
+                                      epoch=thp.epoch)
+        hcross = types.FrequencySeries(thc.data.data[:],
+                                       delta_f=thc.deltaF,
+                                       epoch=thc.epoch)
         # }}}
     elif 'FromDataFile' in approximant:
         # {{{
@@ -219,10 +218,12 @@ def get_waveform(approximant,
                 downsample_ratio)
         elif verbose:
             print("Downsampling by a factor of %d" % int(downsample_ratio))
-        h_real = TimeSeries(data[::int(downsample_ratio), 1] / DYN_RANGE_FAC,
-                            delta_t=delta_t)
-        h_imag = TimeSeries(data[::int(downsample_ratio), 2] / DYN_RANGE_FAC,
-                            delta_t=delta_t)
+        h_real = types.TimeSeries(data[::int(downsample_ratio), 1] /
+                                  DYN_RANGE_FAC,
+                                  delta_t=delta_t)
+        h_imag = types.TimeSeries(data[::int(downsample_ratio), 2] /
+                                  DYN_RANGE_FAC,
+                                  delta_t=delta_t)
 
         if verbose:
             print("max, min,len of h_real = ", max(h_real.data),
@@ -249,19 +250,77 @@ def get_waveform(approximant,
     hvec = hplus
     htilde = make_frequency_series(hvec)
     htilde = extend_waveform_FrequencySeries(htilde, filter_n)
-    #
-    print("type of hplus, hcross = ", type(hplus.data), type(hcross.data))
+
     if any(isnan(hplus.data)) or any(isnan(hcross.data)):
         print("..### %s hplus or hcross have NANS!!" % approximant)
-    #
     if any(isinf(hplus.data)) or any(isinf(hcross.data)):
         print("..### %s hplus or hcross have INFS!!" % approximant)
-    #
     if any(isnan(htilde.data)):
         print("..### %s Fourier transform htilde has NANS!!" % approximant)
-    #
     if any(isinf(htilde.data)):
         print("..### %s Fourier transform htilde has INFS!!" % approximant)
-    #
     return htilde
-    # }}}
+
+
+def project_polarizations_onto_detector(ifo_name,
+                                        hp,
+                                        hc,
+                                        ra,
+                                        dec,
+                                        pol,
+                                        tc,
+                                        taper_mode='TAPER_NONE',
+                                        amp_scaler=1.0):
+    '''
+    Inputs
+    ------
+    ifo_name: str
+        Abbreviated detector name, e.g. H1, L1, V1, G1.
+
+    hp: TimeSeries
+        Plus (+) polarization time series
+
+    hc: TimeSeries:
+        Cross (x) polarization time series
+
+    ra: float
+        right ascension angle in radians
+
+    dec: float
+        declination angle in radians
+
+    pol: float
+        polarization angle in radians
+
+    tc: float
+        coalescences time
+
+    taper_mode : string
+        Should be one of ('TAPER_NONE', 'TAPER_START', 'TAPER_END',
+        'TAPER_STARTEND', 'start', 'end', 'startend') - NB 'TAPER_NONE' will
+        not change the series!
+
+    amp_scaler: float
+        Scaling factor by which the polarizations are divided, before
+        projecting them onto the detector
+    '''
+
+    class MyInj(object):
+
+        def __init__(self,
+                     ra,
+                     dec,
+                     pol,
+                     tc,
+                     taper_mode='TAPER_START',
+                     proj_method='lal'):
+            self.tc = self.time_geocent = lal.LIGOTimeGPS(tc)
+            self.ra = self.longitude = ra
+            self.dec = self.latitude = dec
+            self.polarization = pol
+            self.taper = taper_mode
+            self.detector_projection_method = proj_method
+
+    inj = MyInj(ra, dec, pol, tc, taper_mode=taper_mode)
+    strain = inject.projector(ifo_name, inj, hp, hc, distance_scale=amp_scaler)
+    return strain
