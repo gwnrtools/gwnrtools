@@ -243,7 +243,6 @@ Input:
                                    nc, :] = get_current_axis(nr,
                                                              nc).get_ylim()
 
-        fig.hold(True)
 
         # Pre-choose color for 1D histograms (and scatter plots, if applicable)
         rand_color = np.random.rand(3, )
@@ -294,7 +293,7 @@ Input:
                     im = ax.hist(_data,
                                  bins=nhbins,
                                  histtype=histogram_type,
-                                 normed=True,
+                                 density=True,
                                  alpha=hist_alpha,
                                  color=rand_color,
                                  label=label)
@@ -361,7 +360,7 @@ Input:
                                      histtype="step",
                                      color='k',
                                      range=_prior_xrange,
-                                     normed=True)
+                                     density=True)
 
                     if plim_low is not None and plim_high is not None:
                         ax.set_xlim(plim_low[nc], plim_high[nc])
