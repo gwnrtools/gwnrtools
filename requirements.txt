@@ -6,7 +6,7 @@ lalsuite>=6.63
 lscsoft_glue==2.0.0
 matplotlib==2.1
 numexpr
-numpy==1.16.5
+numpy==1.22.0
 pandas==0.24.2
 pathlib
 pycbc>=1.15.4
