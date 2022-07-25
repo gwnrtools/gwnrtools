@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+export BASEDIR=$PWD
+export SPECTRE_ROOT=${BASEDIR}/spectre # No SLASH at the end of this path
+
+# Get SPACK
+git clone -c feature.manyFiles=true https://github.com/spack/spack.git ${BASEDIR}/
+source ${BASEDIR}/spack/share/spack/setup-env.sh
+
+# Build dependencies of SpECTRE with SPACK
+spack install gcc@9.4.0
+spack load gcc@9.4.0
+spack compiler find
+
+spack env create spectre_gcc spectre.yaml
+spack env activate spectre_gcc -p
+
+spack concretize -Uf
+spack install -U
+
+# Add missing Python packages
+spack load python
+spack load py-h5py
+spack load py-nbconvert
+spack load py-numpy
+spack load py-matplotlib
+spack load py-pybind11
+spack load py-pyyaml
+spack load py-scipy
+pip3 install beautifulsoup4 pybtex
+
+# Get SpECTRE
+export CHARM_ROOT=$(spack location --install-dir charmpp)
+git clone https://github.com/sxs-collaboration/spectre.git ${SPECTRE_ROOT}
+
+# Build SpECTRE
+cd ${SPECTRE_ROOT} && git checkout v2022.02.08 && \
+ mkdir build && cd build && \
+ cmake -D CHARM_ROOT=$CHARM_ROOT $SPECTRE_ROOT && make -j 4
+
