@@ -74,52 +74,52 @@ def shift_waveform_phase_time(hp,
     # First apply phase shift
     if ph_shift != 0.:
         amplitude = amplitude_from_polarizations(hpnew, hcnew)
-        phase = phase_from_polarizations(hpnew, hcnew)
+        phase = phase_from_polarizations(hpnew,
+                                         hcnew,
+                                         remove_start_phase=False)
         if verbose:
             print(("shifting by %f radians" % ph_shift))
         phase = phase + ph_shift
-        hpnew = TimeSeries(amplitude * np.cos(phase + np.pi),
+        hpnew = TimeSeries(amplitude * np.cos(phase),
                            epoch=hpnew._epoch,
                            delta_t=hpnew.delta_t,
                            dtype=hpnew.dtype)
-        hcnew = TimeSeries(amplitude * np.sin(phase + np.pi),
+        hcnew = TimeSeries(amplitude * np.sin(phase),
                            epoch=hcnew._epoch,
                            delta_t=hcnew.delta_t,
-                           dtype=hcnew.dtype)
-    # Now apply time shift
+                           dtype=hcnew.dtype)  # Now apply time shift
     # Only positive time shifts can be applied by rolling forward data
     # if negative time shifts are asked for, we can only shift epochs
-    if shift_epochs_only or t_shift <= 0:
-        hpnew._epoch += t_shift
-        hcnew._epoch += t_shift
-    else:
-        hpnewI = InterpolatedUnivariateSpline(hpnew.get_sample_times(),
-                                              hpnew.data)
-        hcnewI = InterpolatedUnivariateSpline(hcnew.get_sample_times(),
-                                              hcnew.data)
+    if t_shift != 0:
+        if shift_epochs_only or t_shift <= 0:
+            hpnew._epoch += t_shift
+            hcnew._epoch += t_shift
+        else:
+            time_vals = hpnew.get_sample_times()
+            hpnewI = InterpolatedUnivariateSpline(time_vals, hpnew.data)
+            hcnewI = InterpolatedUnivariateSpline(time_vals, hcnew.data)
 
-        time_vals = hpnew.get_sample_times()
-        shifted_time_vals = np.arange(
-            time_vals[0],  # start of new timeseries
-            time_vals[-1] + t_shift + 0 * hpnew.delta_t,  # end of it
-            hpnew.delta_t)
-        mask_times_to_reevaluate = [
-            (shifted_time_vals - t_shift >= time_vals[0]) &
-            (shifted_time_vals - t_shift <= time_vals[-1])
-        ]
-        hp_shifted = np.zeros(len(shifted_time_vals))
-        hp_shifted[mask_times_to_reevaluate] = hpnewI(
-            shifted_time_vals[mask_times_to_reevaluate] - t_shift)
-        hpnew = TimeSeries(hp_shifted,
-                           epoch=hpnew._epoch + t_shift,
-                           delta_t=hpnew.delta_t)
+            shifted_time_vals = np.arange(
+                time_vals[0],  # start of new timeseries
+                time_vals[-1] + t_shift + 0 * hpnew.delta_t,  # end of it
+                hpnew.delta_t)
+            mask_times_to_reevaluate = [
+                (shifted_time_vals - t_shift >= time_vals[0]) &
+                (shifted_time_vals - t_shift <= time_vals[-1])
+            ]
+            hp_shifted = np.zeros(len(shifted_time_vals))
+            hp_shifted[mask_times_to_reevaluate] = hpnewI(
+                shifted_time_vals[mask_times_to_reevaluate] - t_shift)
+            hpnew = TimeSeries(hp_shifted,
+                               epoch=hpnew._epoch + t_shift,
+                               delta_t=hpnew.delta_t)
 
-        hc_shifted = np.zeros(len(shifted_time_vals))
-        hc_shifted[mask_times_to_reevaluate] = hcnewI(
-            shifted_time_vals[mask_times_to_reevaluate] - t_shift)
-        hcnew = TimeSeries(hc_shifted,
-                           epoch=hcnew._epoch + t_shift,
-                           delta_t=hcnew.delta_t)
+            hc_shifted = np.zeros(len(shifted_time_vals))
+            hc_shifted[mask_times_to_reevaluate] = hcnewI(
+                shifted_time_vals[mask_times_to_reevaluate] - t_shift)
+            hcnew = TimeSeries(hc_shifted,
+                               epoch=hcnew._epoch + t_shift,
+                               delta_t=hcnew.delta_t)
 
     if trim_trailing:
         hpnew = trim_trailing_zeros(hpnew)
@@ -128,6 +128,45 @@ def shift_waveform_phase_time(hp,
         hpnew = trim_leading_zeros(hpnew)
         hcnew = trim_leading_zeros(hcnew)
     return hpnew, hcnew
+
+
+def shift_waveform_phase(hp,
+                         hc,
+                         ph_shift,
+                         trim_leading=False,
+                         trim_trailing=True,
+                         verbose=False):
+    """
+    Input:  hp, hc, where h = hp(t) + i hx(t) = Amp(t) * exp(-i * Phi(t))
+    Output: hp, hc, where h = Amp(t) * exp( -i * [Phi(t) + phi_c] )
+    """
+    return shift_waveform_phase_time(hp,
+                                     hc,
+                                     0,
+                                     ph_shift,
+                                     trim_leading=trim_leading,
+                                     trim_trailing=trim_trailing,
+                                     verbose=verbose)
+
+
+def shift_waveform_time(hp,
+                        hc,
+                        t_shift,
+                        shift_epochs_only=True,
+                        trim_leading=False,
+                        trim_trailing=True,
+                        verbose=False):
+    """
+    Input:  hp, hc, where h = hp(t) + i hx(t) = Amp(t) * exp(-i * Phi(t))
+    Output: hp, hc, where h = Amp(t - t_c) * exp( -i * [Phi(t - t_c)] )
+    """
+    return shift_waveform_phase_time(hp,
+                                     hc,
+                                     t_shift,
+                                     shift_epochs_only=shift_epochs_only,
+                                     trim_leading=trim_leading,
+                                     trim_trailing=trim_trailing,
+                                     verbose=verbose)
 
 
 def align_waveforms_amplitude_peak(hplus1,
@@ -197,8 +236,8 @@ def align_waveforms_amplitude_peak(hplus1,
         print(("time shift = %f to be added to waveform 2" % t_shift))
 
     # Find phase shift
-    phs1 = phase_from_polarizations(hp1, hc1)
-    phs2 = phase_from_polarizations(hp2, hc2)
+    phs1 = phase_from_polarizations(hp1, hc1, remove_start_phase=False)
+    phs2 = phase_from_polarizations(hp2, hc2, remove_start_phase=False)
     phs1I = InterpolatedUnivariateSpline(phs1.sample_times, phs1.data)
     phs2I = InterpolatedUnivariateSpline(phs2.sample_times, phs2.data)
 
@@ -329,8 +368,8 @@ def align_waveforms_at_frequency(hplus1,
     #
     # Find phase shift at the time
     #
-    phs1 = phase_from_polarizations(hp1, hc1)
-    phs2 = phase_from_polarizations(hp2, hc2)
+    phs1 = phase_from_polarizations(hp1, hc1, remove_start_phase=False)
+    phs2 = phase_from_polarizations(hp2, hc2, remove_start_phase=False)
     phs1I = InterpolatedUnivariateSpline(phs1.sample_times, phs1.data)
     phs2I = InterpolatedUnivariateSpline(phs2.sample_times, phs2.data)
 
