@@ -1,0 +1,177 @@
+def perform_hybridisation(inspiral, merger_ringdown, frq_attach, frq_width):
+    
+    
+    timeaxis_insp = np.arange(len(inspiral))*dt
+    timeaxis_mr = np.arange(len(merger_ringdown))*dt
+    
+    
+    ''' Computing waveform attributes: amplitude, phase, frequency (no interpolation) '''
+
+    def compute_amplitude(waveform):
+        amplitude = np.abs(waveform)
+        return amplitude
+    
+    def compute_phase(waveform): 
+        phase = np.unwrap(-np.angle(waveform))
+        return phase
+    
+    def compute_frequency(phase):
+        frequency = np.diff(phase)/(dt*2*np.pi)
+        return frequency
+    
+    
+    frqisco = 1/(6*np.sqrt(6)*2*np.pi*(mass1+mass2))*(c3_by_G) # we will not have m1 and m2 as input 
+    phase_insp = compute_phase(inspiral)
+    frq_insp = compute_frequency(phase_insp)
+    amp_insp = compute_amplitude(inspiral)
+
+    phase_mr = compute_phase(merger_ringdown)
+    frq_mr = compute_frequency(phase_mr)
+    amp_mr = compute_amplitude(merger_ringdown)
+
+    ''' first we need to find the attachment region, based on the frequency '''
+    
+    def find_i1(frq_timeseries, frq_desired):
+    
+        if frq_desired < frq_min:
+            raise Exception('Desired frequency out of bounds, lower than min frequency')
+
+        if frq_desired > np.max(frq_timeseries):
+            raise Exception('Desired frequency out of bounds, higher than max frequency')
+
+        tol = 0.1 # error tolerance in percentage, fails at aroubd 0.0001%
+
+        i1_tentative = np.logical_and(frq_timeseries >= (1-tol)*frq_desired, frq_timeseries <= (1+tol)*frq_desired) 
+        ''' i1_tentative gives a boolean numpy array (length same as frq_timeseries) 
+        where the frq values are within the tolerance wrt desired frq, 
+        there will be multiple such values '''
+
+        where_i1 = np.where(i1_tentative)
+        ''' where_i1 is a tuple that holds a small array of the index values of frq_timeseries,
+        corresponding to the indices where i1_tentative is TRUE '''
+
+        cost_i1 = np.square(frq_timeseries[where_i1] - frq_desired)
+        ''' cost_i1 is a cost fn which minimised the square of the difference between the frq values 
+        at the indices provided by where_i1, and the desired frq, this will have the length same as the array held by the tuple where_i1 '''
+
+        i1_forsure = np.where(cost_i1 == np.min(cost_i1))
+        ''' i_forsure is a tuple that holds an array which holds the numerical value of the index where cost_i1 is minimum '''
+
+        i1 = where_i1[0][i1_forsure[0][0]] 
+        ''' i1 is an integer, which is the numerical value of the index value where frq_desired is located, 
+        it is extracted from the tuple where_i1'''
+        return i1
+    
+    
+    
+    t1_index_insp = find_i1(frq_insp, frq_attach - frq_width/2)
+    t2_index_insp = find_i1(frq_insp, frq_attach + frq_width/2)
+
+
+    t1_index_mr_tent = find_i1(frq_mr, frq_attach - frq_width/2)
+    # t2_index_mr_tent = find_i1(frq_mr, frq_attach + frq_width/2) 
+
+    # another way to define t2_index_mr_tent is through number of points in the inspiral window    
+    t2_index_mr_tent = t1_index_mr_tent + (t2_index_insp-t1_index_insp)
+
+    no_cycles = (phase_insp[t1_index_insp] - phase_insp[t2_index_insp])/(2*np.pi)
+
+
+    ''' After alignment, need to find corresponding indices for merger_ringdown as well '''
+    
+    
+    ''' Alignment: '''
+    
+    # Defining the Comb
+    
+    def get_comb(t1_index_insp, t2_index_insp, no_sp):
+
+        d = int((t2_index_insp-t1_index_insp)/no_sp)
+
+        count1 = np.empty(no_sp-1)
+        for kk in range(no_sp-1):
+            count1[kk] = kk*d
+
+        samples = np.append(count1, t2_index_insp-t1_index_insp-1).astype(int)
+        return samples
+
+    sample_indices_insp = get_comb(t1_index_insp, t2_index_insp, no_sp = 4)
+    sample_indices_mr = get_comb(t1_index_mr_tent, t2_index_mr_tent, no_sp = 4)
+
+
+
+    ''' Enter alignment code here '''
+
+    ''' Need interpolated frequency evaluated on the time axis for timeshifts '''
+
+    interp_phase_insp = UnivariateSpline(timeaxis_insp[t1_index_insp:t2_index_insp], phase_insp[t1_index_insp:t2_index_insp], k = 4)
+    interp_phase_mr = UnivariateSpline(timeaxis_mr[t1_index_mr_tent:t2_index_mr_tent], phase_mr[t1_index_mr_tent:t2_index_mr_tent], k = 4)
+
+    interp_frq_insp = interp_phase_insp.derivative()(timeaxis_insp[t1_index_insp:t2_index_insp])/(2*np.pi)
+    interp_frq_mr = interp_phase_mr.derivative()(timeaxis_mr[t1_index_mr_tent:t2_index_mr_tent])/(2*np.pi)
+
+
+
+
+
+
+
+
+
+    ''' alignment using corrective phase addition '''
+
+    def mismatch_discrete(w1, w2):
+        w1_d = w1[sample_indices_insp]
+        w2_d = w2[sample_indices_mr] # can't give the same comb to w2
+        w1sq = np.square(np.abs(w1_d))
+        w2sq = np.square(np.abs(w2_d))
+        diff = np.abs(w1_d - w2_d)
+        diffsq = np.square(diff)
+        mm = 0.5*(np.sum(diffsq)/np.sum(w1sq))
+        return mm
+    '''
+    def optfn_ph(phaseshift_correction):
+    phase_corr_mr = merger_ringdown*np.exp(1j*phaseshift_correction)
+    m = mismatch_discrete(inspiral[t1_index_insp:t2_index_insp], phase_corr_mr[t1_index_mr_tent:t2_index_mr_tent])
+    return m
+    '''
+
+    ''' Performing attachment using the blending function '''
+
+    # blending fn is an array
+    blfn_var = np.arange(t1_index_insp, t2_index_insp)
+    tau = np.square((np.sin((np.pi/2)*(blfn_var-t1_index_insp)/(t2_index_insp-t1_index_insp))))
+
+
+    def blend1(x1, x2):
+        x_hyb = (1-tau)*x1[t1_index_insp:t2_index_insp] + tau*x2[t1_index_insp:t2_index_insp]
+        return x_hyb
+
+
+    amp_hyb_window = blend1(amp_insp, amp_mr)
+    frq_hyb_window = blend1(frq_insp, frq_mr)
+
+    ''' Integrating frq_hyb to obtain phase_hyb and removing discontinuities, 
+        compiling amp_hyb and phase_hyb to obtain the hybrid waveform.     ''' 
+
+
+    phase_hyb_window = (2*np.pi)*cumulative_trapezoid(frq_hyb_window, dx = dt)
+
+    ''' Right now the phase is integrated only inside the hybrid window, 
+    need to add constants to preserve phase continuity and compile full IMR phase '''
+
+    def remove_phase_discont(phase_insp, phase_mr, phase_hyb_window):
+        delta1 = phase_insp[t1_index_insp] - phase_hyb_window[0]
+        phase_hyb_1 = np.append(phase_insp[:t1_index_insp], phase_hyb_window + delta1)
+        delta2 = phase_hyb_1[t2_index_insp - 1] - phase_mr[t2_index_mr_tent - 1]
+        phase_hyb_2 = np.append(phase_hyb_1[:t2_index_insp-1], phase_mr[t2_index_mr_tent -1:] + delta2)
+        return phase_hyb_2
+
+    phase_hyb_full = remove_phase_discont(phase_insp, phase_mr, phase_hyb_window)
+    amp_hyb_full = np.append(amp_insp[:t1_index_insp], amp_hyb_window, amp_mr[t2_index_mr_tent -1:])
+    frq_hyb_full = np.append(frq_insp[:t1_index_insp], frq_hyb_window, frq_mr[t2_index_mr_tent -1:])
+
+
+    waveform_hyb =  amp_hyb_full*np.exp(-1j*phase_hyb_full)
+
+    return waveform_hyb
