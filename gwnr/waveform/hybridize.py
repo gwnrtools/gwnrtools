@@ -78,7 +78,7 @@ def perform_hybridisation(inspiral, merger_ringdown, frq_attach, frq_width, tol 
     t2_index_insp = find_value_location_in_series(frq_insp, frq_attach + frq_width/2)
 
 
-    t1_index_mr_tent = find_i1(frq_mr, frq_attach - frq_width/2)
+    t1_index_mr_tent = find_value_location_in_series(frq_mr, frq_attach - frq_width/2)
     # t2_index_mr_tent = find_i1(frq_mr, frq_attach + frq_width/2) 
 
     # another way to define t2_index_mr_tent is through number of points in the inspiral window    
@@ -163,10 +163,10 @@ def perform_hybridisation(inspiral, merger_ringdown, frq_attach, frq_width, tol 
 
         aligned_merger_ringdown = merger_ringdown*np.exp(1j*phaseshift_required_for_alignment)
 
-        return aligned_merger_ringdown 
+        return aligned_merger_ringdown, phaseshift_required_for_alignment 
 
 
-    merger_ringdown_aligned = align_in_phase(inspiral, merger_ringdown)
+    merger_ringdown_aligned, phasecorr = align_in_phase(inspiral, merger_ringdown)
     amp_mr_aligned = compute_amplitude(merger_ringdown_aligned)
     phase_mr_aligned = compute_phase(merger_ringdown_aligned)
     frq_mr_aligned = compute_frequency(phase_mr_aligned) # it would be same as frq_mr as the corrected phase factor will be canceled in the derivative
@@ -214,3 +214,6 @@ def perform_hybridisation(inspiral, merger_ringdown, frq_attach, frq_width, tol 
     waveform_hyb =  amp_hyb_full*np.exp(-1j*phase_hyb_full)
 
     return waveform_hyb, t1_index_insp, t1_index_mr_tent, t2_index_insp, t2_index_mr_tent, frq_insp, frq_mr, frq_mr_aligned, merger_ringdown_aligned, sample_indices_insp, sample_indices_mr, amp_hyb_window, amp_hyb_full, phase_hyb_window, phase_hyb_full
+
+
+
