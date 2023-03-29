@@ -203,8 +203,8 @@ def perform_hybridisation(inspiral,
     )  # Length of this will be one point shorter than frq_hyb_window
     ''' Right now the phase is integrated only inside the hybrid window, 
     need to add constants to preserve phase continuity and compile full IMR phase '''
-    def remove_phase_discontinuity(phase_insp, phase_hyb_window,
-                                   phase_mr_aligned):
+    def remove_phase_discontinuity(phase_insp_aligned, phase_hyb_window,
+                                   phase_mr):
         delta1 = phase_insp_aligned[t1_index_insp] - phase_hyb_window[0]
         phase_hyb_1 = np.append(phase_insp_aligned[:t1_index_insp],
                                 phase_hyb_window + delta1)
