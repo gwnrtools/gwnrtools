@@ -74,25 +74,24 @@ def mismatch_discrete(w1, w2, sample_indices_insp, sample_indices_mr):
     mm = 0.5 * (np.sum(diffsq) / np.sum(w2sq))
     return mm
 
-
 def align_in_phase(inspiral, merger_ringdown, sample_indices_insp,
                    sample_indices_mr, t1_index_insp, t2_index_insp,
-                   t1_index_mr, t2_index_mr):
+                   t1_index_mr, t2_index_mr, m = 2):
     # Function alignes the two waveforms using the phase, optimised over the attachment region
-
+    # m from l,m mode
     def optfn_ph(phaseshift_correction):
-        phase_corrected_insp = inspiral * np.exp(1j * phaseshift_correction)
-        m = mismatch_discrete(
+        phase_corrected_insp = inspiral * np.exp(1j * m * phaseshift_correction) 
+        m_d = mismatch_discrete(
             phase_corrected_insp[t1_index_insp:t2_index_insp + 1],
             merger_ringdown[t1_index_mr:t2_index_mr + 1], sample_indices_insp,
             sample_indices_mr)
-        return m
+        return m_d
 
     phase_optimizer = scipy.optimize.minimize(optfn_ph, 0)
     phaseshift_required_for_alignment = phase_optimizer.x
 
     inspiral_aligned = inspiral * np.exp(
-        1j * phaseshift_required_for_alignment)
+        1j * m * phaseshift_required_for_alignment)
 
     return inspiral_aligned, phaseshift_required_for_alignment
 
@@ -176,11 +175,11 @@ def perform_hybridisation(inspiral,
     sample_indices_mr = sample_indices_insp  # since the attachment region in both has the same length
     ''' alignment using corrective phase addition '''
 
-    inspiral_aligned, phasecorr = align_in_phase(inspiral, merger_ringdown,
+    inspiral_aligned, phase_correction = align_in_phase(inspiral, merger_ringdown,
                                                  sample_indices_insp,
                                                  sample_indices_mr,
                                                  t1_index_insp, t2_index_insp,
-                                                 t1_index_mr, t2_index_mr)
+                                                 t1_index_mr, t2_index_mr, m = 2)
 
     amp_insp_aligned = compute_amplitude(inspiral_aligned)
     phase_insp_aligned = compute_phase(inspiral_aligned)
@@ -224,10 +223,12 @@ def perform_hybridisation(inspiral,
     waveform_hyb = amp_hyb_full * np.exp(-1j * phase_hyb_full)
 
     return (waveform_hyb, t1_index_insp, t1_index_mr, t2_index_insp,
-            t2_index_mr, frq_insp, frq_mr, frq_mr_aligned, inspiral_aligned,
-            sample_indices_insp, sample_indices_mr, amp_insp, amp_insp_aligned,
-            amp_hyb_window, amp_hyb_full, phase_insp, phase_hyb_window,
-            phase_hyb_full)
+            t2_index_mr, frq_insp, frq_mr, frq_insp_aligned, inspiral_aligned,
+            sample_indices_insp, sample_indices_mr, amp_insp_aligned,
+            amp_hyb_window, amp_hyb_full, phase_insp, phase_insp_aligned, 
+            phase_hyb_window, phase_hyb_full, phase_correction)
+
+
 
 
 ''' END OF CODE '''
