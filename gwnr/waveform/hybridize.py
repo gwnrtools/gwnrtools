@@ -29,6 +29,40 @@ import scipy.optimize
 from scipy.integrate import cumulative_trapezoid
 
 
+
+def find_first_value_location_in_series(frq_timeseries, frq_desired):
+
+    if frq_desired < np.min(frq_timeseries):
+        raise Exception(
+            'Desired frequency out of bounds, lower than min frequency')
+
+    if frq_desired > np.max(frq_timeseries):
+        raise Exception(
+            'Desired frequency out of bounds, higher than max frequency')
+    ''' 
+        We reverse the array and traverse it to find the location where the i_th value is more than
+        the desired value while the i+1_th value is less, hence locating the desired value somewhere
+        between those two points. We then choose the value closer to the value desired (among i and i+1) 
+        and call it the location of the desired value. 
+    '''
+
+    
+    for idx, f_value in enumerate(frq_timeseries):
+        if idx != len(frq_timeseries) - 1:
+            if frq_timeseries[
+                    idx] <= frq_desired and frq_timeseries[
+                        idx + 1] >= frq_desired:
+                fr1 = frq_timeseries[idx]
+                fr2 = frq_timeseries[idx + 1]
+
+                if abs(frq_desired - fr1) <= abs(frq_desired - fr2):
+                    final_idx = idx
+                else:
+                    final_idx = idx + 1
+                break
+    return final_idx
+
+
 def find_last_value_location_in_series(frq_timeseries, frq_desired):
 
     if frq_desired < np.min(frq_timeseries):
@@ -76,11 +110,11 @@ def mismatch_discrete(w1, w2, sample_indices_insp, sample_indices_mr):
 
 def align_in_phase(inspiral, merger_ringdown, sample_indices_insp,
                    sample_indices_mr, t1_index_insp, t2_index_insp,
-                   t1_index_mr, t2_index_mr, m = 2):
+                   t1_index_mr, t2_index_mr, m_mode):
     # Function alignes the two waveforms using the phase, optimised over the attachment region
     # m from l,m mode
     def optfn_ph(phaseshift_correction):
-        phase_corrected_insp = inspiral * np.exp(1j * m * phaseshift_correction) 
+        phase_corrected_insp = inspiral * np.exp(1j * m_mode * phaseshift_correction) 
         m_d = mismatch_discrete(
             phase_corrected_insp[t1_index_insp:t2_index_insp + 1],
             merger_ringdown[t1_index_mr:t2_index_mr + 1], sample_indices_insp,
@@ -91,7 +125,7 @@ def align_in_phase(inspiral, merger_ringdown, sample_indices_insp,
     phaseshift_required_for_alignment = phase_optimizer.x
 
     inspiral_aligned = inspiral * np.exp(
-        1j * m * phaseshift_required_for_alignment)
+        1j * m_mode * phaseshift_required_for_alignment)
 
     return inspiral_aligned, phaseshift_required_for_alignment
 
@@ -134,6 +168,7 @@ def perform_hybridisation(inspiral,
                           dt,
                           frq_attach,
                           frq_width,
+                          m_mode,
                           no_sp=4):
 
     phase_insp = compute_phase(inspiral)
@@ -143,11 +178,16 @@ def perform_hybridisation(inspiral,
     frq_mr = compute_frequency(phase_mr, dt)
     amp_mr = compute_amplitude(merger_ringdown)
     ''' first we need to find the attachment region, based on the frequency '''
-
-    t1_index_mr = find_last_value_location_in_series(
+    
+    ''' 
+        We search left to right in merger-ringdown to avoid frequency fluctuations 
+        after the merger, and right to left in inspiral to avoid frequency degeneracy
+        caused by eccentricity 
+    '''
+    t1_index_mr = find_first_value_location_in_series(
         frq_mr, frq_attach - frq_width / 2)
 
-    t2_index_mr = find_last_value_location_in_series(
+    t2_index_mr = find_first_value_location_in_series(
         frq_mr, frq_attach + frq_width / 2)
     ''' 
     For eccentric inspiral, there will be multiple instances of the 
@@ -179,7 +219,7 @@ def perform_hybridisation(inspiral,
                                                  sample_indices_insp,
                                                  sample_indices_mr,
                                                  t1_index_insp, t2_index_insp,
-                                                 t1_index_mr, t2_index_mr, m = 2)
+                                                 t1_index_mr, t2_index_mr, m_mode = m_mode)
 
     amp_insp_aligned = compute_amplitude(inspiral_aligned)
     phase_insp_aligned = compute_phase(inspiral_aligned)
@@ -223,11 +263,10 @@ def perform_hybridisation(inspiral,
     waveform_hyb = amp_hyb_full * np.exp(-1j * phase_hyb_full)
 
     return (waveform_hyb, t1_index_insp, t1_index_mr, t2_index_insp,
-            t2_index_mr, frq_insp, frq_mr, frq_insp_aligned, inspiral_aligned,
+            t2_index_mr, frq_insp, frq_mr, frq_insp_aligned, frq_hyb_window, inspiral_aligned,
             sample_indices_insp, sample_indices_mr, amp_insp_aligned,
             amp_hyb_window, amp_hyb_full, phase_insp, phase_insp_aligned, 
             phase_hyb_window, phase_hyb_full, phase_correction)
-
 
 
 
