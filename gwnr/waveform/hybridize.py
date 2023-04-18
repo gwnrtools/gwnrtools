@@ -110,7 +110,7 @@ def mismatch_discrete(w1, w2, sample_indices_insp, sample_indices_mr):
 
 def align_in_phase(inspiral, merger_ringdown, sample_indices_insp,
                    sample_indices_mr, t1_index_insp, t2_index_insp,
-                   t1_index_mr, t2_index_mr, m_mode):
+                   t1_index_mr, t2_index_mr, m_mode = 2):
     # Function alignes the two waveforms using the phase, optimised over the attachment region
     # m from l,m mode
     def optfn_ph(phaseshift_correction):
@@ -163,20 +163,27 @@ def compute_frequency(phase, dt):
     return frequency
 
 
-def perform_hybridisation(inspiral,
-                          merger_ringdown,
+def perform_hybridisation(inspiral_modes,
+                          merger_ringdown_modes,
                           dt,
                           frq_attach,
                           frq_width,
-                          m_mode,
                           no_sp=4):
+    phase_insp = {}
+    frq_insp = {}
+    phase_mr = {}
+    frq_mr = {}
+    amp_mr = {}
+    
+    for ii in range(2, 5): 
+        phase_insp[(ii, ii)] = compute_phase(inspiral_modes[(ii,ii)])
+        frq_insp[(ii, ii)] = compute_frequency(phase_insp[(ii, ii)], dt)
 
-    phase_insp = compute_phase(inspiral)
-    frq_insp = compute_frequency(phase_insp, dt)
-
-    phase_mr = compute_phase(merger_ringdown)
-    frq_mr = compute_frequency(phase_mr, dt)
-    amp_mr = compute_amplitude(merger_ringdown)
+        phase_mr[(ii, ii)] = compute_phase(merger_ringdown_modes[(ii, ii)])
+        frq_mr[(ii, ii)] = compute_frequency(phase_mr[(ii, ii)], dt)
+        amp_mr[(ii, ii)] = compute_amplitude(merger_ringdown_modes[(ii, ii)])
+        
+        
     ''' first we need to find the attachment region, based on the frequency '''
     
     ''' 
@@ -185,10 +192,10 @@ def perform_hybridisation(inspiral,
         caused by eccentricity 
     '''
     t1_index_mr = find_first_value_location_in_series(
-        frq_mr, frq_attach - frq_width / 2)
+        frq_mr[(2,2)], frq_attach - frq_width / 2)
 
     t2_index_mr = find_first_value_location_in_series(
-        frq_mr, frq_attach + frq_width / 2)
+        frq_mr[(2,2)], frq_attach + frq_width / 2)
     ''' 
     For eccentric inspiral, there will be multiple instances of the 
     same frequency. Pick the one having the highest index value (i.e. 
@@ -196,7 +203,7 @@ def perform_hybridisation(inspiral,
 
     '''
     t2_index_insp = find_last_value_location_in_series(
-        frq_insp, frq_attach + frq_width / 2)
+        frq_insp[(2,2)], frq_attach + frq_width / 2)
 
     # another way to define t2_index_mr is through number of points in the inspiral window
     t1_index_insp = t2_index_insp - (t2_index_mr - t1_index_mr)
@@ -215,31 +222,55 @@ def perform_hybridisation(inspiral,
     sample_indices_mr = sample_indices_insp  # since the attachment region in both has the same length
     ''' alignment using corrective phase addition '''
 
-    inspiral_aligned, phase_correction = align_in_phase(inspiral, merger_ringdown,
+    inspiral_modes_aligned = {}
+    amp_insp_aligned = {}
+    phase_insp_aligned = {}
+    frq_insp_aligned = {}
+    
+    inspiral_modes_aligned[(2,2)], phase_correction = align_in_phase(inspiral_modes[(2,2)], merger_ringdown_modes[(2,2)],
                                                  sample_indices_insp,
                                                  sample_indices_mr,
                                                  t1_index_insp, t2_index_insp,
-                                                 t1_index_mr, t2_index_mr, m_mode = m_mode)
-
-    amp_insp_aligned = compute_amplitude(inspiral_aligned)
-    phase_insp_aligned = compute_phase(inspiral_aligned)
+                                                 t1_index_mr, t2_index_mr)
+    
+    amp_insp_aligned[(2,2)] = compute_amplitude(inspiral_modes_aligned[(2,2)])
+    phase_insp_aligned[(2,2)] = compute_phase(inspiral_modes_aligned[(2,2)])
+    phph = compute_phase(inspiral_modes_aligned[(2,2)])
+    
+    for jj in range(3, 5):
+        inspiral_modes_aligned[(jj, jj)] = inspiral_modes[(jj, jj)] * np.exp(1j * jj * phase_correction)
+        amp_insp_aligned[(jj, jj)] = compute_amplitude(inspiral_modes_aligned[(jj, jj)])
+        phase_insp_aligned[(jj, jj)] = compute_phase(inspiral_modes_aligned[(jj, jj)])
+    
     '''
         It would be same as frq_mr as the corrected phase factor will be canceled in the derivative, 
         defining frq_insp_aligned just for consistency 
     '''
     frq_insp_aligned = frq_insp
+    
+    
     ''' Performing attachment using the blending function '''
 
-    amp_hyb_window = blend_series(amp_insp_aligned, amp_mr, t1_index_insp,
-                                  t2_index_insp, t1_index_mr, t2_index_mr)
-    frq_hyb_window = blend_series(frq_insp_aligned, frq_mr, t1_index_insp,
-                                  t2_index_insp, t1_index_mr, t2_index_mr)
-    ''' Integrating frq_hyb to obtain phase_hyb and removing discontinuities, 
-        compiling amp_hyb and phase_hyb to obtain the hybrid waveform.     '''
+    amp_hyb_window = {}
+    amp_hyb_full = {}
+    frq_hyb_window = {}
+    phase_hyb_window = {}
+    phase_hyb_full = {}
+    hybrid_modes = {}
+    
+    
+    for kk in range(2, 5):
+    
+        amp_hyb_window[(kk,kk)] = blend_series(amp_insp_aligned[(kk,kk)], amp_mr[(kk,kk)], t1_index_insp,
+                                      t2_index_insp, t1_index_mr, t2_index_mr)
+        frq_hyb_window[(kk,kk)] = blend_series(frq_insp_aligned[(kk,kk)], frq_mr[(kk,kk)], t1_index_insp,
+                                      t2_index_insp, t1_index_mr, t2_index_mr)
+        ''' Integrating frq_hyb to obtain phase_hyb and removing discontinuities, 
+            compiling amp_hyb and phase_hyb to obtain the hybrid waveform.     '''
 
-    phase_hyb_window = (2 * np.pi) * cumulative_trapezoid(
-        frq_hyb_window, dx=dt, initial=0
-    )  # Length of this will be one point shorter than frq_hyb_window
+        phase_hyb_window[(kk,kk)] = (2 * np.pi) * cumulative_trapezoid(
+            frq_hyb_window[(kk,kk)], dx=dt, initial=0)
+    
     ''' Right now the phase is integrated only inside the hybrid window, 
     need to add constants to preserve phase continuity and compile full IMR phase '''
     def remove_phase_discontinuity(phase_insp_aligned, phase_hyb_window,
@@ -252,21 +283,23 @@ def perform_hybridisation(inspiral,
                                 phase_mr[t2_index_mr - 1:] + delta2)
         return phase_hyb_2
 
-    phase_hyb_full = remove_phase_discontinuity(phase_insp_aligned,
-                                                phase_hyb_window, phase_mr)
+    for ll in range(2, 5):
+        
+        phase_hyb_full[(ll,ll)] = remove_phase_discontinuity(phase_insp_aligned[(ll,ll)],
+                                                    phase_hyb_window[(ll,ll)], phase_mr[(ll,ll)])
 
-    amp_hyb_full = np.append(
-        np.concatenate([amp_insp_aligned[:t1_index_insp],
-                        amp_hyb_window])[:t2_index_insp - 1],
-        amp_mr[t2_index_mr - 1:])
+        amp_hyb_full[(ll,ll)] = np.append(
+            np.concatenate([amp_insp_aligned[(ll,ll)][:t1_index_insp],
+                            amp_hyb_window[(ll,ll)]])[:t2_index_insp - 1],
+            amp_mr[(ll,ll)][t2_index_mr - 1:])
 
-    waveform_hyb = amp_hyb_full * np.exp(-1j * phase_hyb_full)
+        hybrid_modes[(ll,ll)] = amp_hyb_full[(ll,ll)] * np.exp(-1j * phase_hyb_full[(ll,ll)])
 
-    return (waveform_hyb, t1_index_insp, t1_index_mr, t2_index_insp,
-            t2_index_mr, frq_insp, frq_mr, frq_insp_aligned, frq_hyb_window, inspiral_aligned,
+    return (hybrid_modes, t1_index_insp, t1_index_mr, t2_index_insp,
+            t2_index_mr, frq_insp, frq_mr, frq_insp_aligned, frq_hyb_window, inspiral_modes_aligned,
             sample_indices_insp, sample_indices_mr, amp_insp_aligned,
             amp_hyb_window, amp_hyb_full, phase_insp, phase_insp_aligned, 
-            phase_hyb_window, phase_hyb_full, phase_correction)
+            phase_hyb_window, phase_hyb_full, phase_correction, phph)
 
 
 
