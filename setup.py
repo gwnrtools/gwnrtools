@@ -115,7 +115,7 @@ if __name__ == "__main__":
             'numpy>=1.16.5',
             'pandas>=0.24.2',
             'pathlib',
-            # 'pycbc>=1.15.4',
+            'pycbc>=1.15.4',
             'pyswarm>=0.6',
             'pytest',
             'romspline>=1.1.6',
