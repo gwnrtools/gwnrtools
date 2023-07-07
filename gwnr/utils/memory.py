@@ -23,9 +23,9 @@
 from __future__ import print_function
 
 import sys
-from collections import Mapping
+from collections.abc import Mapping, Set
+from collections import deque
 from numbers import Number
-from collections import Set, Mapping, deque
 
 ########################################
 # Other FUNCTIONS
