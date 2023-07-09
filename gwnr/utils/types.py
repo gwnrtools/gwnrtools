@@ -29,7 +29,13 @@ from __future__ import print_function
 from numpy import *
 import numpy as np
 
-from pycbc.types import TimeSeries, FrequencySeries, complex_same_precision_as
+import lal
+from pycbc.types import (
+    TimeSeries,
+    FrequencySeries,
+    complex_same_precision_as,
+    real_same_precision_as,
+)
 from pycbc.pnutils import nearest_larger_binary_number
 
 
@@ -46,25 +52,25 @@ def convert_TimeSeries_to_lalREAL8TimeSeries(h, name=None):
 
 
 def convert_lalREAL8TimeSeries_to_TimeSeries(h):
-    return TimeSeries(h.data.data,
-                      delta_t=h.deltaT,
-                      copy=True,
-                      epoch=h.epoch,
-                      dtype=h.data.data.dtype)
+    return TimeSeries(
+        h.data.data, delta_t=h.deltaT, copy=True, epoch=h.epoch, dtype=h.data.data.dtype
+    )
 
 
 def extend_waveform_TimeSeries(wav, filter_N):
     # {{{
     if len(wav) != filter_N:
         try:
-            _wav = TimeSeries(np.zeros(filter_N),
-                              delta_t=wav.delta_t,
-                              dtype=real_same_precision_as(wav),
-                              epoch=wav._epoch)
+            _wav = TimeSeries(
+                np.zeros(filter_N),
+                delta_t=wav.delta_t,
+                dtype=real_same_precision_as(wav),
+                epoch=wav._epoch,
+            )
         except MemoryError as merr:
             print(("Do you really want to allocate %d doubles?" % filter_N))
             raise MemoryError(merr)
-        _wav[:len(wav)] = wav
+        _wav[: len(wav)] = wav
     else:
         _wav = wav
     return _wav
@@ -74,41 +80,47 @@ def extend_waveform_TimeSeries(wav, filter_N):
 def extend_waveform_FrequencySeries(wav, filter_n, force_fit=False):
     # {{{
     if len(wav) < filter_n:
-        _wav = FrequencySeries(np.zeros(filter_n),
-                               delta_f=wav.delta_f,
-                               dtype=complex_same_precision_as(wav),
-                               epoch=wav._epoch)
-        _wav[:len(wav)] = wav
+        _wav = FrequencySeries(
+            np.zeros(filter_n),
+            delta_f=wav.delta_f,
+            dtype=complex_same_precision_as(wav),
+            epoch=wav._epoch,
+        )
+        _wav[: len(wav)] = wav
     elif len(wav) == filter_n:
         _wav = wav
     elif force_fit:
-        print(("WARNING: Ignoring high-frequency content above %.3f Hz" %
-               (wav.delta_f * filter_n)))
-        _wav = FrequencySeries(np.zeros(filter_n),
-                               delta_f=wav.delta_f,
-                               dtype=complex_same_precision_as(wav),
-                               epoch=wav._epoch)
-        _wav[:len(_wav)] = wav[:len(_wav)]
+        print(
+            (
+                "WARNING: Ignoring high-frequency content above %.3f Hz"
+                % (wav.delta_f * filter_n)
+            )
+        )
+        _wav = FrequencySeries(
+            np.zeros(filter_n),
+            delta_f=wav.delta_f,
+            dtype=complex_same_precision_as(wav),
+            epoch=wav._epoch,
+        )
+        _wav[: len(_wav)] = wav[: len(_wav)]
     else:
         raise IOError(
-            "Passed FrequencySeries has length %d, cannot shrink to %d" %
-            (len(wav), filter_n))
+            "Passed FrequencySeries has length %d, cannot shrink to %d"
+            % (len(wav), filter_n)
+        )
     return _wav
     # }}}
 
 
-def convert_numpy_to_pycbc_type(arr,
-                                out_type,
-                                sample_rate=None,
-                                time_length=None):
+def convert_numpy_to_pycbc_type(arr, out_type, sample_rate=None, time_length=None):
     """
 Convert numpy.array to pycbc.types, TimeSeries and FrequencySeries.
 Output array is extended to length consistent with time_length passed
 
 ALL ARGUMENTS ARE NECESSARY.
     """
-    delta_t = 1. / sample_rate
-    delta_f = 1. / time_length
+    delta_t = 1.0 / sample_rate
+    delta_f = 1.0 / time_length
     N = sample_rate * time_length
     n = N / 2 + 1
     if out_type == TimeSeries:
@@ -135,22 +147,26 @@ filter_N and/or delta_f are given, the output will take those values. If
     filter_n = filter_N / 2 + 1
 
     if isinstance(vec, FrequencySeries):
-        vectilde = FrequencySeries(zeros(filter_n),
-                                   delta_f=vec.get_delta_f(),
-                                   dtype=complex_same_precision_as(vec))
+        vectilde = FrequencySeries(
+            zeros(filter_n),
+            delta_f=vec.get_delta_f(),
+            dtype=complex_same_precision_as(vec),
+        )
         cplen = min(len(vec), len(vectilde))
         vectilde[:cplen] = vec[:cplen]
         if delta_f is not None:
             delta_f_ratio = max(1, int(ceil(vectilde.get_delta_f() / delta_f)))
-            vectilde = vectilde[:len(vectilde):delta_f_ratio]
+            vectilde = vectilde[: len(vectilde) : delta_f_ratio]
     elif isinstance(vec, TimeSeries):
-        delta_f_from_filter_N = 1. / filter_N / vec.get_delta_t()
+        delta_f_from_filter_N = 1.0 / filter_N / vec.get_delta_t()
         vec.resize(filter_N)
         v_tilde = vec.to_frequencyseries()
-        vectilde = FrequencySeries(v_tilde[:],
-                                   delta_f=delta_f_from_filter_N,
-                                   dtype=complex_same_precision_as(vec),
-                                   copy=True)
+        vectilde = FrequencySeries(
+            v_tilde[:],
+            delta_f=delta_f_from_filter_N,
+            dtype=complex_same_precision_as(vec),
+            copy=True,
+        )
     else:
         vectilde = None
         raise IOError("Input is neither a TimeSeries nor a FrequencySeries")
