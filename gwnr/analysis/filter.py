@@ -60,9 +60,11 @@ def calculate_faithfulness(
     dec=0,
     polarization=0,
     signal_approx="IMRPhenomD",
-    signal_file=None,
+    signal_file="",
+    signal_h=None,
     tmplt_approx="IMRPhenomC",
-    tmplt_file=None,
+    tmplt_file="",
+    tmplt_h=None,
     aligned_spin_tmplt_only=True,
     non_spin_tmplt_only=False,
     f_lower=15.0,
@@ -170,177 +172,192 @@ def calculate_faithfulness(
 
     # 2) GENERATE THE TARGET SIGNAL
     # Get the signal waveform first
-    if (
-        signal_approx in pywf.fd_approximants()
-        or signal_approx in pywf.td_approximants()
-    ):
-        generator = pywfg.FDomainDetFrameGenerator(
-            pywfg.select_waveform_generator(signal_approx),
-            0,
-            variable_args=[
-                "mass1",
-                "mass2",
-                "spin1x",
-                "spin1y",
-                "spin1z",
-                "spin2x",
-                "spin2y",
-                "spin2z",
-                "coa_phase",
-                "tc",
-                "ra",
-                "dec",
-                "polarization",
-            ],
-            detectors=["H1"],
-            delta_t=delta_t,
-            delta_f=delta_f,
-            f_lower=f_lower,
-            approximant=signal_approx,
-        )
-    elif "FromDataFile" in signal_approx:
-        if os.path.getsize(signal_file) == 0:
-            raise RuntimeError(" ERROR:...OOPS. Waveform file %s empty!!" % signal_file)
-        try:
-            _ = np.loadtxt(signal_file)
-        except BaseException:
-            raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." % signal_file)
-
-        waveform_params = lsctables.SimInspiral()
-        waveform_params.latitude = 0
-        waveform_params.longitude = 0
-        waveform_params.polarization = 0
-        waveform_params.spin1x = 0
-        waveform_params.spin1y = 0
-        waveform_params.spin1z = 0
-        waveform_params.spin2x = 0
-        waveform_params.spin2y = 0
-        waveform_params.spin2z = 0
-        # try:
-        if True:
-            if verbose:
-                print(".. generating signal waveform ")
-            signal_htilde, _params = get_waveform(
-                signal_approx,
-                -1,
-                -1,
-                -1,
-                waveform_params,
-                f_lower,
-                sample_rate,
-                filter_N,
-                datafile=signal_file,
+    if signal_h is None:
+        if (
+            signal_approx in pywf.fd_approximants()
+            or signal_approx in pywf.td_approximants()
+        ):
+            signal_generator = pywfg.FDomainDetFrameGenerator(
+                pywfg.select_waveform_generator(signal_approx),
+                0,
+                variable_args=[
+                    "mass1",
+                    "mass2",
+                    "spin1x",
+                    "spin1y",
+                    "spin1z",
+                    "spin2x",
+                    "spin2y",
+                    "spin2z",
+                    "coa_phase",
+                    "tc",
+                    "ra",
+                    "dec",
+                    "polarization",
+                ],
+                detectors=["H1"],
+                delta_t=delta_t,
+                delta_f=delta_f,
+                f_lower=f_lower,
+                approximant=signal_approx,
             )
-            print(".. generated signal waveform ")
-            m1, m2, w_value, _ = _params
-            waveform_params.mass1 = m1
-            waveform_params.mass2 = m2
-            signal_h = make_frequency_series(signal_htilde)
-            signal_h = extend_waveform_FrequencySeries(signal_h, filter_n)
-        # except: raise IOError("Approximant %s not found.." % signal_approx)
-    else:
-        raise IOError("Signal Approximant %s not found.." % signal_approx)
+        elif "FromDataFile" in signal_approx:
+            if os.path.getsize(signal_file) == 0:
+                raise RuntimeError(
+                    " ERROR:...OOPS. Waveform file %s empty!!" % signal_file
+                )
+            try:
+                _ = np.loadtxt(signal_file)
+            except BaseException:
+                raise RuntimeError(
+                    " WARNING: FAILURE READING DATA FROM %s.." % signal_file
+                )
 
-    if verbose:
-        print(
-            "..Generating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
-            % (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z)
-        )
-        sys.stdout.flush()
+            waveform_params = lsctables.SimInspiral()
+            waveform_params.latitude = 0
+            waveform_params.longitude = 0
+            waveform_params.polarization = 0
+            waveform_params.spin1x = 0
+            waveform_params.spin1y = 0
+            waveform_params.spin1z = 0
+            waveform_params.spin2x = 0
+            waveform_params.spin2y = 0
+            waveform_params.spin2z = 0
+            # try:
+            if True:
+                if verbose:
+                    print(".. generating signal waveform ")
+                signal_htilde, _params = get_waveform(
+                    signal_approx,
+                    -1,
+                    -1,
+                    -1,
+                    waveform_params,
+                    f_lower,
+                    sample_rate,
+                    filter_N,
+                    datafile=signal_file,
+                )
+                print(".. generated signal waveform ")
+                m1, m2, w_value, _ = _params
+                waveform_params.mass1 = m1
+                waveform_params.mass2 = m2
+                signal_h = signal_htilde
+            # except: raise IOError("Approximant %s not found.." % signal_approx)
+        else:
+            raise IOError("Signal Approximant %s not found.." % signal_approx)
 
-    if (
-        signal_approx in pywf.fd_approximants()
-        or signal_approx in pywf.td_approximants()
-    ):
-        signal = generator.generate(
-            mass1=m1,
-            mass2=m2,
-            spin1x=s1x,
-            spin1y=s1y,
-            spin1z=s1z,
-            spin2x=s2x,
-            spin2y=s2y,
-            spin2z=s2z,
-            coa_phase=phic,
-            tc=tc,
-            ra=ra,
-            dec=dec,
-            polarization=polarization,
-        )
-        # NOTE: SEOBNRv4 has extra high frequency content, it seems..
-        signal_h = make_frequency_series(signal["H1"])
-        signal_h = extend_waveform_FrequencySeries(signal_h, filter_n, force_fit=True)
+        if verbose:
+            print(
+                "..Generating signal with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
+                % (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z)
+            )
+            sys.stdout.flush()
+
+    if signal_h is None:
+        if (
+            signal_approx in pywf.fd_approximants()
+            or signal_approx in pywf.td_approximants()
+        ):
+            signal = signal_generator.generate(
+                mass1=m1,
+                mass2=m2,
+                spin1x=s1x,
+                spin1y=s1y,
+                spin1z=s1z,
+                spin2x=s2x,
+                spin2y=s2y,
+                spin2z=s2z,
+                coa_phase=phic,
+                tc=tc,
+                ra=ra,
+                dec=dec,
+                polarization=polarization,
+            )
+            # NOTE: SEOBNRv4 has extra high frequency content, it seems..
+            signal_h = signal["H1"]
+
+    signal_h = make_frequency_series(signal_h)
+    signal_h = extend_waveform_FrequencySeries(signal_h, filter_n, force_fit=True)
 
     # 3) GENERATE THE TARGET TEMPLATE
     # Get the signal waveform first
-    if tmplt_approx in pywf.fd_approximants() or tmplt_approx in pywf.td_approximants():
-        generator = pywfg.FDomainDetFrameGenerator(
-            pywfg.select_waveform_generator(tmplt_approx),
-            0,
-            variable_args=[
-                "mass1",
-                "mass2",
-                "spin1x",
-                "spin1y",
-                "spin1z",
-                "spin2x",
-                "spin2y",
-                "spin2z",
-                "coa_phase",
-                "tc",
-                "ra",
-                "dec",
-                "polarization",
-            ],
-            detectors=["H1"],
-            delta_f=delta_f,
-            delta_t=delta_t,
-            f_lower=f_lower,
-            approximant=tmplt_approx,
-        )
-    elif "FromDataFile" in tmplt_approx:
-        if os.path.getsize(tmplt_file) == 0:
-            raise RuntimeError(" ERROR:...OOPS. Waveform file %s empty!!" % tmplt_file)
-        try:
-            _ = np.loadtxt(tmplt_file)
-        except BaseException:
-            raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." % tmplt_file)
-
-        waveform_params = lsctables.SimInspiral()
-        waveform_params.latitude = 0
-        waveform_params.longitude = 0
-        waveform_params.polarization = 0
-        waveform_params.spin1x = 0
-        waveform_params.spin1y = 0
-        waveform_params.spin1z = 0
-        waveform_params.spin2x = 0
-        waveform_params.spin2y = 0
-        waveform_params.spin2z = 0
-        # try:
-        if True:
-            if verbose:
-                print(".. generating signal waveform ")
-            tmplt_htilde, _params = get_waveform(
-                tmplt_approx,
-                -1,
-                -1,
-                -1,
-                waveform_params,
-                f_lower,
-                1.0 / delta_t,
-                filter_N,
-                datafile=tmplt_file,
+    if tmplt_h is None:
+        if (
+            tmplt_approx in pywf.fd_approximants()
+            or tmplt_approx in pywf.td_approximants()
+        ):
+            tmplt_generator = pywfg.FDomainDetFrameGenerator(
+                pywfg.select_waveform_generator(tmplt_approx),
+                0,
+                variable_args=[
+                    "mass1",
+                    "mass2",
+                    "spin1x",
+                    "spin1y",
+                    "spin1z",
+                    "spin2x",
+                    "spin2y",
+                    "spin2z",
+                    "coa_phase",
+                    "tc",
+                    "ra",
+                    "dec",
+                    "polarization",
+                ],
+                detectors=["H1"],
+                delta_f=delta_f,
+                delta_t=delta_t,
+                f_lower=f_lower,
+                approximant=tmplt_approx,
             )
-            print(".. generated signal waveform ")
-            m1, m2, w_value, _ = _params
-            waveform_params.mass1 = m1
-            waveform_params.mass2 = m2
-            tmplt_h = make_frequency_series(tmplt_htilde)
-            tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n)
-        # except: raise IOError("Approximant %s not found.." % tmplt_approx)
-    else:
-        raise IOError("Template Approximant %s not found.." % tmplt_approx)
-    #
+        elif "FromDataFile" in tmplt_approx:
+            if os.path.getsize(tmplt_file) == 0:
+                raise RuntimeError(
+                    " ERROR:...OOPS. Waveform file %s empty!!" % tmplt_file
+                )
+            try:
+                _ = np.loadtxt(tmplt_file)
+            except BaseException:
+                raise RuntimeError(
+                    " WARNING: FAILURE READING DATA FROM %s.." % tmplt_file
+                )
+
+            waveform_params = lsctables.SimInspiral()
+            waveform_params.latitude = 0
+            waveform_params.longitude = 0
+            waveform_params.polarization = 0
+            waveform_params.spin1x = 0
+            waveform_params.spin1y = 0
+            waveform_params.spin1z = 0
+            waveform_params.spin2x = 0
+            waveform_params.spin2y = 0
+            waveform_params.spin2z = 0
+            # try:
+            if True:
+                if verbose:
+                    print(".. generating signal waveform ")
+                tmplt_htilde, _params = get_waveform(
+                    tmplt_approx,
+                    -1,
+                    -1,
+                    -1,
+                    waveform_params,
+                    f_lower,
+                    1.0 / delta_t,
+                    filter_N,
+                    datafile=tmplt_file,
+                )
+                print(".. generated signal waveform ")
+                m1, m2, w_value, _ = _params
+                waveform_params.mass1 = m1
+                waveform_params.mass2 = m2
+                tmplt_h = make_frequency_series(tmplt_htilde)
+                tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n)
+            # except: raise IOError("Approximant %s not found.." % tmplt_approx)
+        else:
+            raise IOError("Template Approximant %s not found.." % tmplt_approx)
+
     if aligned_spin_tmplt_only:
         _m1, _m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z = m1, m2, 0, 0, s1z, 0, 0, s2z
     elif non_spin_tmplt_only:
@@ -369,55 +386,59 @@ def calculate_faithfulness(
         )
         sys.stdout.flush()
 
-    if tmplt_approx in pywf.fd_approximants() or tmplt_approx in pywf.td_approximants():
-        try:
-            template = generator.generate(
-                mass1=_m1,
-                mass2=_m2,
-                spin1x=_s1x,
-                spin1y=_s1y,
-                spin1z=_s1z,
-                spin2x=_s2x,
-                spin2y=_s2y,
-                spin2z=_s2z,
-                coa_phase=phic,
-                tc=tc,
-                ra=ra,
-                dec=dec,
-                polarization=polarization,
-            )
-        except RuntimeError as rerr:
-            print(
-                """FAILED TO GENERATE %s waveform for
-              masses = %.3f, %.3f
-              spins = (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f)from gwnr.analysis.filter import calculate_faithfulness
-
-              phic, tc, ra, dec, pol = (%.3f, %.3f, %.3f, %.3f, %.3f)"""
-                % (
-                    tmplt_approx,
-                    _m1,
-                    _m2,
-                    _s1x,
-                    _s1y,
-                    _s1z,
-                    _s2x,
-                    _s2y,
-                    _s2z,
-                    phic,
-                    tc,
-                    ra,
-                    dec,
-                    polarization,
+    if tmplt_h is None:
+        if (
+            tmplt_approx in pywf.fd_approximants()
+            or tmplt_approx in pywf.td_approximants()
+        ):
+            try:
+                template = tmplt_generator.generate(
+                    mass1=_m1,
+                    mass2=_m2,
+                    spin1x=_s1x,
+                    spin1y=_s1y,
+                    spin1z=_s1z,
+                    spin2x=_s2x,
+                    spin2y=_s2y,
+                    spin2z=_s2z,
+                    coa_phase=phic,
+                    tc=tc,
+                    ra=ra,
+                    dec=dec,
+                    polarization=polarization,
                 )
-            )
-            raise RuntimeError(rerr)
-        template_h = make_frequency_series(template["H1"])
-        template_h = extend_waveform_FrequencySeries(
-            template_h, filter_n, force_fit=True
-        )
+            except RuntimeError as rerr:
+                print(
+                    """FAILED TO GENERATE %s waveform for
+                masses = %.3f, %.3f
+                spins = (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f)from gwnr.analysis.filter import calculate_faithfulness
+
+                phic, tc, ra, dec, pol = (%.3f, %.3f, %.3f, %.3f, %.3f)"""
+                    % (
+                        tmplt_approx,
+                        _m1,
+                        _m2,
+                        _s1x,
+                        _s1y,
+                        _s1z,
+                        _s2x,
+                        _s2y,
+                        _s2z,
+                        phic,
+                        tc,
+                        ra,
+                        dec,
+                        polarization,
+                    )
+                )
+                raise RuntimeError(rerr)
+            tmplt_h = template["H1"]
+
+    tmplt_h = make_frequency_series(tmplt_h)
+    tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n, force_fit=True)
 
     # 4) COMPUTE MATCH
-    m, idx = match(signal_h, template_h, psd=psd, low_frequency_cutoff=f_lower)
+    m, idx = match(signal_h, tmplt_h, psd=psd, low_frequency_cutoff=f_lower)
 
     if debug:
         print(
@@ -592,6 +613,7 @@ def _objective_function_fitting_factor_(x, *args, debug=False):
 def calculate_fitting_factor(
     m1,
     m2,
+    tmplt_approx,
     s1x=0,
     s1y=0,
     s1z=0,
@@ -606,7 +628,6 @@ def calculate_fitting_factor(
     signal_approx="",
     signal_file=None,
     signal_h=None,
-    tmplt_approx="",
     vary_masses_only=True,
     vary_masses_and_aligned_spin_only=False,
     chirp_mass_window=0.2,
@@ -671,7 +692,7 @@ def calculate_fitting_factor(
 
     signal_approx: {"", string}
         Waveform approximant to model the simulated signal.
-    signal_file: {None, string}
+    signal_file: {"", string}
         Path to file containing simulated signal written in ASCII.
     signal_h: {None, pycbc.types.FrequencySeries`}
         Simulated signal in frequency domain
@@ -978,8 +999,9 @@ def calculate_fitting_factor(
         polarization=polarization,
         signal_approx=signal_approx,
         signal_file=signal_file,
+        signal_h=signal_h,
         tmplt_approx=tmplt_approx,
-        tmplt_file=None,
+        tmplt_file="",
         aligned_spin_tmplt_only=vary_masses_and_aligned_spin_only,
         non_spin_tmplt_only=vary_masses_only,
         f_lower=f_lower,
