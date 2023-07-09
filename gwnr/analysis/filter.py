@@ -30,6 +30,7 @@ import sys
 import numpy as np
 import pyswarm
 
+import pycbc
 from pycbc.psd import from_string
 from pycbc.filter import match, make_frequency_series
 import pycbc.pnutils as pnutils
@@ -277,6 +278,8 @@ def calculate_faithfulness(
             # NOTE: SEOBNRv4 has extra high frequency content, it seems..
             signal_h = signal["H1"]
 
+    if type(signal_h) == pycbc.types.TimeSeries:
+        signal_h = extend_waveform_TimeSeries(signal_h, filter_N)
     signal_h = make_frequency_series(signal_h)
     signal_h = extend_waveform_FrequencySeries(signal_h, filter_n, force_fit=True)
 
@@ -434,6 +437,8 @@ def calculate_faithfulness(
                 raise RuntimeError(rerr)
             tmplt_h = template["H1"]
 
+    if type(tmplt_h) == pycbc.types.TimeSeries:
+        tmplt_h = extend_waveform_TimeSeries(tmplt_h, filter_N)
     tmplt_h = make_frequency_series(tmplt_h)
     tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n, force_fit=True)
 
@@ -475,6 +480,7 @@ def _constraint_function_fitting_factor_(x, *args):
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
         [psd, f_lower, filter_n],
+        [verbose, debug],
     ) = args
 
     if len(x) == 2:
@@ -509,7 +515,7 @@ def _constraint_function_fitting_factor_(x, *args):
 
 
 # 4) DEFINE AN OBJECTIVE FUNCTION FOR PSO TO MINIMIZE
-def _objective_function_fitting_factor_(x, *args, debug=False):
+def _objective_function_fitting_factor_(x, *args):
     """
     This function is to be minimized if the fitting factor is to be found
 
@@ -531,6 +537,7 @@ def _objective_function_fitting_factor_(x, *args, debug=False):
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
         [psd, f_lower, filter_n],
+        [verbose, debug],
     ) = args
 
     # 1) OBTAIN THE TEMPLATE PARAMETERS FROM X. ASSUME THAT ONLY
@@ -565,8 +572,6 @@ def _objective_function_fitting_factor_(x, *args, debug=False):
         spin2y=_s2y,
         spin2z=_s2z,
     )
-    tmplt_h = make_frequency_series(tmplt["H1"])
-
     if debug:
         print(
             "IN FF Objective-> for parameters:",
@@ -584,6 +589,7 @@ def _objective_function_fitting_factor_(x, *args, debug=False):
                 len(tmplt["H1"]), filter_n
             )
         )
+    tmplt_h = make_frequency_series(tmplt["H1"])
     tmplt_h = extend_waveform_FrequencySeries(tmplt_h, filter_n, force_fit=True)
 
     # 3) COMPUTE MATCH
@@ -591,7 +597,7 @@ def _objective_function_fitting_factor_(x, *args, debug=False):
 
     if debug:
         print(
-            "MATCH IS %.6f for parameters:" % m,
+            "MATCH IS %e for parameters:" % m,
             m1,
             m2,
             _s1x,
@@ -626,7 +632,7 @@ def calculate_fitting_factor(
     dec=0,
     polarization=0,
     signal_approx="",
-    signal_file=None,
+    signal_file="",
     signal_h=None,
     vary_masses_only=True,
     vary_masses_and_aligned_spin_only=False,
@@ -902,6 +908,8 @@ def calculate_fitting_factor(
         )
         signal_h = signal["H1"]
 
+    if type(signal_h) == pycbc.types.TimeSeries:
+        signal_h = extend_waveform_TimeSeries(signal_h, filter_N)
     signal_h = make_frequency_series(signal_h)
     signal_h = extend_waveform_FrequencySeries(signal_h, filter_n, force_fit=True)
 
@@ -930,6 +938,7 @@ def calculate_fitting_factor(
         dec=dec,
         polarization=polarization,
         delta_f=delta_f,
+        # delta_t=delta_t, #FIXME
         f_lower=f_lower,
         approximant=tmplt_approx,
     )
@@ -954,6 +963,7 @@ def calculate_fitting_factor(
 
     if verbose:
         print(
+            "SEARCH LIMITS-> ",
             m1,
             m2,
             mt,
@@ -969,12 +979,12 @@ def calculate_fitting_factor(
             m2_max,
         )
 
-    if vary_masses_only:
-        low_lim = [m1_min, m2_min]
-        high_lim = [m1_max, m2_max]
-    elif vary_masses_and_aligned_spin_only:
+    if vary_masses_and_aligned_spin_only:
         low_lim = [m1_min, m2_min, s_min, s_min]
         high_lim = [m1_max, m2_max, s_max, s_max]
+    elif vary_masses_only:
+        low_lim = [m1_min, m2_min]
+        high_lim = [m1_max, m2_max]
     else:
         low_lim = [m1_min, m2_min, s_min, s_min, s_min, s_min, s_min, s_min]
         high_lim = [m1_max, m2_max, s_max, s_max, s_max, s_max, s_max, s_max]
@@ -1017,10 +1027,10 @@ def calculate_fitting_factor(
             print(
                 "Skipping FF computation as olap is high enough at: {:.6f}".format(olap)
             )
-        if vary_masses_only:
-            return [np.array([m1, m2]), olap, olap]
         if vary_masses_and_aligned_spin_only:
             return [np.array([m1, m2, s1z, s2z]), olap, olap]
+        if vary_masses_only:
+            return [np.array([m1, m2]), olap, olap]
         return [np.array([m1, m2, s1x, s1y, s1z, s2x, s2y, s2z]), olap, olap]
     if verbose:
         print(
@@ -1045,13 +1055,14 @@ def calculate_fitting_factor(
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
         [psd, f_lower, filter_n],
+        [verbose, debug],
     )
     idx = 1
     ff = 0.0
     _objective_function_fitting_factor_.counter = 0
 
     # 6) Use PSO to compute fitting factor
-    while ff < olap and ff < ff_max:
+    while ff <= olap and ff < ff_max:
         if idx and idx % 2 == 0:
             pso_minfunc *= 0.1
             pso_phig *= 1.1
