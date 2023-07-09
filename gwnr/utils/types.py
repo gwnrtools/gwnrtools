@@ -30,6 +30,7 @@ from numpy import *
 import numpy as np
 
 import lal
+import pycbc
 from pycbc.types import (
     TimeSeries,
     FrequencySeries,
@@ -110,6 +111,21 @@ def extend_waveform_FrequencySeries(wav, filter_n, force_fit=False):
         )
     return _wav
     # }}}
+
+
+def write_series(series, filename):
+    import pycbc
+
+    x = None
+    if type(series) == pycbc.types.TimeSeries:
+        x = series.sample_times
+    elif type(series) == pycbc.types.FrequencySeries:
+        x = series.sample_frequencies
+    if x is None:
+        return
+    with open(filename, "w") as fout:
+        for xx, yy in zip(x, series.data):
+            fout.write("{}\t{}\t{}\n".format(xx, np.real(yy), np.imag(yy)))
 
 
 def convert_numpy_to_pycbc_type(arr, out_type, sample_rate=None, time_length=None):
