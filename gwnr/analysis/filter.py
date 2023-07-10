@@ -651,7 +651,6 @@ def calculate_fitting_factor(
     vary_masses_and_aligned_spin_only=False,
     chirp_mass_window=0.2,
     effective_spin_window=0.75,
-    num_retries=5,
     f_lower=15.0,
     sample_rate=4096,
     signal_duration=16,
@@ -662,6 +661,8 @@ def calculate_fitting_factor(
     pso_phip=0.5,
     pso_phig=0.25,
     pso_minfunc=1e-3,
+    pso_n_processes=1,
+    num_retries=5,
     verbose=True,
     debug=False,
 ):
@@ -752,6 +753,9 @@ def calculate_fitting_factor(
         Scaling factor to search away from the particle’s best known position.
     pso_minfunc: {1e-3, float}
         The minimum change of swarm’s best objective value before the search terminates.
+    pso_n_processes: {1, int}
+        Number of CPU cores to engage for calculating objective functions by PSO algorithm.
+        NOTE: this option is under construction.
     num_retries: {4, int}
         Number of times we retune configurations of PSO before declaring a
         globally optimized fitting factor.
@@ -1119,6 +1123,7 @@ def calculate_fitting_factor(
             phig=pso_phig,
             minfunc=pso_minfunc,
             maxiter=10,
+            processes=pso_n_processes,
             debug=verbose,
         )
         # Restore fitting factor from 1-ff

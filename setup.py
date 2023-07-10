@@ -116,7 +116,7 @@ if __name__ == "__main__":
             'pandas>=0.24.2',
             'pathlib',
             'pycbc>=1.15.4',
-            'pyswarm>=0.6',
+            'pyswarm @ git+https://github.com/tisimst/pyswarm@master',
             'pytest',
             'romspline>=1.1.6',
             'scikit-learn>=0.20.4',
