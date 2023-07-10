@@ -22,9 +22,9 @@
 #
 from __future__ import print_function
 
-from gwnr.utils.types import extend_waveform_FrequencySeries
+from gwnr.utils.types import extend_waveform_FrequencySeries, extend_waveform_TimeSeries
 from gwnr.waveform.waveform import get_waveform
-from gwnr.utils.types import *
+
 import os
 import sys
 import numpy as np
@@ -57,6 +57,7 @@ def calculate_faithfulness(
     s2z=0,
     tc=0,
     phic=0,
+    inclination=0,
     ra=0,
     dec=0,
     polarization=0,
@@ -109,6 +110,9 @@ def calculate_faithfulness(
         Time of coalescence of the binary.
     phic: {0, float}
         Orbital phase at coalescence of the binary.
+    inclination: {0, float}
+        Inclination angle of binary with respect to line of sight joining it
+        with the GW detector
     ra: {0, float}
         Right ascension of the binary in sky (longitude).
     dec: {0, float}
@@ -192,6 +196,7 @@ def calculate_faithfulness(
                     "spin2z",
                     "coa_phase",
                     "tc",
+                    "inclination",
                     "ra",
                     "dec",
                     "polarization",
@@ -271,6 +276,7 @@ def calculate_faithfulness(
                 spin2z=s2z,
                 coa_phase=phic,
                 tc=tc,
+                inclination=inclination,
                 ra=ra,
                 dec=dec,
                 polarization=polarization,
@@ -304,6 +310,7 @@ def calculate_faithfulness(
                     "spin2z",
                     "coa_phase",
                     "tc",
+                    "inclination",
                     "ra",
                     "dec",
                     "polarization",
@@ -376,12 +383,7 @@ def calculate_faithfulness(
             s2y,
             s2z,
         )
-    #
-    # template = generator.generate(mass1=_m1, mass2=_m2, spin1x=_s1x, spin1y=_s1y,
-    # spin1z=_s1z, spin2x=_s2x, spin2y=_s2y, spin2z=_s2z,\
-    #                              coa_phase=phic, tc=tc, ra=ra, dec=dec,
-    # polarization=polarization)
-    #
+
     if verbose:
         print(
             "..Generating template with masses = %3f, %.3f, spin1 = (%.3f, %.3f, %.3f), and  spin2 = (%.3f, %.3f, %.3f)"
@@ -406,6 +408,7 @@ def calculate_faithfulness(
                     spin2z=_s2z,
                     coa_phase=phic,
                     tc=tc,
+                    inclination=inclination,
                     ra=ra,
                     dec=dec,
                     polarization=polarization,
@@ -456,6 +459,7 @@ def calculate_faithfulness(
             _s2x,
             _s2y,
             _s2z,
+            inclination,
         )
         sys.stderr.flush()
     #
@@ -479,6 +483,7 @@ def _constraint_function_fitting_factor_(x, *args):
         [s_eff_min, s_eff_max],
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
+        [inclination],
         [psd, f_lower, filter_n],
         [verbose, debug],
     ) = args
@@ -497,24 +502,25 @@ def _constraint_function_fitting_factor_(x, *args):
         else:
             _s1x, _s1y = s1x, s1y
             _s2x, _s2y = s2x, s2y
-    elif len(x) == 8:
-        m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z = x
+    elif len(x) == 9:
+        m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z, _inclination = x
     else:
-        raise IOError("No of vars %d not supported (should be 2 or 4 or 8)" % len(x))
+        raise IOError("No of vars %d not supported (should be 2 or 4 or 9)" % len(x))
     # Constraint on spin magnitudes
     s1_mag = (_s1x ** 2 + _s1y ** 2 + _s1z ** 2) ** 0.5
     s2_mag = (_s2x ** 2 + _s2y ** 2 + _s2z ** 2) ** 0.5
     if (s1_mag > s_max) or (s2_mag > s_max):
         return -1
+
     # Constraint on effective spin
     s_eff = (_s1z * m1 + _s2z * m2) / (m1 + m2)
     if (s_eff > s_eff_max) or (s_eff < s_eff_min):
         return -1
+
     # Default
     return 1
 
 
-# 4) DEFINE AN OBJECTIVE FUNCTION FOR PSO TO MINIMIZE
 def _objective_function_fitting_factor_(x, *args):
     """
     This function is to be minimized if the fitting factor is to be found
@@ -536,6 +542,7 @@ def _objective_function_fitting_factor_(x, *args):
         [s_eff_min, s_eff_max],
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
+        [inclination],
         [psd, f_lower, filter_n],
         [verbose, debug],
     ) = args
@@ -549,6 +556,7 @@ def _objective_function_fitting_factor_(x, *args):
         else:
             _s1x, _s1y, _s1z = s1x, s1y, s1z
             _s2x, _s2y, _s2z = s2x, s2y, s2z
+        _inclination = inclination
     elif len(x) == 4:
         m1, m2, _s1z, _s2z = x
         if vary_masses_and_aligned_spin_only:
@@ -556,10 +564,11 @@ def _objective_function_fitting_factor_(x, *args):
         else:
             _s1x, _s1y = s1x, s1y
             _s2x, _s2y = s2x, s2y
-    elif len(x) == 8:
-        m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z = x
+        _inclination = inclination
+    elif len(x) == 9:
+        m1, m2, _s1x, _s1y, _s1z, _s2x, _s2y, _s2z, _inclination = x
     else:
-        raise IOError("No of vars %d not supported (should be 2 or 4 or 8)" % len(x))
+        raise IOError("No of vars %d not supported (should be 2 or 4 or 9)" % len(x))
 
     # 2) ASSUME THAT
     tmplt = tmplt_generator.generate(
@@ -571,6 +580,7 @@ def _objective_function_fitting_factor_(x, *args):
         spin2x=_s2x,
         spin2y=_s2y,
         spin2z=_s2z,
+        inclination=_inclination,
     )
     if debug:
         print(
@@ -583,6 +593,7 @@ def _objective_function_fitting_factor_(x, *args):
             _s2x,
             _s2y,
             _s2z,
+            _inclination,
         )
         print(
             "IN FF Objective-> Length(tmplt) = {}, making it {}".format(
@@ -606,6 +617,7 @@ def _objective_function_fitting_factor_(x, *args):
             _s2x,
             _s2y,
             _s2z,
+            _inclination,
         )
 
     retval = np.log10(1.0 - m)
@@ -628,6 +640,7 @@ def calculate_fitting_factor(
     s2z=0,
     tc=0,
     phic=0,
+    inclination=0,
     ra=0,
     dec=0,
     polarization=0,
@@ -687,6 +700,9 @@ def calculate_fitting_factor(
         Time of coalescence of the binary.
     phic: {0, float}
         Orbital phase at coalescence of the binary.
+    inclination: {0, float}
+        Inclination angle of binary with respect to line of sight joining it
+        with the GW detector
     ra: {0, float}
         Right ascension of the binary in sky (longitude).
     dec: {0, float}
@@ -786,14 +802,15 @@ def calculate_fitting_factor(
             "WARNING: Only component masses and spin components parallel to L "
             "allowed to be varied in templates. Setting the rest to signal values."
         )
-    if vary_masses_only and vary_masses_and_aligned_spin_only:
-        raise IOError(
-            "Inconsistent options: vary_masses_only and vary_masses_and_aligned_spin_only"
+        # Explicitly supercede the `vary_masses_only` option flag.
+        print(
+            "WARNING: Inconsistent options: vary_masses_only and vary_masses_and_aligned_spin_only both specified. Choosing the more liberal option."
         )
+        vary_masses_only = False
     if (not vary_masses_only) and (not vary_masses_and_aligned_spin_only):
         print(
-            "WARNING: All mass and spin components varied in templates. Sky"
-            " parameters still fixed to signal values."
+            "WARNING: All mass and spin components, and source inclination being"
+            " varied in templates. Sky parameters still fixed to signal values."
         )
 
     # 1) Filtering parameters
@@ -871,12 +888,14 @@ def calculate_fitting_factor(
                 "spin2z",
                 "coa_phase",
                 "tc",
+                "inclination",
                 "ra",
                 "dec",
                 "polarization",
             ],
             detectors=["H1"],
             delta_f=delta_f,
+            delta_t=delta_t,
             f_lower=f_lower,
             approximant=signal_approx,
         )
@@ -901,10 +920,10 @@ def calculate_fitting_factor(
             spin2z=s2z,
             coa_phase=phic,
             tc=tc,
+            inclination=inclination,
             ra=ra,
             dec=dec,
             polarization=polarization,
-            delta_t=delta_t,
         )
         signal_h = signal["H1"]
 
@@ -930,6 +949,7 @@ def calculate_fitting_factor(
             "spin2x",
             "spin2y",
             "spin2z",
+            "inclination",
         ],
         detectors=["H1"],
         coa_phase=phic,
@@ -938,7 +958,7 @@ def calculate_fitting_factor(
         dec=dec,
         polarization=polarization,
         delta_f=delta_f,
-        # delta_t=delta_t, #FIXME
+        delta_t=delta_t,
         f_lower=f_lower,
         approximant=tmplt_approx,
     )
@@ -960,6 +980,8 @@ def calculate_fitting_factor(
     s_eff = (s1z * m1 + s2z * m2) / (m1 + m2)
     s_eff_min = s_eff - effective_spin_window
     s_eff_max = s_eff + effective_spin_window
+    incl_min = 0
+    incl_max = np.pi
 
     if verbose:
         print(
@@ -986,8 +1008,8 @@ def calculate_fitting_factor(
         low_lim = [m1_min, m2_min]
         high_lim = [m1_max, m2_max]
     else:
-        low_lim = [m1_min, m2_min, s_min, s_min, s_min, s_min, s_min, s_min]
-        high_lim = [m1_max, m2_max, s_max, s_max, s_max, s_max, s_max, s_max]
+        low_lim = [m1_min, m2_min, s_min, s_min, s_min, s_min, s_min, s_min, incl_min]
+        high_lim = [m1_max, m2_max, s_max, s_max, s_max, s_max, s_max, s_max, incl_max]
 
     if verbose:
         print("\nSearching within limits:\n", low_lim, " and \n", high_lim)
@@ -1004,6 +1026,7 @@ def calculate_fitting_factor(
         s2z,
         tc=tc,
         phic=phic,
+        inclination=inclination,
         ra=ra,
         dec=dec,
         polarization=polarization,
@@ -1022,7 +1045,7 @@ def calculate_fitting_factor(
     )
 
     # IF overlap is already high enough, skip FF computation.
-    if olap > ff_max:
+    if olap >= ff_max:
         if verbose:
             print(
                 "Skipping FF computation as olap is high enough at: {:.6f}".format(olap)
@@ -1031,7 +1054,11 @@ def calculate_fitting_factor(
             return [np.array([m1, m2, s1z, s2z]), olap, olap]
         if vary_masses_only:
             return [np.array([m1, m2]), olap, olap]
-        return [np.array([m1, m2, s1x, s1y, s1z, s2x, s2y, s2z]), olap, olap]
+        return [
+            np.array([m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, inclination]),
+            olap,
+            olap,
+        ]
     if verbose:
         print(
             "Overlap with aligned_spin_tmplt_only = ",
@@ -1054,6 +1081,7 @@ def calculate_fitting_factor(
         [s_eff_min, s_eff_max],
         [s1x, s1y, s1z],
         [s2x, s2y, s2z],
+        [inclination],
         [psd, f_lower, filter_n],
         [verbose, debug],
     )
