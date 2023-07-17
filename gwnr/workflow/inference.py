@@ -26,25 +26,27 @@ def get_ini_opts(confs, section):
 
 
 class OneInferenceAnalysis(object):
-    def __init__(self,
-                 opts,
-                 run_dir,
-                 config_files,
-                 inj_exe_name=None,
-                 inf_exe_name=None,
-                 plt_exe_name=None,
-                 verbose=False):
-        '''
-Base class for inference on one single source
+    def __init__(
+        self,
+        opts,
+        run_dir,
+        config_files,
+        inj_exe_name=None,
+        inf_exe_name=None,
+        plt_exe_name=None,
+        verbose=False,
+    ):
+        """
+        Base class for inference on one single source
 
-Use `PycbcInferenceInjectionAnalysis` or `PycbcInferenceEventAnalysis` instead
-        '''
+        Use `PycbcInferenceInjectionAnalysis` or `PycbcInferenceEventAnalysis` instead
+        """
         self.verbose = verbose
         self.opts = opts
 
         # Extract useful options now
-        if opts.has_option('workflow', 'sample-rate'):
-            self.sample_rate = int(opts.get('workflow', 'sample-rate'))
+        if opts.has_option("workflow", "sample-rate"):
+            self.sample_rate = int(opts.get("workflow", "sample-rate"))
         else:
             self.sample_rate = 2048
 
@@ -82,16 +84,14 @@ Use `PycbcInferenceInjectionAnalysis` or `PycbcInferenceEventAnalysis` instead
         return os.path.join(self.run_dir, "make_plot")
 
     def get_log_dir(self):
-        return os.path.join(self.run_dir, 'log')
+        return os.path.join(self.run_dir, "log")
 
     def setup(self):
         raise NotImplementedError()
 
-    def write_run_script(self,
-                         exe_opts,
-                         exe_path,
-                         script_name,
-                         script_base="""#!/bin/bash\n"""):
+    def write_run_script(
+        self, exe_opts, exe_path, script_name, script_base="""#!/bin/bash\n"""
+    ):
         out_str = script_base
         out_str += "{0} \\\n".format(exe_path)
         for exe_opt_name, exe_opt in exe_opts:
@@ -102,18 +102,20 @@ Use `PycbcInferenceInjectionAnalysis` or `PycbcInferenceEventAnalysis` instead
 
 
 class BatchInferenceAnalyses(object):
-    def __init__(self,
-                 opts,
-                 run_dir,
-                 inj_exe_name=None,
-                 inf_exe_name=None,
-                 plt_exe_name=None,
-                 verbose=False):
-        '''
-Base class for inference on a batch of sources
+    def __init__(
+        self,
+        opts,
+        run_dir,
+        inj_exe_name=None,
+        inf_exe_name=None,
+        plt_exe_name=None,
+        verbose=False,
+    ):
+        """
+        Base class for inference on a batch of sources
 
-Use `PycbcInferenceOnInjectionBatch` or `PycbcInferenceOnEventBatch` instead
-        '''
+        Use `PycbcInferenceOnInjectionBatch` or `PycbcInferenceOnEventBatch` instead
+        """
         self.verbose = verbose
         self.opts = opts
         self.run_dir = run_dir

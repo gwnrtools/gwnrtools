@@ -41,7 +41,7 @@ import matplotlib
 from matplotlib import cm
 import matplotlib.pyplot as plt
 
-plt.rcParams.update({'text.usetex': True})
+plt.rcParams.update({"text.usetex": True})
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -58,14 +58,14 @@ perc_int_99_7 = [0.13, 99.87]  # 3 sigma
 ######################################################
 # Function to make parameter bias plots
 
-linestyles = ['-', '--', '-.', '-x', '--o']
-linecolors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-plotdir = 'plots/'
-gmean = (5**0.5 + 1) / 2.
+linestyles = ["-", "--", "-.", "-x", "--o"]
+linecolors = ["r", "g", "b", "c", "m", "y", "k"]
+plotdir = "plots/"
+gmean = (5**0.5 + 1) / 2.0
 
 # Figure settings
 ppi = 72.0
-aspect = (5.**0.5 - 1) * 0.5
+aspect = (5.0**0.5 - 1) * 0.5
 size = 4.0 * 2  # was 6
 figsize = (size, aspect * size)
 
@@ -99,30 +99,33 @@ def KDEMedianOverRange(kde_func, x_range):
 
 
 class OneDDistribution:
-    '''
-DESCRIPTION:
-Here we operate on 1-D distributions:
+    """
+    DESCRIPTION:
+    Here we operate on 1-D distributions:
 
--- compute mean, median of multi-d distributions
--- compute mean, median of 1-d marginalized distributions
--- compute KDE
--- compute normalization
+    -- compute mean, median of multi-d distributions
+    -- compute mean, median of 1-d marginalized distributions
+    -- compute KDE
+    -- compute normalization
 
-INPUTS:
-data - 1-D iterable type (list, array)
-data_kde - if provided, must be a KDE estimator class with a member
-            function called "evaluate". E.g. use KDEUnivariate class from
-            [] from statsmodels.nonparametric.kde import KDEUnivariate
-    '''
-    def __init__(self,
-                 data,
-                 data_kde=None,
-                 kernel='gau',
-                 bw_method='scott',
-                 kernel_cut=3.0,
-                 xlimits=None,
-                 verbose=False,
-                 debug=False):
+    INPUTS:
+    data - 1-D iterable type (list, array)
+    data_kde - if provided, must be a KDE estimator class with a member
+                function called "evaluate". E.g. use KDEUnivariate class from
+                [] from statsmodels.nonparametric.kde import KDEUnivariate
+    """
+
+    def __init__(
+        self,
+        data,
+        data_kde=None,
+        kernel="gau",
+        bw_method="scott",
+        kernel_cut=3.0,
+        xlimits=None,
+        verbose=False,
+        debug=False,
+    ):
         if debug:
             logging.info("Initializing OneDDistribution object..")
         self.input_data = np.array(data)
@@ -132,8 +135,7 @@ data_kde - if provided, must be a KDE estimator class with a member
         if xlimits:
             self.xllimit, self.xulimit = xlimits
         else:
-            self.xllimit, self.xulimit = min(self.input_data), max(
-                self.input_data)
+            self.xllimit, self.xulimit = min(self.input_data), max(self.input_data)
         if data_kde != None:
             self.kde = data_kde
             logging.warn(
@@ -160,11 +162,9 @@ data_kde - if provided, must be a KDE estimator class with a member
             xllimit, _ = self.xlimits()
         if xulimit == None:
             _, xulimit = self.xlimits()
-        input_data_norm = si.quad(input_kde_func,
-                                  xllimit,
-                                  xulimit,
-                                  epsabs=1.e-16,
-                                  epsrel=1.e-16)[0]
+        input_data_norm = si.quad(
+            input_kde_func, xllimit, xulimit, epsabs=1.0e-16, epsrel=1.0e-16
+        )[0]
         self.norm = input_data_norm
         return input_data_norm
 
@@ -199,15 +199,13 @@ data_kde - if provided, must be a KDE estimator class with a member
             logging.info("INITALIZING 1D KDE")
         kde = KDEUnivariate(self.input_data)
         try:
-            kde.fit(kernel=self.kernel,
-                    bw=self.bw_method,
-                    fft=True,
-                    cut=self.kernel_cut)
+            kde.fit(
+                kernel=self.kernel, bw=self.bw_method, fft=True, cut=self.kernel_cut
+            )
         except:
-            kde.fit(kernel=self.kernel,
-                    bw=self.bw_method,
-                    fft=False,
-                    cut=self.kernel_cut)
+            kde.fit(
+                kernel=self.kernel, bw=self.bw_method, fft=False, cut=self.kernel_cut
+            )
         self.evaluate_kde = kde.evaluate
         self.kde_object = kde
         return self.evaluate_kde
@@ -215,8 +213,8 @@ data_kde - if provided, must be a KDE estimator class with a member
     def sliced(self, i):
         if i != 0:
             raise RuntimeError(
-                "One-D data has only one slice, indexed by 0 (asked for %d)" %
-                i)
+                "One-D data has only one slice, indexed by 0 (asked for %d)" % i
+            )
         return self
 
     # oneD_
@@ -235,42 +233,38 @@ data_kde - if provided, must be a KDE estimator class with a member
 
 
 class MultipleOneDDistributions:
-    '''
-DESCRIPTION:
-Here we operate on multiple n-D distributions:
+    """
+    DESCRIPTION:
+    Here we operate on multiple n-D distributions:
 
--- marginalize over 1 parameter
--- marginalize over lots of parameters
--- compute mean, median of multi-d distributions
--- compute mean, median of 1-d marginalized distributions
--- compute KDE
--- ??
+    -- marginalize over 1 parameter
+    -- marginalize over lots of parameters
+    -- compute mean, median of multi-d distributions
+    -- compute mean, median of 1-d marginalized distributions
+    -- compute KDE
+    -- ??
 
-INPUTS:
-data : >=2 dimensional iterable type (list, array)
+    INPUTS:
+    data : >=2 dimensional iterable type (list, array)
 
-var_type: str
-    The type of the variables:
+    var_type: str
+        The type of the variables:
 
-        - c : continuous
-        - u : unordered (discrete)
-        - o : ordered (discrete)
+            - c : continuous
+            - u : unordered (discrete)
+            - o : ordered (discrete)
 
-    The string should contain a type specifier for each variable, so for
-    example ``var_type='ccuo'``.
+        The string should contain a type specifier for each variable, so for
+        example ``var_type='ccuo'``.
 
-data_kde: KDE estimator class object with a member function called "evaluate".
-    E.g. use KDEUnivariate class from
-            [] from statsmodels.nonparametric.kde import KDEUnivariate
+    data_kde: KDE estimator class object with a member function called "evaluate".
+        E.g. use KDEUnivariate class from
+                [] from statsmodels.nonparametric.kde import KDEUnivariate
 
-xlimits: iterable of two arrays, one for lower limit and one for uppe
-    '''
-    def __init__(self,
-                 datadir,
-                 result_tag,
-                 event_ids,
-                 var_type,
-                 verbose=False):
+    xlimits: iterable of two arrays, one for lower limit and one for uppe
+    """
+
+    def __init__(self, datadir, result_tag, event_ids, var_type, verbose=False):
         ### =======         INPUT CHECKING/HANDLING              ======= ###
         if not os.path.exists(datadir):
             raise IOError("DATA Directory %s does not exist.." % datadir)
@@ -291,12 +285,11 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         return
 
     def read_distributions(self):
-        datadir, result_tag, event_ids =\
-            self.datadir, self.result_tag, self.event_ids
+        datadir, result_tag, event_ids = self.datadir, self.result_tag, self.event_ids
         data = {}
         id_cnt = 0
         for c in result_tag:
-            if c == '%':
+            if c == "%":
                 id_cnt += 1
         for event_id in event_ids:
             if verbose:
@@ -313,9 +306,9 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
             if self.verbose:
                 logging.info("\n READING EVENT %d" % (id))
 
-            self.event[id] = MultiDDistribution(self.data[id],
-                                                self.var_type,
-                                                oneD_kernel_cut=kernel_cut)
+            self.event[id] = MultiDDistribution(
+                self.data[id], self.var_type, oneD_kernel_cut=kernel_cut
+            )
             self.pdf_norm_event[id] = self.event[id].sliced(0).normalization()
         return self.event
 
@@ -330,37 +323,46 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         self.XRANGE = x_range
         self.PRIORDATA = prior_func(x_range)
         for id_cnt, id in enumerate(event_ids):
-            self.pdf_norm_event[id] = self.event[id].sliced(0).normalization(
-                xllimit=x_range.min(), xulimit=x_range.max())
-            self.pdf_event[id] = self.event[id].sliced(0).kde()(
-                x_range) / self.pdf_norm_event[id]
+            self.pdf_norm_event[id] = (
+                self.event[id]
+                .sliced(0)
+                .normalization(xllimit=x_range.min(), xulimit=x_range.max())
+            )
+            self.pdf_event[id] = (
+                self.event[id].sliced(0).kde()(x_range) / self.pdf_norm_event[id]
+            )
             if id_cnt != 0:
-                self.pdf_cum_events[id] = self.pdf_cum_events[event_ids[
-                    id_cnt - 1]] * self.pdf_event[id]
+                self.pdf_cum_events[id] = (
+                    self.pdf_cum_events[event_ids[id_cnt - 1]] * self.pdf_event[id]
+                )
                 self.pdf_cum_events[id] /= self.PRIORDATA**2
-                AREA = np.sum(self.pdf_cum_events[id]) * (
-                    x_range.max() - x_range.min()) / len(x_range)
+                AREA = (
+                    np.sum(self.pdf_cum_events[id])
+                    * (x_range.max() - x_range.min())
+                    / len(x_range)
+                )
                 self.pdf_cum_events[id] /= AREA
             else:
-                self.pdf_cum_events[id] = self.pdf_event[id] / \
-                    self.pdf_norm_event[id]
+                self.pdf_cum_events[id] = self.pdf_event[id] / self.pdf_norm_event[id]
         # for id_cnt, id in enumerate(event_ids):
         #    self.pdf_cum_events[id] /= self.PRIORDATA**id_cnt
         #    AREA = np.sum(self.pdf_cum_events[id]) * (x_range.max() - x_range.min()) / len(x_range)
         #    self.pdf_cum_events[id] /= AREA
         return self.pdf_cum_events[id]
 
-    def plot_combined_oned_slices(self,
-                                  x_range,
-                                  prior_func,
-                                  event_ids=None,
-                                  labels_per_column=15,
-                                  label_every_nth_curve=1,
-                                  cum_pdf_ylim=[0, 1.2],
-                                  pdf_ylim=[0, 0.22],
-                                  cum_pdf_title='CUMULATIVE PDFS',
-                                  pdf_title='INDIVIDUAL EVENT PDFS AND KDES',
-                                  xlabel='$H_0$'):
+    def plot_combined_oned_slices(
+        self,
+        x_range,
+        prior_func,
+        event_ids=None,
+        labels_per_column=15,
+        label_every_nth_curve=1,
+        cum_pdf_ylim=[0, 1.2],
+        pdf_ylim=[0, 0.22],
+        cum_pdf_title="CUMULATIVE PDFS",
+        pdf_title="INDIVIDUAL EVENT PDFS AND KDES",
+        xlabel="$H_0$",
+    ):
         if event_ids == None:
             event_ids = self.event_ids
         self.combine_oned_slices(x_range, prior_func, event_ids=event_ids)
@@ -371,71 +373,77 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
         label_cnt = 0
         for id_cnt, id in enumerate(event_ids):
             label_txt = None
-            if label_every_nth_curve > 1 and ((id_cnt + 1) %
-                                              label_every_nth_curve) == 0:
-                label_txt = '%d' % (id_cnt + 1)
+            if (
+                label_every_nth_curve > 1
+                and ((id_cnt + 1) % label_every_nth_curve) == 0
+            ):
+                label_txt = "%d" % (id_cnt + 1)
                 label_cnt += 1
-            ax0.plot(x_range,
-                     self.pdf_cum_events[id],
-                     'k',
-                     lw=2,
-                     alpha=0.1 + id_cnt * 0.7 / len(event_ids),
-                     label=label_txt)
+            ax0.plot(
+                x_range,
+                self.pdf_cum_events[id],
+                "k",
+                lw=2,
+                alpha=0.1 + id_cnt * 0.7 / len(event_ids),
+                label=label_txt,
+            )
 
             label_txt = None
-            if label_every_nth_curve > 1 and ((id_cnt + 1) %
-                                              label_every_nth_curve) == 0:
-                label_txt = '%d' % (id_cnt + 1)
-            ax2.plot(x_range,
-                     self.pdf_event[id] / self.pdf_norm_event[id],
-                     label=label_txt,
-                     color='k',
-                     lw=2,
-                     alpha=0.1 + id_cnt * 0.7 / len(event_ids))
-            _ = ax2.hist(self.event[id].sliced(0).input_data,
-                         bins=50,
-                         normed=True,
-                         alpha=0.03)
+            if (
+                label_every_nth_curve > 1
+                and ((id_cnt + 1) % label_every_nth_curve) == 0
+            ):
+                label_txt = "%d" % (id_cnt + 1)
+            ax2.plot(
+                x_range,
+                self.pdf_event[id] / self.pdf_norm_event[id],
+                label=label_txt,
+                color="k",
+                lw=2,
+                alpha=0.1 + id_cnt * 0.7 / len(event_ids),
+            )
+            _ = ax2.hist(
+                self.event[id].sliced(0).input_data, bins=50, normed=True, alpha=0.03
+            )
 
-            ax0.axvline(self.event[id].sliced(0).mean(),
-                        color='g',
-                        alpha=0.5,
-                        ls='--')
-            ax0.axvline([self.event[id].sliced(0).median()],
-                        color='r',
-                        alpha=0.6,
-                        ls='--')
-            ax0.axvline(KDEMedianOverRange(
-                UnivariateSpline(x_range, self.pdf_cum_events[id]), x_range),
-                        color='k',
-                        alpha=0.1 + id_cnt * 0.7 / len(event_ids),
-                        ls='--')
+            ax0.axvline(self.event[id].sliced(0).mean(), color="g", alpha=0.5, ls="--")
+            ax0.axvline(
+                [self.event[id].sliced(0).median()], color="r", alpha=0.6, ls="--"
+            )
+            ax0.axvline(
+                KDEMedianOverRange(
+                    UnivariateSpline(x_range, self.pdf_cum_events[id]), x_range
+                ),
+                color="k",
+                alpha=0.1 + id_cnt * 0.7 / len(event_ids),
+                ls="--",
+            )
 
-            ax2.axvline(self.event[id].sliced(0).mean(),
-                        color='g',
-                        alpha=0.5,
-                        ls='--')
-            ax2.axvline([self.event[id].sliced(0).median()],
-                        color='r',
-                        alpha=0.6,
-                        ls='--')
+            ax2.axvline(self.event[id].sliced(0).mean(), color="g", alpha=0.5, ls="--")
+            ax2.axvline(
+                [self.event[id].sliced(0).median()], color="r", alpha=0.6, ls="--"
+            )
         #
         ax0.set_title(cum_pdf_title)
         ax2.set_title(pdf_title)
 
-        ax0.legend(loc="upper left",
-                   bbox_to_anchor=(1, 1),
-                   ncol=label_cnt / labels_per_column + 1)
-        ax2.legend(loc="upper left",
-                   bbox_to_anchor=(1, 1),
-                   ncol=label_cnt / labels_per_column + 1)
+        ax0.legend(
+            loc="upper left",
+            bbox_to_anchor=(1, 1),
+            ncol=label_cnt / labels_per_column + 1,
+        )
+        ax2.legend(
+            loc="upper left",
+            bbox_to_anchor=(1, 1),
+            ncol=label_cnt / labels_per_column + 1,
+        )
 
         ax0.set_ylim(cum_pdf_ylim)
         ax2.set_ylim(pdf_ylim)
 
         # COMMON FORMATTING
         for ax in [ax0, ax2]:
-            ax.axvline(H0, color='y', lw=2)
+            ax.axvline(H0, color="y", lw=2)
             ax.grid()
             ax.set_xlabel(xlabel)
             ax.set_xlim(x_range.min(), x_range.max())
@@ -443,64 +451,68 @@ xlimits: iterable of two arrays, one for lower limit and one for uppe
 
 
 class MultiDDistribution:
-    '''
-DESCRIPTION:
-Here we operate on n(>=2)-D distributions:
+    """
+    DESCRIPTION:
+    Here we operate on n(>=2)-D distributions:
 
--- marginalize over 1 parameter
--- marginalize over lots of parameters
--- compute mean, median of multi-d distributions
--- compute mean, median of 1-d marginalized distributions
--- compute KDE
--- ??
+    -- marginalize over 1 parameter
+    -- marginalize over lots of parameters
+    -- compute mean, median of multi-d distributions
+    -- compute mean, median of 1-d marginalized distributions
+    -- compute KDE
+    -- ??
 
-INPUTS:
-data : >=2 dimensional iterable type (list, array). Different dimensions are
-in different columns, while a single column should contain samples for that
-dimension
+    INPUTS:
+    data : >=2 dimensional iterable type (list, array). Different dimensions are
+    in different columns, while a single column should contain samples for that
+    dimension
 
-var_type: str
-    The type of the variables:
+    var_type: str
+        The type of the variables:
 
-        - c : continuous
-        - u : unordered (discrete)
-        - o : ordered (discrete)
+            - c : continuous
+            - u : unordered (discrete)
+            - o : ordered (discrete)
 
-    The string should contain a type specifier for each variable, so for
-    example ``var_type='ccuo'``.
+        The string should contain a type specifier for each variable, so for
+        example ``var_type='ccuo'``.
 
-data_kde: KDE estimator class object with a member function called "evaluate".
-    E.g. use KDEUnivariate class from
-            [] from statsmodels.nonparametric.kde import KDEUnivariate
+    data_kde: KDE estimator class object with a member function called "evaluate".
+        E.g. use KDEUnivariate class from
+                [] from statsmodels.nonparametric.kde import KDEUnivariate
 
-xlimits: iterable of two arrays, one for lower limit and one for upper
-    '''
-    def __init__(self,
-                 data,
-                 var_type,
-                 var_names=[],
-                 data_kde=None,
-                 oneD_kernel='gau',
-                 oneD_kernel_cut=3.0,
-                 oneD_bw_method='normal_reference',
-                 mulD_kernel='gau',
-                 mulD_bw_method='normal_reference',
-                 xlimits=None,
-                 verbose=False,
-                 debug=False):
+    xlimits: iterable of two arrays, one for lower limit and one for upper
+    """
+
+    def __init__(
+        self,
+        data,
+        var_type,
+        var_names=[],
+        data_kde=None,
+        oneD_kernel="gau",
+        oneD_kernel_cut=3.0,
+        oneD_bw_method="normal_reference",
+        mulD_kernel="gau",
+        mulD_bw_method="normal_reference",
+        xlimits=None,
+        verbose=False,
+        debug=False,
+    ):
         # CHECK INPUTS
         self.verbose = verbose
         self.debug = debug
         if len(np.shape(np.array(data))) == 1:
-            logging.info(
-                "WARNING: Returning OneDDistribution for 1-D distributions")
-            return OneDDistribution(data,
-                                    data_kde=data_kde,
-                                    kernel=oneD_kernel,
-                                    kernel_cut=oneD_kernel_cut,
-                                    bw_method=oneD_bw_method,
-                                    verbose=verbose,
-                                    debug=debug)
+            logging.info("WARNING: Returning OneDDistribution for 1-D distributions")
+            return OneDDistribution(
+                data,
+                data_kde=data_kde,
+                kernel=oneD_kernel,
+                kernel_cut=oneD_kernel_cut,
+                bw_method=oneD_bw_method,
+                verbose=verbose,
+                debug=debug,
+            )
 
         # ENSURE DATA SHAPE, EXTRACT DIMENSION
         if verbose:
@@ -518,8 +530,10 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
                     data = np.transpose(data)
         else:
             raise IOError(
-                "Input data has {} dimensions. We only support 1D and 2D data."
-                .format(len(np.shape(data))))
+                "Input data has {} dimensions. We only support 1D and 2D data.".format(
+                    len(np.shape(data))
+                )
+            )
 
         self.input_data = np.array(data)
         self.dim = np.shape(data)[-1]
@@ -562,13 +576,12 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         self.structured_data = cp.deepcopy(self.input_data)
 
         if self.debug:
-            logging.info("Shape of structured_data: ",
-                         np.shape(self.structured_data))
+            logging.info("Shape of structured_data: ", np.shape(self.structured_data))
 
         if len(var_names) == np.shape(self.input_data)[-1]:
-            self.structured_data = np.array(self.structured_data,
-                                            dtype=[(h, '<f8')
-                                                   for h in var_names])
+            self.structured_data = np.array(
+                self.structured_data, dtype=[(h, "<f8") for h in var_names]
+            )
         return self.structured_data
 
     def index_of_name(self, name):
@@ -604,8 +617,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
     def percentile(self, perc, name=None):
         if name in self.var_names:
             return self.sliced(self.index_of_name(name)).percentile(perc)
-        return np.array(
-            [self.sliced(i).percentile(perc) for i in range(self.dim)])
+        return np.array([self.sliced(i).percentile(perc) for i in range(self.dim)])
 
     def credible_interval(self, credible_level, name=None):
         perc_int_low = (100.0 - credible_level) * 0.5
@@ -614,7 +626,7 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         def _get_credible_interval(i):
             return [
                 self.sliced(i).percentile(perc_int_low),
-                self.sliced(i).percentile(perc_int_high)
+                self.sliced(i).percentile(perc_int_high),
             ]
 
         if name in self.var_names:
@@ -624,9 +636,9 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
     def kde(self):
         if hasattr(self, "kde"):
             return self.kde
-        kde = KDEMultivariate(self.input_data,
-                              var_type=self.var_type,
-                              bw=self.bw_method)
+        kde = KDEMultivariate(
+            self.input_data, var_type=self.var_type, bw=self.bw_method
+        )
         self.kde = kde
         self.evaluate_kde = kde.pdf
         return kde
@@ -644,11 +656,9 @@ xlimits: iterable of two arrays, one for lower limit and one for upper
         return self.norm
 
     def plot_twod_slice(self, *args):
-        raise RuntimeError(
-            "This function has been removed. Use gwnr.graph.CornerPlot.")
+        raise RuntimeError("This function has been removed. Use gwnr.graph.CornerPlot.")
 
     def corner_plot(self, *args):
-        raise RuntimeError(
-            "This function has been removed. Use gwnr.graph.CornerPlot.")
+        raise RuntimeError("This function has been removed. Use gwnr.graph.CornerPlot.")
 
     # }}}

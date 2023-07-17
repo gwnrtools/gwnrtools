@@ -34,9 +34,9 @@ from gwnr.utils import find_nearest, approx_equal
 ########################################
 
 
-class ParsePVD():
+class ParsePVD:
     """
-Elementary class to modify PVD files
+    Elementary class to modify PVD files
     """
 
     # {{{
@@ -57,7 +57,7 @@ Elementary class to modify PVD files
         i = cnt = 0
         while i < len(pvdrev):
             pl = pvdrev[i]
-            if re.search('</VTKFile>', pl) != None:
+            if re.search("</VTKFile>", pl) != None:
                 cnt += 1
                 if cnt == 1:
                     revlist.append(pvdrev[i])
@@ -74,12 +74,19 @@ Elementary class to modify PVD files
 
     def RetrieveUniqueTimeSteps(self):
         """
-Returns time stamps of all unique time steps
+        Returns time stamps of all unique time steps
         """
-        self.tsteps = \
-            np.array(list(set([float(re.findall('"\d+.\d+"', tl)[0].strip('"'))
-                               for tl in self.pvdlines
-                               if re.findall('timestep="\d+.\d+"', tl) != []])))
+        self.tsteps = np.array(
+            list(
+                set(
+                    [
+                        float(re.findall('"\d+.\d+"', tl)[0].strip('"'))
+                        for tl in self.pvdlines
+                        if re.findall('timestep="\d+.\d+"', tl) != []
+                    ]
+                )
+            )
+        )
         self.tsteps.sort()
         return self.tsteps
 
@@ -87,8 +94,8 @@ Returns time stamps of all unique time steps
 
     def DownsampleTimeSteps(self, downsample_factor):
         """
-Down-samples the PVD file by a given factor. This
-operation is irreversible and cumulative!
+        Down-samples the PVD file by a given factor. This
+        operation is irreversible and cumulative!
         """
         self.RemoveBreaks()
         newpvdlines = []
@@ -98,7 +105,7 @@ operation is irreversible and cumulative!
             if re.findall('timestep="\d+.\d+"', tl) != []:
                 t_curr = float(re.findall('"\d+.\d+"', tl)[0].strip('"'))
                 # print t_prev, t_curr
-                if not approx_equal(t_prev, t_curr, eps=1.e-9):
+                if not approx_equal(t_prev, t_curr, eps=1.0e-9):
                     cnt += 1
                 # print cnt % downsample_factor
                 if cnt % downsample_factor == 0:
@@ -111,8 +118,8 @@ operation is irreversible and cumulative!
 
     def RemoveTimeSteps(self, remove_low_lim, remove_high_lim):
         """
-Removes time-steps in a given range. This operation is irreversible
-and cumulative!
+        Removes time-steps in a given range. This operation is irreversible
+        and cumulative!
         """
         newpvdlines = []
         for tl in self.pvdlines:
@@ -127,7 +134,7 @@ and cumulative!
 
     def WriteFile(self, filename):
         """
-Writes out a new PVD file (presumably after processing).
+        Writes out a new PVD file (presumably after processing).
         """
         with open(filename, "w") as fout:
             for pl in self.pvdlines:

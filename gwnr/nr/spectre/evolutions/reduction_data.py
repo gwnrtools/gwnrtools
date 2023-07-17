@@ -35,59 +35,50 @@ except ImportError:
 
 
 class HandleSpectreReductionDatum(object):
-    def __init__(self,
-                 reduction_data_file='',
-                 name='',
-                 hdf_path='element_data.dat'):
-        assert os.path.exists(reduction_data_file),\
-            "Cannot find data file: {0:s}".format(reduction_data_file)
+    def __init__(self, reduction_data_file="", name="", hdf_path="element_data.dat"):
+        assert os.path.exists(
+            reduction_data_file
+        ), "Cannot find data file: {0:s}".format(reduction_data_file)
         self.name = name
         self.reduction_data_file = reduction_data_file
         self.hdf_path = hdf_path
         self.read_data()
         self.plotting_funcs = {
-            'linlin': 'plot',
-            'loglin': 'semilogx',
-            'loglog': 'loglog',
-            'linlog': 'semilogy'
+            "linlin": "plot",
+            "loglin": "semilogx",
+            "loglog": "loglog",
+            "linlog": "semilogy",
         }
-        self.linestyles = ['-', '--', '--', '-.', ':']
-        self.linecolors = ['r', 'g', 'b', 'k', 'm', 'y']
+        self.linestyles = ["-", "--", "--", "-.", ":"]
+        self.linecolors = ["r", "g", "b", "k", "m", "y"]
 
     def read_data(self):
         logging.info("Reading in: {0:s}".format(self.reduction_data_file))
-        self.data = h5py.File(self.reduction_data_file, 'r')[self.hdf_path][()]
-        logging.info(".. read in a dataset with shape: {}".format(
-            np.shape(self.data)))
+        self.data = h5py.File(self.reduction_data_file, "r")[self.hdf_path][()]
+        logging.info(".. read in a dataset with shape: {}".format(np.shape(self.data)))
 
     def get_data(self):
         return self.data
 
-    def plot(self,
-             column_of_vars={
-                 2: '$\Pi$',
-                 3: '$\Phi_i$',
-                 4: '$\Psi$'
-             },
-             ax=None,
-             xy_scales='linlog',
-             lw_a=2.5,
-             lw_delta=-0.2,
-             linewidths=None,
-             linestyles=None,
-             linecolors=None,
-             plot_kwargs={},
-             xlabel='Code time',
-             ylabel='L${}^2$ error norms vs analytic soln',
-             title=None,
-             grid=False,
-             legend=True,
-             legend_kwargs={
-                 'ncol': 3,
-                 'fontsize': 14,
-                 'frameon': False
-             }):
-        '''
+    def plot(
+        self,
+        column_of_vars={2: "$\Pi$", 3: "$\Phi_i$", 4: "$\Psi$"},
+        ax=None,
+        xy_scales="linlog",
+        lw_a=2.5,
+        lw_delta=-0.2,
+        linewidths=None,
+        linestyles=None,
+        linecolors=None,
+        plot_kwargs={},
+        xlabel="Code time",
+        ylabel="L${}^2$ error norms vs analytic soln",
+        title=None,
+        grid=False,
+        legend=True,
+        legend_kwargs={"ncol": 3, "fontsize": 14, "frameon": False},
+    ):
+        """
         With `idx` being the index_of_data_column, this function uses:
 
         - linewidth = lw_a + idx * lw_delta
@@ -96,7 +87,7 @@ class HandleSpectreReductionDatum(object):
         - linestyle = list[idx] (if list of colors provided)
                     = str (if single color is provided)
         - label     = column_of_vars[idx]
-        '''
+        """
         assert len(column_of_vars) > 0, "Nothing asked to plot!"
 
         if ax is None:
@@ -106,9 +97,9 @@ class HandleSpectreReductionDatum(object):
         plotting_func = getattr(ax, self.plotting_funcs[xy_scales])
 
         d = self.get_data()
-        logging.info("Plotting {0} of {1} columns".format(
-            len(column_of_vars),
-            np.shape(d)[-1]))
+        logging.info(
+            "Plotting {0} of {1} columns".format(len(column_of_vars), np.shape(d)[-1])
+        )
         for i, idx in enumerate(column_of_vars):
             # formatting
             try:
@@ -140,13 +131,15 @@ class HandleSpectreReductionDatum(object):
                 label = label + " ({0:s})".format(self.name)
 
             logging.info("Plotting {0}".format(column_of_vars[idx]))
-            plotting_func(d[:, 0],
-                          d[:, idx],
-                          label=label,
-                          lw=linewidth,
-                          ls=linestyle,
-                          c=linecolor,
-                          **plot_kwargs)
+            plotting_func(
+                d[:, 0],
+                d[:, idx],
+                label=label,
+                lw=linewidth,
+                ls=linestyle,
+                c=linecolor,
+                **plot_kwargs
+            )
 
         if grid:
             plt.grid(True)
@@ -163,11 +156,13 @@ class HandleSpectreReductionDatum(object):
 
 class HandleSpectreReductionData(object):
     def __init__(self, reduction_data_files=[], **args):
-        assert len(reduction_data_files) > 0,\
-            "Please provide at least one reduction data file!"
+        assert (
+            len(reduction_data_files) > 0
+        ), "Please provide at least one reduction data file!"
         for f in reduction_data_files:
-            assert (os.path.exists(f) and os.path.getsize(f) > 0),\
-                "Data file: {0:s} not found / is empty!".format(f)
+            assert (
+                os.path.exists(f) and os.path.getsize(f) > 0
+            ), "Data file: {0:s} not found / is empty!".format(f)
         self.handler = {}
         for f in reduction_data_files:
             self.handler[f] = HandleSpectreReductionDatum(f, **args)

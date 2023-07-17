@@ -40,6 +40,7 @@ try:
     @lsctables.use_in
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
         pass
+
 except:
     print("Warning: Could not import LAL/PyCBC modules")
 
@@ -50,34 +51,43 @@ def extrapolated_outdir_from_cce_outdir(outdir):
     # Return BBH_SKS_d19.8_q1_sA_0_0_-0.800_sB_0_0_-0.800
     #
     # {{{
-    outdir = outdir.strip('/').split('/')[-1]
+    outdir = outdir.strip("/").split("/")[-1]
     try:
-        idtype, dq, s1x, s1y, s1z, _, s2x, s2y, s2z = outdir.split('_')
+        idtype, dq, s1x, s1y, s1z, _, s2x, s2y, s2z = outdir.split("_")
     except ValueError:
-        if outdir[0] == 'd':
-            outdir = 'CF_' + outdir
-            idtype, dq, s1x, s1y, s1z, _, s2x, s2y, s2z = outdir.split('_')
+        if outdir[0] == "d":
+            outdir = "CF_" + outdir
+            idtype, dq, s1x, s1y, s1z, _, s2x, s2y, s2z = outdir.split("_")
         else:
-            raise ValueError('Cannot translate dir name to extrapolated dir')
-    if idtype == 'CF':
-        idtype += 'MS'
-    d, q, _ = dq.split('-')
+            raise ValueError("Cannot translate dir name to extrapolated dir")
+    if idtype == "CF":
+        idtype += "MS"
+    d, q, _ = dq.split("-")
     print(q)
-    if '.' in q:
-        q = 'q%.2f' % np.float64(q[1:])
+    if "." in q:
+        q = "q%.2f" % np.float64(q[1:])
     if np.float64(d[1:]) == np.round(np.float64(d[1:])):
-        d = 'd' + str(int(np.float64(d[1:])))
+        d = "d" + str(int(np.float64(d[1:])))
     print((s1z, s2z))
-    if np.float(s1z) == 0.:
-        s1z = '0'
+    if np.float(s1z) == 0.0:
+        s1z = "0"
     else:
-        s1z = '%.3f' % np.float128(s1z)
-    if np.float(s2z) == 0.:
-        s2z = '0'
+        s1z = "%.3f" % np.float128(s1z)
+    if np.float(s2z) == 0.0:
+        s2z = "0"
     else:
-        s2z = '%.3f' % np.float128(s2z)
-    retdir = 'BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s' % (idtype, d, q, s1x, s1y,
-                                                       s1z, s2x, s2y, s2z)
+        s2z = "%.3f" % np.float128(s2z)
+    retdir = "BBH_%s_%s_%s_sA_%s_%s_%s_sB_%s_%s_%s" % (
+        idtype,
+        d,
+        q,
+        s1x,
+        s1y,
+        s1z,
+        s2x,
+        s2y,
+        s2z,
+    )
     return retdir
     # }}}
 

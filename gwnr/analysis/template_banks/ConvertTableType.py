@@ -58,9 +58,10 @@ def new_row(tabletype):
 
 ### option parsing ###
 
-parser = OptionParser(version=git_version.verbose_msg,
-                      usage="%prog [OPTIONS]",
-                      description="""\
+parser = OptionParser(
+    version=git_version.verbose_msg,
+    usage="%prog [OPTIONS]",
+    description="""\
     Takes in a Sim or Sngl InspiralTable file. Copies over all the columns to 
     a new file of the opposite table type. The columns which are not copyable,
     are printed out to the user. 
@@ -69,27 +70,34 @@ parser = OptionParser(version=git_version.verbose_msg,
     
     This script is NOT meant to be part of any workflow, as table conversion is
     flaky at best.
-    """)
+    """,
+)
 
-parser.add_option("-x",
-                  "--input-catalog",
-                  help="Names of the xml file to append the information to",
-                  type=str,
-                  default=None)
-parser.add_option("-t", "--output-catalog", help='output file name')
+parser.add_option(
+    "-x",
+    "--input-catalog",
+    help="Names of the xml file to append the information to",
+    type=str,
+    default=None,
+)
+parser.add_option("-t", "--output-catalog", help="output file name")
 
-parser.add_option("-V",
-                  "--verbose",
-                  action="store_true",
-                  help="print extra debugging information",
-                  default=False)
+parser.add_option(
+    "-V",
+    "--verbose",
+    action="store_true",
+    help="print extra debugging information",
+    default=False,
+)
 
 options, argv_frame_files = parser.parse_args()
 
 if options.input_catalog is not None:
-    indoc = ligolw_utils.load_filename(options.input_catalog,
-                                       contenthandler=LIGOLWContentHandler,
-                                       verbose=options.verbose)
+    indoc = ligolw_utils.load_filename(
+        options.input_catalog,
+        contenthandler=LIGOLWContentHandler,
+        verbose=options.verbose,
+    )
     #
     try:
         input_table = lsctables.SnglInspiralTable.get_table(indoc)
@@ -101,11 +109,9 @@ if options.input_catalog is not None:
     # print tabletype
     length = len(input_table)
 else:
-    print(
-        "Waning: No input table given to append to, will construct one from scratch"
-    )
+    print("Waning: No input table given to append to, will construct one from scratch")
     inputtabletype = lsctables.SimInspiralTable
-    #raise IOError("Please give a table to add the information about NR waveforms to.")
+    # raise IOError("Please give a table to add the information about NR waveforms to.")
 
 # Get output table type
 outputtabletype = invert_tabletype(inputtabletype)
@@ -129,15 +135,13 @@ outcols = list(oslots.intersection(tslots))
 uncopiedcols = list(tslots - oslots)
 
 if options.verbose:
-    print("##### The followings columns ARE NOT copied over: ####\n",
-          file=sys.stdout)
+    print("##### The followings columns ARE NOT copied over: ####\n", file=sys.stdout)
     print(uncopiedcols, file=sys.stdout)
     print("\n\n", file=sys.stdout)
     sys.stdout.flush()
 
 if options.verbose:
-    print("##### The followings columns ARE copied over: ####\n",
-          file=sys.stdout)
+    print("##### The followings columns ARE copied over: ####\n", file=sys.stdout)
     print(outcols, file=sys.stdout)
     print("\n\n", file=sys.stdout)
     sys.stdout.flush()
@@ -152,11 +156,12 @@ proc_id = ligolw_process.register_to_xmldoc(
     ifos=["G1"],
     version=git_version.id,
     cvs_repository=git_version.branch,
-    cvs_entry_time=git_version.date).process_id
+    cvs_entry_time=git_version.date,
+).process_id
 
 # Create output table
 if outputtabletype == lsctables.SnglInspiralTable:
-    outcols.append('event_id')
+    outcols.append("event_id")
 
 out_table = lsctables.New(outputtabletype, columns=outcols)
 outdoc.childNodes[0].appendChild(out_table)
@@ -180,7 +185,7 @@ for idx, tmplt in enumerate(input_table):
         if options.verbose and idx % 1000 == 0:
             print(newp.event_id)
 
-    newp.__setattr__('process_id', proc_id)
+    newp.__setattr__("process_id", proc_id)
 
     # Add the point to the output table
     out_table.append(newp)
@@ -190,10 +195,10 @@ proctable = lsctables.ProcessTable.get_table(outdoc)
 proctable[0].end_time = gpstime.GpsSecondsFromPyUTC(time.time())
 
 outname = options.output_catalog
-if '.xml' not in outname:
-    outname = outname + '.xml'
+if ".xml" not in outname:
+    outname = outname + ".xml"
 
-ligolw_utils.write_filename(outdoc, outname, gz=outname.endswith('.gz'))
+ligolw_utils.write_filename(outdoc, outname, gz=outname.endswith(".gz"))
 
 print(len(out_table))
 print(" Total %f seconds taken" % (time.time() - itime))

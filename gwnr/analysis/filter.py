@@ -153,7 +153,7 @@ def calculate_faithfulness(
         Enable verbose logging.
     debug: {False, bool}
         Enable debugging level logging.
-    
+
 
     Returns
     -------
@@ -507,8 +507,8 @@ def _constraint_function_fitting_factor_(x, *args):
     else:
         raise IOError("No of vars %d not supported (should be 2 or 4 or 9)" % len(x))
     # Constraint on spin magnitudes
-    s1_mag = (_s1x ** 2 + _s1y ** 2 + _s1z ** 2) ** 0.5
-    s2_mag = (_s2x ** 2 + _s2y ** 2 + _s2z ** 2) ** 0.5
+    s1_mag = (_s1x**2 + _s1y**2 + _s1z**2) ** 0.5
+    s2_mag = (_s2x**2 + _s2y**2 + _s2z**2) ** 0.5
     if (s1_mag > s_max) or (s2_mag > s_max):
         return -1
 
@@ -720,7 +720,7 @@ def calculate_fitting_factor(
     signal_h: {None, pycbc.types.FrequencySeries`}
         Simulated signal in frequency domain
     Note: One and only out of signal_approx, signal_file, signal_h must be specified
-    
+
     vary_masses_only: {True, bool}
         Enable variation of masses only in templates. All other parameters are
         fixed to their signal values.
@@ -764,7 +764,7 @@ def calculate_fitting_factor(
         Enable verbose logging.
     debug: {False, bool}
         Enable debugging level logging.
-    
+
 
     Returns
     -------
@@ -970,7 +970,7 @@ def calculate_fitting_factor(
     # 6b) NOW SET THE RANGE OF PARAMETERS TO BE PROBED
     mt = m1 + m2 * 1.0
     et = m1 * m2 / mt / mt
-    mc = mt * et ** 0.6
+    mc = mt * et**0.6
     mc_min = mc * (1.0 - chirp_mass_window)
     mc_max = mc * (1.0 + chirp_mass_window)
     et_max = 0.25
@@ -1127,7 +1127,7 @@ def calculate_fitting_factor(
             debug=verbose,
         )
         # Restore fitting factor from 1-ff
-        ff = 1.0 - 10 ** ff
+        ff = 1.0 - 10**ff
         if verbose:
             print("\nLoop will continue till %.12f < %.12f" % (ff, olap))
             sys.stdout.flush()

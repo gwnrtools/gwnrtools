@@ -7,8 +7,12 @@ import numpy as np
 
 import sys
 import os, logging
-logging.basicConfig(format='%(asctime)s | %(levelname)s : %(message)s',\
-                     level=logging.INFO, stream=sys.stdout)
+
+logging.basicConfig(
+    format="%(asctime)s | %(levelname)s : %(message)s",
+    level=logging.INFO,
+    stream=sys.stdout,
+)
 import time
 
 import argparse
@@ -32,7 +36,7 @@ __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
 #########################################################################
 #################### Input parsing #####################
 #########################################################################
-#{{{
+# {{{
 parser = argparse.ArgumentParser(
     usage="%%prog [OPTIONS]",
     description="""
@@ -41,180 +45,233 @@ points are chosen in a way that they mchirp > (1+mw)*mchirp of all points in a
 pre-existing "old_bank". This is done to ensure that these new points are
 minimally overlapping in terms of the parameter space volume that they cover.
 """,
-    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
 
 # Sampling Parameters
-parser.add_argument("--iteration-id",
-                    dest="iid",
-                    help="The index of the iteration",
-                    type=int)
-parser.add_argument("--num-new-points",
-                    help="No of bank points in each sub-job",
-                    default=1000,
-                    type=int)
-parser.add_argument("--max-attempts",
-                    help="""Max out if these many attempts do not furnish a
+parser.add_argument(
+    "--iteration-id", dest="iid", help="The index of the iteration", type=int
+)
+parser.add_argument(
+    "--num-new-points", help="No of bank points in each sub-job", default=1000, type=int
+)
+parser.add_argument(
+    "--max-attempts",
+    help="""Max out if these many attempts do not furnish a
 viable new point""",
-                    default=1e7,
-                    type=int)
+    default=1e7,
+    type=int,
+)
 
-parser.add_argument("--old-bank",
-                    help="""Old bank from which the new points should at least
+parser.add_argument(
+    "--old-bank",
+    help="""Old bank from which the new points should at least
 be a mchirp_window away""",
-                    default="",
-                    type=str)
+    default="",
+    type=str,
+)
 
 # Physical parameter ranges
-parser.add_argument('--component-mass-min',
-                    help="Minimum value allowed for component masses",
-                    default=5.0,
-                    type=float)
-parser.add_argument('--component-mass-max',
-                    help="Maximum value allowed for component masses",
-                    default=50.0,
-                    type=float)
-parser.add_argument('--total-mass-max',
-                    help="Maximum value allowed for total mass",
-                    default=100.0,
-                    type=float)
-
-parser.add_argument('--spin-mag-min',
-                    help="Minimum value allowed for component spin magnitudes",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--spin-mag-max',
-                    help="Maximum value allowed for component spin magnitudes",
-                    default=0.0,
-                    type=float)
+parser.add_argument(
+    "--component-mass-min",
+    help="Minimum value allowed for component masses",
+    default=5.0,
+    type=float,
+)
+parser.add_argument(
+    "--component-mass-max",
+    help="Maximum value allowed for component masses",
+    default=50.0,
+    type=float,
+)
+parser.add_argument(
+    "--total-mass-max",
+    help="Maximum value allowed for total mass",
+    default=100.0,
+    type=float,
+)
 
 parser.add_argument(
-    '--spin-component-min',
+    "--spin-mag-min",
+    help="Minimum value allowed for component spin magnitudes",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--spin-mag-max",
+    help="Maximum value allowed for component spin magnitudes",
+    default=0.0,
+    type=float,
+)
+
+parser.add_argument(
+    "--spin-component-min",
     help="Minimum value allowed for component spin x,y,z comps",
     default=0.0,
-    type=float)
+    type=float,
+)
 parser.add_argument(
-    '--spin-component-max',
+    "--spin-component-max",
     help="Maximum value allowed for component spin x,y,z comps",
     default=0.0,
-    type=float)
-
-parser.add_argument('--eccentricity-min',
-                    help="Minimum value allowed for eccentricity",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--eccentricity-max',
-                    help="Maximum value allowed for eccentricity",
-                    default=0.4,
-                    type=float)
-
-parser.add_argument('--inclination-min',
-                    help="Minimum value allowed for inclination angle",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--inclination-max',
-                    help="Maximum value allowed for inclination angle",
-                    default=0.0,
-                    type=float)
-
-parser.add_argument('--coa-phase-min',
-                    help="Minimum value allowed for reference phase",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--coa-phase-max',
-                    help="Maximum value allowed for reference phase",
-                    default=0.0,
-                    type=float)
-
-parser.add_argument('--mean-per-ano-min',
-                    help="Minimum value allowed for mean periastron anomaly",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--mean-per-ano-max',
-                    help="Maximum value allowed for mean periastron anomaly",
-                    default=0.0,
-                    type=float)
+    type=float,
+)
 
 parser.add_argument(
-    '--long-asc-nodes-min',
+    "--eccentricity-min",
+    help="Minimum value allowed for eccentricity",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--eccentricity-max",
+    help="Maximum value allowed for eccentricity",
+    default=0.4,
+    type=float,
+)
+
+parser.add_argument(
+    "--inclination-min",
+    help="Minimum value allowed for inclination angle",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--inclination-max",
+    help="Maximum value allowed for inclination angle",
+    default=0.0,
+    type=float,
+)
+
+parser.add_argument(
+    "--coa-phase-min",
+    help="Minimum value allowed for reference phase",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--coa-phase-max",
+    help="Maximum value allowed for reference phase",
+    default=0.0,
+    type=float,
+)
+
+parser.add_argument(
+    "--mean-per-ano-min",
+    help="Minimum value allowed for mean periastron anomaly",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--mean-per-ano-max",
+    help="Maximum value allowed for mean periastron anomaly",
+    default=0.0,
+    type=float,
+)
+
+parser.add_argument(
+    "--long-asc-nodes-min",
     help="Minimum value allowed for longitude of ascending nodes",
     default=0.0,
-    type=float)
+    type=float,
+)
 parser.add_argument(
-    '--long-asc-nodes-max',
+    "--long-asc-nodes-max",
     help="Maximum value allowed for the longitude of ascending node",
     default=0.0,
-    type=float)
+    type=float,
+)
 
 # Sky location and orientation parameters
-parser.add_argument('--latitude-min',
-                    help="Minimum value allowed for latitude (or declination)",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--latitude-max',
-                    help="Maximum value allowed for latitude (or declination)",
-                    default=0.0,
-                    type=float)
+parser.add_argument(
+    "--latitude-min",
+    help="Minimum value allowed for latitude (or declination)",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--latitude-max",
+    help="Maximum value allowed for latitude (or declination)",
+    default=0.0,
+    type=float,
+)
 
 parser.add_argument(
-    '--longitude-min',
+    "--longitude-min",
     help="Minimum value allowed for longitude (or right ascension)",
     default=0.0,
-    type=float)
+    type=float,
+)
 parser.add_argument(
-    '--longitude-max',
+    "--longitude-max",
     help="Maximum value allowed for longitude (or right ascension)",
     default=0.0,
-    type=float)
+    type=float,
+)
 
-parser.add_argument('--polarization-min',
-                    help="Minimum value allowed for polarization angle",
-                    default=0.0,
-                    type=float)
-parser.add_argument('--polarization-max',
-                    help="Maximum value allowed for polarization angle",
-                    default=0.0,
-                    type=float)
+parser.add_argument(
+    "--polarization-min",
+    help="Minimum value allowed for polarization angle",
+    default=0.0,
+    type=float,
+)
+parser.add_argument(
+    "--polarization-max",
+    help="Maximum value allowed for polarization angle",
+    default=0.0,
+    type=float,
+)
 
 # Match parameters
-parser.add_argument('-w',
-                    '--mchirp-window',
-                    metavar='MC_WIN',
-                    dest="mchirp_window",
-                    help="""Fractional window on mchirp parameter. If waveform
+parser.add_argument(
+    "-w",
+    "--mchirp-window",
+    metavar="MC_WIN",
+    dest="mchirp_window",
+    help="""Fractional window on mchirp parameter. If waveform
 parameters differ by more than this window, the overlap is set to 0.""",
-                    default=0.01,
-                    type=float)
-parser.add_argument('-e',
-                    '--eccentricity-window',
-                    metavar='E0_WIN',
-                    dest="ecc_window",
-                    help="""Absolute window on eccentricity.""",
-                    default=0.0,
-                    type=float)
+    default=0.01,
+    type=float,
+)
+parser.add_argument(
+    "-e",
+    "--eccentricity-window",
+    metavar="E0_WIN",
+    dest="ecc_window",
+    help="""Absolute window on eccentricity.""",
+    default=0.0,
+    type=float,
+)
 
 # Others
-parser.add_argument("--output-prefix",
-                    help="""Prefix to the name of the new bank, formatted
+parser.add_argument(
+    "--output-prefix",
+    help="""Prefix to the name of the new bank, formatted
 finally as 'output_prefix' + '%%06d.xml'.""",
-                    default="testpoints/test_",
-                    type=str)
+    default="testpoints/test_",
+    type=str,
+)
 
-parser.add_argument("-C",
-                    "--comment",
-                    metavar="STRING",
-                    help="add the optional STRING as the process:comment",
-                    default='')
-parser.add_argument("-V",
-                    "--verbose",
-                    action="store_true",
-                    help="print extra debugging information",
-                    default=False)
+parser.add_argument(
+    "-C",
+    "--comment",
+    metavar="STRING",
+    help="add the optional STRING as the process:comment",
+    default="",
+)
+parser.add_argument(
+    "-V",
+    "--verbose",
+    action="store_true",
+    help="print extra debugging information",
+    default=False,
+)
 
 options = parser.parse_args()
-#}}}
+# }}}
 logging.info("mchirp-window = %f" % (options.mchirp_window))
 logging.info("eccentricity-window = %f" % (options.ecc_window))
-#ctx = CUDAScheme()
+# ctx = CUDAScheme()
 
 #########################################################################
 ################### Get new sample points ###############################
@@ -247,8 +304,8 @@ coa_phase_max = options.coa_phase_max
 inc_min = options.inclination_min
 inc_max = options.inclination_max
 
-dist_min = 1.e6
-dist_max = 1.e6
+dist_min = 1.0e6
+dist_max = 1.0e6
 
 pol_min = options.polarization_min
 pol_max = options.polarization_max
@@ -259,15 +316,15 @@ lat_max = options.latitude_max
 lon_min = options.longitude_min
 lon_max = options.longitude_max
 
-mchirp_max = (2. * mass_max) * (eta_max**0.6)
-mchirp_min = (2. * mass_min) * (eta_max**0.6)
+mchirp_max = (2.0 * mass_max) * (eta_max**0.6)
+mchirp_min = (2.0 * mass_min) * (eta_max**0.6)
 mtotal_min = 2 * mass_min
-eta_min = mass_max * mass_min / (mass_max + mass_min)**2.
-q_min = 1.
+eta_min = mass_max * mass_min / (mass_max + mass_min) ** 2.0
+q_min = 1.0
 q_max = DA.get_q_from_eta(eta_min)
 
 
-#{{{
+# {{{
 def sample_mass(N=1):
     return SU.uniform_CompactObject_mass(N, mass_min, mass_max)
 
@@ -322,19 +379,21 @@ def sample_pol(N=1):
 
 def sample_lat_lon(N=1):
     if lat_min == lat_max or lon_min == lon_max:
-        return SU.uniform_bound(lat_min, lat_max, N),\
-               SU.uniform_bound(lon_min, lon_max, N)
-    lat, lon = SU.CubeToUniformOnS2(np.random.uniform(0, 1, N),
-                                    np.random.uniform(0, 1, N))
+        return SU.uniform_bound(lat_min, lat_max, N), SU.uniform_bound(
+            lon_min, lon_max, N
+        )
+    lat, lon = SU.CubeToUniformOnS2(
+        np.random.uniform(0, 1, N), np.random.uniform(0, 1, N)
+    )
     while lat > lat_max or lat < lat_min or lon > lon_max or lon < lon_min:
-        lat, lon = SU.CubeToUniformOnS2(np.random.uniform(0, 1, N),
-                                        np.random.uniform(0, 1, N))
+        lat, lon = SU.CubeToUniformOnS2(
+            np.random.uniform(0, 1, N), np.random.uniform(0, 1, N)
+        )
     return lat, lon
 
 
 def get_sim_hash(N=1, num_digits=10):
-    return ilwd.ilwdchar(":%s:0" %
-                         DA.get_unique_hex_tag(N=N, num_digits=num_digits))
+    return ilwd.ilwdchar(":%s:0" % DA.get_unique_hex_tag(N=N, num_digits=num_digits))
 
 
 def accept_point_boundary(mc, eta):
@@ -353,17 +412,20 @@ def accept_point_boundary(mc, eta):
 
 def accept_point(mc, eta):
     m1, m2 = mchirp_eta_to_mass1_mass2(mc, eta)
-    if m1 > mass_max or m1 < mass_min: return False
-    if m2 > mass_max or m2 < mass_min: return False
-    if (m1 + m2) > mtotal_max or (m1 + m2) < mtotal_min: return False
+    if m1 > mass_max or m1 < mass_min:
+        return False
+    if m2 > mass_max or m2 < mass_min:
+        return False
+    if (m1 + m2) > mtotal_max or (m1 + m2) < mtotal_min:
+        return False
     return True
 
 
 ################### Functions to sample & reject ##################
 def get_new_sample_point():
     """This function returns an instance of lsctables.SimInspiral, with elements
-  corresponding to various physical parameters uniformly sampled within their
-  respective ranges. """
+    corresponding to various physical parameters uniformly sampled within their
+    respective ranges."""
     p = lsctables.SimInspiral()
 
     # Masses
@@ -378,22 +440,22 @@ def get_new_sample_point():
     p.spin1x = sample_sxyz()
     p.spin1y = sample_sxyz()
     p.spin1z = sample_sxyz()
-    smag = np.sqrt(p.spin1x**2. + p.spin1y**2. + p.spin1z**2.)
+    smag = np.sqrt(p.spin1x**2.0 + p.spin1y**2.0 + p.spin1z**2.0)
     if smag > smag_max or smag < smag_min:
         newsmag = sample_smag()
-        p.spin1x *= (newsmag / smag)
-        p.spin1y *= (newsmag / smag)
-        p.spin1z *= (newsmag / smag)
+        p.spin1x *= newsmag / smag
+        p.spin1y *= newsmag / smag
+        p.spin1z *= newsmag / smag
 
     p.spin2x = sample_sxyz()
     p.spin2y = sample_sxyz()
     p.spin2z = sample_sxyz()
-    smag = np.sqrt(p.spin2x**2. + p.spin2y**2. + p.spin2z**2.)
+    smag = np.sqrt(p.spin2x**2.0 + p.spin2y**2.0 + p.spin2z**2.0)
     if smag > smag_max or smag < smag_min:
         newsmag = sample_smag()
-        p.spin2x *= (newsmag / smag)
-        p.spin2y *= (newsmag / smag)
-        p.spin2z *= (newsmag / smag)
+        p.spin2x *= newsmag / smag
+        p.spin2y *= newsmag / smag
+        p.spin2z *= newsmag / smag
 
     # Orbital parameters
     p.alpha = sample_ecc()
@@ -420,7 +482,7 @@ def get_new_sample_point():
 
 
 def within_mchirp_window(bank, sim, w):
-    #{{{
+    # {{{
     if hasattr(bank, "mchirp"):
         bmchirp = bank.mchirp
     elif hasattr(bank, "mass1") and hasattr(bank, "mass2"):
@@ -438,7 +500,7 @@ def within_mchirp_window(bank, sim, w):
     if abs(smchirp - bmchirp) < (w * min(smchirp, bmchirp)):
         return True
     return False
-    #}}}
+    # }}}
 
 
 def within_ecc_window(bank, sim, w):
@@ -447,30 +509,27 @@ def within_ecc_window(bank, sim, w):
     return False
 
 
-def reject_new_sample_point(new_point,
-                            points_table,
-                            in_mchirp_window,
-                            ecc_window=0.0):
+def reject_new_sample_point(new_point, points_table, in_mchirp_window, ecc_window=0.0):
     """This function takes in a new proposed point, and finds its mchirp distance
-  with all points in the points_table. If all of these distances are >
-  in_mchirp_window, it returns True, else returns False.
-  Which implies that if the new proposed point should be rejected from the set,
-  it returns True, and False if that point should be kept."""
+    with all points in the points_table. If all of these distances are >
+    in_mchirp_window, it returns True, else returns False.
+    Which implies that if the new proposed point should be rejected from the set,
+    it returns True, and False if that point should be kept."""
     if in_mchirp_window:
         mchirp_window = in_mchirp_window
     else:
         mchirp_window = 0.0
 
     for point in points_table:
-        if within_mchirp_window(new_point, point,
-                                mchirp_window) and within_ecc_window(
-                                    new_point, point, ecc_window):
+        if within_mchirp_window(new_point, point, mchirp_window) and within_ecc_window(
+            new_point, point, ecc_window
+        ):
             return True
 
     return False
 
 
-#}}}
+# }}}
 
 #####################################################
 ########## Obtain & Save new sample points ##########
@@ -481,17 +540,18 @@ old_points_name = options.old_bank
 if not os.path.exists(old_points_name):
     old_points_table = []
 else:
-    indoc = ligolw_utils.load_filename(old_points_name,
-                                       contenthandler=table.use_in(
-                                           ligolw.LIGOLWContentHandler),
-                                       verbose=options.verbose)
+    indoc = ligolw_utils.load_filename(
+        old_points_name,
+        contenthandler=table.use_in(ligolw.LIGOLWContentHandler),
+        verbose=options.verbose,
+    )
     try:
         old_points_table = lsctables.SimInspiralTable.get_table(indoc)
     except:
         raise IOError("Please provide the old bank as a SimInspiralTable")
 
 ######## Creating the new points file ############
-#{{{
+# {{{
 if options.iid is not None:
     iid = options.iid
     new_file_name = options.output_prefix + "%06d.xml" % iid
@@ -508,8 +568,7 @@ else:
         name2 = options.output_prefix + "%06d.xml" % idx
     new_file_name = name1
     iid = idx - 1
-    logging.info(
-        "Changing to iid = {}, all previous testpoints exist.".format(iid))
+    logging.info("Changing to iid = {}, all previous testpoints exist.".format(iid))
 logging.info("Storing the new sample points in {}".format(new_file_name))
 sys.stdout.flush()
 
@@ -517,22 +576,38 @@ new_points_doc = ligolw.Document()
 new_points_doc.appendChild(ligolw.LIGO_LW())
 
 out_proc_id = ligolw_process.register_to_xmldoc(
-    new_points_doc, PROGRAM_NAME, options.__dict__,
-    comment=options.comment).process_id
+    new_points_doc, PROGRAM_NAME, options.__dict__, comment=options.comment
+).process_id
 
-new_points_table = lsctables.New(lsctables.SimInspiralTable,columns=[\
-  'mass1','mass2','mchirp','eta',\
-  'spin1x','spin1y','spin1z','spin2x','spin2y','spin2z',\
-  'alpha', # -> eccentricity
-'alpha1', # -> mean_per_ano = meanPerAno
-'alpha2', # -> long_asc_nodes = longAscNodes
-'coa_phase',\
-  'inclination','distance',\
-  'polarization','latitude','longitude',\
-  'simulation_id','process_id'])
+new_points_table = lsctables.New(
+    lsctables.SimInspiralTable,
+    columns=[
+        "mass1",
+        "mass2",
+        "mchirp",
+        "eta",
+        "spin1x",
+        "spin1y",
+        "spin1z",
+        "spin2x",
+        "spin2y",
+        "spin2z",
+        "alpha",  # -> eccentricity
+        "alpha1",  # -> mean_per_ano = meanPerAno
+        "alpha2",  # -> long_asc_nodes = longAscNodes
+        "coa_phase",
+        "inclination",
+        "distance",
+        "polarization",
+        "latitude",
+        "longitude",
+        "simulation_id",
+        "process_id",
+    ],
+)
 new_points_doc.childNodes[0].appendChild(new_points_table)
 
-#{{{
+# {{{
 num_new_points = np.int(options.num_new_points)
 
 break_now = False
@@ -549,15 +624,14 @@ while cnt < num_new_points:
 
     k = 0
     new_point = get_new_sample_point()
-    while reject_new_sample_point(new_point,\
-                                  new_points_table,\
-                                  options.mchirp_window,\
-                                  options.ecc_window) or\
-          (len(old_points_table) > 0 and\
-          reject_new_sample_point(new_point,\
-                                  old_points_table,\
-                                  options.mchirp_window,\
-                                  options.ecc_window)):
+    while reject_new_sample_point(
+        new_point, new_points_table, options.mchirp_window, options.ecc_window
+    ) or (
+        len(old_points_table) > 0
+        and reject_new_sample_point(
+            new_point, old_points_table, options.mchirp_window, options.ecc_window
+        )
+    ):
         if options.verbose and k % (num_new_points / 50) == 0:
             logging.info("\t\t ...rejecting sample %d" % k)
             sys.stdout.flush()
@@ -570,17 +644,16 @@ while cnt < num_new_points:
     new_points_table.append(new_point)
     cnt += 1
     if break_now:
-        logging.info("ONLY FILLED IN {} POINTS IN REASONABLE TIME.".format(
-            len(new_points_table)))
+        logging.info(
+            "ONLY FILLED IN {} POINTS IN REASONABLE TIME.".format(len(new_points_table))
+        )
         break
 
-#}}}
+# }}}
 ############## Write the new sample points to XML #############
-logging.info("Writing %d new points to %s" %
-             (len(new_points_table), new_file_name))
+logging.info("Writing %d new points to %s" % (len(new_points_table), new_file_name))
 sys.stdout.flush()
 
-new_points_proctable = table.get_table(new_points_doc,
-                                       lsctables.ProcessTable.tableName)
+new_points_proctable = table.get_table(new_points_doc, lsctables.ProcessTable.tableName)
 new_points_proctable[0].end_time = gpstime.GpsSecondsFromPyUTC(time.time())
 ligolw_utils.write_filename(new_points_doc, new_file_name)

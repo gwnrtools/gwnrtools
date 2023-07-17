@@ -14,23 +14,25 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-'''
+"""
 Collections of configuration files for various 
 evolution systems as Python dictionaries for 
 their text and formatting
-'''
+"""
 
-__header__ = '''\
+__header__ = """\
 # Distributed under the MIT License.
 # See LICENSE.txt for details.
-'''
+"""
 
 # Output files
-reduction_data_file_name = 'EvolutionReductions'
-volume_data_file_name = 'EvolutionVolume'
+reduction_data_file_name = "EvolutionReductions"
+volume_data_file_name = "EvolutionVolume"
 
 input_files = {}
-input_files['bc_on_x_periodic_on_y'] = '''\
+input_files[
+    "bc_on_x_periodic_on_y"
+] = """\
 # Distributed under the MIT License.
 # See LICENSE.txt for details.
 
@@ -94,9 +96,13 @@ EventsAndTriggers:
 Observers:
   VolumeFileName: "{0:s}"
   ReductionFileName: "{1:s}"
-'''.format(volume_data_file_name, reduction_data_file_name)
+""".format(
+    volume_data_file_name, reduction_data_file_name
+)
 
-input_files['bc_on_xy'] = '''\
+input_files[
+    "bc_on_xy"
+] = """\
 # Distributed under the MIT License.
 # See LICENSE.txt for details.
 
@@ -160,7 +166,9 @@ EventsAndTriggers:
 Observers:
   VolumeFileName: "{0:s}"
   ReductionFileName: "{1:s}"
-'''.format(volume_data_file_name, reduction_data_file_name)
+""".format(
+    volume_data_file_name, reduction_data_file_name
+)
 
 #
 # Sample submission files for solvers with spectre
@@ -170,9 +178,9 @@ Observers:
 # We start with a list of available clusters, and another
 # of the compilers we want to use. While we expect the first
 # list to change / grow, not so much for the second.
-__available_clusters__ = ['Wheeler', 'Wheeler_unlimited']
+__available_clusters__ = ["Wheeler", "Wheeler_unlimited"]
 
-__available_compilers__ = ['gcc', 'clang']
+__available_compilers__ = ["gcc", "clang"]
 
 # We initialize subnmission file hash tables to None
 __cluster_submission_files__ = {}
@@ -182,8 +190,10 @@ for c in __available_clusters__:
     __cluster_submission_files_formatting__[c] = []
 
 # We populate explicitly
-for c in ['Wheeler']:
-    __cluster_submission_files__[c] = '''#!/bin/bash -
+for c in ["Wheeler"]:
+    __cluster_submission_files__[
+        c
+    ] = """#!/bin/bash -
 #SBATCH -J {tag}
 #SBATCH -o spectre.out
 #SBATCH -e spectre.out
@@ -237,13 +247,20 @@ module swap python/3.6.5
 python3 $SPECTRE_ROOT/src/Visualization/Python/GenerateXdmf.py \\
   --file-prefix EvolutionVolume \\
   --output EvolutionVolume
-'''
+"""
     __cluster_submission_files_formatting__[c] = [
-        'tag', 'run_dir', 'spectre_root', 'exe', 'input_file', 'compiler'
+        "tag",
+        "run_dir",
+        "spectre_root",
+        "exe",
+        "input_file",
+        "compiler",
     ]
 
-for c in ['Wheeler_unlimited']:
-    __cluster_submission_files__[c] = '''#!/bin/bash -
+for c in ["Wheeler_unlimited"]:
+    __cluster_submission_files__[
+        c
+    ] = """#!/bin/bash -
 #SBATCH -J {tag}
 #SBATCH -o spectre.out
 #SBATCH -e spectre.out
@@ -298,14 +315,19 @@ module swap python/3.6.5
 python3 $SPECTRE_ROOT/src/Visualization/Python/GenerateXdmf.py \\
   --file-prefix EvolutionVolume \\
   --output EvolutionVolume
-'''
+"""
     __cluster_submission_files_formatting__[c] = [
-        'tag', 'run_dir', 'spectre_root', 'exe', 'input_file', 'compiler'
+        "tag",
+        "run_dir",
+        "spectre_root",
+        "exe",
+        "input_file",
+        "compiler",
     ]
 
 
 def cluster_submission_file(cluster, **args):
-    '''
+    """
     Input:
     ------
 
@@ -313,17 +335,23 @@ def cluster_submission_file(cluster, **args):
     fiels in the submission file are:
 
     {0}
-    '''.format(__cluster_submission_files_formatting__[cluster])
-    assert cluster in __available_clusters__,\
-        "Cluster {0} not set up yet.".format(cluster)
-    assert (cluster in __cluster_submission_files__ and
-            cluster in __cluster_submission_files_formatting__),\
-        "Error in finding info for {0}".format(cluster)
+    """.format(
+        __cluster_submission_files_formatting__[cluster]
+    )
+    assert cluster in __available_clusters__, "Cluster {0} not set up yet.".format(
+        cluster
+    )
+    assert (
+        cluster in __cluster_submission_files__
+        and cluster in __cluster_submission_files_formatting__
+    ), "Error in finding info for {0}".format(cluster)
     for fmt in __cluster_submission_files_formatting__[cluster]:
         assert fmt in args, "Misnamed input. Allowed keyword arguments: {0}".format(
-            __cluster_submission_files_formatting__[cluster])
-    if 'compiler' in args:
-        assert args['compiler'] in __available_compilers__,\
-            "Compiler {0} not supported.".format(args['compiler'])
+            __cluster_submission_files_formatting__[cluster]
+        )
+    if "compiler" in args:
+        assert (
+            args["compiler"] in __available_compilers__
+        ), "Compiler {0} not supported.".format(args["compiler"])
 
     return __cluster_submission_files__[cluster].format(**args)

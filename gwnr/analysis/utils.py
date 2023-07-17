@@ -31,8 +31,6 @@ except:
 from glue.ligolw import ilwd
 
 
-
-
 def get_uniform_mass_range(m_lower, m_upper, m_sep):
     # {{{
     mlist = [m_lower]
@@ -51,26 +49,24 @@ def outside_mchirp_window(bank, sim, w):
     if hasattr(bank, "mchirp"):
         bmchirp = bank.mchirp
     elif hasattr(bank, "mass1") and hasattr(bank, "mass2"):
-        bmchirp, eta =\
-            pnutils.mass1_mass2_to_mchirp_eta(bank.mass1, bank.mass2)
+        bmchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(bank.mass1, bank.mass2)
     elif hasattr(bank, "mtotal") and hasattr(bank, "eta"):
         bmchirp = bank.mtotal * (bank.eta**0.6)
     # signal / injection / proposal mchirp
     if hasattr(sim, "mchirp"):
         smchirp = sim.mchirp
     elif hasattr(sim, "mass1") and hasattr(sim, "mass2"):
-        smchirp, eta =\
-            pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
+        smchirp, eta = pnutils.mass1_mass2_to_mchirp_eta(sim.mass1, sim.mass2)
     elif hasattr(sim, "mtotal") and hasattr(sim, "eta"):
         smchirp = sim.mtotal * (sim.eta**0.6)
     return abs(smchirp - bmchirp) > (w * bmchirp)
 
 
 def outside_tau0_window(bank, sim, window, f_lower):
-    b_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(getattr(bank, 'mass1'),
-                                                 getattr(bank, 'mass2'),
-                                                 f_lower)
-    s_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(getattr(sim, 'mass1'),
-                                                 getattr(sim, 'mass2'),
-                                                 f_lower)
+    b_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(
+        getattr(bank, "mass1"), getattr(bank, "mass2"), f_lower
+    )
+    s_tau0, _ = pnutils.mass1_mass2_to_tau0_tau3(
+        getattr(sim, "mass1"), getattr(sim, "mass2"), f_lower
+    )
     return abs(b_tau0 - s_tau0) > window

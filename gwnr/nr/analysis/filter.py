@@ -37,21 +37,17 @@ class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
 
 
 #############################
-def overlaps_vs_totalmass(wav1,
-                          wav2,
-                          psd=None,
-                          mf_lower=-1.,
-                          m_lower=-1.,
-                          m_upper=100.,
-                          m_delta=5.):
-    '''
-Need two wobjects of nr_waveform class.
+def overlaps_vs_totalmass(
+    wav1, wav2, psd=None, mf_lower=-1.0, m_lower=-1.0, m_upper=100.0, m_delta=5.0
+):
+    """
+    Need two wobjects of nr_waveform class.
 
-Waveforms are rescaled to different total masses and their overlaps
-computed.
+    Waveforms are rescaled to different total masses and their overlaps
+    computed.
 
-Returns an array of total masses and overlaps.
-    '''
+    Returns an array of total masses and overlaps.
+    """
     # {{{
     # print(min(wav1.rawhp), max(wav1.rawhp), max(wav2.rawhp), min(wav2.rawhp))
     if psd is None:
@@ -61,7 +57,7 @@ Returns an array of total masses and overlaps.
     #
     t2_opt = [1000, 2000]
     t_option = [100, t2_opt[0], t2_opt[1], 50, 100]
-    f_lower = 15. - 0.5
+    f_lower = 15.0 - 0.5
     # Calculate lowest total mass, from a) mf_lower, b) m_lower, c) calculate
     if mf_lower > 0:
         m_lower = mf_lower / f_lower / lal.MTSUN_SI
@@ -76,13 +72,14 @@ Returns an array of total masses and overlaps.
     for mtot in mass_range:
         # wav1.rescale_to_totalmass( mtot )
         # wav2.rescale_to_totalmass( mtot )
-        wav_blended1 = blend(wav1, mtot, wav1.sample_rate, wav1.time_length,
-                             t_option)  # blending
-        wav_blended2 = blend(wav2, mtot, wav1.sample_rate, wav1.time_length,
-                             t_option)  # blending
+        wav_blended1 = blend(
+            wav1, mtot, wav1.sample_rate, wav1.time_length, t_option
+        )  # blending
+        wav_blended2 = blend(
+            wav2, mtot, wav1.sample_rate, wav1.time_length, t_option
+        )  # blending
         if len(wav_blended1) != len(wav_blended2):
-            raise RuntimeError(
-                "blending function return different sets of waveforms!!")
+            raise RuntimeError("blending function return different sets of waveforms!!")
         tmp_overlaps = [mtot]
         for ii in range(len(wav_blended1)):
             hp1, hp2 = wav_blended1[ii], wav_blended2[ii]
@@ -95,16 +92,17 @@ Returns an array of total masses and overlaps.
 
 
 def calculate_mismatch_between_levs_hdf5(
-        self,
-        wavefilename='rhOverM_CcePITT_Asymptotic_GeometricUnits.h5',
-        outdir='matches',
-        outputfile='OverlapsLevs.h5',
-        catalogfile=None,
-        m_upper=100.,
-        m_delta=5.):
+    self,
+    wavefilename="rhOverM_CcePITT_Asymptotic_GeometricUnits.h5",
+    outdir="matches",
+    outputfile="OverlapsLevs.h5",
+    catalogfile=None,
+    m_upper=100.0,
+    m_delta=5.0,
+):
     # {{{
-    cmd.getoutput('mkdir -p %s/%s' % (self.outdir, outdir))
-    fout = h5py.File(self.outdir + '/' + outdir + '/' + outputfile, "a")
+    cmd.getoutput("mkdir -p %s/%s" % (self.outdir, outdir))
+    fout = h5py.File(self.outdir + "/" + outdir + "/" + outputfile, "a")
     #
     # Get the waveforms for different levs
     self.read_waveforms_from_hdf5_files(wavefilename=wavefilename)
@@ -124,26 +122,29 @@ def calculate_mismatch_between_levs_hdf5(
             ld1 = self.levs[i1]
             for i2 in range(i1, len(self.levs)):  # Include self overlaps
                 ld2 = self.levs[i2]
-                if ccef not in list(self.hwaveforms[ld1].keys()) or \
-                        ccef not in list(self.hwaveforms[ld2].keys()):
-                    print(ccef, " waveforms not found in both %s and %s" %
-                          (ld1, ld2))
+                if ccef not in list(self.hwaveforms[ld1].keys()) or ccef not in list(
+                    self.hwaveforms[ld2].keys()
+                ):
+                    print(ccef, " waveforms not found in both %s and %s" % (ld1, ld2))
                     continue
                 # Create a group in output file for this ccefile
                 if ccef not in list(fout.keys()):
                     fout.create_group(ccef)
                 # Compute matches
                 if self.verbose:
-                    print("\n\nOverlaps for %s Between %s and %s" %
-                          (ccef, ld1, ld2),
-                          file=sys.stderr)
-                overlaps = overlaps_vs_totalmass(self.hwaveforms[ld1][ccef],
-                                                 self.hwaveforms[ld2][ccef],
-                                                 psd=self.psd,
-                                                 m_upper=m_upper,
-                                                 m_delta=m_delta)
+                    print(
+                        "\n\nOverlaps for %s Between %s and %s" % (ccef, ld1, ld2),
+                        file=sys.stderr,
+                    )
+                overlaps = overlaps_vs_totalmass(
+                    self.hwaveforms[ld1][ccef],
+                    self.hwaveforms[ld2][ccef],
+                    psd=self.psd,
+                    m_upper=m_upper,
+                    m_delta=m_delta,
+                )
                 # Add matches and masses as a dataset to the group
-                dsetname = ld1 + '_' + ld2 + '.dat'
+                dsetname = ld1 + "_" + ld2 + ".dat"
                 fout[ccef].create_dataset(dsetname, data=overlaps)
     #
     fout.flush()

@@ -20,7 +20,7 @@
 #
 # =============================================================================
 #
-from __future__ import (absolute_import, print_function)
+from __future__ import absolute_import, print_function
 
 import os
 import numpy as np
@@ -29,23 +29,26 @@ from scipy.optimize import minimize_scalar
 
 import lal
 from pycbc.types import FrequencySeries
-from pycbc.waveform import (amplitude_from_polarizations,
-                            phase_from_polarizations)
+from pycbc.waveform import (
+    amplitude_from_polarizations,
+    frequency_from_polarizations,
+    phase_from_polarizations,
+)
 from pycbc.detector import overhead_antenna_pattern as generate_fplus_fcross
 from pycbc.pnutils import *
 
 
 def get_detector_response(ra, dec, psi, detector_tag, gmst=0):
     detMap = {
-        'H1': lal.LALDetectorIndexLHODIFF,
-        'H2': lal.LALDetectorIndexLHODIFF,
-        'L1': lal.LALDetectorIndexLLODIFF,
-        'G1': lal.LALDetectorIndexGEO600DIFF,
-        'V1': lal.LALDetectorIndexVIRGODIFF,
-        'T1': lal.LALDetectorIndexTAMA300DIFF,
-        'AL1': lal.LALDetectorIndexLLODIFF,
-        'AH1': lal.LALDetectorIndexLHODIFF,
-        'AV1': lal.LALDetectorIndexVIRGODIFF
+        "H1": lal.LALDetectorIndexLHODIFF,
+        "H2": lal.LALDetectorIndexLHODIFF,
+        "L1": lal.LALDetectorIndexLLODIFF,
+        "G1": lal.LALDetectorIndexGEO600DIFF,
+        "V1": lal.LALDetectorIndexVIRGODIFF,
+        "T1": lal.LALDetectorIndexTAMA300DIFF,
+        "AL1": lal.LALDetectorIndexLLODIFF,
+        "AH1": lal.LALDetectorIndexLHODIFF,
+        "AV1": lal.LALDetectorIndexVIRGODIFF,
     }
     detector = detMap[detector_tag]
     # get detector
@@ -62,18 +65,18 @@ def generate_detector_strain(template_params, h_plus, h_cross):
     longitude = 0
     polarization = 0
 
-    if hasattr(template_params, 'latitude'):
+    if hasattr(template_params, "latitude"):
         latitude = template_params.latitude
     else:
-        latitude = template_params['latitude']
-    if hasattr(template_params, 'longitude'):
+        latitude = template_params["latitude"]
+    if hasattr(template_params, "longitude"):
         longitude = template_params.longitude
     else:
-        longitude = template_params['longitude']
-    if hasattr(template_params, 'polarization'):
+        longitude = template_params["longitude"]
+    if hasattr(template_params, "polarization"):
         polarization = template_params.polarization
     else:
-        polarization = template_params['polarization']
+        polarization = template_params["polarization"]
 
     f_plus, f_cross = generate_fplus_fcross(longitude, latitude, polarization)
 
@@ -99,12 +102,13 @@ def get_time_at_frequency_from_polarizations(hp, hc, fvalue):
         if fr[idx] > 2 * fvalue and fr[idx + 1] > 2 * fvalue:
             break
     frI = InterpolatedUnivariateSpline(fr.sample_times, obj_func)
-    tmp = minimize_scalar(frI,
-                          fr.sample_times[id_start],
-                          method='bounded',
-                          bounds=(fr.sample_times[id_start],
-                                  fr.sample_times[idx]))
-    return tmp['x']
+    tmp = minimize_scalar(
+        frI,
+        fr.sample_times[id_start],
+        method="bounded",
+        bounds=(fr.sample_times[id_start], fr.sample_times[idx]),
+    )
+    return tmp["x"]
 
 
 def get_time_at_frequency(fr, fvalue):
@@ -112,7 +116,7 @@ def get_time_at_frequency(fr, fvalue):
 
 
 def get_freq_crossings(freq, f0, df_threshold=0.4):
-    '''
+    """
     Inputs
     ------
     freq: Array of similar iterable of frequency values
@@ -125,14 +129,16 @@ def get_freq_crossings(freq, f0, df_threshold=0.4):
     crossing_freqs: numpy.array
         Array of precise crossing frequencies. These may be slightly different
         from f0 given that the `freq` is discretely sampled
-    '''
+    """
     f0_crossing_times, f0_crossing_freqs = [], []
     for idx, finst in enumerate(freq):
         if idx == 0 or idx == len(freq) - 1:
             continue
-        if (np.abs(freq[idx - 1] - f0) > np.abs(finst - f0)) and (
-                np.abs(freq[idx + 1] - f0) >
-                np.abs(finst - f0)) and (np.abs(finst - f0) < df_threshold):
+        if (
+            (np.abs(freq[idx - 1] - f0) > np.abs(finst - f0))
+            and (np.abs(freq[idx + 1] - f0) > np.abs(finst - f0))
+            and (np.abs(finst - f0) < df_threshold)
+        ):
             f0_crossing_freqs.append(finst)
             f0_crossing_times.append(freq.sample_times[idx])
     return (np.array(f0_crossing_times), np.array(f0_crossing_freqs))
@@ -146,19 +152,22 @@ def get_time_at_y(fr, fvalue):
     # Define time interval to be searched
     idx_first = int(len(fr) * 0.2)  # 20% margin for junk - TOO MUCH?
     idx_end = np.where(
-        np.abs(fr.sample_times.data) == np.abs(fr.sample_times.data).min())[0][
-            0]  # Assume a properly aligned TimeSeries
+        np.abs(fr.sample_times.data) == np.abs(fr.sample_times.data).min()
+    )[0][
+        0
+    ]  # Assume a properly aligned TimeSeries
     # Starting guess
     obj_func = np.abs(np.abs(fr) - fvalue)[idx_first:idx_end]
-    id_start = np.where(obj_func == np.min(obj_func))[0][int(
-        np.ceil(len(np.where(obj_func == np.min(obj_func))[0]) / 2))]
+    id_start = np.where(obj_func == np.min(obj_func))[0][
+        int(np.ceil(len(np.where(obj_func == np.min(obj_func))[0]) / 2))
+    ]
     # Interpolate and find
-    frI = InterpolatedUnivariateSpline(fr.sample_times[idx_first:idx_end],
-                                       obj_func)
-    tmp = minimize_scalar(frI,
-                          fr.sample_times[id_start],
-                          method='bounded',
-                          bounds=(fr.sample_times[idx_first],
-                                  fr.sample_times[idx_end]))
+    frI = InterpolatedUnivariateSpline(fr.sample_times[idx_first:idx_end], obj_func)
+    tmp = minimize_scalar(
+        frI,
+        fr.sample_times[id_start],
+        method="bounded",
+        bounds=(fr.sample_times[idx_first], fr.sample_times[idx_end]),
+    )
     # Return time value
-    return tmp['x']
+    return tmp["x"]

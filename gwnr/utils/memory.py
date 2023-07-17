@@ -53,10 +53,10 @@ def MemoryUsage(o):
     # {{{
     try:  # Python 2
         zero_depth_bases = (str, Number, xrange, bytearray)
-        iteritems = 'iteritems'
+        iteritems = "iteritems"
     except NameError:  # Python 3
         zero_depth_bases = (str, bytes, Number, range, bytearray)
-        iteritems = 'items'
+        iteritems = "items"
 
     _seen_ids = set()
 
@@ -73,26 +73,25 @@ def MemoryUsage(o):
         elif isinstance(obj, (tuple, list, Set, deque)):
             size += sum(inner(i) for i in obj)
         elif isinstance(obj, Mapping) or hasattr(obj, iteritems):
-            size += sum(
-                inner(k) + inner(v) for k, v in getattr(obj, iteritems)())
+            size += sum(inner(k) + inner(v) for k, v in getattr(obj, iteritems)())
 
         # Check for custom object instances - may subclass above too
-        if hasattr(obj, '__dict__'):
+        if hasattr(obj, "__dict__"):
             size += inner(vars(obj))
-        if hasattr(obj, '__slots__'):  # can have __slots__ with __dict__
+        if hasattr(obj, "__slots__"):  # can have __slots__ with __dict__
             size += sum(
-                inner(getattr(obj, s)) for s in obj.__slots__
-                if hasattr(obj, s))
+                inner(getattr(obj, s)) for s in obj.__slots__ if hasattr(obj, s)
+            )
         return size
 
     return inner(o)
     # }}}
 
 
-def ShowMemoryUsage(objs=[], prefac=1e-6, prefac_name='Mb'):
+def ShowMemoryUsage(objs=[], prefac=1e-6, prefac_name="Mb"):
     """
-This is a wrapper around MemoryUsage that takes in a list
-of arbitrary objects, and prints their total size
+    This is a wrapper around MemoryUsage that takes in a list
+    of arbitrary objects, and prints their total size
     """
     # {{{
     if type(objs) is not list:

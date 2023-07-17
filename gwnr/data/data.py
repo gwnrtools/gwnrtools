@@ -20,18 +20,18 @@ import glob
 
 
 def gw_noise_curve_file(filename):
-    """ Return path to ASCII file containing noise power spectral
+    """Return path to ASCII file containing noise power spectral
     density estimates for various GW detectors, as a function of
     frequency.
     """
     return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), 'gw_noise_curves', filename))
+        os.path.join(os.path.dirname(__file__), "gw_noise_curves", filename)
+    )
 
 
 def available_gw_noise_curves():
-    """Returns a list of noise curves whose data is available.
-    """
+    """Returns a list of noise curves whose data is available."""
     return [
-        f.split('/')[-1]
-        for f in glob.glob(os.path.dirname(__file__) + '/gw_noise_curves/*')
+        f.split("/")[-1]
+        for f in glob.glob(os.path.dirname(__file__) + "/gw_noise_curves/*")
     ]

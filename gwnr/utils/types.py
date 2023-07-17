@@ -130,10 +130,10 @@ def write_series(series, filename):
 
 def convert_numpy_to_pycbc_type(arr, out_type, sample_rate=None, time_length=None):
     """
-Convert numpy.array to pycbc.types, TimeSeries and FrequencySeries.
-Output array is extended to length consistent with time_length passed
+    Convert numpy.array to pycbc.types, TimeSeries and FrequencySeries.
+    Output array is extended to length consistent with time_length passed
 
-ALL ARGUMENTS ARE NECESSARY.
+    ALL ARGUMENTS ARE NECESSARY.
     """
     delta_t = 1.0 / sample_rate
     delta_f = 1.0 / time_length
@@ -150,12 +150,12 @@ ALL ARGUMENTS ARE NECESSARY.
 
 def make_padded_frequency_series(vec, filter_N=None, delta_f=None):
     """
-Convert vec (TimeSeries or FrequencySeries) to a FrequencySeries. For
-a TimeSeries input, first it is resized to filter_N and  is  If
-filter_N and/or delta_f are given, the output will take those values. If
-    not told otherwise the code will attempt to pad a timeseries first such that
-    the waveform will not wraparound. However, if delta_f is specified to be
-    shorter than the waveform length then wraparound *will* be allowed.
+    Convert vec (TimeSeries or FrequencySeries) to a FrequencySeries. For
+    a TimeSeries input, first it is resized to filter_N and  is  If
+    filter_N and/or delta_f are given, the output will take those values. If
+        not told otherwise the code will attempt to pad a timeseries first such that
+        the waveform will not wraparound. However, if delta_f is specified to be
+        shorter than the waveform length then wraparound *will* be allowed.
     """
     # {{{
     if filter_N is None:

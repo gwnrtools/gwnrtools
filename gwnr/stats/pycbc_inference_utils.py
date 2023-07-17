@@ -18,7 +18,7 @@ from gwnr.stats.config_utils import ConfigBase
 
 
 class InferenceConfigs(ConfigBase):
-    '''
+    """
     Stores config files for pycbc_inference runs
 
     Parameters
@@ -58,52 +58,57 @@ class InferenceConfigs(ConfigBase):
     V1_channel    : str
     sample_rate   : int (power of 2)
 
-    '''
+    """
+
     def __init__(
-            self,
-            run_dir,
-            configs={},
-            # workflow opts
-            n_cpus=10,
-            checkpoint_interval=2000,
-            # nested samplers opts
-            n_live=2000,
-            n_maxmcmc=8000,
-            d_logz=0.1,
-            # parallel mcmc opts
-            n_walkers=1000,
-            n_temperatures=20,
-            n_maxsamps_per_walker=1000,
-            n_eff_samples=4000):
+        self,
+        run_dir,
+        configs={},
+        # workflow opts
+        n_cpus=10,
+        checkpoint_interval=2000,
+        # nested samplers opts
+        n_live=2000,
+        n_maxmcmc=8000,
+        d_logz=0.1,
+        # parallel mcmc opts
+        n_walkers=1000,
+        n_temperatures=20,
+        n_maxsamps_per_walker=1000,
+        n_eff_samples=4000,
+    ):
         super(InferenceConfigs, self).__init__(run_dir, configs)
 
         # Add data configs
-        if 'data' not in self.configs:
-            self.configs['data'] = {}
+        if "data" not in self.configs:
+            self.configs["data"] = {}
         self.add_data_configs()
 
         # Add data configs for events
         import pycbc.catalog
+
         self.event_names = pycbc.catalog.Catalog().names
         for event_name in self.event_names:
             self.add_data_configs(event_name)
 
         # Add sampler configs
-        if 'sampler' not in self.configs:
-            self.configs['sampler'] = {}
-        self.add_sampler_configs(n_cpus=n_cpus,
-                                 n_live=n_live,
-                                 n_maxmcmc=n_maxmcmc,
-                                 d_logz=d_logz,
-                                 n_walkers=n_walkers,
-                                 n_temperatures=n_temperatures,
-                                 n_maxsamps_per_walker=n_maxsamps_per_walker,
-                                 n_eff_samples=n_eff_samples,
-                                 ckpt_interval=checkpoint_interval)
+        if "sampler" not in self.configs:
+            self.configs["sampler"] = {}
+        self.add_sampler_configs(
+            n_cpus=n_cpus,
+            n_live=n_live,
+            n_maxmcmc=n_maxmcmc,
+            d_logz=d_logz,
+            n_walkers=n_walkers,
+            n_temperatures=n_temperatures,
+            n_maxsamps_per_walker=n_maxsamps_per_walker,
+            n_eff_samples=n_eff_samples,
+            ckpt_interval=checkpoint_interval,
+        )
 
         # Add inference configs
-        if 'inference' not in self.configs:
-            self.configs['inference'] = {}
+        if "inference" not in self.configs:
+            self.configs["inference"] = {}
         self.add_inference_configs()
 
         # Initialize their config writers
@@ -112,10 +117,17 @@ class InferenceConfigs(ConfigBase):
     def add_data_configs(self, event_name=None):
         # Events
         if event_name is not None:
-            if '150914' in event_name or '170104' in event_name or\
-                    '151012' in event_name or '170608' in event_name or\
-                    '151226' in event_name or '170823' in event_name:
-                self.configs['data'][event_name] = """\
+            if (
+                "150914" in event_name
+                or "170104" in event_name
+                or "151012" in event_name
+                or "170608" in event_name
+                or "151226" in event_name
+                or "170823" in event_name
+            ):
+                self.configs["data"][
+                    event_name
+                ] = """\
 [data]
 instruments = H1 L1
 trigger-time = {gpstime}
@@ -139,9 +151,15 @@ strain-high-pass = 15
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
 """
-            elif '170729' in event_name or '170814' in event_name or\
-                    '170809' in event_name or '170818' in event_name:
-                self.configs['data'][event_name] = """\
+            elif (
+                "170729" in event_name
+                or "170814" in event_name
+                or "170809" in event_name
+                or "170818" in event_name
+            ):
+                self.configs["data"][
+                    event_name
+                ] = """\
 [data]
 instruments = H1 L1 V1
 trigger-time = {gpstime}
@@ -165,8 +183,10 @@ strain-high-pass = 15
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
 """
-            elif '170817' in event_name:
-                self.configs['data'][event_name] = """\
+            elif "170817" in event_name:
+                self.configs["data"][
+                    event_name
+                ] = """\
 [data]
 instruments = H1 L1 V1
 trigger-time = {gpstime}
@@ -194,7 +214,10 @@ pad-data = 8
 
         # Injections
         import numpy
-        self.configs['data']['gw150914-like-gaussian'] = """\
+
+        self.configs["data"][
+            "gw150914-like-gaussian"
+        ] = """\
 [data]
 instruments = H1 L1
 trigger-time = 1126259462.42
@@ -229,8 +252,12 @@ strain-high-pass = 15
 ; inverse length. Since it is discarded before the data is transformed for the
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
-""".format(numpy.random.randint(1, 1e6), numpy.random.randint(1, 1e6))
-        self.configs['data']['gw150914-like-zeronoise'] = """\
+""".format(
+            numpy.random.randint(1, 1e6), numpy.random.randint(1, 1e6)
+        )
+        self.configs["data"][
+            "gw150914-like-zeronoise"
+        ] = """\
 [data]
 instruments = H1 L1
 trigger-time = 1126259462.42
@@ -262,17 +289,21 @@ strain-high-pass = 15
 pad-data = 8
 """
 
-    def add_sampler_configs(self,
-                            n_cpus=10,
-                            n_live=2000,
-                            n_maxmcmc=8000,
-                            d_logz=0.1,
-                            n_walkers=1000,
-                            n_temperatures=20,
-                            n_maxsamps_per_walker=1000,
-                            n_eff_samples=4000,
-                            ckpt_interval=2000):
-        self.configs['sampler']['emcee'] = """\
+    def add_sampler_configs(
+        self,
+        n_cpus=10,
+        n_live=2000,
+        n_maxmcmc=8000,
+        d_logz=0.1,
+        n_walkers=1000,
+        n_temperatures=20,
+        n_maxsamps_per_walker=1000,
+        n_eff_samples=4000,
+        ckpt_interval=2000,
+    ):
+        self.configs["sampler"][
+            "emcee"
+        ] = """\
 [sampler]
 name = emcee
 nprocesses = {n_cpus}
@@ -283,12 +314,16 @@ checkpoint-interval = {ckpt_interval}
 
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
-""".format(n_cpus=n_cpus,
-           n_walkers=n_walkers,
-           n_eff_samples=n_eff_samples,
-           n_maxsamps_per_walker=n_maxsamps_per_walker,
-           ckpt_interval=ckpt_interval)
-        self.configs['sampler']['emcee_pt'] = """\
+""".format(
+            n_cpus=n_cpus,
+            n_walkers=n_walkers,
+            n_eff_samples=n_eff_samples,
+            n_maxsamps_per_walker=n_maxsamps_per_walker,
+            ckpt_interval=ckpt_interval,
+        )
+        self.configs["sampler"][
+            "emcee_pt"
+        ] = """\
 [sampler]
 name = emcee_pt
 nprocesses = {n_cpus}
@@ -313,13 +348,17 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-""".format(n_cpus=n_cpus,
-           n_walkers=n_walkers,
-           n_temperatures=n_temperatures,
-           n_maxsamps_per_walker=n_maxsamps_per_walker,
-           n_eff_samples=n_eff_samples,
-           ckpt_interval=ckpt_interval)
-        self.configs['sampler']['epsie'] = """\
+""".format(
+            n_cpus=n_cpus,
+            n_walkers=n_walkers,
+            n_temperatures=n_temperatures,
+            n_maxsamps_per_walker=n_maxsamps_per_walker,
+            n_eff_samples=n_eff_samples,
+            ckpt_interval=ckpt_interval,
+        )
+        self.configs["sampler"][
+            "epsie"
+        ] = """\
 [sampler]
 name = epsie
 nprocesses = {n_cpus}
@@ -390,13 +429,17 @@ name = normal
 
 [jump_proposal-spin2_a]
 name = normal
-""".format(n_cpus=n_cpus,
-           n_walkers=n_walkers,
-           n_eff_samples=n_eff_samples,
-           n_temperatures=n_temperatures,
-           n_maxsamps_per_walker=n_maxsamps_per_walker,
-           ckpt_interval=ckpt_interval)
-        self.configs['sampler']['dynesty'] = """\
+""".format(
+            n_cpus=n_cpus,
+            n_walkers=n_walkers,
+            n_eff_samples=n_eff_samples,
+            n_temperatures=n_temperatures,
+            n_maxsamps_per_walker=n_maxsamps_per_walker,
+            ckpt_interval=ckpt_interval,
+        )
+        self.configs["sampler"][
+            "dynesty"
+        ] = """\
 [sampler]
 name = dynesty
 nprocesses = {n_cpus}
@@ -412,8 +455,12 @@ bound = multi  ; none, single, multi, balls, cubes
 ; enlarge =
 ; update_interval =
 ; loglikelihood-function = loglr
-""".format(n_cpus=n_cpus, d_logz=d_logz, n_live=n_live)
-        self.configs['sampler']['ultranest'] = """\
+""".format(
+            n_cpus=n_cpus, d_logz=d_logz, n_live=n_live
+        )
+        self.configs["sampler"][
+            "ultranest"
+        ] = """\
 [sampler]
 name = ultranest
 dlogz = {d_logz}
@@ -425,8 +472,12 @@ min_num_live_points = {n_live}
 ; Lepsilon, min_ess, max_iters, max_ncalls,
 ; max_num_improvement_loops, 
 ; cluster_num_live_points
-""".format(n_live=n_live, d_logz=d_logz)
-        self.configs['sampler']['multinest'] = """\
+""".format(
+            n_live=n_live, d_logz=d_logz
+        )
+        self.configs["sampler"][
+            "multinest"
+        ] = """\
 [sampler]
 name = multinest
 nprocesses = {n_cpus}
@@ -435,11 +486,12 @@ checkpoint-interval = {ckpt_interval}
 evidence-tolerance = {d_logz}
 sampling-efficiency = 0.8
 importance-nested-sampling = True
-""".format(n_cpus=n_cpus,
-           n_live=n_live,
-           d_logz=d_logz,
-           ckpt_interval=ckpt_interval)
-        self.configs['sampler']['cpnest'] = """\
+""".format(
+            n_cpus=n_cpus, n_live=n_live, d_logz=d_logz, ckpt_interval=ckpt_interval
+        )
+        self.configs["sampler"][
+            "cpnest"
+        ] = """\
 [sampler]
 ;
 ; WARNING: this sampler requires python3 support
@@ -465,10 +517,14 @@ mass1, mass2 : mchirp, q
 ; inputs mass1, mass2
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
-""".format(n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc)
+""".format(
+            n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc
+        )
 
     def add_inference_configs(self):
-        self.configs['inference']['bbh_precessing'] = """\
+        self.configs["inference"][
+            "bbh_precessing"
+        ] = """\
 [model]
 name = gaussian_noise
 low-frequency-cutoff = 20.0
@@ -588,7 +644,9 @@ name = uniform_sky
 ; polarization prior
 name = uniform_angle
 """
-        self.configs['inference']['bbh_alignedspin'] = """\
+        self.configs["inference"][
+            "bbh_alignedspin"
+        ] = """\
 [model]
 name = gaussian_noise
 low-frequency-cutoff = 20.0

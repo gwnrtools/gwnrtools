@@ -27,19 +27,21 @@ import sys
 import os
 import subprocess as cmd
 import imp
-sys.path.append('/home/prayush/src/UseNRinDA/scripts/setupCCEruns/')
-sys.path.append('/home/p/pfeiffer/prayush/src/UseNRinDA/scripts/setupCCEruns/')
+
+sys.path.append("/home/prayush/src/UseNRinDA/scripts/setupCCEruns/")
+sys.path.append("/home/p/pfeiffer/prayush/src/UseNRinDA/scripts/setupCCEruns/")
 try:
-    cmd.getoutput('module load git')
-    head_dir = cmd.getoutput('git rev-parse --show-toplevel')
-    sys.path.append(os.path.join(head_dir, 'scripts/setupCCEruns/'))
+    cmd.getoutput("module load git")
+    head_dir = cmd.getoutput("git rev-parse --show-toplevel")
+    sys.path.append(os.path.join(head_dir, "scripts/setupCCEruns/"))
 except BaseException:
     print("adding path to UseNRinDA using git rev-parse failed.. :(")
 
 imp.reload(CC)
 
-if sys.argv[1] == '-h':
-    print("""\
+if sys.argv[1] == "-h":
+    print(
+        """\
 ######################################################
 ######################################################
 **PostProcessOneRunRunAtOneLev.py
@@ -52,12 +54,13 @@ if sys.argv[1] == '-h':
      subdirectories with names Lev?
 
 #3- Lev, e.g. Lev3 Lev4 Lev5
-""")
+"""
+    )
     exit()
 
-#datadir = '/prayush/NR/CCE_2/SKS_d16.6-q3-sA_0_0_-0.6_sB_0_0_-0.4/'
-#outdir = datadir
-levdirs = ['Lev5']
+# datadir = '/prayush/NR/CCE_2/SKS_d16.6-q3-sA_0_0_-0.6_sB_0_0_-0.4/'
+# outdir = datadir
+levdirs = ["Lev5"]
 
 datadir = sys.argv[1]
 outdir = sys.argv[2]
@@ -70,15 +73,17 @@ crun = {}
 for ld in levdirs:
     ld_datadir = os.path.join(datadir, ld)
     ld_outdir = os.path.join(outdir, ld)
-    datafile = cmd.getoutput('/bin/ls %s/ | grep .h5 | grep CceR' % ld_outdir)
+    datafile = cmd.getoutput("/bin/ls %s/ | grep .h5 | grep CceR" % ld_outdir)
     #
     print(ld_datadir, "\n", ld_outdir, "\n", datafile)
-    crun[ld] = CC.cce_run(datafile=datafile,
-                          datadir=ld_datadir,
-                          pittnull=os.path.join(ld_datadir, datafile),
-                          outdir=ld_outdir,
-                          post_process_only=True,
-                          verbose=True)
+    crun[ld] = CC.cce_run(
+        datafile=datafile,
+        datadir=ld_datadir,
+        pittnull=os.path.join(ld_datadir, datafile),
+        outdir=ld_outdir,
+        post_process_only=True,
+        verbose=True,
+    )
 
 # Combine different segments of CCE
 for ld in levdirs:

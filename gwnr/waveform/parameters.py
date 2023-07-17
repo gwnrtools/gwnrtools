@@ -20,22 +20,26 @@
 #
 # =============================================================================
 #
-from __future__ import (absolute_import, print_function)
+from __future__ import absolute_import, print_function
 
 import numpy as np
 
 
 def spins_to_PNeffective_spin(m1, m2, chi1, chi2):
-    chieff = (113.*m1*m1*chi1 + 113.*m2*m2*chi2 + 75.*m1*m2*(chi1 + chi2)) /\
-        (113. * (m1 + m2)**2)
+    chieff = (
+        113.0 * m1 * m1 * chi1 + 113.0 * m2 * m2 * chi2 + 75.0 * m1 * m2 * (chi1 + chi2)
+    ) / (113.0 * (m1 + m2) ** 2)
     return chieff
 
 
 def spins_to_2PNeffective_spin(m1, m2, chi1, chi2):
     q1, q2 = 1, 1
-    num = (1. + 80.*q1) * m1**2 * chi1**2 + (1. + 80.*q2) * m2**2 * chi2**2 \
-        + 158. * m1*m2*chi1*chi2
-    den = 16. * (m1 + m2)**2
+    num = (
+        (1.0 + 80.0 * q1) * m1**2 * chi1**2
+        + (1.0 + 80.0 * q2) * m2**2 * chi2**2
+        + 158.0 * m1 * m2 * chi1 * chi2
+    )
+    den = 16.0 * (m1 + m2) ** 2
     return num / den
 
 
@@ -45,8 +49,8 @@ def spins_to_massweighted_spin(m1, m2, chi1, chi2):
 
 
 def spins_to_damoureffective_spin(m1, m2, chi1, chi2):
-    chiwt = 4 * m1**2 * chi1 + 4 * m2**2 * chi2 + 3. * m1 * m2 * (chi1 + chi2)
-    return chiwt / 4. / (m1 + m2)**2
+    chiwt = 4 * m1**2 * chi1 + 4 * m2**2 * chi2 + 3.0 * m1 * m2 * (chi1 + chi2)
+    return chiwt / 4.0 / (m1 + m2) ** 2
 
 
 def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
@@ -61,8 +65,8 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
     S1_perp = m1_2 * np.sqrt(s1x * s1x + s1y * s1y)
     S2_perp = m2_2 * np.sqrt(s2x * s2x + s2y * s2y)
     # /* From this we can compute chip*/
-    A1 = 2. + (3. * m2) / (2 * m1)
-    A2 = 2. + (3. * m1) / (2 * m2)
+    A1 = 2.0 + (3.0 * m2) / (2 * m1)
+    A2 = 2.0 + (3.0 * m1) / (2 * m2)
     ASp1 = A1 * S1_perp
     ASp2 = A2 * S2_perp
     if type(m1) != float and type(m1) != int:
@@ -90,13 +94,13 @@ def chip_from_masses_spins(m1, m2, s1x, s1y, s1z, s2x, s2y, s2z):
 
 
 def q_to_eta(q):
-    return q / (1. + q)**2
+    return q / (1.0 + q) ** 2
 
 
 def eta_to_q(eta):
-    a = c = 1.
-    b = 2. - 1. / np.array(eta)
-    D = (b**2 - 4. * a * c)**0.5
+    a = c = 1.0
+    b = 2.0 - 1.0 / np.array(eta)
+    D = (b**2 - 4.0 * a * c) ** 0.5
     # print type(a), type(b), type(c), type(D)
-    roots = [(-b + D) / (2. * a), (-b - D) / (2. * a)]
+    roots = [(-b + D) / (2.0 * a), (-b - D) / (2.0 * a)]
     return roots[0]

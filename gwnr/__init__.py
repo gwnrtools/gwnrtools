@@ -17,7 +17,8 @@ gwnr is a toolkit for gravitational-wave physics
 """
 from __future__ import absolute_import
 
-from . import (analysis, cosmo, data, graph, nr, utils, waveform, workflow)
+from . import analysis, cosmo, data, graph, nr, utils, waveform, workflow
+
 try:
     from . import stats
 except:
@@ -27,8 +28,10 @@ from gwnr.utils import *
 
 def get_version_information():
     import os
-    version_file = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                "gwnr/.version")
+
+    version_file = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "gwnr/.version"
+    )
     try:
         with open(version_file, "r") as f:
             return f.readline().rstrip()

@@ -29,7 +29,6 @@ import scipy.optimize
 from scipy.integrate import cumulative_trapezoid
 
 
-
 def find_first_value_location_in_series(frq_timeseries, frq_desired):
     if frq_desired < np.min(frq_timeseries):
         raise Exception("Desired frequency out of bounds, lower than min frequency")

@@ -15,16 +15,18 @@ from common import contour_dir, events, sample_files
 from bounded_2d_kde import Bounded_2d_kde
 
 
-def estimate_2d_post(params,
-                     post,
-                     data2=None,
-                     xlow=None,
-                     xhigh=None,
-                     ylow=None,
-                     yhigh=None,
-                     transform=None,
-                     gridsize=500,
-                     **kwargs):
+def estimate_2d_post(
+    params,
+    post,
+    data2=None,
+    xlow=None,
+    xhigh=None,
+    ylow=None,
+    yhigh=None,
+    transform=None,
+    gridsize=500,
+    **kwargs
+):
     x = post[params[0]]
     y = post[params[1]]
 
@@ -33,8 +35,8 @@ def estimate_2d_post(params,
 
     deltax = x.max() - x.min()
     deltay = y.max() - y.min()
-    x_pts = np.linspace(x.min() - .1 * deltax, x.max() + .1 * deltax, gridsize)
-    y_pts = np.linspace(y.min() - .1 * deltay, y.max() + .1 * deltay, gridsize)
+    x_pts = np.linspace(x.min() - 0.1 * deltax, x.max() + 0.1 * deltax, gridsize)
+    y_pts = np.linspace(y.min() - 0.1 * deltay, y.max() + 0.1 * deltay, gridsize)
 
     xx, yy = np.meshgrid(x_pts, y_pts)
 
@@ -51,32 +53,29 @@ def estimate_2d_post(params,
 
     Nden = den_pts.shape[0]
 
-    post_kde = Bounded_2d_kde(kde_pts,
-                              xlow=xlow,
-                              xhigh=xhigh,
-                              ylow=ylow,
-                              yhigh=yhigh)
+    post_kde = Bounded_2d_kde(kde_pts, xlow=xlow, xhigh=xhigh, ylow=ylow, yhigh=yhigh)
     den = post_kde(den_pts)
     inds = np.argsort(den)[::-1]
     den = den[inds]
 
     z = np.reshape(post_kde(transform(positions)), xx.shape)
 
-    return {'xx': xx, 'yy': yy, 'z': z, 'kde': den, 'kde_sel': kde_sel}
+    return {"xx": xx, "yy": yy, "z": z, "kde": den, "kde_sel": kde_sel}
 
 
 def pickle_contour_data(event, post_name, cdata):
-    outfile = os.path.join(contour_dir,
-                           '{}_{}_contour_data.pkl'.format(event, post_name))
-    with open(outfile, 'w') as outp:
+    outfile = os.path.join(
+        contour_dir, "{}_{}_contour_data.pkl".format(event, post_name)
+    )
+    with open(outfile, "w") as outp:
         pickle.dump(cdata, outp)
 
 
 for event in events:
     # Load posterior samples, replacing the final spin with more detailed estimates
     pos = np.genfromtxt(sample_files[event], names=True)
-    #final_spin_pos = np.genfromtxt(sample_files[event]['comb_final_spin'], names=True)
-    #pos['af'] = final_spin_pos['af']
+    # final_spin_pos = np.genfromtxt(sample_files[event]['comb_final_spin'], names=True)
+    # pos['af'] = final_spin_pos['af']
 
     # m1-m2
     # post_name = 'm1_m2'
@@ -85,13 +84,10 @@ for event in events:
 
     xlow, xhigh = 0.0, 1.0
     ylow, yhigh = -1.0, 1.0
-    post_name = 'chieff_chip'
-    contour_data = estimate_2d_post(['chi_p', 'chi_eff'],
-                                    pos,
-                                    xlow=xlow,
-                                    xhigh=xhigh,
-                                    ylow=ylow,
-                                    yhigh=yhigh)
+    post_name = "chieff_chip"
+    contour_data = estimate_2d_post(
+        ["chi_p", "chi_eff"], pos, xlow=xlow, xhigh=xhigh, ylow=ylow, yhigh=yhigh
+    )
     pickle_contour_data(event, post_name, contour_data)
 
     # # final mass and final spin

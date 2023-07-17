@@ -23,7 +23,7 @@
 #
 """General Utilities"""
 
-from __future__ import (absolute_import, print_function)
+from __future__ import absolute_import, print_function
 
 import sys
 from numpy import *
@@ -47,21 +47,26 @@ def find_nearest(a, a0):
     return idx, np.array(a).flat[idx]
 
 
-def approx_equal(A, B, eps=1.e-4):
-    return (np.abs(A - B) / (np.abs(A) + np.abs(B)) < eps)
+def approx_equal(A, B, eps=1.0e-4):
+    return np.abs(A - B) / (np.abs(A) + np.abs(B)) < eps
 
 
 def update_progress(progress):
-    print(('\r\r[{0}] {1:.2%}'.format(
-        '#' * (int(progress * 100) / 2) + ' ' * (50 - int(progress * 100) / 2),
-        progress)))
+    print(
+        (
+            "\r\r[{0}] {1:.2%}".format(
+                "#" * (int(progress * 100) / 2) + " " * (50 - int(progress * 100) / 2),
+                progress,
+            )
+        )
+    )
     if progress == 100:
         print("Done")
     sys.stdout.flush()
 
 
 def nextpow2(n):
-    return 2**int(ceil(log2(n)))
+    return 2 ** int(ceil(log2(n)))
 
 
 def nCr(n, r):
@@ -70,8 +75,8 @@ def nCr(n, r):
 
 
 def area_inside_contour(vs):
-    '''Use Green's theorem to compute the area
-    enclosed by a given contour.'''
+    """Use Green's theorem to compute the area
+    enclosed by a given contour."""
     x = vs[:, 0]
     y = vs[:, 1]
     a = 0.5 * np.sum(y[:-1] * np.diff(x) - x[:-1] * np.diff(y))
@@ -84,12 +89,12 @@ def zero_pad_beginning(h, steps=1):
 
 
 def get_sec(s):
-    l = s.split(':')
+    l = s.split(":")
     return int(l[0]) * 3600 + int(l[1]) * 60 + int(l[2])
 
 
 def get_time(date, time):
-    date_contrib = int(date.split('/')[-1]) * 24 * 60 * 60
+    date_contrib = int(date.split("/")[-1]) * 24 * 60 * 60
     time_contrib = get_sec(time)
     return date_contrib + time_contrib
 
@@ -98,7 +103,7 @@ def trim_trailing_zeros(hp):
     for i in np.arange(len(hp) - 1, 0, -1):
         if hp[i] != 0:
             break
-    return hp[:i + 1]
+    return hp[: i + 1]
 
 
 def trim_leading_zeros(hp):
@@ -122,6 +127,7 @@ def format_string(string_template, **string_kwargs):
 
 def mkdir(dir_name):
     import subprocess
+
     try:
         subprocess.call(["mkdir", "-p", dir_name])
     except OSError:
@@ -130,6 +136,7 @@ def mkdir(dir_name):
 
 def rmdir(dir_name):
     import subprocess
+
     try:
         subprocess.call(["rm", "-rf", dir_name])
     except OSError:
@@ -137,9 +144,9 @@ def rmdir(dir_name):
 
 
 def insert_min_max_into_array(arr, low, high):
-    '''
+    """
     Assume an ordered array is passed. Insert min and max and force that
-    '''
+    """
     if low > arr.max() or high < arr.min():
         return np.array([low, high])
     new_arr = arr

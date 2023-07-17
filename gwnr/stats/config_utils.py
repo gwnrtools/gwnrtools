@@ -17,37 +17,40 @@
 import os
 
 
-class ConfigWriter():
+class ConfigWriter:
     def __init__(self, configs, run_dir):
-        '''
-Writer class for configuration files
+        """
+        Writer class for configuration files
 
-Parameters
-----------
+        Parameters
+        ----------
 
-name : string
-    The name that configuration file will be written to. 
-    This does not depend on the available options 
-configs : dict
-    Has key:value pairs for different ini file texts
-run_dir : string
-    Run directory where the configuration files are to be written
-        '''
+        name : string
+            The name that configuration file will be written to.
+            This does not depend on the available options
+        configs : dict
+            Has key:value pairs for different ini file texts
+        run_dir : string
+            Run directory where the configuration files are to be written
+        """
         self.configs = configs
         self.run_dir = run_dir
 
     def write(self, name, **formatting_kwargs):
-        '''
-        Config file string may have some blanks that need to 
+        """
+        Config file string may have some blanks that need to
         be filled, especially for data configs for GW events.
-        '''
+        """
         if name not in self.configs:
-            print("Provided name {} not available. Available: {}".format(
-                name, self.types()))
+            print(
+                "Provided name {} not available. Available: {}".format(
+                    name, self.types()
+                )
+            )
             return
 
         out_str = self.configs[name]
-        with open(os.path.join(self.run_dir, name + '.ini'), 'w') as fout:
+        with open(os.path.join(self.run_dir, name + ".ini"), "w") as fout:
             if len(formatting_kwargs) > 0:
                 fout.write(out_str.format(**formatting_kwargs))
             else:
@@ -57,13 +60,14 @@ run_dir : string
         return list(self.configs.keys())
 
 
-class ConfigBase():
-    '''
+class ConfigBase:
+    """
     Class to store config file samples for categories, as dict of dicts
-    '''
+    """
+
     def __init__(self, run_dir, configs={}) -> None:
         self.run_dir = run_dir
-        assert (isinstance(configs, dict))
+        assert isinstance(configs, dict)
         self.configs = configs
 
     def get_run_dir(self):
@@ -78,21 +82,22 @@ class ConfigBase():
 
     def update_config_writers(self):
         # Initialize their config writers
-        if not hasattr(self, '_config_writers'):
+        if not hasattr(self, "_config_writers"):
             self._config_writers = {}
         for config_name in self.config_names:
             self._config_writers[config_name] = ConfigWriter(
-                self.configs[config_name], self.get_run_dir())
+                self.configs[config_name], self.get_run_dir()
+            )
 
     @property
     def config_writers(self):
         # Initialize their config writers
-        if not hasattr(self, '_config_writers'):
+        if not hasattr(self, "_config_writers"):
             self.update_config_writers()
         return self._config_writers
 
     def get_config_writer(self, name):
-        assert (name in self.available_configs())
+        assert name in self.available_configs()
         return self.config_writers[name]
 
     def get(self, config_name, type_name=None):

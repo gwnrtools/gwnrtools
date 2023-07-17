@@ -38,8 +38,7 @@ def uniform_mass(N, comp_min, comp_max):
     return uniform_bound(comp_min, comp_max, N)
 
 
-def uniform_in_totalmass_massratio_masses(N, mtotal_min, mtotal_max, q_min,
-                                          q_max):
+def uniform_in_totalmass_massratio_masses(N, mtotal_min, mtotal_max, q_min, q_max):
     from pycbc.pnutils import mtotal_eta_to_mass1_mass2
     from gwnr.waveform.parameters import q_to_eta
 
@@ -57,15 +56,15 @@ def uniform_spin_magnitude(N, a_min, a_max):
     return uniform_bound(a_min, a_max, N)
 
 
-def uniform_coalescence_time(N, t_min=1170720018., t_max=1170806417.):
+def uniform_coalescence_time(N, t_min=1170720018.0, t_max=1170806417.0):
     return uniform_bound(t_min, t_max, N)
 
 
-def uniform_in_cos_angle(N, costheta_min=-1, costheta_max=1, offset=0.):
+def uniform_in_cos_angle(N, costheta_min=-1, costheta_max=1, offset=0.0):
     return np.arccos(np.random.uniform(costheta_min, costheta_max, N)) + offset
 
 
-def uniform_in_angle(N, theta_min=0., theta_max=2. * np.pi, offset=0.):
+def uniform_in_angle(N, theta_min=0.0, theta_max=2.0 * np.pi, offset=0.0):
     return uniform_bound(theta_min, theta_max, N) + offset
 
 
@@ -76,16 +75,15 @@ def cube_to_uniform_on_S2(u, v):
     """
     if np.any(u < 0) or np.any(u > 1) or np.any(v < 0) or np.any(v > 1):
         raise IOError("Both inputs should be in [0,1]")
-    return [2. * np.pi * u, np.arccos(2. * v - 1.)]
+    return [2.0 * np.pi * u, np.arccos(2.0 * v - 1.0)]
 
 
 def uniform_on_S2(N):
-    return cube_to_uniform_on_S2(uniform_bound(0, 1, N),
-                                 uniform_bound(0, 1, N))
+    return cube_to_uniform_on_S2(uniform_bound(0, 1, N), uniform_bound(0, 1, N))
 
 
 def uniform_in_volume_distance(N, d_min, d_max):
-    return d_min + (d_max - d_min) * uniform_bound(0, 1., N)**(1. / 3.)
+    return d_min + (d_max - d_min) * uniform_bound(0, 1.0, N) ** (1.0 / 3.0)
 
 
 def uniform_in_choices(N, choices):
@@ -102,23 +100,24 @@ def idempotence(N, x):
 
 
 class OneDRandom:
-    '''
-DESCRIPTION: Random number generation meta-class
+    """
+    DESCRIPTION: Random number generation meta-class
 
-Input:
-------
-sampling_vars : pandas.DataFrame. It should have a column:
-        - 'dist' that provides a distribution for it.
-        - 'range' that provides the allowed numerical range for it.
-    '''
+    Input:
+    ------
+    sampling_vars : pandas.DataFrame. It should have a column:
+            - 'dist' that provides a distribution for it.
+            - 'range' that provides the allowed numerical range for it.
+    """
+
     def __init__(self, sampling_vars=None):
         self.draw = {}
-        self.draw['uniform'] = np.random.uniform
-        self.draw['zero'] = np.zeros
-        self.draw['uniform_cos'] = uniform_in_cos_angle
-        self.draw['uniform_S2'] = uniform_on_S2
-        self.draw['fixed'] = idempotence
-        self.draw['choices'] = uniform_in_choices
+        self.draw["uniform"] = np.random.uniform
+        self.draw["zero"] = np.zeros
+        self.draw["uniform_cos"] = uniform_in_cos_angle
+        self.draw["uniform_S2"] = uniform_on_S2
+        self.draw["fixed"] = idempotence
+        self.draw["choices"] = uniform_in_choices
 
         self.params = sampling_vars
 
@@ -129,15 +128,18 @@ sampling_vars : pandas.DataFrame. It should have a column:
         return list(self.draw.keys())
 
     def sample(self, name, size=1, dist=None):
-        assert (self.params is not None),\
-            "Provide a DataFrame of sampling parameter info at initialization"
-        assert (name in self.params), "Cannot find info on {}".format(name)
+        assert (
+            self.params is not None
+        ), "Provide a DataFrame of sampling parameter info at initialization"
+        assert name in self.params, "Cannot find info on {}".format(name)
 
         if dist is not None:
             if dist not in self.available_distributions():
                 logging.info(
-                    "Distribution {} not supported. See `available_distributions`."
-                    .format(dist))
+                    "Distribution {} not supported. See `available_distributions`.".format(
+                        dist
+                    )
+                )
                 dist = self.params[name].dist
         else:
             dist = self.params[name].dist
@@ -145,29 +147,32 @@ sampling_vars : pandas.DataFrame. It should have a column:
         # Final check on requested distribution
         if dist not in self.available_distributions():
             logging.info(
-                "Distribution {} not supported. See `available_distributions`."
-                .format(dist))
+                "Distribution {} not supported. See `available_distributions`.".format(
+                    dist
+                )
+            )
             return None
 
         sampling_func = self.draw[dist]
         sampling_lims = self.params[name].range
 
-        if dist == 'uniform':
+        if dist == "uniform":
             return sampling_func(*sampling_lims, size=size)
-        if dist == 'zero':
+        if dist == "zero":
             return sampling_func(size)
-        if dist == 'uniform_cos':
+        if dist == "uniform_cos":
             return sampling_func(size, *sampling_lims)
-        if dist == 'uniform_S2':
+        if dist == "uniform_S2":
             return sampling_func(size)
-        if dist == 'fixed':
-            assert len(sampling_lims) == 1 or \
-                len(set(np.array(sampling_lims).flatten())) == 1,\
-                "Range of {}: {} does not support a fixed distribution".format(
-                name, sampling_lims)
+        if dist == "fixed":
+            assert (
+                len(sampling_lims) == 1
+                or len(set(np.array(sampling_lims).flatten())) == 1
+            ), "Range of {}: {} does not support a fixed distribution".format(
+                name, sampling_lims
+            )
             return sampling_func(size, np.unique(sampling_lims)[0])
-        if dist == 'choices':
+        if dist == "choices":
             return sampling_func(size, sampling_lims)
 
-        raise IOError("Failed to generate sample for {}, dist = {}.".format(
-            name, dist))
+        raise IOError("Failed to generate sample for {}, dist = {}.".format(name, dist))

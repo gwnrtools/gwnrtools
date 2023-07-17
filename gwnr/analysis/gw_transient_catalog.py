@@ -16,16 +16,17 @@
 import subprocess
 import pycbc.catalog
 
-gwtc1_psd_url_template = "https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_{0}_PSDs.dat"
+gwtc1_psd_url_template = (
+    "https://dcc.ligo.org/public/0158/P1900011/001/GWTC1_{0}_PSDs.dat"
+)
 
 
 def get_psd_url(source, name):
-    """Get the source psd for a particular GW catalog
-    """
-    if source == 'gwtc-1':
+    """Get the source psd for a particular GW catalog"""
+    if source == "gwtc-1":
         fname = gwtc1_psd_url_template.format(name)
     else:
-        raise ValueError('Unkown catalog source {}'.format(source))
+        raise ValueError("Unkown catalog source {}".format(source))
     return fname
 
 
@@ -45,12 +46,13 @@ def rmfile(filename):
 
 class Merger(pycbc.catalog.Merger):
     """Informaton about a specific compact binary merger"""
-    def __init__(self, name, source='gwtc-1', **kwargs):
+
+    def __init__(self, name, source="gwtc-1", **kwargs):
         super(Merger, self).__init__(name, source, **kwargs)
         self.psd_url = get_psd_url(source, name)
 
-    def operating_ifos(self, ignore_ifos=['G1']):
-        ifos = self.data['files']['OperatingIFOs'].split()
+    def operating_ifos(self, ignore_ifos=["G1"]):
+        ifos = self.data["files"]["OperatingIFOs"].split()
         # Explicitly ignore IFOs
         for ifo in ignore_ifos:
             if ifo in ifos:
@@ -58,7 +60,7 @@ class Merger(pycbc.catalog.Merger):
         return ifos
 
     def gpstime(self):
-        return self.data['tc']['best']
+        return self.data["tc"]["best"]
 
     def frame_data_url(self, ifo, duration=32, sample_rate=4096):
         length = "{}sec".format(duration)
@@ -68,20 +70,21 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
-                .format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(
+                    sample_rate
+                )
+            )
 
-        return self.data['files'][ifo][length][sampling]['GWF']
+        return self.data["files"][ifo][length][sampling]["GWF"]
 
     def frame_data_name(self, ifo, duration, sample_rate):
-        """ Get the name of frame data file using pycbc.catalog API
-        """
-        return self.frame_data_url(ifo,
-                                   duration=duration,
-                                   sample_rate=sample_rate).split('/')[-1]
+        """Get the name of frame data file using pycbc.catalog API"""
+        return self.frame_data_url(
+            ifo, duration=duration, sample_rate=sample_rate
+        ).split("/")[-1]
 
-    def fetch_data(self, ifo, duration=32, sample_rate=4096, save_dir=''):
-        """ Download strain file around the event
+    def fetch_data(self, ifo, duration=32, sample_rate=4096, save_dir=""):
+        """Download strain file around the event
 
         By default this will return the strain around the event in the smallest
         format available. Selection of other data requires options to be set.
@@ -112,32 +115,32 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
-                .format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(
+                    sample_rate
+                )
+            )
 
-        url = self.frame_data_url(ifo,
-                                  duration=duration,
-                                  sample_rate=sample_rate)
+        url = self.frame_data_url(ifo, duration=duration, sample_rate=sample_rate)
         filename = download_file(url, cache=False)
-        local_filename = self.frame_data_name(ifo,
-                                              duration=duration,
-                                              sample_rate=sample_rate)
+        local_filename = self.frame_data_name(
+            ifo, duration=duration, sample_rate=sample_rate
+        )
 
-        if save_dir != '.' and save_dir != '':
+        if save_dir != "." and save_dir != "":
             mkdir(save_dir)
             local_filename = os.path.join(save_dir, local_filename)
 
-        subprocess.call('mv {0} {1}'.format(filename, local_filename).split())
+        subprocess.call("mv {0} {1}".format(filename, local_filename).split())
 
         return local_filename
 
     def channel_name(self, ifo, sample_rate):
-        """ Get the channel name in data
+        """Get the channel name in data
 
         Currently this is hard-coded to the regex followed at
         https://www.gw-openscience.org/catalog/GWTC-1-confident/
 
-        and does not use the catalog 
+        and does not use the catalog
         """
         if sample_rate == 4096:
             sampling = "4KHz"
@@ -145,14 +148,16 @@ class Merger(pycbc.catalog.Merger):
             sampling = "16KHz"
         else:
             raise IOError(
-                "Data is not available at sample rate {}Hz. Resampling is not supported yet."
-                .format(sample_rate))
+                "Data is not available at sample rate {}Hz. Resampling is not supported yet.".format(
+                    sample_rate
+                )
+            )
         return "{}:GWOSC-{}_R1_STRAIN".format(ifo, sampling.upper())
 
     def psd_file_name(self, ifo):
-        return 'psd_{0}.dat'.format(ifo)
+        return "psd_{0}.dat".format(ifo)
 
-    def fetch_psds(self, duration=32, sample_rate=4096, save_dir=''):
+    def fetch_psds(self, duration=32, sample_rate=4096, save_dir=""):
         """Download PSD file around the event
 
         This will return the PSD around the event and interpolate
@@ -193,7 +198,7 @@ class Merger(pycbc.catalog.Merger):
         for idx, ifo in enumerate(self.operating_ifos()):
             # get file name for the PSD
             local_filename = self.psd_file_name(ifo)
-            if save_dir != '.' and save_dir != '':
+            if save_dir != "." and save_dir != "":
                 mkdir(save_dir)
                 local_filename = os.path.join(save_dir, local_filename)
             filenames[ifo] = local_filename
@@ -204,16 +209,18 @@ class Merger(pycbc.catalog.Merger):
 
             # Interpolate to desired delta_f
             resampled_psd = resample_and_extrapolate_psd(
-                freq_vals, psd_vals, 1. / duration, sample_rate / 2)
+                freq_vals, psd_vals, 1.0 / duration, sample_rate / 2
+            )
 
             # Write interpolated PSD to disk
-            numpy.savetxt(local_filename,
-                          numpy.column_stack([
-                              resampled_psd.sample_frequencies,
-                              resampled_psd.data
-                          ]),
-                          fmt='%.12e',
-                          header='Frequency(Hz)  PSD')
+            numpy.savetxt(
+                local_filename,
+                numpy.column_stack(
+                    [resampled_psd.sample_frequencies, resampled_psd.data]
+                ),
+                fmt="%.12e",
+                header="Frequency(Hz)  PSD",
+            )
 
         return filenames
 
