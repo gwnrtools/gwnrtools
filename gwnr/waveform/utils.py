@@ -171,3 +171,91 @@ def get_time_at_y(fr, fvalue):
     )
     # Return time value
     return tmp["x"]
+
+
+def get_isco_x(mass1, mass2, spin1z, spin2z, show_figure=False):
+    def isco_eqn(
+        x,
+        mass1,
+        mass2,
+        spin1z,
+        spin2z,
+    ):
+        """ """
+        try:
+            if x <= 0:
+                return 1e99
+        except:
+            pass
+
+        dm = mass1 - mass2
+        total_mass = mass1 + mass2
+        dm_over_m = dm / total_mass
+        eta = mass1 * mass2 / total_mass / total_mass
+
+        # S^c_{1,2} = s{1,2}z * m{1,2} * m{1,2}
+        s_c_1 = spin1z * mass1 * mass1
+        s_c_2 = spin2z * mass2 * mass2
+
+        # s_c_l = ell.S^c = Z.S^c, with
+        # S^c = S^c_1 + S^c_2
+        s_c_l = s_c_1 + s_c_2
+
+        # sigma_c_l = ell.sigma^c = Z.sigma_c, with
+        # sigma^c = (M/m2) S^c_2 - (M/m1) S^c_1
+        sigma_c_l = (total_mass / mass2) * s_c_2 - (total_mass / mass1) * s_c_1
+
+        # s_c_0l = ell.S^c_0 = Z.S^c_0, with
+        # S^c_0 = (1 + m2/m1) S^c_1 + (1 + m1/m2) S^_2
+        s_c_0l = (1.0 + mass2 / mass1) * s_c_1 + (1.0 + mass1 / mass2) * s_c_2
+
+        # Now, normalize all spin combinations with total_mass^2
+        s_c_l /= total_mass**2
+        sigma_c_l /= total_mass**2
+        s_c_0l /= total_mass**2
+
+        print(f"Spin combos: {s_c_l}, {sigma_c_l}, {s_c_0l} for ({spin1z}, {spin2z})")
+
+        pn1p5 = 14 * s_c_l + 6.0 * dm_over_m * sigma_c_l
+        pn2 = 14.0 * eta - 3 * s_c_0l**2
+        pn2p5 = -(
+            (22.0 + 32.0 * eta) * s_c_l + dm_over_m * sigma_c_l * (18.0 + 15.0 * eta)
+        )
+        pn3 = (397.0 / 2.0 - 123.0 * np.pi * np.pi / 16.0) * eta - 14.0 * eta**2
+        return (
+            1
+            - 6.0 * x
+            + pn1p5 * x**1.5
+            + pn2 * x**2
+            + pn2p5 * x**2.5
+            + pn3 * x**3
+        )
+
+    res = minimize_scalar(
+        isco_eqn, method="brent", bracket=[0.01, 1], args=(mass1, mass2, spin1z, spin2z)
+    )
+    print(f"Value of x at ISCO: {res.x}")
+    if show_figure:
+        import matplotlib.pyplot as plt
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(
+            np.arange(0, 1, 0.01),
+            isco_eqn(np.arange(0, 1, 0.01), mass1, mass2, spin1z, spin2z),
+        )
+        plt.axvline(res.x, color="g", label="ISCO x")
+        plt.axhline(res.fun, color="r", label="min potential")
+        plt.axvline(1 / 6, color="k", label="r=6M")
+        plt.legend()
+        plt.ylim(0, 6)
+        plt.xlabel("x")
+        plt.ylabel("effective binary potential")
+    return res.x
+
+
+def get_isco_frequency(mass1, mass2, spin1z, spin2z):
+    x_isco = get_isco_x(mass1, mass2, spin1z, spin2z)
+    m_omg_isco = x_isco**1.5
+    f_isco = m_omg_isco / (lal.PI * (mass1 + mass2) * lal.MTSUN_SI)
+    print(f"Value of f at ISCO: {f_isco}Hz")
+    return f_isco
