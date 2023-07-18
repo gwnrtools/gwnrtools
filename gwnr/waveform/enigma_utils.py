@@ -99,7 +99,7 @@ def eccentricity_at_periastron_frequency(
     return e0
 
 
-def get_imr_enigma_waveform(
+def get_imr_enigma_modes(
     mass1,
     mass2,
     spin1z,
@@ -109,11 +109,22 @@ def get_imr_enigma_waveform(
     distance,
     f_lower,
     sample_rate,
+    modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    include_conjugate_modes=True,
     f_mr_transition=None,
     f_window_mr_transition=None,
     return_hybridization_info=False,
-    verbose=True,
+    verbose=False,
 ):
+    if f_mr_transition is None:
+        f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
+        # get_isco_frequency(m1, m2, s1z, s2z) / 2 / 2,
+    if f_window_mr_transition is None:
+        f_window_mr_transition = 10.0
+
+    if distance < lal.PC_SI:
+        distance = distance * lal.PC_SI
+
     itime = time.time()
     retval = ls.SimInspiralENIGMADynamics(
         mass1,
@@ -133,25 +144,30 @@ def get_imr_enigma_waveform(
     if verbose:
         print("Orbital evolution took: {} seconds".format(time_delta))
 
+    # Include conjugate modes in the mode list
+    if include_conjugate_modes:
+        for el, em in modes_to_use:
+            if (el, -em) not in modes_to_use:
+                modes_to_use.append((el, -em))
+
     itime = time.time()
     modes = {}
-    for l in [2, 3, 4, 5, 6, 7, 8]:
-        for m in range(-l, l + 1):
-            modes[(l, m)] = ls.SimInspiralENIGMAModeFromDynamics(
-                l,
-                m,
-                t.data,
-                x.data,
-                phi.data,
-                phidot.data,
-                r.data,
-                rdot.data,
-                mass1,
-                mass2,
-                spin1z,
-                spin2z,
-                distance,
-            )
+    for el, em in modes_to_use:
+        modes[(el, em)] = ls.SimInspiralENIGMAModeFromDynamics(
+            el,
+            em,
+            t.data,
+            x.data,
+            phi.data,
+            phidot.data,
+            r.data,
+            rdot.data,
+            mass1,
+            mass2,
+            spin1z,
+            spin2z,
+            distance,
+        )
 
     modes_numpy = {k: np.asarray(modes[k].data.data) for k in modes}
     time_delta = time.time() - itime
@@ -175,8 +191,8 @@ def get_imr_enigma_waveform(
         0,
         0,
         spin2z,
-        90,
-        90,
+        (f_mr_transition - f_window_mr_transition) * 0.9,
+        (f_mr_transition - f_window_mr_transition) * 0.9,
         distance,
         None,
         4,
@@ -190,25 +206,111 @@ def get_imr_enigma_waveform(
 
     modes_mr_numpy = {k: np.asarray(modes_mr[k].data.data) for k in modes_mr}
 
-    if f_mr_transition is None:
-        f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
-        # get_isco_frequency(m1, m2, s1z, s2z) / 2 / 2,
-    if f_window_mr_transition is None:
-        f_window_mr_transition = 10.0
     retval = gwnr.waveform.hybridize.hybridize_modes(
         modes_numpy,
         modes_mr_numpy,
         f_mr_transition,
         f_window_mr_transition,
         1.0 / sample_rate,
-        modes_to_hybridize=[(2, 2), (3, 3), (4, 4)],
+        modes_to_hybridize=modes_to_use,
+        verbose=verbose,
     )
-    modes_imr = retval[0]
+    modes_imr_numpy = retval[0]
+
+    # Align modes at peak of (2, 2) mode
+    mode_to_align_by = (2, 2)
+    if mode_to_align_by not in modes_imr_numpy:
+        mode_to_align_by = list(modes_imr_numpy.keys())[0]
+    idx_peak = abs(modes_imr_numpy[mode_to_align_by]).argmax()
+    t_peak = idx_peak / sample_rate
+
+    itime = time.time()
+    modes_imr = {}
+    for el, em in modes_imr_numpy:
+        modes_imr[(el, em)] = pt.TimeSeries(
+            modes_imr_numpy[(el, em)], delta_t=1.0 / sample_rate, epoch=-1 * t_peak
+        )
+    if verbose:
+        print(
+            "Time taken to store in pycbc.TimeSeries is {} secs".format(
+                time.time() - itime
+            )
+        )
+
     if verbose:
         print("hybridized.")
     if return_hybridization_info:
         return modes_imr, retval
     return modes_imr
+
+
+def get_imr_enigma_waveform(
+    mass1,
+    mass2,
+    spin1z,
+    spin2z,
+    eccentricity,
+    mean_anomaly,
+    inclination,
+    coa_phase,
+    distance,
+    f_lower,
+    sample_rate,
+    modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    f_mr_transition=None,
+    f_window_mr_transition=None,
+    return_hybridization_info=False,
+    verbose=False,
+):
+    if distance < lal.PC_SI:
+        distance = distance * lal.PC_SI
+
+    retval = get_imr_enigma_modes(
+        mass1,
+        mass2,
+        spin1z,
+        spin2z,
+        eccentricity,
+        mean_anomaly,
+        distance,
+        f_lower,
+        sample_rate,
+        modes_to_use=modes_to_use,
+        include_conjugate_modes=True,
+        f_mr_transition=f_mr_transition,
+        f_window_mr_transition=f_window_mr_transition,
+        return_hybridization_info=return_hybridization_info,
+        verbose=verbose,
+    )
+    if return_hybridization_info:
+        modes_imr, retval = retval
+    else:
+        modes_imr = retval
+
+    hp_ihc = modes_imr[(2, 2)] * 0  # Initialize with zeros
+    if verbose:
+        print("Shape of hp_ihc: {}".format(np.shape(hp_ihc)), flush=True)
+
+    for el, em in modes_imr:
+        ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
+        hp_ihc = hp_ihc + modes_imr[(el, em)] * ylm
+        if verbose:
+            print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
+            print(
+                "... adding {}, {}".format(
+                    modes_imr[(el, em)], modes_imr[(el, em)] * ylm
+                ),
+                flush=True,
+            )
+            print(f"hp after adding: {hp_ihc.data}", flush=True)
+
+    hp = hp_ihc.real()
+    hc = -1 * hp_ihc.imag()
+
+    if return_hybridization_info:
+        return hp, hc, retval
+
+    return hp, hc
 
 
 class FitMOmegaIMRAttachmentNonSpinning:
