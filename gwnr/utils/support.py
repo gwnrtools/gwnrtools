@@ -53,11 +53,9 @@ def approx_equal(A, B, eps=1.0e-4):
 
 def update_progress(progress):
     print(
-        (
-            "\r\r[{0}] {1:.2%}".format(
-                "#" * (int(progress * 100) / 2) + " " * (50 - int(progress * 100) / 2),
-                progress,
-            )
+        "\r\r[{0}] {1:.2%}".format(
+            "#" * (int(progress * 100) / 2) + " " * (50 - int(progress * 100) / 2),
+            progress,
         )
     )
     if progress == 100:
@@ -163,3 +161,36 @@ def get_uniform_mass_range(m_lower, m_upper, m_sep):
         mlist.append(m)
     mlist.append(m_upper)
     return np.array(mlist)
+
+
+def call_with_timeout(myfunc, args=(), kwargs={}, timeout=5):
+    """
+    This function calls user-provided `myfunc` with user-provided
+    `args` and `kwargs` in a separate multiprocessing.Process.
+    if the function evaluation takes more than `timeout` seconds, the
+    `Process` is terminated and error raised. If it evalutes within
+    `timeout` seconds, the results are fetched from the `Queue` and
+    returned.
+    """
+
+    from multiprocessing import Process, Queue
+
+    def funcwrapper(p, *args, **kwargs):
+        """
+        This thin wrapper calls the user-provided function, and puts
+        its result into the multiprocessing `Queue`  so that it can be
+        obtained via `Queue().get()`.
+        """
+        res = myfunc(*args, **kwargs)
+        p.put(res)
+
+    queue = Queue()
+    task = Process(target=funcwrapper, args=(queue, *args))
+    task.start()
+    task.join(timeout=timeout)
+    task.terminate()
+    try:
+        result = queue.get(timeout=0)
+        return result
+    except Exception:
+        raise Exception("Timeout")
