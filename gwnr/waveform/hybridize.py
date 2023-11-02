@@ -206,7 +206,7 @@ def hybridize_modes(
         Sample rate for timeseries (Hz)
     np_sp: {4, int}
 
-    modes_to_hybridize: {[(2, 2), (3, 3), (4, 4), (5, 5)], list}
+    modes_to_hybridize: {[(2, 2), (3, 3), (4, 4)], list}
         List of modes as tuples of (l, m) values to hybridize
     mode_to_align_by: {(2, 2), tuple}
         One specific mode (l, m) value that is to be treated as baseline for
@@ -219,9 +219,11 @@ def hybridize_modes(
     modes_not_aligned_by = modes_to_hybridize.copy()
     if include_conjugate_modes:
         for el, em in modes_to_hybridize.copy():
-            modes_to_hybridize.append((el, -em))
+            if (el, -em) not in modes_to_hybridize:
+                modes_to_hybridize.append((el, -em))
         for el, em in modes_not_aligned_by.copy():
-            modes_not_aligned_by.append((el, -em))
+            if (el, -em) not in modes_not_aligned_by:
+                modes_not_aligned_by.append((el, -em))
     modes_not_aligned_by.remove(mode_to_align_by)
 
     # Input checks
