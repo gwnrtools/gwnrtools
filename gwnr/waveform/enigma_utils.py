@@ -55,16 +55,15 @@ def eccentricity_at_extremum_frequency(
     if extremum.lower() not in ["periastron", "apastron"]:
         raise IOError("Allowed values for extremum: periastron, apastron")
 
-    itime = time.time()
+    itime = time.perf_counter()
     retval = ls.SimInspiralENIGMADynamics(
         mass1, mass2, spin1z, spin2z, e0, f_lower, l0, 1e-12, sample_rate, False
     )
     t, x, e, l, phi, phidot, r, rdot = retval[:8]
     t.data.data *= lal.MTSUN_SI
 
-    time_delta = time.time() - itime
     if verbose:
-        print("Orbital evolution took: {} seconds".format(time_delta))
+        print(f"Orbital evolution took: {time.perf_counter() - itime} seconds")
 
     omega = pt.TimeSeries(phidot.data.data, delta_t=t.data.data[1] - t.data.data[0])
     if extremum == "periastron":
@@ -132,16 +131,15 @@ def eccentricity_at_reference_frequency(
     verbose=False,
 ):
     """ """
-    itime = time.time()
+    itime = time.perf_counter()
     retval = ls.SimInspiralENIGMADynamics(
         mass1, mass2, spin1z, spin2z, e0, f_lower, l0, 1e-12, sample_rate, False
     )
     t, x, e, l, phi, phidot, r, rdot = retval[:8]
     t.data.data *= lal.MTSUN_SI
 
-    time_delta = time.time() - itime
     if verbose:
-        print("Orbital evolution took: {} seconds".format(time_delta))
+        print(f"Orbital evolution took: {time.perf_counter() - itime} seconds")
 
     x_reference = (np.pi * (mass1 + mass2) * lal.MTSUN_SI * f_reference) ** (2.0 / 3.0)
 
@@ -171,33 +169,62 @@ def eccentricity_at_reference_frequency(
     return e0
 
 
-def get_imr_enigma_modes(
+def get_inspiral_enigma_modes(
     mass1,
     mass2,
-    spin1z,
-    spin2z,
-    eccentricity,
-    mean_anomaly,
-    distance,
     f_lower,
     sample_rate,
+    spin1z=0.0,
+    spin2z=0.0,
+    eccentricity=0.0,
+    mean_anomaly=0.0,
+    distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     include_conjugate_modes=True,
-    f_mr_transition=None,
-    f_window_mr_transition=None,
-    return_hybridization_info=False,
+    return_orbital_params=False,
     verbose=False,
 ):
-    if f_mr_transition is None:
-        f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
-        # get_isco_frequency(m1, m2, s1z, s2z) / 2 / 2,
-    if f_window_mr_transition is None:
-        f_window_mr_transition = 10.0
+    """
+    Returns inspiral ENIGMA GW modes
 
-    if distance < lal.PC_SI:
-        distance = distance * lal.PC_SI
+    Parameters:
+    -----------
+        mass1, mass2            -- Binary's component masses (in solar masses)
+        f_lower                 -- Starting frequency of the waveform (in Hz)
+        sample_rate             -- Sampling rate of the waveform timeseries (in Hz)
+        spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
+        eccentricity            -- Initial eccentricity
+        mean_anomaly            -- Mean anomaly of the periastron (in rad)
+        distance                -- Luminosity distance to the binary (in Mpc)
+        modes_to_use            -- GW modes to use. List of tuples (l, |m|)
+        include_conjugate_modes -- If True, (l, -|m|) modes are included as well
+        return_orbital_params   -- If True, returns the orbital evolution of all the orbital elements.
+                                   Can also be a list of orbital variable names to return only those
+                                   specific variables. Available orbital variables are:
+                                   ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot']
+        verbose                 -- Verbosity flag
 
-    itime = time.time()
+    Returns:
+    --------
+        t                 -- Time grid (in seconds)
+        orbital_var_dict  -- Dictionary of evolution of orbital elements.
+                             Returned only if "return_orbital_params" is specified.
+        modes_numpy       -- Dictionary of GW modes
+    """
+
+    if return_orbital_params:
+        orbital_var_names = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
+        if return_orbital_params != True:
+            for name in return_orbital_params:
+                if name not in orbital_var_names:
+                    raise Exception(
+                        f"{name} is not a valid orbital variable name. Available orbital variable names are: {orbital_var_names}."
+                    )
+
+    distance *= 1.0e6 * lal.PC_SI  # Mpc to SI conversion
+
+    # Calculating the orbital variables
+    itime = time.perf_counter()
     retval = ls.SimInspiralENIGMADynamics(
         mass1,
         mass2,
@@ -211,10 +238,12 @@ def get_imr_enigma_modes(
         False,
     )
     t, x, e, l, phi, phidot, r, rdot = retval[:8]
-    t.data.data *= lal.MTSUN_SI
-    time_delta = time.time() - itime
+    t.data.data *= (
+        mass1 + mass2
+    ) * lal.MTSUN_SI  # Time from geometrized units to seconds
+
     if verbose:
-        print("Orbital evolution took: {} seconds".format(time_delta))
+        print(f"Orbital evolution took: {time.perf_counter() - itime} seconds")
 
     # Include conjugate modes in the mode list
     if include_conjugate_modes:
@@ -222,7 +251,7 @@ def get_imr_enigma_modes(
             if (el, -em) not in modes_to_use:
                 modes_to_use.append((el, -em))
 
-    itime = time.time()
+    itime = time.perf_counter()
     modes = {}
     for el, em in modes_to_use:
         modes[(el, em)] = ls.SimInspiralENIGMAModeFromDynamics(
@@ -242,9 +271,177 @@ def get_imr_enigma_modes(
         )
 
     modes_numpy = {k: np.asarray(modes[k].data.data) for k in modes}
-    time_delta = time.time() - itime
+
     if verbose:
-        print("Modes generation took: {} seconds".format(time_delta))
+        print(f"Modes generation took: {time.perf_counter() - itime} seconds")
+
+    if return_orbital_params:
+        orbital_var_dict = {}
+        if return_orbital_params == True:
+            return_orbital_params = orbital_var_names
+        for name in return_orbital_params:
+            exec(f"orbital_var_dict['{name}'] = {name}.data.data")
+        return (t.data.data - t.data.data[-1]), orbital_var_dict, modes_numpy
+    return (t.data.data - t.data.data[-1]), modes_numpy
+
+
+def get_inspiral_enigma_waveform(
+    mass1,
+    mass2,
+    f_lower,
+    sample_rate,
+    spin1z=0.0,
+    spin2z=0.0,
+    eccentricity=0.0,
+    mean_anomaly=0.0,
+    inclination=0.0,
+    coa_phase=0.0,
+    distance=1.0,
+    modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    return_orbital_params=False,
+    verbose=False,
+):
+    """
+    Returns inspiral ENIGMA GW polarizations
+
+    Parameters:
+    -----------
+        mass1, mass2            -- Binary's component masses (in solar masses)
+        f_lower                 -- Starting frequency of the waveform (in Hz)
+        sample_rate             -- Sampling rate of the waveform timeseries (in Hz)
+        spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
+        eccentricity            -- Initial eccentricity
+        mean_anomaly            -- Mean anomaly of the periastron (in rad)
+        inclination             -- Inclination (in rad), defined as the angle between the orbital
+                                   angular momentum L and the line-of-sight
+        coa_phase               -- Coalesence phase of the binary (in rad)
+        distance                -- Luminosity distance to the binary (in Mpc)
+        modes_to_use            -- GW modes to use. List of tuples (l, |m|)
+        return_orbital_params   -- If True, returns the orbital evolution of all the orbital elements (in
+                                   geometrized units). Can also be a list of orbital variable names to return
+                                   only those specific variables. Available orbital variables names are:
+                                   ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot']
+        verbose                 -- Verbosity level. Available values are: 0, 1, 2
+
+    Returns:
+    --------
+        t                 -- Time grid (in seconds)
+        orbital_var_dict  -- Dictionary of evolution of orbital elements.
+                             Returned only if "return_orbital_params" is specified.
+        hp, hc            -- Plus and cross GW polarizations
+    """
+
+    retval = get_inspiral_enigma_modes(
+        mass1=mass1,
+        mass2=mass2,
+        spin1z=spin1z,
+        spin2z=spin2z,
+        eccentricity=eccentricity,
+        mean_anomaly=mean_anomaly,
+        distance=distance,
+        f_lower=f_lower,
+        sample_rate=sample_rate,
+        modes_to_use=modes_to_use,
+        include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
+        return_orbital_params=return_orbital_params,
+        verbose=verbose,
+    )
+
+    if return_orbital_params:
+        t, orbital_var_dict, modes_imr = retval
+    else:
+        t, modes_imr = retval
+
+    hp_ihc = modes_imr[(2, 2)] * 0  # Initialize with zeros
+    if verbose:
+        print("Shape of hp_ihc: {}".format(np.shape(hp_ihc)), flush=True)
+
+    for el, em in modes_imr:
+        ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
+        hp_ihc = hp_ihc + modes_imr[(el, em)] * ylm
+        if verbose == 2:
+            print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
+            print(
+                "... adding {}, {}".format(
+                    modes_imr[(el, em)], modes_imr[(el, em)] * ylm
+                ),
+                flush=True,
+            )
+            print(f"hp after adding: {hp_ihc}", flush=True)
+
+    hp = hp_ihc.real
+    hc = -1 * hp_ihc.imag
+
+    if return_orbital_params:
+        return t, orbital_var_dict, hp, hc
+    return t, hp, hc
+
+
+def get_imr_enigma_modes(
+    mass1,
+    mass2,
+    f_lower,
+    sample_rate,
+    spin1z=0.0,
+    spin2z=0.0,
+    eccentricity=0.0,
+    mean_anomaly=0.0,
+    distance=1.0,
+    modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    include_conjugate_modes=True,
+    f_mr_transition=None,
+    f_window_mr_transition=None,
+    return_hybridization_info=False,
+    verbose=False,
+):
+    """
+    Returns IMR GW modes constructed using ENIGMA for inspiral and NRSur7dq4 for merger-ringdown
+
+    Parameters:
+    -----------
+        mass1, mass2              -- Binary's component masses (in solar masses)
+        f_lower                   -- Starting frequency of the waveform (in Hz)
+        sample_rate               -- Sampling rate of the waveform timeseries (in Hz)
+        spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
+        eccentricity              -- Initial eccentricity
+        mean_anomaly              -- Mean anomaly of the periastron (in rad)
+        distance                  -- Luminosity distance to the binary (in Mpc)
+        modes_to_use              -- GW modes to use. List of tuples (l, |m|)
+        include_conjugate_modes   -- If True, (l, -|m|) modes are included as well
+        f_mr_transition           -- Inspiral to merger transition frequency (in Hz)
+        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz)
+        return_hybridization_info -- If True, returns hybridization related data
+        verbose                   -- Verbosity flag
+
+    Returns:
+    --------
+        modes_imr  -- Dictionary of IMR GW modes PyCBC TimeSeries
+        retval     -- Hybridization related data.
+                      Returned only if "return_hybridization_info" is True
+    """
+    if f_mr_transition is None:
+        f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
+        # get_isco_frequency(m1, m2, s1z, s2z) / 2 / 2,
+    if f_window_mr_transition is None:
+        f_window_mr_transition = 10.0
+
+    retval = get_inspiral_enigma_modes(
+        mass1=mass1,
+        mass2=mass2,
+        spin1z=spin1z,
+        spin2z=spin2z,
+        eccentricity=eccentricity,
+        mean_anomaly=mean_anomaly,
+        distance=distance,
+        f_lower=f_lower,
+        sample_rate=sample_rate,
+        modes_to_use=modes_to_use,
+        include_conjugate_modes=include_conjugate_modes,
+        return_orbital_params=False,  # These IMR functions don't have the functionality of returning the intermediate orbital parameters
+        verbose=verbose,
+    )
+
+    modes_numpy = retval[-1]
 
     # SimInspiralChooseTDModes(
     # REAL8 phiRef, REAL8 deltaT,
@@ -265,7 +462,7 @@ def get_imr_enigma_modes(
         spin2z,
         (f_mr_transition - f_window_mr_transition) * 0.9,
         (f_mr_transition - f_window_mr_transition) * 0.9,
-        distance,
+        distance * lal.PC_SI * 1.0e6,
         None,
         4,
         ls.NRSur7dq4,
@@ -296,7 +493,7 @@ def get_imr_enigma_modes(
     idx_peak = abs(modes_imr_numpy[mode_to_align_by]).argmax()
     t_peak = idx_peak / sample_rate
 
-    itime = time.time()
+    itime = time.perf_counter()
     modes_imr = {}
     for el, em in modes_imr_numpy:
         modes_imr[(el, em)] = pt.TimeSeries(
@@ -305,50 +502,77 @@ def get_imr_enigma_modes(
     if verbose:
         print(
             "Time taken to store in pycbc.TimeSeries is {} secs".format(
-                time.time() - itime
+                time.perf_counter() - itime
             )
         )
 
     if verbose:
         print("hybridized.")
+
     if return_hybridization_info:
         return modes_imr, retval
+
     return modes_imr
 
 
 def get_imr_enigma_waveform(
     mass1,
     mass2,
-    spin1z,
-    spin2z,
-    eccentricity,
-    mean_anomaly,
-    inclination,
-    coa_phase,
-    distance,
     f_lower,
     sample_rate,
+    spin1z=0.0,
+    spin2z=0.0,
+    eccentricity=0.0,
+    mean_anomaly=0.0,
+    inclination=0.0,
+    coa_phase=0.0,
+    distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     f_mr_transition=None,
     f_window_mr_transition=None,
     return_hybridization_info=False,
     verbose=False,
 ):
-    if distance < lal.PC_SI:
-        distance = distance * lal.PC_SI
+    """
+    Returns IMR GW polarizations constructed using IMR ENIGMA modes
+
+    Parameters:
+    -----------
+        mass1, mass2              -- Binary's component masses (in solar masses)
+        f_lower                   -- Starting frequency of the waveform (in Hz)
+        sample_rate               -- Sampling rate of the waveform timeseries (in Hz)
+        spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
+        eccentricity              -- Initial eccentricity
+        mean_anomaly              -- Mean anomaly of the periastron (in rad)
+        inclination               -- Inclination (in rad), defined as the angle between the orbital
+                                     angular momentum L and the line-of-sight
+        coa_phase                 -- Coalesence phase of the binary (in rad)
+        distance                  -- Luminosity distance to the binary (in Mpc)
+        modes_to_use              -- GW modes to use. List of tuples (l, |m|)
+        f_mr_transition           -- Inspiral to merger transition frequency (in Hz)
+        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz)
+        return_hybridization_info -- If True, returns hybridization related data
+        verbose                   -- Verbosity level. Available values are: 0, 1, 2
+
+    Returns:
+    --------
+        hp, hc     -- Plus and cross IMR GW polarizations PyCBC TimeSeries
+        retval     -- Hybridization related data.
+                      Returned only if "return_hybridization_info" is True
+    """
 
     retval = get_imr_enigma_modes(
-        mass1,
-        mass2,
-        spin1z,
-        spin2z,
-        eccentricity,
-        mean_anomaly,
-        distance,
-        f_lower,
-        sample_rate,
+        mass1=mass1,
+        mass2=mass2,
+        spin1z=spin1z,
+        spin2z=spin2z,
+        eccentricity=eccentricity,
+        mean_anomaly=mean_anomaly,
+        distance=distance,
+        f_lower=f_lower,
+        sample_rate=sample_rate,
         modes_to_use=modes_to_use,
-        include_conjugate_modes=True,
+        include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         f_mr_transition=f_mr_transition,
         f_window_mr_transition=f_window_mr_transition,
         return_hybridization_info=return_hybridization_info,
@@ -366,7 +590,7 @@ def get_imr_enigma_waveform(
     for el, em in modes_imr:
         ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
         hp_ihc = hp_ihc + modes_imr[(el, em)] * ylm
-        if verbose:
+        if verbose == 2:
             print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
             print(
                 "... adding {}, {}".format(
