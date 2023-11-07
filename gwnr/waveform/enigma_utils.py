@@ -31,6 +31,7 @@ import gwnr
 import lal
 import lalsimulation as ls
 import pycbc.types as pt
+from .utils import f_ISCO_spin
 
 
 def find_x_for_y(x, y, y0):
@@ -408,8 +409,10 @@ def get_imr_enigma_modes(
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
         include_conjugate_modes   -- If True, (l, -|m|) modes are included as well
-        f_mr_transition           -- Inspiral to merger transition frequency (in Hz)
-        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz)
+        f_mr_transition           -- Inspiral to merger transition frequency (in Hz).
+                                     Defaults to the Kerr ISCO frequency
+        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz).
+                                     Defaults to 10 Hz
         return_hybridization_info -- If True, returns hybridization related data
         verbose                   -- Verbosity flag
 
@@ -420,8 +423,10 @@ def get_imr_enigma_modes(
                       Returned only if "return_hybridization_info" is True
     """
     if f_mr_transition is None:
-        f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
-        # get_isco_frequency(m1, m2, s1z, s2z) / 2 / 2,
+        # Kerr ISCO frequency
+        f_mr_transition = f_ISCO_spin(mass1, mass2, spin1z, spin2z)
+        # f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI # Schwarzschild ISCO frequency
+
     if f_window_mr_transition is None:
         f_window_mr_transition = 10.0
 
@@ -549,8 +554,10 @@ def get_imr_enigma_waveform(
         coa_phase                 -- Coalesence phase of the binary (in rad)
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
-        f_mr_transition           -- Inspiral to merger transition frequency (in Hz)
-        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz)
+        f_mr_transition           -- Inspiral to merger transition frequency (in Hz).
+                                     Defaults to the Kerr ISCO frequency
+        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz).
+                                     Defaults to 10 Hz
         return_hybridization_info -- If True, returns hybridization related data
         verbose                   -- Verbosity level. Available values are: 0, 1, 2
 
