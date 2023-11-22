@@ -64,7 +64,7 @@ class PrepareSXSWaveform:
     join_waveform_h5_files
     extrapolate
     join_horizons
-    transform_to_CoM_frame
+    transform_to_com_frame
     upload_output_dir
     prepare_waveform
 
