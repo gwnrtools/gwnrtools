@@ -1,27 +1,20 @@
-""" 
-MIT License
+# Copyright (C) 2023 Vaishak Prasad
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+# option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General
+# Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Copyright (c) 2023 Vaishak Prasad
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-
+"""
 Script to 
 
     a) join h5 files
@@ -113,8 +106,19 @@ class PrepareSXSWaveform:
         else:
             print(f"Out directory is set to {self.out_dir}")
 
-        if not os.path.isdir(self.out_dir):
-            os.mkdir(self.out_dir)
+        if os.path.isfile(self.out_dir):
+            raise NameError(
+                f"A file by the name {self.out_dir} already exists"
+                " Please specify a different file name"
+            )
+        else:
+            if not os.path.isdir(self.out_dir):
+                os.mkdir(self.out_dir)
+            else:
+                raise NameError(
+                    f"A directory with the name {self.out_dir}"
+                    " already exists. Please choose a different name"
+                )
 
         joined_outfile_dir = os.path.join(self.out_dir, Path(f"joined"))
 
@@ -241,7 +245,7 @@ class PrepareSXSWaveform:
 
             print("Command completed. Please check Errors.txt for details")
 
-    def extrapolate(self, ChMass=1.0, UseStupidNRARFormat=True):
+    def extrapolate(self, ch_mass=1.0, use_stupid_nrar_format=True):
         """Extrapolate the waveform"""
 
         try:
@@ -264,8 +268,8 @@ class PrepareSXSWaveform:
                 InputDirectory=self.joined_outfile_dir,
                 OutputDirectory=self.extrap_out_dir,
                 DataFile=self.joined_waveform_outfile_name,
-                ChMass=ChMass,
-                UseStupidNRARFormat=UseStupidNRARFormat,
+                ChMass=ch_mass,
+                UseStupidNRARFormat=use_stupid_nrar_format,
                 DifferenceFiles="",
                 PlotFormat="",
             )
