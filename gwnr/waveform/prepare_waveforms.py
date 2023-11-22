@@ -321,12 +321,12 @@ class PrepareSXSWaveform:
 
             print("Command completed. Please check Errors.txt for details.")
 
-    def transform_to_CoM_frame(
+    def transform_to_com_frame(
         self,
         skip_beginning_fraction=0.01,
         skip_ending_fraction=0.10,
         file_format="NRAR",
-        extrap_enn_list=[-1, 2, 3, 4, 5, 6],
+        extrapolation_orders=[-1, 2, 3, 4, 5, 6],
     ):
         from scri.SpEC.com_motion import remove_avg_com_motion
 
@@ -345,11 +345,12 @@ class PrepareSXSWaveform:
         else:
             print("Transforming to CoM frame...")
 
-            for extrap_enn in extrap_enn_list:
-                print(f"Working on Extrapolated N_{extrap_enn}")
+            for extrapolation_order in extrapolation_orders:
+                print(f"Working on Extrapolated N_{extrapolation_order}")
 
                 path_to_waveform_h5 = os.path.join(
-                    self.extrap_out_dir, f"rhOverM_Extrapolated_N{extrap_enn}.h5"
+                    self.extrap_out_dir,
+                    f"rhOverM_Extrapolated_N{extrapolation_order}.h5",
                 )
 
                 path_to_horizons_h5 = self.joined_horizons_outfile_path
@@ -378,7 +379,7 @@ class PrepareSXSWaveform:
         skip_beginning_fraction=0.01,
         skip_ending_fraction=0.10,
         file_format="NRAR",
-        extrap_enn_list=[-1, 2, 3, 4, 5, 6],
+        extrapolation_orders=[-1, 2, 3, 4, 5, 6],
         upload=False,
     ):
         self.join_waveform_h5_files(verbose=verbose)
@@ -387,11 +388,11 @@ class PrepareSXSWaveform:
 
         self.join_horizons(verbose=verbose)
 
-        self.transform_to_CoM_frame(
+        self.transform_to_com_frame(
             skip_beginning_fraction=skip_beginning_fraction,
             skip_ending_fraction=skip_ending_fraction,
             file_format=file_format,
-            extrap_enn_list=extrap_enn_list,
+            extrapolation_orders=extrapolation_orders,
         )
 
         if upload:
