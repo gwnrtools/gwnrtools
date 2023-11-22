@@ -1,4 +1,4 @@
-''' 
+""" 
 MIT License
 
 Copyright (c) 2023 Vaishak Prasad
@@ -23,98 +23,92 @@ SOFTWARE.
 
 A script to use PrepareSXSWaveforms class.
 
-'''
+"""
 
-#import scri
-#import numpy as np
+# import scri
+# import numpy as np
 from gwnrtools.gwnr.waveform import PrepareSXSWaveform
 
-sims1 = ['ICTSEccParallel01', 'ICTSEccParallel02', 'ICTSEccParallel03']
+sims1 = ["ICTSEccParallel01", "ICTSEccParallel02", "ICTSEccParallel03"]
 
-sims2 = ['EccPrecDiff001', 'EccPrecDiff002', 'EccPrecDiff004']
+sims2 = ["EccPrecDiff001", "EccPrecDiff002", "EccPrecDiff004"]
 
-sims3 = ['EccContPrecDiff001', 'EccContPrecDiff003', 
-        'EccContPrecDiff004', 'EccContPrecDiff005', 'EccContPrecDiff006', 
-        'EccContPrecDiff007' 'EccContPrecDiff008']
+sims3 = [
+    "EccContPrecDiff001",
+    "EccContPrecDiff003",
+    "EccContPrecDiff004",
+    "EccContPrecDiff005",
+    "EccContPrecDiff006",
+    "EccContPrecDiff007" "EccContPrecDiff008",
+]
 
 
-sims4 = ['eccprecrun4b']
+sims4 = ["eccprecrun4b"]
 
-prefix_dir = '/mnt/pfs/vaishak.p/sims/SpEC/gcc/'
+prefix_dir = "/mnt/pfs/vaishak.p/sims/SpEC/gcc/"
 
-sims1_dir = prefix_dir + '/bfi/ICTSEccParallel'
+sims1_dir = prefix_dir + "/bfi/ICTSEccParallel"
 
 levs = [2, 3]
 eccs = [0]
 
 
-#def print_job_info(sim):
+# def print_job_info(sim):
 
 for lev in levs:
-    
     for sim in sims1:
-
         print(sim, lev)
 
         try:
-            wfp = PrepareSXSWaveform(sim_name=sim,
-                                sim_dir=sims1_dir,
-                                lev=lev
-                                )
+            wfp = PrepareSXSWaveform(sim_name=sim, sim_dir=sims1_dir, lev=lev)
 
             wfp.prepare_waveform()
 
-
         except Exception as excep:
-
             excep("Failed")
 
-
-    sims2_dir = prefix_dir + '/bfi/EccPrecDiff'
+    sims2_dir = prefix_dir + "/bfi/EccPrecDiff"
 
     for sim in sims2:
-
         print(sim, lev)
-        
+
         try:
-            
-            wfp = PrepareSXSWaveform(sim_name=sim,
-                                sim_dir=sims2_dir,
-                                )
-            
+            wfp = PrepareSXSWaveform(
+                sim_name=sim,
+                sim_dir=sims2_dir,
+            )
+
             wfp.prepare_waveform()
-            
+
         except Exception as excep:
             excep("Failed")
 
-
-    sims3_dir = prefix_dir + '/bfi/EccContPrecDiff'
+    sims3_dir = prefix_dir + "/bfi/EccContPrecDiff"
 
     for sim in sims3:
-
         print(sim, lev)
-        
+
         try:
-            wfp = PrepareSXSWaveform(sim_name=sim,
-                                sim_dir=sims3_dir,
-                                )
+            wfp = PrepareSXSWaveform(
+                sim_name=sim,
+                sim_dir=sims3_dir,
+            )
             wfp.prepare_waveform()
-            
+
         except Exception as excep:
             excep("Failed")
 
-        
     sims3_dir = prefix_dir
 
     for sim in sims4:
-
         print(sim, lev)
-        
+
         try:
-            wfp = PrepareSXSWaveform(sim_name=sim,
-                            sim_dir=sims3_dir,
-                            )
+            wfp = PrepareSXSWaveform(
+                sim_name=sim,
+                sim_dir=sims3_dir,
+            )
             wfp.prepare_waveform()
-            
+
         except Exception as excep:
             excep("Failed")
