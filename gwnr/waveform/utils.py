@@ -259,3 +259,83 @@ def get_isco_frequency(mass1, mass2, spin1z, spin2z):
     f_isco = m_omg_isco / (lal.PI * (mass1 + mass2) * lal.MTSUN_SI)
     print(f"Value of f at ISCO: {f_isco}Hz")
     return f_isco
+
+
+def f_ISCO_spin(mass1, mass2, spin1z, spin2z):
+    """
+    Kerr ISCO frequency fitting formula for aligned-spins binary black holes
+
+    Parameters:
+    ----------
+    mass1, mass2   -- Binary's component masses (in solar masses)
+    spin1z, spin2z   -- z-components of component dimensionless spins (lies in [0,1))
+
+    Returns: Kerr ISCO frequency (in Hz)
+    -------
+    """
+    Msun = lal.MTSUN_SI
+    k00 = -3.821158961
+    k01 = -1.2019
+    k02 = -1.20764
+    k10 = 3.79245
+    k11 = 1.18385
+    k12 = 4.90494
+    Zeta = 0.41616
+
+    m1 = mass1 * Msun
+    m2 = mass2 * Msun
+    M = m1 + m2
+    eta = (m1 * m2) / (M**2)
+    z = 0
+
+    atot = (spin1z + spin2z * (m2 / m1) ** 2) / ((1 + (m2 / m1)) ** 2)
+    aeff = atot + Zeta * eta * (spin1z + spin2z)
+
+    Z1 = 1 + ((1 - aeff**2) ** (1 / 3)) * (
+        ((1 + aeff) ** (1 / 3)) + ((1 - aeff) ** (1 / 3))
+    )
+    Z2 = np.sqrt(3 * aeff**2 + Z1**2)
+    # riscocap = 3 + Z2 - ((aeff) / abs(aeff)) * np.sqrt((3 - Z1) * (3 + Z1 + 2 * Z2))
+    riscocap = 3 + Z2 - np.sign(aeff) * np.sqrt((3 - Z1) * (3 + Z1 + 2 * Z2))
+    # Equivalent to the above commented expression, and works also for aeff=0.
+    # For aeff=0, np.sign(aeff)=0, which is alright because its coefficient
+    # np.sqrt((3 - Z1) * (3 + Z1 + 2 * Z2)) is anyway 0 when aeff=0 because Z1 = 3 then.
+    Eiscocap = np.sqrt((1 - (2 / (3 * riscocap))))
+    Liscocap = (2 / (3 * np.sqrt(3))) * (1 + 2 * np.sqrt(3 * riscocap - 2))
+
+    chichif = (
+        atot
+        + eta * (Liscocap - 2 * atot * (Eiscocap - 1))
+        + k00 * eta**2
+        + k01 * eta**2 * aeff
+        + k02 * eta**2 * aeff**2
+        + k10 * eta**3
+        + k11 * eta**3 * aeff
+        + k12 * eta**3 * aeff**2
+    )
+    chichip = chichif
+
+    Z1p = 1 + ((1 - chichip**2) ** (1 / 3)) * (
+        ((1 + chichip) ** (1 / 3)) + ((1 - chichip) ** (1 / 3))
+    )
+    Z2p = np.sqrt(3 * chichip**2 + Z1p**2)
+    riscocapp = (
+        3 + Z2p - ((chichip) / abs(chichip)) * np.sqrt((3 - Z1p) * (3 + Z1p + 2 * Z2p))
+    )
+
+    omegacap = 1 / (riscocapp ** (3 / 2) + chichip)
+    Scap = (1 / (1 - 2 * eta)) * (spin1z * m1**2 + spin2z * m2**2) / (M**2)
+    SS = (1 + Scap * (-0.00303023 - 2.00661 * eta + 7.70506 * eta**2)) / (
+        1 + Scap * (-0.67144 - 1.475698 * eta + 7.30468 * eta**2)
+    )
+
+    # Erad = (M* (0.0559745 * eta + 0.580951 * eta**2 - 0.960673 * eta**3 + 3.35241 * eta**4)* SS)
+    Erad_by_M = (
+        0.0559745 * eta + 0.580951 * eta**2 - 0.960673 * eta**3 + 3.35241 * eta**4
+    ) * SS
+
+    # Mfin = M * (1 - Erad / M)
+    Mfin = M * (1 - Erad_by_M)
+    fre = (1 / (1 + z)) * omegacap / (np.pi * Mfin)
+
+    return 1 / 2 * fre
