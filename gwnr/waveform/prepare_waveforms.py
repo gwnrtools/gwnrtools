@@ -26,9 +26,10 @@ Script to
 """
 
 import os
-import scri
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import scri
 
 
 class PrepareSXSWaveform:
