@@ -4,7 +4,7 @@ celluloid>=0.2.0; python_version >= '3.5'
 h5py>=2.10.0
 lalsuite>=6.63
 lscsoft_glue==2.0.0
-matplotlib==2.1
+matplotlib>=2.1
 numexpr
 numpy==1.22.0
 pandas==0.24.2
