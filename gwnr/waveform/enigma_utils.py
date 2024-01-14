@@ -392,7 +392,10 @@ def get_imr_enigma_modes(
     include_conjugate_modes=True,
     f_mr_transition=None,
     f_window_mr_transition=None,
+    num_hyb_orbits=1,
+    keep_f_mr_transition_at_center=False,
     return_hybridization_info=False,
+    return_orbital_params=False,
     verbose=False,
 ):
     """
@@ -409,26 +412,57 @@ def get_imr_enigma_modes(
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
         include_conjugate_modes   -- If True, (l, -|m|) modes are included as well
-        f_mr_transition           -- Inspiral to merger transition frequency (in Hz).
-                                     Defaults to the Kerr ISCO frequency
-        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz).
-                                     Defaults to 10 Hz
+        f_mr_transition           -- Inspiral to merger transition GW frequency (in Hz).
+                                     Defaults to the minimum of the Kerr and Schwarzschild ISCO frequency
+        f_window_mr_transition    -- Hybridization frequency window (in Hz).
+                                     Disabled by the default value (None). In such a case, the hybridization proceeds
+                                     over a window of `num_hyb_orbits` orbital cycles (1 orbital cycle ~ 2 GW cycles)
+                                     that ends at the frequency value given by `f_mr_transition`.
+                                     Also see `keep_f_mr_transition_at_center` to choose the position of
+                                     `f_mr_transition` within this window.
+        num_hyb_orbits            -- number of orbital cycles to hybridize over.
+                                     Only used if f_window_mr_transition is not specified
+        keep_f_mr_transition_at_center -- If True, `f_mr_transition` is kept at the center of the hybridization window.
+                                          Otherwise, it's kept at the end of the window (default).
         return_hybridization_info -- If True, returns hybridization related data
+        return_orbital_params     -- If True, returns the orbital evolution of all the orbital elements (in
+                                     geometrized units). Can also be a list of orbital variable names to return
+                                     only those specific variables. Available orbital variables names are:
+                                     ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot'].
+                                     Note that these are available only for the inspiral portion of the waveform!
         verbose                   -- Verbosity flag
 
     Returns:
     --------
-        modes_imr  -- Dictionary of IMR GW modes PyCBC TimeSeries
-        retval     -- Hybridization related data.
-                      Returned only if "return_hybridization_info" is True
+        modes_imr         -- Dictionary of IMR GW modes PyCBC TimeSeries
+        orbital_var_dict  -- Dictionary of evolution of orbital elements.
+                             Returned only if "return_orbital_params" is specified.
+        retval            -- Hybridization related data.
+                             Returned only if "return_hybridization_info" is True
     """
+    if return_orbital_params is True:
+        return_orbital_params = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
+
+    if isinstance(return_orbital_params, list):
+        return_orbital_params_user = return_orbital_params.copy()
+    else:
+        return_orbital_params_user = False
+
     if f_mr_transition is None:
         # Kerr ISCO frequency
-        f_mr_transition = f_ISCO_spin(mass1, mass2, spin1z, spin2z)
-        # f_mr_transition = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI # Schwarzschild ISCO frequency
+        f_Kerr = f_ISCO_spin(mass1, mass2, spin1z, spin2z)
+        # Schwarzschild ISCO frequency
+        f_Schwarz = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
+        f_mr_transition = min(f_Kerr, f_Schwarz)
 
     if f_window_mr_transition is None:
-        f_window_mr_transition = 10.0
+        if not return_orbital_params:
+            return_orbital_params = []
+        return_orbital_params = set(return_orbital_params)
+        return_orbital_params = return_orbital_params.union(
+            set(["phi", "phidot"])
+        )  # These will be used for figuring out the hybridization window
+        return_orbital_params = list(return_orbital_params)
 
     retval = get_inspiral_enigma_modes(
         mass1=mass1,
@@ -442,11 +476,70 @@ def get_imr_enigma_modes(
         sample_rate=sample_rate,
         modes_to_use=modes_to_use,
         include_conjugate_modes=include_conjugate_modes,
-        return_orbital_params=False,  # These IMR functions don't have the functionality of returning the intermediate orbital parameters
+        return_orbital_params=return_orbital_params,
         verbose=verbose,
     )
 
     modes_numpy = retval[-1]
+    if return_orbital_params_user:
+        orb_var_dict = {
+            key: pt.TimeSeries(
+                retval[-2][key], delta_t=1.0 / sample_rate, epoch=retval[0][0]
+            )
+            for key in return_orbital_params_user
+        }
+
+    if f_window_mr_transition is None:
+        orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
+        orb_phase = retval[-2]["phi"]
+
+        transition_idx = len(orb_freq) - np.argmax(
+            orb_freq[::-1] < f_mr_transition / 2.0
+        )  # index at which orb_freq becomes just larger than transition orbital frequency, towards the end of waveform
+
+        if keep_f_mr_transition_at_center:
+            # Orbital cycle based hybridization that keeps f_mr_transition at the hybridization frequency window's midpoint
+            if (orb_phase[transition_idx] + num_hyb_orbits * np.pi) > orb_phase[-1]:
+                raise Exception(
+                    f"""Requested number of orbits to hybridize over not available in the waveform after the transition frequency.
+Either decrease the number of orbits to hybridize over (currently {num_hyb_orbits}) or decrease the inspiral-to-merger transition frequency."""
+                )
+
+            window_start_idx = (
+                np.searchsorted(
+                    orb_phase, orb_phase[transition_idx] - num_hyb_orbits * np.pi
+                )
+                - 1
+            )  # phase is always a monotonically increasing function, hence using the more efficient np.searchsorted method
+            window_end_idx = np.searchsorted(
+                orb_phase, orb_phase[transition_idx] + num_hyb_orbits * np.pi
+            )
+            f_window_mr_transition = (
+                2
+                * np.max(
+                    [
+                        orb_freq[window_end_idx] - f_mr_transition / 2.0,
+                        f_mr_transition / 2.0 - orb_freq[window_start_idx],
+                    ]
+                )
+                * 2
+            )  # Extra 2-factor for returning the (2,2)-mode frequency
+        else:
+            # Orbital cycle based hybridization that keeps f_mr_transition at the hybridization frequency window's end
+            window_start_idx = (
+                np.searchsorted(
+                    orb_phase, orb_phase[transition_idx] - 2 * np.pi * num_hyb_orbits
+                )
+                - 1
+            )
+            f_window_mr_transition = 2 * (
+                orb_freq[transition_idx] - orb_freq[window_start_idx]
+            )  # Extra 2-factor for returning the (2,2)-mode frequency
+
+    if not keep_f_mr_transition_at_center:
+        f_mr_transition -= (
+            f_window_mr_transition / 2.0
+        )  # This is done to make use of the same hybridization code, that actually assumes f_mr_transition to be at window's midpoint, to keep the hybridization window's end at f_mr_transition
 
     # SimInspiralChooseTDModes(
     # REAL8 phiRef, REAL8 deltaT,
@@ -487,6 +580,7 @@ def get_imr_enigma_modes(
         f_window_mr_transition,
         1.0 / sample_rate,
         modes_to_hybridize=modes_to_use,
+        include_conjugate_modes=include_conjugate_modes,
         verbose=verbose,
     )
     modes_imr_numpy = retval[0]
@@ -514,9 +608,12 @@ def get_imr_enigma_modes(
     if verbose:
         print("hybridized.")
 
-    if return_hybridization_info:
+    if return_hybridization_info and return_orbital_params_user:
+        return modes_imr, orb_var_dict, retval
+    elif return_orbital_params_user:
+        return modes_imr, orb_var_dict
+    elif return_hybridization_info:
         return modes_imr, retval
-
     return modes_imr
 
 
@@ -535,7 +632,10 @@ def get_imr_enigma_waveform(
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     f_mr_transition=None,
     f_window_mr_transition=None,
+    num_hyb_orbits=1,
+    keep_f_mr_transition_at_center=False,
     return_hybridization_info=False,
+    return_orbital_params=False,
     verbose=False,
 ):
     """
@@ -554,18 +654,33 @@ def get_imr_enigma_waveform(
         coa_phase                 -- Coalesence phase of the binary (in rad)
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
-        f_mr_transition           -- Inspiral to merger transition frequency (in Hz).
-                                     Defaults to the Kerr ISCO frequency
-        f_window_mr_transition    -- Hybridization frequency window around f_mr_transition (in Hz).
-                                     Defaults to 10 Hz
+        f_mr_transition           -- Inspiral to merger transition GW frequency (in Hz).
+                                     Defaults to the minimum of the Kerr and Schwarzschild ISCO frequency
+        f_window_mr_transition    -- Hybridization frequency window (in Hz).
+                                     Disabled by the default value (None). In such a case, the hybridization proceeds
+                                     over a window of `num_hyb_orbits` orbital cycles (1 orbital cycle ~ 2 GW cycles)
+                                     that ends at the frequency value given by `f_mr_transition`.
+                                     Also see `keep_f_mr_transition_at_center` to choose the position of
+                                     `f_mr_transition` within this window.
+        num_hyb_orbits            -- number of orbital cycles to hybridize over.
+                                     Only used if f_window_mr_transition is not specified
+        keep_f_mr_transition_at_center -- If True, `f_mr_transition` is kept at the center of the hybridization window.
+                                          Otherwise, it's kept at the end of the window (default).
         return_hybridization_info -- If True, returns hybridization related data
+        return_orbital_params     -- If True, returns the orbital evolution of all the orbital elements (in
+                                     geometrized units). Can also be a list of orbital variable names to return
+                                     only those specific variables. Available orbital variables names are:
+                                     ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot'].
+                                     Note that these are available only for the inspiral portion of the waveform!
         verbose                   -- Verbosity level. Available values are: 0, 1, 2
 
     Returns:
     --------
-        hp, hc     -- Plus and cross IMR GW polarizations PyCBC TimeSeries
-        retval     -- Hybridization related data.
-                      Returned only if "return_hybridization_info" is True
+        hp, hc       -- Plus and cross IMR GW polarizations PyCBC TimeSeries
+        orb_var_dict -- Dictionary of evolution of orbital elements.
+                        Returned only if return_orbital_params is specified
+        retval       -- Hybridization related data.
+                        Returned only if return_hybridization_info is True
     """
 
     retval = get_imr_enigma_modes(
@@ -582,11 +697,18 @@ def get_imr_enigma_waveform(
         include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         f_mr_transition=f_mr_transition,
         f_window_mr_transition=f_window_mr_transition,
+        num_hyb_orbits=num_hyb_orbits,
+        keep_f_mr_transition_at_center=keep_f_mr_transition_at_center,
         return_hybridization_info=return_hybridization_info,
+        return_orbital_params=return_orbital_params,
         verbose=verbose,
     )
-    if return_hybridization_info:
+    if return_hybridization_info and return_orbital_params:
+        modes_imr, orb_var_dict, retval = retval
+    elif return_hybridization_info:
         modes_imr, retval = retval
+    elif return_orbital_params:
+        modes_imr, orb_var_dict = retval
     else:
         modes_imr = retval
 
@@ -610,9 +732,12 @@ def get_imr_enigma_waveform(
     hp = hp_ihc.real()
     hc = -1 * hp_ihc.imag()
 
-    if return_hybridization_info:
+    if return_hybridization_info and return_orbital_params:
+        return hp, hc, orb_var_dict, retval
+    elif return_hybridization_info:
         return hp, hc, retval
-
+    elif return_orbital_params:
+        return hp, hc, orb_var_dict
     return hp, hc
 
 
