@@ -301,6 +301,7 @@ def get_inspiral_enigma_waveform(
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     return_orbital_params=False,
     verbose=False,
+    **kwargs
 ):
     """
     Returns inspiral ENIGMA GW polarizations
@@ -637,6 +638,7 @@ def get_imr_enigma_waveform(
     return_hybridization_info=False,
     return_orbital_params=False,
     verbose=False,
+    **kwargs
 ):
     """
     Returns IMR GW polarizations constructed using IMR ENIGMA modes
