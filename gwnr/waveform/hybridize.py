@@ -261,12 +261,12 @@ def hybridize_modes(
 
         if verbose:
             print(
-                f"INSPIRAL mode ({el}, {em}) goes from {frq_insp[(el, em)][0]}Hz to"
-                f" {frq_insp[(el, em)][-1]}Hz"
+                f"INSPIRAL mode ({el}, {em}) goes from {np.min(frq_insp[(el, em)])}Hz to"
+                f" {np.max(frq_insp[(el, em)])}Hz"
             )
             print(
-                f"MERGER mode ({el}, {em}) goes from {frq_mr[(el, em)][0]}Hz to"
-                f" {frq_mr[(el, em)][-1]}Hz"
+                f"MERGER mode ({el}, {em}) goes from {np.min(frq_mr[(el, em)])}Hz to"
+                f" {np.max(frq_mr[(el, em)])}Hz"
             )
 
     """ first we need to find the attachment region, based on the frequency """
