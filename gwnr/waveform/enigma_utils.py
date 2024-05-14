@@ -174,7 +174,7 @@ def get_inspiral_enigma_modes(
     mass1,
     mass2,
     f_lower,
-    sample_rate,
+    delta_t,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -192,7 +192,7 @@ def get_inspiral_enigma_modes(
     -----------
         mass1, mass2            -- Binary's component masses (in solar masses)
         f_lower                 -- Starting frequency of the waveform (in Hz)
-        sample_rate             -- Sampling rate of the waveform timeseries (in Hz)
+        delta_t                 -- Waveform's time grid-spacing (in s)
         spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity            -- Initial eccentricity
         mean_anomaly            -- Mean anomaly of the periastron (in rad)
@@ -223,6 +223,7 @@ def get_inspiral_enigma_modes(
                     )
 
     distance *= 1.0e6 * lal.PC_SI  # Mpc to SI conversion
+    sample_rate = int(np.round(1 / delta_t))
 
     # Calculating the orbital variables
     itime = time.perf_counter()
@@ -290,7 +291,7 @@ def get_inspiral_enigma_waveform(
     mass1,
     mass2,
     f_lower,
-    sample_rate,
+    delta_t,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -301,7 +302,7 @@ def get_inspiral_enigma_waveform(
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     return_orbital_params=False,
     verbose=False,
-    **kwargs
+    **kwargs,
 ):
     """
     Returns inspiral ENIGMA GW polarizations
@@ -310,7 +311,7 @@ def get_inspiral_enigma_waveform(
     -----------
         mass1, mass2            -- Binary's component masses (in solar masses)
         f_lower                 -- Starting frequency of the waveform (in Hz)
-        sample_rate             -- Sampling rate of the waveform timeseries (in Hz)
+        delta_t                 -- Waveform's time grid-spacing (in s)
         spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity            -- Initial eccentricity
         mean_anomaly            -- Mean anomaly of the periastron (in rad)
@@ -342,7 +343,7 @@ def get_inspiral_enigma_waveform(
         mean_anomaly=mean_anomaly,
         distance=distance,
         f_lower=f_lower,
-        sample_rate=sample_rate,
+        delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         return_orbital_params=return_orbital_params,
@@ -383,7 +384,7 @@ def get_imr_enigma_modes(
     mass1,
     mass2,
     f_lower,
-    sample_rate,
+    delta_t,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -406,7 +407,7 @@ def get_imr_enigma_modes(
     -----------
         mass1, mass2              -- Binary's component masses (in solar masses)
         f_lower                   -- Starting frequency of the waveform (in Hz)
-        sample_rate               -- Sampling rate of the waveform timeseries (in Hz)
+        delta_t                   -- Waveform's time grid-spacing (in s)
         spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity              -- Initial eccentricity
         mean_anomaly              -- Mean anomaly of the periastron (in rad)
@@ -474,12 +475,14 @@ def get_imr_enigma_modes(
         mean_anomaly=mean_anomaly,
         distance=distance,
         f_lower=f_lower,
-        sample_rate=sample_rate,
+        delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=include_conjugate_modes,
         return_orbital_params=return_orbital_params,
         verbose=verbose,
     )
+
+    sample_rate = int(np.round(1 / delta_t))
 
     modes_numpy = retval[-1]
     if return_orbital_params_user:
@@ -622,7 +625,7 @@ def get_imr_enigma_waveform(
     mass1,
     mass2,
     f_lower,
-    sample_rate,
+    delta_t,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -638,7 +641,7 @@ def get_imr_enigma_waveform(
     return_hybridization_info=False,
     return_orbital_params=False,
     verbose=False,
-    **kwargs
+    **kwargs,
 ):
     """
     Returns IMR GW polarizations constructed using IMR ENIGMA modes
@@ -647,7 +650,7 @@ def get_imr_enigma_waveform(
     -----------
         mass1, mass2              -- Binary's component masses (in solar masses)
         f_lower                   -- Starting frequency of the waveform (in Hz)
-        sample_rate               -- Sampling rate of the waveform timeseries (in Hz)
+        delta_t                   -- Waveform's time grid-spacing (in s)
         spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity              -- Initial eccentricity
         mean_anomaly              -- Mean anomaly of the periastron (in rad)
@@ -694,7 +697,7 @@ def get_imr_enigma_waveform(
         mean_anomaly=mean_anomaly,
         distance=distance,
         f_lower=f_lower,
-        sample_rate=sample_rate,
+        delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         f_mr_transition=f_mr_transition,
