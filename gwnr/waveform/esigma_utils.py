@@ -428,6 +428,7 @@ def get_imr_esigma_modes(
                                      Only used if f_window_mr_transition is not specified
         keep_f_mr_transition_at_center -- If True, `f_mr_transition` is kept at the center of the hybridization window.
                                           Otherwise, it's kept at the end of the window (default).
+        merger_ringdown_approximant    -- Choose merger-ringdown model. Tested choices: [NRSur7dq4, SEOBNRv4PHM]
         return_hybridization_info -- If True, returns hybridization related data
         return_orbital_params     -- If True, returns the orbital evolution of all the orbital elements (in
                                      geometrized units). Can also be a list of orbital variable names to return
@@ -644,13 +645,14 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
             include_conjugate_modes=include_conjugate_modes,
             verbose=verbose,
         )
-    except:
+    except Exception as exc:
         print(
             f"""Inspiral + MergerRingdown attachment failed. Its very likely
               that you entered a very large initial eccentricity {eccentricity}.
               The orbital eccentricity at the end of inspiral was {orb_eccentricity[-1]}
               """
         )
+        raise exc
     modes_imr_numpy = retval[0]
 
     # Align modes at peak of (2, 2) mode
@@ -702,8 +704,10 @@ def get_imr_esigma_waveform(
     f_window_mr_transition=None,
     num_hyb_orbits=0.25,
     keep_f_mr_transition_at_center=False,
+    merger_ringdown_approximant="NRSur7dq4",
     return_hybridization_info=False,
     return_orbital_params=False,
+    failsafe=True,
     verbose=False,
     **kwargs,
 ):
@@ -735,12 +739,15 @@ def get_imr_esigma_waveform(
                                      Only used if f_window_mr_transition is not specified
         keep_f_mr_transition_at_center -- If True, `f_mr_transition` is kept at the center of the hybridization window.
                                           Otherwise, it's kept at the end of the window (default).
+        merger_ringdown_approximant    -- Choose merger-ringdown model. Tested choices: [NRSur7dq4, SEOBNRv4PHM]
         return_hybridization_info -- If True, returns hybridization related data
         return_orbital_params     -- If True, returns the orbital evolution of all the orbital elements (in
                                      geometrized units). Can also be a list of orbital variable names to return
                                      only those specific variables. Available orbital variables names are:
                                      ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot'].
                                      Note that these are available only for the inspiral portion of the waveform!
+        failsafe                  -- If True, we make reasonable choices for the user, if the inputs to
+                                     this method lead into exceptions.
         verbose                   -- Verbosity level. Available values are: 0, 1, 2
 
     Returns:
@@ -768,8 +775,10 @@ def get_imr_esigma_waveform(
         f_window_mr_transition=f_window_mr_transition,
         num_hyb_orbits=num_hyb_orbits,
         keep_f_mr_transition_at_center=keep_f_mr_transition_at_center,
+        merger_ringdown_approximant=merger_ringdown_approximant,
         return_hybridization_info=return_hybridization_info,
         return_orbital_params=return_orbital_params,
+        failsafe=failsafe,
         verbose=verbose,
     )
     if return_hybridization_info and return_orbital_params:
