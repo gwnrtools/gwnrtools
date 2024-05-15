@@ -499,8 +499,16 @@ def get_imr_enigma_modes(
     )
 
     orb_eccentricity = retval[-2]["e"]
-    orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
+    if orb_eccentricity[-1] > 0.02 and verbose:
+        print(
+            f"""WARNING: You entered a very large initial eccentricity {eccentricity}.
+              The orbital eccentricity at the end of inspiral was {orb_eccentricity[-1]}.
+              The merger-ringdown attachment with a quasicircular model might
+              be affected.
+              """
+        )
 
+    orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
     if failsafe and (np.argmax(orb_freq[::-1] < f_mr_transition / 2.0) == 0):
         if verbose:
             print(
