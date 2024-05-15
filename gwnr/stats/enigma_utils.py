@@ -36,7 +36,7 @@ from pycbc.filter import match
 
 from gwnr.utils import make_padded_frequency_series
 from gwnr.stats import OneDRandom
-from gwnr.waveform.enigma_utils import FitMOmegaIMRAttachmentNonSpinning
+from gwnr.waveform.esigma_utils import FitMOmegaIMRAttachmentNonSpinning
 
 # TAGS for available fits
 __available_fits__ = [
@@ -102,7 +102,7 @@ for tag in __available_fits__:
         __ranges_of_sampled_params__[tag][p] = [-30.0, 30.0]
 
 
-def log_prior_enigma(
+def log_prior_esigma(
     q, total_mass, PNO, coeffs, omega_attach, sp_info, omega_fit_tag, verbose=False
 ):
     """
@@ -193,7 +193,7 @@ def log_prior_enigma(
     return 0.0
 
 
-def log_likelihood_enigma(
+def log_likelihood_esigma(
     mass1, mass2, omega_attach, PNO, f_lower, sample_rate, psd, dilation_map_match=False
 ):
     """
@@ -278,7 +278,7 @@ def log_likelihood_enigma(
 fit = FitMOmegaIMRAttachmentNonSpinning()
 
 
-def log_prob_enigma(
+def log_prob_esigma(
     theta,
     inputs,
     f_lower,
@@ -318,7 +318,7 @@ def log_prob_enigma(
     m_omega_attach = fit.fit_ratio_poly_44(eta, coeffs)
 
     # prior probability
-    log_prior = log_prior_enigma(
+    log_prior = log_prior_esigma(
         q, total_mass, PNO, coeffs, m_omega_attach, sampling_params, "fit_ratio_poly_44"
     )
     if not np.isfinite(log_prior):
@@ -326,7 +326,7 @@ def log_prob_enigma(
 
     # posterior = likelihood x prior
     return (
-        log_likelihood_enigma(
+        log_likelihood_esigma(
             mass1,
             mass2,
             m_omega_attach,
@@ -340,7 +340,7 @@ def log_prob_enigma(
     )
 
 
-def log_prob_enigma_fixed_masses(
+def log_prob_esigma_fixed_masses(
     theta,
     inputs,
     f_lower,
@@ -388,7 +388,7 @@ def log_prob_enigma_fixed_masses(
         raise
 
     # prior probability
-    log_prior = log_prior_enigma(
+    log_prior = log_prior_esigma(
         q,
         total_mass,
         PNO,
@@ -403,7 +403,7 @@ def log_prob_enigma_fixed_masses(
 
     # posterior = likelihood x prior
     return (
-        log_likelihood_enigma(
+        log_likelihood_esigma(
             mass1,
             mass2,
             m_omega_attach,
@@ -417,7 +417,7 @@ def log_prob_enigma_fixed_masses(
     )
 
 
-def log_prob_enigma_fixed_total_mass_hidden_q(
+def log_prob_esigma_fixed_total_mass_hidden_q(
     theta,
     inputs,
     f_lower,
@@ -471,7 +471,7 @@ def log_prob_enigma_fixed_total_mass_hidden_q(
     else:
         debug = False
 
-    log_prior = log_prior_enigma(
+    log_prior = log_prior_esigma(
         q,
         total_mass,
         PNO,
@@ -487,7 +487,7 @@ def log_prob_enigma_fixed_total_mass_hidden_q(
 
     # posterior = likelihood x prior
     return (
-        log_likelihood_enigma(
+        log_likelihood_esigma(
             mass1,
             mass2,
             m_omega_attach,
@@ -506,29 +506,29 @@ __log_prob_funcs__ = {}
 
 # TAG : fit_quadratic_poly
 tmp = "fit_quadratic_poly"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 # TAG : fit_cubic_poly
 tmp = "fit_cubic_poly"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_poly_44"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_sqrt_poly_44"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_sqrt_hyb1_poly_44"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_poly_43"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_sqrt_poly_43"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_sqrt_hyb1_poly_43"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
 
 tmp = "fit_ratio_poly_34"
-__log_prob_funcs__[tmp] = log_prob_enigma_fixed_total_mass_hidden_q
+__log_prob_funcs__[tmp] = log_prob_esigma_fixed_total_mass_hidden_q
