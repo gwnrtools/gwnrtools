@@ -20,7 +20,7 @@
 #
 # =============================================================================
 #
-"""Fitting functions specific to ENIGMA"""
+"""Fitting functions specific to ESIGMA"""
 
 from __future__ import absolute_import
 
@@ -170,7 +170,7 @@ def eccentricity_at_reference_frequency(
     return e0
 
 
-def get_inspiral_enigma_modes(
+def get_inspiral_esigma_modes(
     mass1,
     mass2,
     f_lower,
@@ -186,7 +186,7 @@ def get_inspiral_enigma_modes(
     verbose=False,
 ):
     """
-    Returns inspiral ENIGMA GW modes
+    Returns inspiral ESIGMA GW modes
 
     Parameters:
     -----------
@@ -287,7 +287,7 @@ def get_inspiral_enigma_modes(
     return (t.data.data - t.data.data[-1]), modes_numpy
 
 
-def get_inspiral_enigma_waveform(
+def get_inspiral_esigma_waveform(
     mass1,
     mass2,
     f_lower,
@@ -305,7 +305,7 @@ def get_inspiral_enigma_waveform(
     **kwargs,
 ):
     """
-    Returns inspiral ENIGMA GW polarizations
+    Returns inspiral ESIGMA GW polarizations
 
     Parameters:
     -----------
@@ -334,7 +334,7 @@ def get_inspiral_enigma_waveform(
         hp, hc            -- Plus and cross GW polarizations
     """
 
-    retval = get_inspiral_enigma_modes(
+    retval = get_inspiral_esigma_modes(
         mass1=mass1,
         mass2=mass2,
         spin1z=spin1z,
@@ -380,7 +380,7 @@ def get_inspiral_enigma_waveform(
     return t, hp, hc
 
 
-def get_imr_enigma_modes(
+def get_imr_esigma_modes(
     mass1,
     mass2,
     f_lower,
@@ -403,7 +403,7 @@ def get_imr_enigma_modes(
     verbose=False,
 ):
     """
-    Returns IMR GW modes constructed using ENIGMA for inspiral and NRSur7dq4 for merger-ringdown
+    Returns IMR GW modes constructed using ESIGMA for inspiral and NRSur7dq4 for merger-ringdown
 
     Parameters:
     -----------
@@ -482,7 +482,7 @@ def get_imr_enigma_modes(
         )  # These will be used for figuring out the hybridization window
         return_orbital_params = list(return_orbital_params)
 
-    retval = get_inspiral_enigma_modes(
+    retval = get_inspiral_esigma_modes(
         mass1=mass1,
         mass2=mass2,
         spin1z=spin1z,
@@ -685,7 +685,7 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
     return modes_imr
 
 
-def get_imr_enigma_waveform(
+def get_imr_esigma_waveform(
     mass1,
     mass2,
     f_lower,
@@ -708,7 +708,7 @@ def get_imr_enigma_waveform(
     **kwargs,
 ):
     """
-    Returns IMR GW polarizations constructed using IMR ENIGMA modes
+    Returns IMR GW polarizations constructed using IMR ESIGMA modes
 
     Parameters:
     -----------
@@ -752,7 +752,7 @@ def get_imr_enigma_waveform(
                         Returned only if return_hybridization_info is True
     """
 
-    retval = get_imr_enigma_modes(
+    retval = get_imr_esigma_modes(
         mass1=mass1,
         mass2=mass2,
         spin1z=spin1z,
