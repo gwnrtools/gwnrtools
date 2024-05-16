@@ -391,6 +391,7 @@ def get_imr_esigma_modes(
     mean_anomaly=0.0,
     distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    mode_to_align_by = (2, 2),
     include_conjugate_modes=True,
     f_mr_transition=None,
     f_window_mr_transition=None,
@@ -415,6 +416,7 @@ def get_imr_esigma_modes(
         mean_anomaly              -- Mean anomaly of the periastron (in rad)
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
+        mode_to_align_by          -- GW mode to use to align inspiral and merger in phase and time
         include_conjugate_modes   -- If True, (l, -|m|) modes are included as well
         f_mr_transition           -- Inspiral to merger transition GW frequency (in Hz).
                                      Defaults to the minimum of the Kerr and Schwarzschild ISCO frequency
@@ -448,8 +450,10 @@ def get_imr_esigma_modes(
                              Returned only if "return_hybridization_info" is True
     """
     if not hasattr(ls, merger_ringdown_approximant):
-        raise IOError("""We cannot generate individual modes for {merger_ringdown_approximant}.
-                      Try one of: [NRSur7dq4, SEOBNRv4PHM]""")
+        raise IOError(
+            """We cannot generate individual modes for {merger_ringdown_approximant}.
+                      Try one of: [NRSur7dq4, SEOBNRv4PHM]"""
+        )
 
     if return_orbital_params is True:
         return_orbital_params = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
@@ -499,7 +503,12 @@ def get_imr_esigma_modes(
         verbose=verbose,
     )
 
+    # Retrieve modes, orbital phase and frequency from the returned list
     orb_eccentricity = retval[-2]["e"]
+    orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
+    modes_numpy = retval[-1]
+
+    # Warn user if eccentricity at the end of inspiral is potentially unsafe
     if orb_eccentricity[-1] > 0.02 and verbose:
         print(
             f"""WARNING: You entered a very large initial eccentricity {eccentricity}.
@@ -509,18 +518,40 @@ def get_imr_esigma_modes(
               """
         )
 
-    orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
-    if failsafe and (np.argmax(orb_freq[::-1] < f_mr_transition / 2.0) == 0):
-        if verbose:
-            print(
-                f"""FAILSAFE: Orb freq at end of inspiral is {orb_freq[-1]}Hz,
-                  so we are resetting transition frequency from
-                  {f_mr_transition}Hz to {2.0 * orb_freq[-1]}Hz.  """
-            )
-        f_mr_transition = 2.0 * orb_freq[-1]
+    # DEBUG
+    if verbose > 1:
+        el, em = mode_to_align_by
+        mode_phase = gwnr.waveform.hybridize.compute_phase(
+            modes_numpy[mode_to_align_by]
+        )
+        mode_frq = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
+        print(
+            f"""DEBUG: Orbital freq at end of inspiral is {orb_freq[-1]}Hz,
+                mode-22 freq at tne end of inspiral is {mode_frq[-1]}Hz,
+                max and min mode-22 frequencies are {np.max(mode_frq)}Hz and {np.min(mode_frq)}Hz,
+                and the transition frequency (of {el},{em}-mode) requested is
+                {f_mr_transition}Hz, which should be less than {2.0 * orb_freq[-1]}Hz.  """
+        )
+        return modes_numpy, mode_phase, mode_frq, orb_freq, orb_eccentricity
 
-    # Retrieve modes from the returned list
-    modes_numpy = retval[-1]
+    # In case the user-specified transition frequency is too high, and they
+    # requested failsafe mode, we reset it to a reasonable value.
+    if failsafe:
+        el, em = mode_to_align_by
+        mode_phase = gwnr.waveform.hybridize.compute_phase(
+            modes_numpy[mode_to_align_by]
+        )
+        mode_frq = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
+        if np.max(mode_frq) < f_mr_transition:
+            if verbose:
+                print(
+                    f"""FAILSAFE: Maximum orbital freq during inspiral is {orb_freq.max()}Hz,
+                    and max frequency of {el},{em}-mode is {mode_frq.max()}Hz,
+                    so we are resetting transition frequency from
+                    {f_mr_transition}Hz to {mode_frq.max()}Hz.  """
+                )
+            f_mr_transition = mode_frq.max()
+
     if return_orbital_params_user:
         orb_var_dict = {
             key: pt.TimeSeries(
@@ -656,7 +687,6 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
     modes_imr_numpy = retval[0]
 
     # Align modes at peak of (2, 2) mode
-    mode_to_align_by = (2, 2)
     if mode_to_align_by not in modes_imr_numpy:
         mode_to_align_by = list(modes_imr_numpy.keys())[0]
     idx_peak = abs(modes_imr_numpy[mode_to_align_by]).argmax()
@@ -700,6 +730,7 @@ def get_imr_esigma_waveform(
     coa_phase=0.0,
     distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
+    mode_to_align_by=(2, 2),
     f_mr_transition=None,
     f_window_mr_transition=None,
     num_hyb_orbits=0.25,
@@ -727,6 +758,7 @@ def get_imr_esigma_waveform(
         coa_phase                 -- Coalesence phase of the binary (in rad)
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
+        mode_to_align_by          -- GW mode to use to align inspiral and merger in phase and time
         f_mr_transition           -- Inspiral to merger transition GW frequency (in Hz).
                                      Defaults to the minimum of the Kerr and Schwarzschild ISCO frequency
         f_window_mr_transition    -- Hybridization frequency window (in Hz).
@@ -770,6 +802,7 @@ def get_imr_esigma_waveform(
         f_lower=f_lower,
         delta_t=delta_t,
         modes_to_use=modes_to_use,
+        mode_to_align_by=mode_to_align_by,
         include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         f_mr_transition=f_mr_transition,
         f_window_mr_transition=f_window_mr_transition,
