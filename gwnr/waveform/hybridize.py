@@ -61,10 +61,14 @@ def find_first_value_location_in_series(frq_timeseries, frq_desired):
 
 def find_last_value_location_in_series(frq_timeseries, frq_desired):
     if frq_desired < np.min(frq_timeseries):
-        raise Exception("Desired frequency out of bounds, lower than min frequency")
+        raise Exception(
+            f"""Desired value {frq_desired} out of bounds, lower than min value {np.min(frq_timeseries)}"""
+        )
 
     if frq_desired > np.max(frq_timeseries):
-        raise Exception("Desired frequency out of bounds, higher than max frequency")
+        raise Exception(
+            f"""Desired value {frq_desired} out of bounds, higher than max value {np.max(frq_timeseries)}"""
+        )
     """ 
         We reverse the array and traverse it to find the location where the i_th value is more than
         the desired value while the i+1_th value is less, hence locating the desired value somewhere
