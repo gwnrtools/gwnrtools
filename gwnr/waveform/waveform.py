@@ -29,11 +29,6 @@ from glue.ligolw import ligolw, lsctables
 
 from gwnr.utils.types import extend_waveform_TimeSeries, extend_waveform_FrequencySeries
 
-os.environ[
-    "LD_LIBRARY_PATH"
-] = "/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/"
-
-
 class ContentHandler(ligolw.LIGOLWContentHandler):
     pass
 
