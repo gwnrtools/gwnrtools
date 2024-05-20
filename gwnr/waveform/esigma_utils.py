@@ -391,7 +391,7 @@ def get_imr_esigma_modes(
     mean_anomaly=0.0,
     distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
-    mode_to_align_by = (2, 2),
+    mode_to_align_by=(2, 2),
     include_conjugate_modes=True,
     f_mr_transition=None,
     f_window_mr_transition=None,
@@ -404,7 +404,7 @@ def get_imr_esigma_modes(
     verbose=False,
 ):
     """
-    Returns IMR GW modes constructed using ESIGMA for inspiral and NRSur7dq4 for merger-ringdown
+    Returns IMR GW modes constructed using ESIGMA for inspiral and NRSur7dq4/SEOBNRv4PHM for merger-ringdown
 
     Parameters:
     -----------
@@ -474,18 +474,24 @@ def get_imr_esigma_modes(
         f_Schwarz = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
         f_mr_transition = min(f_Kerr, f_Schwarz)
 
+    if not return_orbital_params:
+        return_orbital_params = ["e"]
+        # Needed necessarily for hybridization error printing
+    return_orbital_params = set(return_orbital_params)
+
+    if failsafe or (verbose > 1):
+        return_orbital_params = return_orbital_params.union(set(["phidot"]))
+
     # If the user does not provide the width of hybridization window (in terms
     # of 22-mode frequency) over which the inspiral should transition to
     # merger-ringdown, we switch schemes and hybridize over `num_hyb_orbits`
     # orbits instead.
     if f_window_mr_transition is None:
-        if not return_orbital_params:
-            return_orbital_params = []
-        return_orbital_params = set(return_orbital_params)
         return_orbital_params = return_orbital_params.union(
-            set(["phi", "phidot", "e"])
+            set(["phi", "phidot"])
         )  # These will be used for figuring out the hybridization window
-        return_orbital_params = list(return_orbital_params)
+
+    return_orbital_params = list(return_orbital_params)
 
     retval = get_inspiral_esigma_modes(
         mass1=mass1,
@@ -505,7 +511,8 @@ def get_imr_esigma_modes(
 
     # Retrieve modes, orbital phase and frequency from the returned list
     orb_eccentricity = retval[-2]["e"]
-    orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
+    if (f_window_mr_transition is None) or failsafe or (verbose > 1):
+        orb_freq = retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
     modes_numpy = retval[-1]
 
     # Warn user if eccentricity at the end of inspiral is potentially unsafe
@@ -527,10 +534,10 @@ def get_imr_esigma_modes(
         mode_frq = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
         print(
             f"""DEBUG: Orbital freq at end of inspiral is {orb_freq[-1]}Hz,
-                mode-22 freq at tne end of inspiral is {mode_frq[-1]}Hz,
+                mode-22 freq at the end of inspiral is {mode_frq[-1]}Hz,
                 max and min mode-22 frequencies are {np.max(mode_frq)}Hz and {np.min(mode_frq)}Hz,
                 and the transition frequency (of {el},{em}-mode) requested is
-                {f_mr_transition}Hz, which should be less than {2.0 * orb_freq[-1]}Hz.  """
+                {f_mr_transition}Hz, which should be less than 2 x end-of-inspiral orbital freq {2.0 * orb_freq[-1]}Hz."""
         )
         return modes_numpy, mode_phase, mode_frq, orb_freq, orb_eccentricity
 
