@@ -118,6 +118,19 @@ def align_in_phase(
     t2_index_mr,
     m_mode=2,
 ):
+    if len(inspiral) == 0:
+        raise IOError(
+            f"""You passed an inspiral waveform of zero length, to align
+                      with merger-ringdown!"""
+        )
+    if (t2_index_insp + 1 - t1_index_insp) < 1:
+        raise IOError(
+            f"""You have passed a very narrow window for the inspiral
+                      waveform's hybridization. As per your input, the inspiral
+                      waveform from index {t1_index_insp} to {t2_index_insp + 1}
+                      should be used to attach merger-ringdown"""
+        )
+
     # Function alignes the two waveforms using the phase, optimised over the attachment region
     # m from l,m mode
     def optfn_ph(phaseshift_correction):
@@ -220,6 +233,11 @@ def hybridize_modes(
     verbose: {True, bool}
         Set this to True to enable logging output.
     """
+    if frq_width <= 0:
+        raise IOError(
+            f"""You are trying to hybridize over a frequency window of
+            negative length (= {frq_width}Hz). Fix this."""
+        )
     modes_not_aligned_by = modes_to_hybridize.copy()
     if include_conjugate_modes:
         for el, em in modes_to_hybridize.copy():
@@ -301,6 +319,19 @@ def hybridize_modes(
 
     # another way to define t2_index_mr is through number of points in the inspiral window
     t1_index_insp = t2_index_insp - (t2_index_mr - t1_index_mr)
+
+    if verbose > 4:
+        print(
+            f"""In the merger-ringdown waveform, the hybridization frequency window
+              [{frq_attach - frq_width / 2}, {frq_attach + frq_width / 2}]
+              was found at indices [{t1_index_mr}, {t2_index_mr}]
+              """
+        )
+        print(
+            f"""In the inspiral waveform, the same window is to be found at
+              indices [{t1_index_insp}, {t2_index_insp}.]
+              """
+        )
     """ 
         Theoretically, we NEED a timeshift to align the waveforms in frequency. 
         Instead of shifting one of the two waveforms for alignment, we are defining
