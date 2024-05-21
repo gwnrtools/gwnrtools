@@ -579,10 +579,10 @@ def get_imr_esigma_modes(
         )  # index at which orb_freq becomes just larger than transition orbital
         # frequency, towards the end of waveform
 
-        if verbose:
+        if verbose > 4:
             print(
-                f"""The transition is to happen at index: {transition_idx}, with
-                length: {len(orb_freq)}"""
+                f"""The transition is to happen in a window centered at
+                index: {transition_idx}. Total length is: {len(orb_freq)}"""
             )
 
         if keep_f_mr_transition_at_center and not (
@@ -616,6 +616,10 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
                 )
                 * 2
             )  # Extra 2-factor for returning the (2,2)-mode frequency
+            if verbose:
+                print(
+                    f"""Location 2: f_window_mr_transition = {f_window_mr_transition}"""
+                )
         else:
             # Orbital cycle based hybridization that keeps f_mr_transition at the hybridization frequency window's end
             window_start_idx = (
@@ -627,6 +631,13 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
             f_window_mr_transition = 2 * (
                 orb_freq[transition_idx] - orb_freq[window_start_idx]
             )  # Extra 2-factor for returning the (2,2)-mode frequency
+
+            if verbose > 4:
+                print(
+                    f"""The transition is to happen in a window from
+                    frequencies: [{orb_freq[window_start_idx]}, {orb_freq[transition_idx]}]Hz,
+                    between indices: [{window_start_idx}, {transition_idx}]"""
+                )
 
     # This is done to make use of the same hybridization code, that actually
     # assumes f_mr_transition to be at window's midpoint, to keep the
@@ -677,8 +688,8 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
             modes_numpy,
             modes_mr_numpy,
             f_mr_transition,
-            f_window_mr_transition,
-            1.0 / sample_rate,
+            frq_width=f_window_mr_transition,
+            delta_t=1.0 / sample_rate,
             modes_to_hybridize=modes_to_use,
             include_conjugate_modes=include_conjugate_modes,
             verbose=verbose,
