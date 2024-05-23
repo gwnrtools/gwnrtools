@@ -526,7 +526,7 @@ def get_imr_esigma_modes(
         )
 
     # DEBUG
-    if verbose > 4:
+    if verbose > 5:
         el, em = mode_to_align_by
         mode_phase = gwnr.waveform.hybridize.compute_phase(
             modes_numpy[mode_to_align_by]
