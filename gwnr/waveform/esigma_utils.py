@@ -574,8 +574,8 @@ def get_imr_esigma_modes(
     if f_window_mr_transition is None:
         orb_phase = retval[-2]["phi"]
 
-        transition_idx = len(orb_freq) - np.argmax(
-            orb_freq[::-1] < f_mr_transition / 2.0
+        transition_idx = (
+            len(orb_freq) - 1 - np.argmax(orb_freq[::-1] < f_mr_transition / 2.0)
         )  # index at which orb_freq becomes just larger than transition orbital
         # frequency, towards the end of waveform
 
@@ -635,9 +635,7 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
                     between indices: [{window_start_idx}, {transition_idx}]"""
                 )
         if verbose > 4:
-            print(
-                f"""f_window_mr_transition = {f_window_mr_transition}"""
-            )
+            print(f"""f_window_mr_transition = {f_window_mr_transition}""")
 
     # This is done to make use of the same hybridization code, that actually
     # assumes f_mr_transition to be at window's midpoint, to keep the
