@@ -194,12 +194,14 @@ def compute_frequency(phase, delta_t):
 def hybridize_modes(
     inspiral_modes,
     merger_ringdown_modes,
+    inspiral_orbital_frequency,
     frq_attach,
     frq_width=10.0,
     delta_t=1.0 / 4096,
     no_sp=8,
     modes_to_hybridize=[(2, 2), (3, 3), (4, 4)],
     mode_to_align_by=(2, 2),
+    hybridize_using_orbital_frequency=False,
     include_conjugate_modes=True,
     verbose=True,
 ):
@@ -238,6 +240,13 @@ def hybridize_modes(
             f"""You are trying to hybridize over a frequency window of
             negative length (= {frq_width}Hz). Fix this."""
         )
+    if hybridize_using_orbital_frequency:
+        if len(inspiral_orbital_frequency) != len(inspiral_modes[mode_to_align_by]):
+            raise IOError(
+                f"""You asked for hybridization using orbital frequency, but
+                the orbital frequency array and inspiral modes array have
+                different lengths: {len(inspiral_orbital_frequency)}, {len(inspiral_modes[mode_to_align_by])}"""
+            )
     modes_not_aligned_by = modes_to_hybridize.copy()
     if include_conjugate_modes:
         for el, em in modes_to_hybridize.copy():
@@ -313,9 +322,23 @@ def hybridize_modes(
     the one at the rightmost occurance in time) 
 
     """
-    t2_index_insp = find_last_value_location_in_series(
-        frq_insp[(el, em)], frq_attach + frq_width / 2
-    )
+    if hybridize_using_orbital_frequency:
+        t2_index_insp = find_last_value_location_in_series(
+            inspiral_orbital_frequency, (frq_attach + frq_width / 2) / em
+        )
+        if verbose > 1:
+            print(
+                f"""Hybridizing using orbital frequency. Frequency
+                  {frq_attach + frq_width / 2}Hz found at {t2_index_insp}.
+                  The same frequency would have been found at index
+                  {find_last_value_location_in_series(frq_insp[(el, em)],
+                  frq_attach + frq_width / 2)} of mode frequency evolution.
+                  """
+            )
+    else:
+        t2_index_insp = find_last_value_location_in_series(
+            frq_insp[(el, em)], frq_attach + frq_width / 2
+        )
 
     # another way to define t2_index_mr is through number of points in the inspiral window
     t1_index_insp = t2_index_insp - (t2_index_mr - t1_index_mr)
