@@ -175,6 +175,7 @@ def get_inspiral_esigma_modes(
     mass2,
     f_lower,
     delta_t,
+    f_ref=None,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -183,6 +184,7 @@ def get_inspiral_esigma_modes(
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     include_conjugate_modes=True,
     return_orbital_params=False,
+    return_pycbc_timeseries=True,
     verbose=False,
 ):
     """
@@ -192,6 +194,9 @@ def get_inspiral_esigma_modes(
     -----------
         mass1, mass2            -- Binary's component masses (in solar masses)
         f_lower                 -- Starting frequency of the waveform (in Hz)
+        f_ref                   -- Reference frequency at which to define the waveform
+                                   parameters.
+                                   We require f_ref <= f_lower. f_ref = f_lower by default.
         delta_t                 -- Waveform's time grid-spacing (in s)
         spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity            -- Initial eccentricity
@@ -203,14 +208,17 @@ def get_inspiral_esigma_modes(
                                    Can also be a list of orbital variable names to return only those
                                    specific variables. Available orbital variables are:
                                    ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot']
+        return_pycbc_timeseries -- If True, returns data in the form of PyCBC timeseries.
+                                   True by default.
         verbose                 -- Verbosity flag
 
     Returns:
     --------
-        t                 -- Time grid (in seconds)
+        t                 -- Time grid (in seconds).
+                             Returned only if return_pycbc_timeseries=False
         orbital_var_dict  -- Dictionary of evolution of orbital elements.
-                             Returned only if "return_orbital_params" is specified.
-        modes_numpy       -- Dictionary of GW modes
+                             Returned only if "return_orbital_params" is specified
+        modes             -- Dictionary of GW modes
     """
 
     if return_orbital_params:
@@ -221,6 +229,11 @@ def get_inspiral_esigma_modes(
                     raise Exception(
                         f"{name} is not a valid orbital variable name. Available orbital variable names are: {orbital_var_names}."
                     )
+
+    if f_ref is None:
+        f_ref = f_lower
+    elif f_ref > f_lower:
+        raise NotImplementedError("We do not support f_ref > f_lower yet.")
 
     distance *= 1.0e6 * lal.PC_SI  # Mpc to SI conversion
     sample_rate = int(np.round(1 / delta_t))
@@ -233,12 +246,22 @@ def get_inspiral_esigma_modes(
         spin1z,
         spin2z,
         eccentricity,
-        f_lower,
+        f_ref,
         mean_anomaly,
         1e-12,
         sample_rate,
         False,
     )
+
+    if f_ref < f_lower:
+        ref_idx = np.searchsorted(
+            (retval[1].data.data ** 1.5) / ((mass1 + mass2) * lal.MTSUN_SI * np.pi),
+            f_lower,
+        )
+        new_len = len(retval[0].data.data) - ref_idx
+        for ii in range(8):
+            lal.ResizeREAL8TimeSeries(retval[ii], ref_idx, new_len)
+
     t, x, e, l, phi, phidot, r, rdot = retval[:8]
     t.data.data *= (
         mass1 + mass2
@@ -272,7 +295,13 @@ def get_inspiral_esigma_modes(
             distance,
         )
 
-    modes_numpy = {k: np.asarray(modes[k].data.data) for k in modes}
+    if return_pycbc_timeseries:
+        modes = {
+            k: pt.TimeSeries(modes[k].data.data, delta_t=1.0 / sample_rate, epoch=0)
+            for k in modes
+        }
+    else:
+        modes = {k: np.asarray(modes[k].data.data) for k in modes}
 
     if verbose:
         print(f"Modes generation took: {time.perf_counter() - itime} seconds")
@@ -281,10 +310,21 @@ def get_inspiral_esigma_modes(
         orbital_var_dict = {}
         if return_orbital_params == True:
             return_orbital_params = orbital_var_names
+
+        if return_pycbc_timeseries:
+            for name in return_orbital_params:
+                exec(
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=1.0 / sample_rate, epoch=0)"
+                )
+            return orbital_var_dict, modes
+
         for name in return_orbital_params:
             exec(f"orbital_var_dict['{name}'] = {name}.data.data")
-        return (t.data.data - t.data.data[-1]), orbital_var_dict, modes_numpy
-    return (t.data.data - t.data.data[-1]), modes_numpy
+        return (t.data.data - t.data.data[-1]), orbital_var_dict, modes
+
+    if return_pycbc_timeseries:
+        return modes
+    return (t.data.data - t.data.data[-1]), modes
 
 
 def get_inspiral_esigma_waveform(
@@ -292,6 +332,7 @@ def get_inspiral_esigma_waveform(
     mass2,
     f_lower,
     delta_t,
+    f_ref=None,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -301,6 +342,7 @@ def get_inspiral_esigma_waveform(
     distance=1.0,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
     return_orbital_params=False,
+    return_pycbc_timeseries=True,
     verbose=False,
     **kwargs,
 ):
@@ -311,6 +353,9 @@ def get_inspiral_esigma_waveform(
     -----------
         mass1, mass2            -- Binary's component masses (in solar masses)
         f_lower                 -- Starting frequency of the waveform (in Hz)
+        f_ref                   -- Reference frequency at which to define the waveform
+                                   parameters.
+                                   We require f_ref <= f_lower. f_ref = f_lower by default.
         delta_t                 -- Waveform's time grid-spacing (in s)
         spin1z, spin2z          -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity            -- Initial eccentricity
@@ -324,13 +369,16 @@ def get_inspiral_esigma_waveform(
                                    geometrized units). Can also be a list of orbital variable names to return
                                    only those specific variables. Available orbital variables names are:
                                    ['x', 'e', 'l', 'phi', 'phidot', 'r', 'rdot']
+        return_pycbc_timeseries -- If True, returns data in the form of PyCBC timeseries.
+                                   True by default
         verbose                 -- Verbosity level. Available values are: 0, 1, 2
 
     Returns:
     --------
-        t                 -- Time grid (in seconds)
+        t                 -- Time grid (in seconds).
+                             Returned only if return_pycbc_timeseries=False
         orbital_var_dict  -- Dictionary of evolution of orbital elements.
-                             Returned only if "return_orbital_params" is specified.
+                             Returned only if "return_orbital_params" is specified
         hp, hc            -- Plus and cross GW polarizations
     """
 
@@ -342,12 +390,14 @@ def get_inspiral_esigma_waveform(
         eccentricity=eccentricity,
         mean_anomaly=mean_anomaly,
         distance=distance,
+        f_ref=f_ref,
         f_lower=f_lower,
         delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=True,  # Always include conjugate modes while generating polarizations
         return_orbital_params=return_orbital_params,
         verbose=verbose,
+        return_pycbc_timeseries=False,
     )
 
     if return_orbital_params:
@@ -372,11 +422,24 @@ def get_inspiral_esigma_waveform(
             )
             print(f"hp after adding: {hp_ihc}", flush=True)
 
-    hp = hp_ihc.real
-    hc = -1 * hp_ihc.imag
+    if return_pycbc_timeseries:
+        hp = pt.TimeSeries(hp_ihc.real, delta_t=t[1] - t[0], epoch=0)
+        hc = pt.TimeSeries(-1 * hp_ihc.imag, delta_t=t[1] - t[0], epoch=0)
+    else:
+        hp = hp_ihc.real
+        hc = -1 * hp_ihc.imag
 
     if return_orbital_params:
+        if return_pycbc_timeseries:
+            for name in orbital_var_dict:
+                exec(
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries(orbital_var_dict['{name}'], delta_t=t[1]-t[0], epoch=0)"
+                )
+            return orbital_var_dict, hp, hc
         return t, orbital_var_dict, hp, hc
+
+    if return_pycbc_timeseries:
+        return hp, hc
     return t, hp, hc
 
 
@@ -385,6 +448,7 @@ def get_imr_esigma_modes(
     mass2,
     f_lower,
     delta_t,
+    f_ref=None,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -410,6 +474,9 @@ def get_imr_esigma_modes(
     -----------
         mass1, mass2              -- Binary's component masses (in solar masses)
         f_lower                   -- Starting frequency of the waveform (in Hz)
+        f_ref                     -- Reference frequency at which to define the waveform
+                                     parameters.
+                                     We require f_ref <= f_lower. f_ref = f_lower by default.
         delta_t                   -- Waveform's time grid-spacing (in s)
         spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity              -- Initial eccentricity
@@ -445,7 +512,7 @@ def get_imr_esigma_modes(
     --------
         modes_imr         -- Dictionary of IMR GW modes PyCBC TimeSeries
         orbital_var_dict  -- Dictionary of evolution of orbital elements.
-                             Returned only if "return_orbital_params" is specified.
+                             Returned only if "return_orbital_params" is specified
         retval            -- Hybridization related data.
                              Returned only if "return_hybridization_info" is True
     """
@@ -502,10 +569,12 @@ def get_imr_esigma_modes(
         mean_anomaly=mean_anomaly,
         distance=distance,
         f_lower=f_lower,
+        f_ref=f_ref,
         delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=include_conjugate_modes,
         return_orbital_params=return_orbital_params,
+        return_pycbc_timeseries=False,
         verbose=verbose,
     )
 
@@ -738,6 +807,7 @@ def get_imr_esigma_waveform(
     mass2,
     f_lower,
     delta_t,
+    f_ref=None,
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
@@ -765,6 +835,9 @@ def get_imr_esigma_waveform(
     -----------
         mass1, mass2              -- Binary's component masses (in solar masses)
         f_lower                   -- Starting frequency of the waveform (in Hz)
+        f_ref                     -- Reference frequency at which to define the waveform
+                                     parameters.
+                                     We require f_ref <= f_lower. f_ref = f_lower by default.
         delta_t                   -- Waveform's time grid-spacing (in s)
         spin1z, spin2z            -- z-components of component dimensionless spins (lies in [0,1))
         eccentricity              -- Initial eccentricity
@@ -816,6 +889,7 @@ def get_imr_esigma_waveform(
         mean_anomaly=mean_anomaly,
         distance=distance,
         f_lower=f_lower,
+        f_ref=f_ref,
         delta_t=delta_t,
         modes_to_use=modes_to_use,
         mode_to_align_by=mode_to_align_by,
