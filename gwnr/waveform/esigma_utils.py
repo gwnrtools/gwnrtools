@@ -33,6 +33,9 @@ import lalsimulation as ls
 import pycbc.types as pt
 from .utils import f_ISCO_spin
 
+ECCENTRICITY_LEVEL_ISCO_WARNING = 0.02
+ECCENTRICITY_LEVEL_ISCO_ERROR = 0.1
+
 
 def find_x_for_y(x, y, y0):
     return x[abs(y - y0).argmin()]
@@ -526,7 +529,7 @@ def get_imr_esigma_modes(
                       Try one of: [NRSur7dq4, SEOBNRv4PHM]"""
         )
 
-    if return_orbital_params is True:
+    if return_orbital_params == True:
         return_orbital_params = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
 
     if isinstance(return_orbital_params, list):
@@ -546,8 +549,9 @@ def get_imr_esigma_modes(
         f_mr_transition = min(f_Kerr, f_Schwarz)
 
     if not return_orbital_params:
-        return_orbital_params = ["e"]
         # Needed necessarily for hybridization error printing
+        return_orbital_params = ["e"]
+
     return_orbital_params = set(return_orbital_params)
 
     if failsafe or (verbose > 1):
@@ -583,7 +587,7 @@ def get_imr_esigma_modes(
     )
 
     # Retrieve modes, orbital phase and frequency from the returned list
-    modes_numpy = retval[-1]
+    modes_inspiral = retval[-1]
     orb_eccentricity = retval[-2]["e"]
     if (f_window_mr_transition is None) or failsafe or (verbose > 1):
         if hybridize_using_orbital_frequency:
@@ -596,7 +600,7 @@ def get_imr_esigma_modes(
             )
 
     # Warn user if eccentricity at the end of inspiral is potentially unsafe
-    if orb_eccentricity[-1] > 0.02 and verbose:
+    if orb_eccentricity[-1] > ECCENTRICITY_LEVEL_ISCO_WARNING and verbose:
         print(
             f"""WARNING: You entered a very large initial eccentricity {eccentricity}.
               The orbital eccentricity at the end of inspiral was {orb_eccentricity[-1]}.
@@ -608,7 +612,7 @@ def get_imr_esigma_modes(
     if return_orbital_params_user:
         orb_var_dict = {
             key: pt.TimeSeries(
-                retval[-2][key], delta_t=1.0 / sample_rate, epoch=retval[0][0]
+                retval[-2][key], delta_t=delta_t, epoch=retval[0][0]
             )
             for key in return_orbital_params_user
         }
@@ -617,7 +621,7 @@ def get_imr_esigma_modes(
     if verbose > 5:
         el, em = mode_to_align_by
         mode_phase = gwnr.waveform.hybridize.compute_phase(
-            modes_numpy[mode_to_align_by]
+            modes_inspiral[mode_to_align_by]
         )
         mode_frq = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
         print(
@@ -629,7 +633,7 @@ def get_imr_esigma_modes(
                 of dominant mode: {mode_frq.max()}Hz."""
         )
         return (
-            modes_numpy,
+            modes_inspiral,
             mode_phase,
             mode_frq,
             orb_freq,
@@ -642,7 +646,7 @@ def get_imr_esigma_modes(
     if failsafe:
         el, em = mode_to_align_by
         mode_phase = gwnr.waveform.hybridize.compute_phase(
-            modes_numpy[mode_to_align_by]
+            modes_inspiral[mode_to_align_by]
         )
         mode_frq = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
         if mode_frq.max() < f_mr_transition:
@@ -774,7 +778,7 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
                 print(f"Generating MR waveform from {f_lower_mr}Hz...")
             hlm_mr = ls.SimInspiralChooseTDModes(
                 0,  # phiRef
-                1.0 / sample_rate,  # deltaT
+                delta_t,  # deltaT
                 mass1 * lal.MSUN_SI,
                 mass2 * lal.MSUN_SI,
                 0,  # spin1x
@@ -804,12 +808,12 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
 
     try:
         retval = gwnr.waveform.hybridize.hybridize_modes(
-            modes_numpy,
+            modes_inspiral,
             modes_mr_numpy,
             orb_freq,
             f_mr_transition,
             frq_width=f_window_mr_transition,
-            delta_t=1.0 / sample_rate,
+            delta_t=delta_t,
             modes_to_hybridize=modes_to_use,
             hybridize_using_orbital_frequency=hybridize_using_orbital_frequency,
             include_conjugate_modes=include_conjugate_modes,
@@ -835,7 +839,7 @@ Either decrease the number of orbits to hybridize over (currently {num_hyb_orbit
     modes_imr = {}
     for el, em in modes_imr_numpy:
         modes_imr[(el, em)] = pt.TimeSeries(
-            modes_imr_numpy[(el, em)], delta_t=1.0 / sample_rate, epoch=-1 * t_peak
+            modes_imr_numpy[(el, em)], delta_t=delta_t, epoch=-1 * t_peak
         )
     if verbose:
         print(
