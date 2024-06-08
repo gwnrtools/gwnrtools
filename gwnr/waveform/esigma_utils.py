@@ -239,7 +239,6 @@ def get_inspiral_esigma_modes(
         raise NotImplementedError("We do not support f_ref > f_lower yet.")
 
     distance *= 1.0e6 * lal.PC_SI  # Mpc to SI conversion
-    sample_rate = int(np.round(1 / delta_t))
 
     # Calculating the orbital variables
     itime = time.perf_counter()
@@ -252,7 +251,7 @@ def get_inspiral_esigma_modes(
         f_ref,
         mean_anomaly,
         1e-12,
-        sample_rate,
+        1 / delta_t,
         False,
     )
 
@@ -300,7 +299,7 @@ def get_inspiral_esigma_modes(
 
     if return_pycbc_timeseries:
         modes = {
-            k: pt.TimeSeries(modes[k].data.data, delta_t=1.0 / sample_rate, epoch=0)
+            k: pt.TimeSeries(modes[k].data.data, delta_t=delta_t, epoch=0)
             for k in modes
         }
     else:
@@ -317,7 +316,7 @@ def get_inspiral_esigma_modes(
         if return_pycbc_timeseries:
             for name in return_orbital_params:
                 exec(
-                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=1.0 / sample_rate, epoch=0)"
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=delta_t, epoch=0)"
                 )
             return orbital_var_dict, modes
 
@@ -447,17 +446,32 @@ def get_inspiral_esigma_waveform(
 
 
 def _get_window_start(freq_, delta_t_, delta_phi_, direction="forward"):
+    """Integrates frequency backward/forward from the start/end until
+    `delta_phi_` radians of orbital phase has elapsed.
+
+    Args:
+        freq_ (numpy.array):  Frequency time series, uniformly sampled
+        delta_t_ (float64):   Step size in time
+        delta_phi_ (float64): Phase shift in radians to integrate across
+        direction (str, optional): Direction of integration in time.
+                                   Defaults to "forward".
+
+    Returns:
+        int: Index in frequency array where `delta_phi` is reached
+    """
     from scipy import integrate
 
     if direction == "backward":
         for idx in range(len(freq_) - 2, 0, -1):
             # this could be optimized to not repeat integration
-            if abs(integrate.trapezoid(freq_[idx:], dx=delta_t_)) >= delta_phi_:
+            if abs(integrate.trapezoid(freq_[idx:], dx=delta_t_)) >= abs(delta_phi_):
                 return idx
     elif direction == "forward":
-        for idx in range(1, len(freq_) - 1):
+        for idx in range(1, len(freq_)):
             # this could be optimized to not repeat integration
-            if abs(integrate.trapezoid(freq_[:idx], dx=delta_t_)) >= delta_phi_:
+            if abs(integrate.trapezoid(freq_[: idx + 1], dx=delta_t_)) >= abs(
+                delta_phi_
+            ):
                 return idx
 
 
@@ -465,10 +479,10 @@ def _get_transition_frequency_window(
     orbital_phase,
     orbital_freq,
     delta_t,
-    f_mr_transition,  # dominant-mode GW frequency
+    f_mr_transition,  # orbital frequency
     num_hyb_orbits,
     keep_f_mr_transition_at_center,
-    hybridize_using_orbital_frequency,
+    hybridize_using_avg_orbital_frequency,
     failsafe,
     verbose=False,
 ):
@@ -480,19 +494,18 @@ def _get_transition_frequency_window(
 
     Parameters:
     -----------
-        orbital_phase             -- Luminosity distance to the binary (in Mpc)
-        orbital_freq              -- GW modes to use. List of tuples (l, |m|)
+        orbital_phase             -- Orbital phase evolution
+        orbital_freq              -- Orbital frequency evolution
         delta_t                   -- Waveform's time grid-spacing (s)
-        f_mr_transition           -- Inspiral to merger transition GW frequency
-                                     (Hz).
+        f_mr_transition           -- Inspiral to merger transition frequency
+                                     (Hz). This should be the same (mode/orbital)
+                                     frequency as passed for `orbital_freq`.
         num_hyb_orbits            -- number of orbital cycles to hybridize over.
-                                     Only used if f_window_mr_transition is not
-                                     specified.
         keep_f_mr_transition_at_center    -- If True, `f_mr_transition` is kept
                                      at the center of the hybridization window.
                                      Otherwise, it's kept at the end of the
                                      window (default).
-        hybridize_using_orbital_frequency -- If True, the orbit averaged
+        hybridize_using_avg_orbital_frequency -- If True, the orbit averaged
                                      frequency during the inspiral is used to
                                      hybridize modes, instead of the modes'
                                      frequency.
@@ -503,12 +516,11 @@ def _get_transition_frequency_window(
 
     Returns:
     --------
-        f_window_mr_transition    -- Dictionary of IMR GW modes PyCBC TimeSeries
-
+        f_window_mr_transition    -- Hybridization frequency window (in Hz).
     """
     transition_idx = (
-        len(orbital_freq) - 1 - np.argmax(orbital_freq[::-1] < f_mr_transition / 2.0)
-    )  # index at which orbital_freq becomes just larger than transition orbital
+        len(orbital_freq) - 1 - np.argmax(orbital_freq[::-1] < f_mr_transition)
+    )  # index at which orbital_freq becomes just smaller than transition orbital
     # frequency, towards the end of waveform
 
     if verbose > 4:
@@ -517,52 +529,23 @@ def _get_transition_frequency_window(
             in the orbital frequency array of length {len(orbital_freq)}"""
         )
 
-    if not keep_f_mr_transition_at_center or (
-        failsafe
-        and (
-            (orbital_phase[transition_idx] + num_hyb_orbits * np.pi) > orbital_phase[-1]
-        )
-    ):
-        if hybridize_using_orbital_frequency:
-            window_start_idx = _get_window_start(
-                orbital_freq[: transition_idx + 1],
-                delta_t,
-                2 * num_hyb_orbits * np.pi,
-                direction="backward",
-            )
-        else:
-            # Orbital cycle based hybridization that keeps f_mr_transition
-            # at the hybridization frequency window's end
-            window_start_idx = (
-                np.searchsorted(
-                    orbital_phase,
-                    orbital_phase[transition_idx] - 2 * np.pi * num_hyb_orbits,
-                )
-                - 1
-            )
-        f_window_mr_transition = 2 * (
-            orbital_freq[transition_idx] - orbital_freq[window_start_idx]
-        )  # Extra 2-factor for returning the (2,2)-mode frequency
+    if hybridize_using_avg_orbital_frequency:
+        # We integrate `orbital_freq` to obtain `orbital_phase`
+        from scipy import integrate
 
-        if verbose > 4:
-            print(
-                f"""The transition is to happen in a window from
-                frequencies: [{orbital_freq[window_start_idx]}, {orbital_freq[transition_idx]}]Hz,
-                between indices: [{window_start_idx}, {transition_idx}]"""
+        orbital_phase = integrate.cumulative_trapezoid(
+            orbital_freq, dx=delta_t, initial=0
+        )
+        if len(orbital_phase) != len(orbital_freq):
+            raise RuntimeError(
+                f"""Something went wrong while integrating orbital frequency.
+They have different lengths: {len(orbital_freq)} and {len(orbital_phase)}."""
             )
 
     if keep_f_mr_transition_at_center:
         # Orbital cycle based hybridization that keeps f_mr_transition at
         # the hybridization frequency window's midpoint
-        if (orbital_phase[transition_idx] + num_hyb_orbits * np.pi) > orbital_phase[-1]:
-            raise RuntimeError(
-                f"""Requested number of orbits to hybridize over not available
-in the waveform after the transition frequency. Either decrease the number of
-orbits to hybridize over (currently {num_hyb_orbits}) or decrease the
-inspiral-to-merger transition frequency."""
-            )
-
-        if hybridize_using_orbital_frequency:
+        if hybridize_using_avg_orbital_frequency:
             window_start_idx = _get_window_start(
                 orbital_freq[: transition_idx + 1],
                 delta_t,
@@ -575,6 +558,27 @@ inspiral-to-merger transition frequency."""
                 num_hyb_orbits * np.pi,
                 direction="forward",
             )
+            # FAILSAFE mode behavior
+            if window_start_idx is None:
+                if failsafe:
+                    window_start_idx = 0
+                else:
+                    raise RuntimeError(
+                        f"""Requested number of orbits to hybridize over not available
+in the waveform before the transition frequency. Either decrease the number of
+orbits to hybridize over (currently {num_hyb_orbits}) or increase the
+inspiral-to-merger transition frequency. `window_start_idx` is None."""
+                    )
+            if window_end_idx is None:
+                if failsafe:
+                    window_end_idx = len(orbital_freq) - 1
+                else:
+                    raise RuntimeError(
+                        f"""Requested number of orbits to hybridize over not available
+in the waveform after the transition frequency. Either decrease the number of
+orbits to hybridize over (currently {num_hyb_orbits}) or decrease the
+inspiral-to-merger transition frequency. `window_end_idx` is None."""
+                    )
         else:
             # phase is always a monotonically increasing function,
             #    hence using the more efficient np.searchsorted method
@@ -584,12 +588,57 @@ inspiral-to-merger transition frequency."""
             window_end_idx = np.searchsorted(
                 orbital_phase, orbital_phase[transition_idx] + num_hyb_orbits * np.pi
             )
-        f_window_mr_transition = 4 * np.max(
+        f_window_mr_transition = 2 * np.min(
             [
-                orbital_freq[window_end_idx] - f_mr_transition / 2.0,
-                f_mr_transition / 2.0 - orbital_freq[window_start_idx],
+                orbital_freq[window_end_idx] - f_mr_transition,
+                f_mr_transition - orbital_freq[window_start_idx],
             ]
-        )  # Extra 2-factor for returning the (2,2)-mode frequency
+        )
+    elif not keep_f_mr_transition_at_center:
+        # Orbital cycle based hybridization that keeps f_mr_transition at
+        # the hybridization frequency window's right end
+        if hybridize_using_avg_orbital_frequency:
+            window_start_idx = _get_window_start(
+                orbital_freq[: transition_idx + 1],
+                delta_t,
+                2 * num_hyb_orbits * np.pi,
+                direction="backward",
+            )
+            if window_start_idx is None:
+                if failsafe:
+                    window_start_idx = 0
+                else:
+                    raise RuntimeError(
+                        f"""Requested number of orbits to hybridize over not available
+in the waveform before the transition frequency. Either decrease the number of
+orbits to hybridize over (currently {num_hyb_orbits}) or increase the
+inspiral-to-merger transition frequency. `window_start_idx` is None."""
+                    )
+        else:
+            # Orbital cycle based hybridization that keeps f_mr_transition
+            # at the hybridization frequency window's end
+            window_start_idx = (
+                np.searchsorted(
+                    orbital_phase,
+                    orbital_phase[transition_idx] - 2 * np.pi * num_hyb_orbits,
+                )
+                - 1
+            )
+        f_window_mr_transition = (
+            orbital_freq[transition_idx] - orbital_freq[window_start_idx]
+        )
+
+        if verbose > 4:
+            print(
+                f"""The transition is to happen in a window from
+                frequencies: [{orbital_freq[window_start_idx]}, {orbital_freq[transition_idx]}]Hz,
+                between indices: [{window_start_idx}, {transition_idx}]"""
+            )
+    else:
+        raise RuntimeError(
+            """We should never reach here. Did you set a non-bool value for the
+            flag `keep_f_mr_transition_at_center`?"""
+        )
 
     if verbose > 4:
         print(f"""f_window_mr_transition = {f_window_mr_transition}""")
@@ -605,7 +654,8 @@ def get_imr_esigma_modes(
     spin1z=0.0,
     spin2z=0.0,
     eccentricity=0.0,
-    mean_anomaly=0.0,
+    mean_anomaly=None,
+    coa_phase=None,
     distance=1.0,
     f_ref=None,
     modes_to_use=[(2, 2), (3, 3), (4, 4)],
@@ -614,7 +664,8 @@ def get_imr_esigma_modes(
     f_mr_transition=None,
     f_window_mr_transition=None,
     num_hyb_orbits=0.25,
-    hybridize_using_orbital_frequency=False,
+    hybridize_using_avg_orbital_frequency=False,
+    hybridize_aligning_merger_to_inspiral=False,
     keep_f_mr_transition_at_center=False,
     merger_ringdown_approximant="NRSur7dq4",
     return_hybridization_info=False,
@@ -638,7 +689,8 @@ def get_imr_esigma_modes(
         spin1z, spin2z            -- z-components of component dimensionless
                                      spins (lies in [0,1))
         eccentricity              -- Initial eccentricity
-        mean_anomaly              -- Mean anomaly of the periastron (in rad)
+        mean_anomaly              -- Mean anomaly of the periastron (radians)
+        coa_phase                 -- Coalesence phase of the binary (in rad)
         distance                  -- Luminosity distance to the binary (in Mpc)
         modes_to_use              -- GW modes to use. List of tuples (l, |m|)
         mode_to_align_by          -- GW mode to use to align inspiral and merger
@@ -646,10 +698,14 @@ def get_imr_esigma_modes(
         include_conjugate_modes   -- If True, (l, -|m|) modes are included as
                                      well
         f_mr_transition           -- Inspiral to merger transition GW frequency
-                                     (Hz).
+                                     (Hz). Should correspond to the mode
+                                     specified by `mode_to_align_by`.
                                      Defaults to the minimum of the Kerr and
-                                     Schwarzschild ISCO frequency
+                                     Schwarzschild ISCO frequency equivalent
+                                     for the mode `mode_to_align_by`.
         f_window_mr_transition    -- Hybridization frequency window (in Hz).
+                                     Should correspond to the mode specified by
+                                     `mode_to_align_by`.
                                      Disabled by the default value (None). In
                                      such a case, the hybridization proceeds
                                      over a window of `num_hyb_orbits` orbital
@@ -662,10 +718,15 @@ def get_imr_esigma_modes(
         num_hyb_orbits            -- number of orbital cycles to hybridize over.
                                      Only used if f_window_mr_transition is not
                                      specified.
-        hybridize_using_orbital_frequency -- If True, the orbit averaged
+        hybridize_using_avg_orbital_frequency -- If True, the orbit averaged
                                      frequency during the inspiral is used to
                                      hybridize modes, instead of the modes'
                                      frequency.
+        hybridize_aligning_merger_to_inspiral -- (default: False) If True, the
+                                     merger-ringdown mode would be phase aligned
+                                     to the inspiral
+                                     If False, the inspiral is phase aligned
+                                     Note: specify the desired
         keep_f_mr_transition_at_center -- If True, `f_mr_transition` is kept at
                                      the center of the hybridization window.
                                      Otherwise, it's kept at the end of the
@@ -701,45 +762,81 @@ def get_imr_esigma_modes(
             """We cannot generate individual modes for {merger_ringdown_approximant}.
                       Try one of: [NRSur7dq4, SEOBNRv4PHM]"""
         )
+    if (mean_anomaly is None) and (coa_phase is None):
+        raise IOError(
+            f"""Please specify one of the phase angles, either of
+                      `mean_anomaly` or `coa_phase`."""
+        )
+    if hybridize_aligning_merger_to_inspiral and (coa_phase is None):
+        raise IOError(
+            f"""If you want to attach ESIGMA inspiral to merger, by
+                      phase shifting merger to inspiral, please specify the
+                      phase angle `coa_phase`"""
+        )
+    if (not hybridize_aligning_merger_to_inspiral) and (mean_anomaly is None):
+        raise IOError(
+            f"""If you want to attach ESIGMA inspiral to merger, by
+                      phase shifting inspiral to merger, please specify the
+                      phase angle `mean_anomaly`"""
+        )
+    if mean_anomaly is None:
+        mean_anomaly = 0
+    if coa_phase is None:
+        coa_phase = 0
 
+    available_inspiral_orbital_params = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
     if return_orbital_params == True:
-        return_orbital_params = ["x", "e", "l", "phi", "phidot", "r", "rdot"]
-
-    if isinstance(return_orbital_params, list):
+        return_orbital_params = available_inspiral_orbital_params
+        return_orbital_params_user = set(return_orbital_params)
+    elif (
+        isinstance(return_orbital_params, list)
+        or isinstance(return_orbital_params, set)
+        or isinstance(return_orbital_params, tuple)
+    ):
         return_orbital_params_user = return_orbital_params.copy()
-    else:
+        return_orbital_params_user = set(return_orbital_params_user).intersection(
+            set(available_inspiral_orbital_params)
+        )
+        if return_orbital_params_user != set(return_orbital_params):
+            print(
+                f"""Warning: You requested the following list of orbital
+parameters to be returned: {return_orbital_params}, but we reduce it to
+{return_orbital_params_user} as we only have the evolution of the following 
+parameters available with us: {available_inspiral_orbital_params}.
+                  """
+            )
+    elif not return_orbital_params:
+        return_orbital_params = []
         return_orbital_params_user = False
 
-    sample_rate = int(np.round(1.0 / delta_t))
+    return_orbital_params = set(return_orbital_params)
+    return_orbital_params = return_orbital_params.union(
+        set(["e"])
+    )  # "e" needed necessarily for hybridization error printing
 
-    # If the user does not provide the 22-mode frequency at which the inspiral
+    if failsafe or (verbose > 1):
+        return_orbital_params = return_orbital_params.union(set(["phidot"]))
+
+    # If the user does not provide the width of hybridization window (in terms
+    # of orbital frequency) over which the inspiral should transition to
+    # merger-ringdown, we switch schemes and hybridize over `num_hyb_orbits`
+    # orbits instead.
+    if f_window_mr_transition is None:
+        # These will be used for figuring out the hybridization window
+        return_orbital_params = return_orbital_params.union(set(["phi", "phidot"]))
+        if hybridize_using_avg_orbital_frequency:
+            return_orbital_params = return_orbital_params.union(set(["x"]))
+
+    _, mode_to_align_by_em = mode_to_align_by
+
+    # If the user does not provide the orbital frequency at which the inspiral
     # should transition to merger-ringdown, we use sensible defaults here.
     if f_mr_transition is None:
         # Kerr ISCO frequency
         f_Kerr = f_ISCO_spin(mass1, mass2, spin1z, spin2z)
         # Schwarzschild ISCO frequency
         f_Schwarz = 6.0**-1.5 / (mass1 + mass2) / lal.MTSUN_SI / lal.PI
-        f_mr_transition = min(f_Kerr, f_Schwarz)
-
-    if not return_orbital_params:
-        # Needed necessarily for hybridization error printing
-        return_orbital_params = ["e"]
-
-    return_orbital_params = set(return_orbital_params)
-
-    if failsafe or (verbose > 1):
-        return_orbital_params = return_orbital_params.union(set(["phidot"]))
-
-    # If the user does not provide the width of hybridization window (in terms
-    # of 22-mode frequency) over which the inspiral should transition to
-    # merger-ringdown, we switch schemes and hybridize over `num_hyb_orbits`
-    # orbits instead.
-    if f_window_mr_transition is None:
-        return_orbital_params = return_orbital_params.union(
-            set(["phi", "phidot"])
-        )  # These will be used for figuring out the hybridization window
-
-    return_orbital_params = list(return_orbital_params)
+        f_mr_transition = min(f_Kerr, f_Schwarz) * (mode_to_align_by_em / 2)
 
     retval = get_inspiral_esigma_modes(
         mass1=mass1,
@@ -754,7 +851,7 @@ def get_imr_esigma_modes(
         delta_t=delta_t,
         modes_to_use=modes_to_use,
         include_conjugate_modes=include_conjugate_modes,
-        return_orbital_params=return_orbital_params,
+        return_orbital_params=list(return_orbital_params),
         return_pycbc_timeseries=False,
         verbose=verbose,
     )
@@ -779,7 +876,7 @@ model might be affected."""
         )
 
     if (f_window_mr_transition is None) or failsafe or (verbose > 1):
-        if hybridize_using_orbital_frequency:
+        if hybridize_using_avg_orbital_frequency:
             orbital_frequency = (
                 retval[-2]["x"] ** 1.5 / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
             )
@@ -804,10 +901,11 @@ model might be affected."""
         mode_frequency = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
         print(
             f"""DEBUG: Orbital freq at end of inspiral is {orbital_frequency[-1]}Hz,
-mode-22 freq at the end of inspiral is {mode_frequency[-1]}Hz, max and min mode-22
-frequencies are {np.max(mode_frequency)}Hz and {np.min(mode_frequency)}Hz, and the
-transition frequency (of {el},{em}-mode) requested is {f_mr_transition}Hz, which
-should be less than the maximum freq of dominant mode: {mode_frequency.max()}Hz."""
+mode-{el}{em} freq at the end of inspiral is {mode_frequency[-1]}Hz, max and min
+mode-{el}{em} frequencies are {np.max(mode_frequency)}Hz and
+{np.min(mode_frequency)}Hz, and the transition frequency (of {el},{em}-mode)
+requested is {f_mr_transition}Hz, which should be less than the maximum freq of
+{el}{em}-mode: {mode_frequency.max()}Hz."""
         )
         return (
             modes_inspiral_numpy,
@@ -841,16 +939,19 @@ should be less than the maximum freq of dominant mode: {mode_frequency.max()}Hz.
     # merger-ringdown, we switch schemes and hybridize over `num_hyb_orbits`
     # orbits instead.
     if f_window_mr_transition is None:
-        f_window_mr_transition = _get_transition_frequency_window(
-            retval[-2]["phi"],
-            orbital_frequency,
-            delta_t,
-            f_mr_transition,
-            num_hyb_orbits,
-            keep_f_mr_transition_at_center,
-            hybridize_using_orbital_frequency,
-            failsafe=True,
-            verbose=verbose,
+        f_window_mr_transition = (
+            _get_transition_frequency_window(
+                retval[-2]["phi"],
+                orbital_frequency,
+                delta_t,
+                f_mr_transition / mode_to_align_by_em,
+                num_hyb_orbits,
+                keep_f_mr_transition_at_center,
+                hybridize_using_avg_orbital_frequency,
+                failsafe=failsafe,
+                verbose=verbose,
+            )
+            * mode_to_align_by_em
         )
 
     # This is done to make use of the same hybridization code, that actually
@@ -862,13 +963,15 @@ should be less than the maximum freq of dominant mode: {mode_frequency.max()}Hz.
     # Generate NR surrogate waveform that will be our merger-ringdown, starting
     # from a frequency = 90% of
     max_retries = 4
-    f_lower_mr = (f_mr_transition - f_window_mr_transition / 2) * 0.9
+    f_lower_mr = (f_mr_transition - f_window_mr_transition / 2) * (
+        1.8 / mode_to_align_by_em
+    )
     for _ in range(max_retries):
         try:
             if verbose:
                 print(f"Generating MR waveform from {f_lower_mr}Hz...")
             hlm_mr = ls.SimInspiralChooseTDModes(
-                0,  # phiRef
+                coa_phase,  # phiRef
                 delta_t,  # deltaT
                 mass1 * lal.MSUN_SI,
                 mass2 * lal.MSUN_SI,
@@ -906,7 +1009,9 @@ should be less than the maximum freq of dominant mode: {mode_frequency.max()}Hz.
             frq_width=f_window_mr_transition,
             delta_t=delta_t,
             modes_to_hybridize=modes_to_use,
-            hybridize_using_orbital_frequency=hybridize_using_orbital_frequency,
+            mode_to_align_by=mode_to_align_by,
+            hybridize_using_avg_orbital_frequency=hybridize_using_avg_orbital_frequency,
+            hybridize_aligning_merger_to_inspiral=hybridize_aligning_merger_to_inspiral,
             include_conjugate_modes=include_conjugate_modes,
             verbose=verbose,
         )
@@ -924,7 +1029,7 @@ eccentricity at the end of inspiral was {orbital_eccentricity[-1]}
     if mode_to_align_by not in modes_imr_numpy:
         mode_to_align_by = list(modes_imr_numpy.keys())[0]
     idx_peak = abs(modes_imr_numpy[mode_to_align_by]).argmax()
-    t_peak = idx_peak / sample_rate
+    t_peak = idx_peak * delta_t
 
     itime = time.perf_counter()
     modes_imr = {}
@@ -969,7 +1074,7 @@ def get_imr_esigma_waveform(
     f_mr_transition=None,
     f_window_mr_transition=None,
     num_hyb_orbits=0.25,
-    hybridize_using_orbital_frequency=False,
+    hybridize_using_avg_orbital_frequency=False,
     keep_f_mr_transition_at_center=False,
     merger_ringdown_approximant="NRSur7dq4",
     return_hybridization_info=False,
@@ -1019,7 +1124,7 @@ def get_imr_esigma_waveform(
         num_hyb_orbits            -- number of orbital cycles to hybridize over.
                                      Only used if f_window_mr_transition is not
                                      specified.
-        hybridize_using_orbital_frequency -- If True, the orbit averaged
+        hybridize_using_avg_orbital_frequency -- If True, the orbit averaged
                                      frequency during the inspiral is used to
                                      hybridize modes, instead of the modes'
                                      frequency.
@@ -1070,7 +1175,7 @@ def get_imr_esigma_waveform(
         f_mr_transition=f_mr_transition,
         f_window_mr_transition=f_window_mr_transition,
         num_hyb_orbits=num_hyb_orbits,
-        hybridize_using_orbital_frequency=hybridize_using_orbital_frequency,
+        hybridize_using_avg_orbital_frequency=hybridize_using_avg_orbital_frequency,
         keep_f_mr_transition_at_center=keep_f_mr_transition_at_center,
         merger_ringdown_approximant=merger_ringdown_approximant,
         return_hybridization_info=return_hybridization_info,
