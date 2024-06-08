@@ -117,6 +117,7 @@ def align_in_phase(
     t1_index_mr,
     t2_index_mr,
     m_mode=2,
+    align_merger_to_inspiral=True,
 ):
     if len(inspiral) == 0:
         raise IOError(
@@ -134,10 +135,19 @@ def align_in_phase(
     # Function alignes the two waveforms using the phase, optimised over the attachment region
     # m from l,m mode
     def optfn_ph(phaseshift_correction):
-        phase_corrected_insp = inspiral * np.exp(1j * m_mode * phaseshift_correction)
+        if align_merger_to_inspiral:
+            phase_corrected_inspiral = inspiral * np.exp(
+                1j * m_mode * phaseshift_correction
+            )
+            phase_corrected_merger_ringdown = merger_ringdown
+        else:
+            phase_corrected_inspiral = inspiral
+            phase_corrected_merger_ringdown = merger_ringdown * np.exp(
+                1j * m_mode * phaseshift_correction
+            )
         m_d = mismatch_discrete(
-            phase_corrected_insp[t1_index_insp : t2_index_insp + 1],
-            merger_ringdown[t1_index_mr : t2_index_mr + 1],
+            phase_corrected_inspiral[t1_index_insp : t2_index_insp + 1],
+            phase_corrected_merger_ringdown[t1_index_mr : t2_index_mr + 1],
             sample_indices_insp,
             sample_indices_mr,
         )
@@ -146,11 +156,14 @@ def align_in_phase(
     phase_optimizer = scipy.optimize.minimize(optfn_ph, 0)
     phaseshift_required_for_alignment = phase_optimizer.x
 
-    inspiral_aligned = inspiral * np.exp(
-        1j * m_mode * phaseshift_required_for_alignment
-    )
-
-    return inspiral_aligned, phaseshift_required_for_alignment
+    if align_merger_to_inspiral:
+        aligned = inspiral * np.exp(1j * m_mode * phaseshift_required_for_alignment)
+        return (aligned, merger_ringdown, phaseshift_required_for_alignment)
+    else:
+        aligned = merger_ringdown * np.exp(
+            1j * m_mode * phaseshift_required_for_alignment
+        )
+        return (inspiral, aligned, phaseshift_required_for_alignment)
 
 
 def blend_series(x1, x2, t1_index_insp, t2_index_insp, t1_index_mr, t2_index_mr):
@@ -201,7 +214,8 @@ def hybridize_modes(
     no_sp=8,
     modes_to_hybridize=[(2, 2), (3, 3), (4, 4)],
     mode_to_align_by=(2, 2),
-    hybridize_using_orbital_frequency=False,
+    hybridize_using_avg_orbital_frequency=False,
+    hybridize_aligning_merger_to_inspiral=False,
     include_conjugate_modes=True,
     verbose=True,
 ):
@@ -230,6 +244,13 @@ def hybridize_modes(
     mode_to_align_by: {(2, 2), tuple}
         One specific mode (l, m) value that is to be treated as baseline for
         time/phase alignment. We recommend using only the (2, 2) mode for this.
+    hybridize_using_avg_orbital_frequency: (False, bool)
+        Flag that enables use of orbit averaged orbital frequency for all
+        calculations of inspiral to merger-ringdown attachment
+    hybridize_aligning_merger_to_inspiral: (True, bool)
+        Flag that ensures any phase difference between inspiral and merger-rd
+        modes is removed by phase shifting the merger-rd portion. If set to
+        False, the inspiral portion is phase shifted instead
     include_conjugate_modes: {True, bool}
         When set to True, we also consider (l, -m) modes in addition to (l, m) ones.
     verbose: {True, bool}
@@ -240,7 +261,7 @@ def hybridize_modes(
             f"""You are trying to hybridize over a frequency window of
             negative length (= {frq_width}Hz). Fix this."""
         )
-    if hybridize_using_orbital_frequency:
+    if hybridize_using_avg_orbital_frequency:
         if len(inspiral_orbital_frequency) != len(inspiral_modes[mode_to_align_by]):
             raise IOError(
                 f"""You asked for hybridization using orbital frequency, but
@@ -280,7 +301,6 @@ def hybridize_modes(
     frq_insp = {}
     phase_mr = {}
     frq_mr = {}
-    amp_mr = {}
 
     for el, em in modes_to_hybridize:
         phase_insp[(el, em)] = compute_phase(inspiral_modes[(el, em)])
@@ -288,7 +308,6 @@ def hybridize_modes(
 
         phase_mr[(el, em)] = compute_phase(merger_ringdown_modes[(el, em)])
         frq_mr[(el, em)] = compute_frequency(phase_mr[(el, em)], delta_t)
-        amp_mr[(el, em)] = compute_amplitude(merger_ringdown_modes[(el, em)])
 
         if verbose:
             print(
@@ -322,7 +341,7 @@ def hybridize_modes(
     the one at the rightmost occurance in time) 
 
     """
-    if hybridize_using_orbital_frequency:
+    if hybridize_using_avg_orbital_frequency:
         t2_index_insp = find_last_value_location_in_series(
             inspiral_orbital_frequency, (frq_attach + frq_width / 2) / em
         )
@@ -378,7 +397,16 @@ def hybridize_modes(
     phase_insp_aligned = {}
     frq_insp_aligned = {}
 
-    inspiral_modes_aligned[(el, em)], phase_correction = align_in_phase(
+    merger_ringdown_modes_aligned = {}
+    amp_mr_aligned = {}
+    phase_mr_aligned = {}
+    frq_mr_aligned = {}
+
+    (
+        inspiral_modes_aligned[(el, em)],
+        merger_ringdown_modes_aligned[(el, em)],
+        phase_correction,
+    ) = align_in_phase(
         inspiral_modes[(el, em)],
         merger_ringdown_modes[(el, em)],
         sample_indices_insp,
@@ -387,24 +415,45 @@ def hybridize_modes(
         t2_index_insp,
         t1_index_mr,
         t2_index_mr,
+        align_merger_to_inspiral=hybridize_aligning_merger_to_inspiral,
     )
 
     amp_insp_aligned[(el, em)] = compute_amplitude(inspiral_modes_aligned[(el, em)])
     phase_insp_aligned[(el, em)] = compute_phase(inspiral_modes_aligned[(el, em)])
     phph = compute_phase(inspiral_modes_aligned[(el, em)])
 
+    amp_mr_aligned[(el, em)] = compute_amplitude(
+        merger_ringdown_modes_aligned[(el, em)]
+    )
+    phase_mr_aligned[(el, em)] = compute_phase(merger_ringdown_modes_aligned[(el, em)])
+    phph2 = compute_phase(merger_ringdown_modes_aligned[(el, em)])
+
     for el, em in modes_not_aligned_by:
-        inspiral_modes_aligned[(el, em)] = inspiral_modes[(el, em)] * np.exp(
-            1j * em * phase_correction
-        )
+        if hybridize_aligning_merger_to_inspiral:
+            inspiral_modes_aligned[(el, em)] = inspiral_modes[(el, em)]
+            merger_ringdown_modes_aligned[(el, em)] = merger_ringdown_modes[
+                (el, em)
+            ] * np.exp(1j * em * phase_correction)
+        else:
+            inspiral_modes_aligned[(el, em)] = inspiral_modes[(el, em)] * np.exp(
+                1j * em * phase_correction
+            )
+            merger_ringdown_modes_aligned[(el, em)] = merger_ringdown_modes[(el, em)]
         amp_insp_aligned[(el, em)] = compute_amplitude(inspiral_modes_aligned[(el, em)])
         phase_insp_aligned[(el, em)] = compute_phase(inspiral_modes_aligned[(el, em)])
+        amp_mr_aligned[(el, em)] = compute_amplitude(
+            merger_ringdown_modes_aligned[(el, em)]
+        )
+        phase_mr_aligned[(el, em)] = compute_phase(
+            merger_ringdown_modes_aligned[(el, em)]
+        )
 
     """
         It would be same as frq_mr as the corrected phase factor will be canceled in the derivative, 
         defining frq_insp_aligned just for consistency 
     """
     frq_insp_aligned = frq_insp
+    frq_mr_aligned = frq_mr
 
     """ Performing attachment using the blending function """
 
@@ -418,7 +467,7 @@ def hybridize_modes(
     for el, em in modes_to_hybridize:
         amp_hyb_window[(el, em)] = blend_series(
             amp_insp_aligned[(el, em)],
-            amp_mr[(el, em)],
+            amp_mr_aligned[(el, em)],
             t1_index_insp,
             t2_index_insp,
             t1_index_mr,
@@ -426,7 +475,7 @@ def hybridize_modes(
         )
         frq_hyb_window[(el, em)] = blend_series(
             frq_insp_aligned[(el, em)],
-            frq_mr[(el, em)],
+            frq_mr_aligned[(el, em)],
             t1_index_insp,
             t2_index_insp,
             t1_index_mr,
@@ -442,27 +491,27 @@ def hybridize_modes(
     """ Right now the phase is integrated only inside the hybrid window, 
     need to add constants to preserve phase continuity and compile full IMR phase """
 
-    def remove_phase_discontinuity(phase_insp_aligned, phase_hyb_window, phase_mr):
-        delta1 = phase_insp_aligned[t1_index_insp] - phase_hyb_window[0]
-        phase_hyb_1 = np.append(
-            phase_insp_aligned[:t1_index_insp], phase_hyb_window + delta1
-        )
-        delta2 = phase_hyb_1[t2_index_insp - 1] - phase_mr[t2_index_mr - 1]
+    def remove_phase_discontinuity(phase_insp_, phase_hyb_window_, phase_mr_):
+        delta1 = phase_insp_[t1_index_insp] - phase_hyb_window_[0]
+        phase_hyb_1 = np.append(phase_insp_[:t1_index_insp], phase_hyb_window_ + delta1)
+        delta2 = phase_hyb_1[t2_index_insp - 1] - phase_mr_[t2_index_mr - 1]
         phase_hyb_2 = np.append(
-            phase_hyb_1[: t2_index_insp - 1], phase_mr[t2_index_mr - 1 :] + delta2
+            phase_hyb_1[: t2_index_insp - 1], phase_mr_[t2_index_mr - 1 :] + delta2
         )
         return phase_hyb_2
 
     for el, em in modes_to_hybridize:
         phase_hyb_full[(el, em)] = remove_phase_discontinuity(
-            phase_insp_aligned[(el, em)], phase_hyb_window[(el, em)], phase_mr[(el, em)]
+            phase_insp_aligned[(el, em)],
+            phase_hyb_window[(el, em)],
+            phase_mr_aligned[(el, em)],
         )
 
         amp_hyb_full[(el, em)] = np.append(
             np.concatenate(
                 [amp_insp_aligned[(el, em)][:t1_index_insp], amp_hyb_window[(el, em)]]
             )[: t2_index_insp - 1],
-            amp_mr[(el, em)][t2_index_mr - 1 :],
+            amp_mr_aligned[(el, em)][t2_index_mr - 1 :],
         )
 
         hybrid_modes[(el, em)] = amp_hyb_full[(el, em)] * np.exp(
