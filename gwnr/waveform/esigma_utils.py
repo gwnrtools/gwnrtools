@@ -773,17 +773,17 @@ def get_imr_esigma_modes(
             f"""Please specify one of the phase angles, either of
                       `mean_anomaly` or `coa_phase`."""
         )
-    if hybridize_aligning_merger_to_inspiral and (coa_phase is None):
+    if hybridize_aligning_merger_to_inspiral and (mean_anomaly is None):
         raise IOError(
             f"""If you want to attach ESIGMA inspiral to merger, by
                       phase shifting merger to inspiral, please specify the
-                      phase angle `coa_phase`"""
+                      phase angle `mean_anomaly`"""
         )
-    if (not hybridize_aligning_merger_to_inspiral) and (mean_anomaly is None):
+    if (not hybridize_aligning_merger_to_inspiral) and (coa_phase is None):
         raise IOError(
             f"""If you want to attach ESIGMA inspiral to merger, by
                       phase shifting inspiral to merger, please specify the
-                      phase angle `mean_anomaly`"""
+                      phase angle `coa_phase`"""
         )
     if mean_anomaly is None:
         mean_anomaly = 0
