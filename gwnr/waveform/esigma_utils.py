@@ -299,7 +299,11 @@ def get_inspiral_esigma_modes(
 
     if return_pycbc_timeseries:
         modes = {
-            k: pt.TimeSeries(modes[k].data.data, delta_t=delta_t, epoch=0)
+            k: pt.TimeSeries(
+                modes[k].data.data,
+                delta_t=delta_t,
+                epoch=-delta_t * len(modes[k].data.data),
+            )
             for k in modes
         }
     else:
@@ -316,7 +320,7 @@ def get_inspiral_esigma_modes(
         if return_pycbc_timeseries:
             for name in return_orbital_params:
                 exec(
-                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=delta_t, epoch=0)"
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=delta_t, epoch=-delta_t * len({name}.data.data)"
                 )
             return orbital_var_dict, modes
 
@@ -403,30 +407,32 @@ def get_inspiral_esigma_waveform(
     )
 
     if return_orbital_params:
-        t, orbital_var_dict, modes_imr = retval
+        t, orbital_var_dict, modes_inspiral = retval
     else:
-        t, modes_imr = retval
+        t, modes_inspiral = retval
 
-    hp_ihc = modes_imr[(2, 2)] * 0  # Initialize with zeros
+    hp_ihc = modes_inspiral[(2, 2)] * 0  # Initialize with zeros
     if verbose:
         print("Shape of hp_ihc: {}".format(np.shape(hp_ihc)), flush=True)
 
-    for el, em in modes_imr:
+    for el, em in modes_inspiral:
         ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
-        hp_ihc = hp_ihc + modes_imr[(el, em)] * ylm
+        hp_ihc = hp_ihc + modes_inspiral[(el, em)] * ylm
         if verbose == 2:
             print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
             print(
                 "... adding {}, {}".format(
-                    modes_imr[(el, em)], modes_imr[(el, em)] * ylm
+                    modes_inspiral[(el, em)], modes_inspiral[(el, em)] * ylm
                 ),
                 flush=True,
             )
             print(f"hp after adding: {hp_ihc}", flush=True)
 
     if return_pycbc_timeseries:
-        hp = pt.TimeSeries(hp_ihc.real, delta_t=t[1] - t[0], epoch=0)
-        hc = pt.TimeSeries(-1 * hp_ihc.imag, delta_t=t[1] - t[0], epoch=0)
+        hp = pt.TimeSeries(hp_ihc.real, delta_t=delta_t, epoch=-delta_t * len(hp_ihc))
+        hc = pt.TimeSeries(
+            -1 * hp_ihc.imag, delta_t=delta_t, epoch=-delta_t * len(hp_ihc)
+        )
     else:
         hp = hp_ihc.real
         hc = -1 * hp_ihc.imag
