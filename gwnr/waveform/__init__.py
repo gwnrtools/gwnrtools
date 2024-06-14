@@ -8,3 +8,4 @@ from .hybridize import *
 from .nr_waveform_sxs import *
 from .tidal import *
 from .utils import *
+from .waveform import *

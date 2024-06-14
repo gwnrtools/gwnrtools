@@ -411,31 +411,13 @@ def get_inspiral_esigma_waveform(
     else:
         t, modes_inspiral = retval
 
-    hp_ihc = modes_inspiral[(2, 2)] * 0  # Initialize with zeros
-    if verbose:
-        print("Shape of hp_ihc: {}".format(np.shape(hp_ihc)), flush=True)
-
-    for el, em in modes_inspiral:
-        ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
-        hp_ihc = hp_ihc + modes_inspiral[(el, em)] * ylm
-        if verbose == 2:
-            print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
-            print(
-                "... adding {}, {}".format(
-                    modes_inspiral[(el, em)], modes_inspiral[(el, em)] * ylm
-                ),
-                flush=True,
-            )
-            print(f"hp after adding: {hp_ihc}", flush=True)
+    hp, hc = gwnr.waveform.get_polarizations_from_multipoles(
+        modes_inspiral, inclination=inclination, coa_phase=coa_phase, verbose=verbose
+    )
 
     if return_pycbc_timeseries:
-        hp = pt.TimeSeries(hp_ihc.real, delta_t=delta_t, epoch=-delta_t * len(hp_ihc))
-        hc = pt.TimeSeries(
-            -1 * hp_ihc.imag, delta_t=delta_t, epoch=-delta_t * len(hp_ihc)
-        )
-    else:
-        hp = hp_ihc.real
-        hc = -1 * hp_ihc.imag
+        hp = pt.TimeSeries(hp, delta_t=delta_t, epoch=-delta_t * len(hp))
+        hc = pt.TimeSeries(hc, delta_t=delta_t, epoch=-delta_t * len(hc))
 
     if return_orbital_params:
         if return_pycbc_timeseries:
@@ -1198,25 +1180,9 @@ def get_imr_esigma_waveform(
     else:
         modes_imr = retval
 
-    hp_ihc = modes_imr[(2, 2)] * 0  # Initialize with zeros
-    if verbose:
-        print("Shape of hp_ihc: {}".format(np.shape(hp_ihc)), flush=True)
-
-    for el, em in modes_imr:
-        ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
-        hp_ihc = hp_ihc + modes_imr[(el, em)] * ylm
-        if verbose == 2:
-            print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
-            print(
-                "... adding {}, {}".format(
-                    modes_imr[(el, em)], modes_imr[(el, em)] * ylm
-                ),
-                flush=True,
-            )
-            print(f"hp after adding: {hp_ihc.data}", flush=True)
-
-    hp = hp_ihc.real()
-    hc = -1 * hp_ihc.imag()
+    hp, hc = gwnr.waveform.get_polarizations_from_multipoles(
+        modes_imr, inclination=inclination, coa_phase=coa_phase, verbose=verbose
+    )
 
     if return_hybridization_info and return_orbital_params:
         return hp, hc, orbital_vars_dict, retval

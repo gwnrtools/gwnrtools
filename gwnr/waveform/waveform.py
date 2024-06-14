@@ -29,6 +29,7 @@ from glue.ligolw import ligolw, lsctables
 
 from gwnr.utils.types import extend_waveform_TimeSeries, extend_waveform_FrequencySeries
 
+
 class ContentHandler(ligolw.LIGOLWContentHandler):
     pass
 
@@ -291,6 +292,56 @@ def get_waveform(
     if any(isinf(htilde.data)):
         print("..### %s Fourier transform htilde has INFS!!" % approximant)
     return htilde
+
+
+def get_polarizations_from_multipoles(
+    waveform_multipoles, inclination, coa_phase, verbose=False
+):
+    """
+    Returns GW polarizations from complex GW multipoles
+
+    Parameters:
+    -----------
+        waveform_multipoles     -- Dictionary of complex Waveform Multipoles
+                                   indexed by their `(el, em)` values
+        inclination             -- Inclination (in rad), defined as the angle between the orbital
+                                   angular momentum L and the line-of-sight
+        coa_phase               -- Coalesence phase of the binary (in rad)
+        delta_t                 -- Waveform's time grid-spacing (in s)
+        verbose                 -- Verbosity level. Available values are: 0, 1, 2
+
+    Returns:
+    --------
+        hp, hc            -- Plus and cross GW polarizations
+    """
+    available_modes = list(waveform_multipoles.keys())
+
+    # Initialize with zeros, preserving data type and precision
+    try:
+        hp = waveform_multipoles[available_modes[0]].real * 0
+        hc = waveform_multipoles[available_modes[0]].real * 0
+    except:
+        hp = waveform_multipoles[available_modes[0]].real() * 0
+        hc = waveform_multipoles[available_modes[0]].real() * 0
+
+    for el, em in waveform_multipoles:
+        ylm = lal.SpinWeightedSphericalHarmonic(inclination, coa_phase, -2, el, em)
+        glm = waveform_multipoles[(el, em)] * ylm
+        if verbose > 4:
+            print(f"Adding mode {el}, {em} with ylm = {ylm}", flush=True)
+            print(
+                f"... adding {waveform_multipoles[(el, em)]}, {glm}",
+                flush=True,
+            )
+            print(f"... after adding, hp={hp}, hc={hc}", flush=True)
+        try:
+            hp = hp + glm.real
+            hc = hc - glm.imag
+        except:
+            hp = hp + glm.real()
+            hc = hc - glm.imag()
+
+    return hp, hc
 
 
 def project_polarizations_onto_detector(
