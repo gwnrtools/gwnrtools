@@ -412,7 +412,10 @@ def get_inspiral_esigma_waveform(
         t, modes_inspiral = retval
 
     hp, hc = gwnr.waveform.get_polarizations_from_multipoles(
-        modes_inspiral, inclination=inclination, coa_phase=coa_phase, verbose=verbose
+        modes_inspiral,
+        inclination=inclination,
+        coa_phase=np.pi / 2 - coa_phase,
+        verbose=verbose,
     )
 
     if return_pycbc_timeseries:
@@ -1183,7 +1186,10 @@ def get_imr_esigma_waveform(
         modes_imr = retval
 
     hp, hc = gwnr.waveform.get_polarizations_from_multipoles(
-        modes_imr, inclination=inclination, coa_phase=coa_phase, verbose=verbose
+        modes_imr,
+        inclination=inclination,
+        coa_phase=np.pi / 2 - coa_phase,
+        verbose=verbose,
     )
 
     if return_hybridization_info and return_orbital_params:
