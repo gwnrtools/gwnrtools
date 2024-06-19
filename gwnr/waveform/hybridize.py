@@ -136,15 +136,15 @@ def align_in_phase(
     # m from l,m mode
     def optfn_ph(phaseshift_correction):
         if align_merger_to_inspiral:
-            phase_corrected_inspiral = inspiral * np.exp(
-                1j * m_mode * phaseshift_correction
-            )
-            phase_corrected_merger_ringdown = merger_ringdown
-        else:
             phase_corrected_inspiral = inspiral
             phase_corrected_merger_ringdown = merger_ringdown * np.exp(
                 1j * m_mode * phaseshift_correction
             )
+        else:
+            phase_corrected_inspiral = inspiral * np.exp(
+                1j * m_mode * phaseshift_correction
+            )
+            phase_corrected_merger_ringdown = merger_ringdown
         m_d = mismatch_discrete(
             phase_corrected_inspiral[t1_index_insp : t2_index_insp + 1],
             phase_corrected_merger_ringdown[t1_index_mr : t2_index_mr + 1],
