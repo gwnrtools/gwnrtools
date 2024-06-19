@@ -214,10 +214,10 @@ def hybridize_modes(
     no_sp=8,
     modes_to_hybridize=[(2, 2), (3, 3), (4, 4)],
     mode_to_align_by=(2, 2),
-    hybridize_using_avg_orbital_frequency=False,
-    hybridize_aligning_merger_to_inspiral=False,
+    hybridize_using_avg_orbital_frequency=True,
+    hybridize_aligning_merger_to_inspiral=True,
     include_conjugate_modes=True,
-    verbose=True,
+    verbose=False,
 ):
     """Hybridize inspiral and merger-ringdown modes
 
@@ -237,7 +237,7 @@ def hybridize_modes(
         hybridization of modes is performed.
     delta_t: {1/4096, float}
         Sample rate for timeseries (Hz)
-    np_sp: {4, int}
+    no_sp: {8, int}
 
     modes_to_hybridize: {[(2, 2), (3, 3), (4, 4)], list}
         List of modes as tuples of (l, m) values to hybridize
@@ -492,12 +492,24 @@ def hybridize_modes(
     need to add constants to preserve phase continuity and compile full IMR phase """
 
     def remove_phase_discontinuity(phase_insp_, phase_hyb_window_, phase_mr_):
-        delta1 = phase_insp_[t1_index_insp] - phase_hyb_window_[0]
-        phase_hyb_1 = np.append(phase_insp_[:t1_index_insp], phase_hyb_window_ + delta1)
-        delta2 = phase_hyb_1[t2_index_insp - 1] - phase_mr_[t2_index_mr - 1]
-        phase_hyb_2 = np.append(
-            phase_hyb_1[: t2_index_insp - 1], phase_mr_[t2_index_mr - 1 :] + delta2
-        )
+        if hybridize_aligning_merger_to_inspiral:
+            delta1 = phase_insp_[t1_index_insp] - phase_hyb_window_[0]
+            phase_hyb_1 = np.append(
+                phase_insp_[:t1_index_insp], phase_hyb_window_ + delta1
+            )
+            delta2 = phase_hyb_1[t2_index_insp - 1] - phase_mr_[t2_index_mr - 1]
+            phase_hyb_2 = np.append(
+                phase_hyb_1[: t2_index_insp - 1], phase_mr_[t2_index_mr - 1 :] + delta2
+            )
+        else:
+            delta1 = phase_hyb_window_[0] - phase_insp_[t1_index_insp]
+            phase_hyb_1 = np.append(
+                phase_insp_[:t1_index_insp] + delta1, phase_hyb_window_
+            )
+            delta2 = phase_mr_[t2_index_mr - 1] - phase_hyb_1[t2_index_insp - 1]
+            phase_hyb_2 = np.append(
+                phase_hyb_1[: t2_index_insp - 1] + delta2, phase_mr_[t2_index_mr - 1 :]
+            )
         return phase_hyb_2
 
     for el, em in modes_to_hybridize:
