@@ -157,13 +157,13 @@ def align_in_phase(
     phaseshift_required_for_alignment = phase_optimizer.x
 
     if align_merger_to_inspiral:
-        aligned = inspiral * np.exp(1j * m_mode * phaseshift_required_for_alignment)
-        return (aligned, merger_ringdown, phaseshift_required_for_alignment)
-    else:
         aligned = merger_ringdown * np.exp(
             1j * m_mode * phaseshift_required_for_alignment
         )
         return (inspiral, aligned, phaseshift_required_for_alignment)
+    else:
+        aligned = inspiral * np.exp(1j * m_mode * phaseshift_required_for_alignment)
+        return (aligned, merger_ringdown, phaseshift_required_for_alignment)
 
 
 def blend_series(x1, x2, t1_index_insp, t2_index_insp, t1_index_mr, t2_index_mr):
@@ -545,10 +545,12 @@ def hybridize_modes(
         sample_indices_mr,
         amp_insp_aligned,
         amp_hyb_window,
+        amp_mr_aligned,
         amp_hyb_full,
         phase_insp,
         phase_insp_aligned,
         phase_hyb_window,
+        phase_mr_aligned,
         phase_hyb_full,
         phase_correction,
         phph,
