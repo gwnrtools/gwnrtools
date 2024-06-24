@@ -848,6 +848,14 @@ parameters available with us: {available_inspiral_orbital_params}.
     )
 
     # Retrieve modes, orbital phase and frequency from the returned list
+    modes_inspiral_numpy = retval[-1]
+    if mode_to_align_by not in modes_inspiral_numpy:
+        raise RuntimeError(
+            f"""The inspiral modes do not contain the primary 
+desired {mode_to_align_by} multipole. It currently holds only the following:
+{modes_inspiral_numpy.keys()}"""
+        )
+
     orbital_eccentricity = retval[-2]["e"]
     # Throw error if eccentricity at the end of inspiral is definitely unsafe
     if orbital_eccentricity[-1] > ECCENTRICITY_LEVEL_ISCO_ERROR:
@@ -875,7 +883,6 @@ model might be affected."""
             orbital_frequency = (
                 retval[-2]["phidot"] / ((mass1 + mass2) * lal.MTSUN_SI) / (2 * np.pi)
             )
-    modes_inspiral_numpy = retval[-1]
 
     if return_orbital_params_user:
         orbital_vars_dict = {
@@ -885,18 +892,17 @@ model might be affected."""
 
     # DEBUG
     if verbose > 5:
-        el, em = mode_to_align_by
         mode_phase = gwnr.waveform.hybridize.compute_phase(
             modes_inspiral_numpy[mode_to_align_by]
         )
         mode_frequency = gwnr.waveform.hybridize.compute_frequency(mode_phase, delta_t)
         print(
             f"""DEBUG: Orbital freq at end of inspiral is {orbital_frequency[-1]}Hz,
-mode-{el}{em} freq at the end of inspiral is {mode_frequency[-1]}Hz, max and min
-mode-{el}{em} frequencies are {np.max(mode_frequency)}Hz and
-{np.min(mode_frequency)}Hz, and the transition frequency (of {el},{em}-mode)
+mode-{mode_to_align_by} freq at the end of inspiral is {mode_frequency[-1]}Hz, max and min
+mode-{mode_to_align_by} frequencies are {np.max(mode_frequency)}Hz and
+{np.min(mode_frequency)}Hz, and the transition frequency (of {mode_to_align_by}-mode)
 requested is {f_mr_transition}Hz, which should be less than the maximum freq of
-{el}{em}-mode: {mode_frequency.max()}Hz."""
+{mode_to_align_by}-mode: {mode_frequency.max()}Hz."""
         )
         return (
             modes_inspiral_numpy,
@@ -910,7 +916,6 @@ requested is {f_mr_transition}Hz, which should be less than the maximum freq of
     # In case the user-specified transition frequency is too high, and they
     # requested failsafe mode, we reset it to a reasonable value.
     if failsafe:
-        el, em = mode_to_align_by
         mode_phase = gwnr.waveform.hybridize.compute_phase(
             modes_inspiral_numpy[mode_to_align_by]
         )
@@ -919,7 +924,7 @@ requested is {f_mr_transition}Hz, which should be less than the maximum freq of
             if verbose:
                 print(
                     f"""FAILSAFE: Maximum orbital freq during inspiral is
-{orbital_frequency.max()}Hz, and max frequency of {el},{em}-mode is
+{orbital_frequency.max()}Hz, and max frequency of {mode_to_align_by}-mode is
 {mode_frequency.max()}Hz, so we are resetting transition frequency from
 {f_mr_transition}Hz to {mode_frequency.max()}Hz."""
                 )
@@ -1028,7 +1033,7 @@ eccentricity at the end of inspiral was {orbital_eccentricity[-1]}
         modes_imr[(el, em)] = pt.TimeSeries(
             modes_imr_numpy[(el, em)], delta_t=delta_t, epoch=-1 * t_peak
         )
-    if verbose:
+    if verbose > 4:
         print(
             "Time taken to store in pycbc.TimeSeries is {} secs".format(
                 time.perf_counter() - itime

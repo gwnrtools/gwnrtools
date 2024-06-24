@@ -415,18 +415,17 @@ def hybridize_modes(
         t2_index_insp,
         t1_index_mr,
         t2_index_mr,
+        m_mode=em,
         align_merger_to_inspiral=hybridize_aligning_merger_to_inspiral,
     )
 
     amp_insp_aligned[(el, em)] = compute_amplitude(inspiral_modes_aligned[(el, em)])
     phase_insp_aligned[(el, em)] = compute_phase(inspiral_modes_aligned[(el, em)])
-    phph = compute_phase(inspiral_modes_aligned[(el, em)])
 
     amp_mr_aligned[(el, em)] = compute_amplitude(
         merger_ringdown_modes_aligned[(el, em)]
     )
     phase_mr_aligned[(el, em)] = compute_phase(merger_ringdown_modes_aligned[(el, em)])
-    phph2 = compute_phase(merger_ringdown_modes_aligned[(el, em)])
 
     for el, em in modes_not_aligned_by:
         if hybridize_aligning_merger_to_inspiral:
@@ -541,6 +540,7 @@ def hybridize_modes(
         frq_insp_aligned,
         frq_hyb_window,
         inspiral_modes_aligned,
+        merger_ringdown_modes_aligned,
         sample_indices_insp,
         sample_indices_mr,
         amp_insp_aligned,
@@ -553,5 +553,4 @@ def hybridize_modes(
         phase_mr_aligned,
         phase_hyb_full,
         phase_correction,
-        phph,
     )
