@@ -958,7 +958,7 @@ requested is {f_mr_transition}Hz, which should be less than the maximum freq of
 
     # Generate NR surrogate waveform that will be our merger-ringdown, starting
     # from a frequency = 90% of
-    max_retries = 4
+    max_retries = 20
     f_lower_mr = (f_mr_transition - f_window_mr_transition / 2) * (
         1.8 / mode_to_align_by_em
     )
