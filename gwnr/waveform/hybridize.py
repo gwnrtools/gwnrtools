@@ -269,6 +269,8 @@ def hybridize_modes(
                 different lengths: {len(inspiral_orbital_frequency)}, {len(inspiral_modes[mode_to_align_by])}"""
             )
     modes_not_aligned_by = modes_to_hybridize.copy()
+    if mode_to_align_by in modes_not_aligned_by:
+        modes_not_aligned_by.remove(mode_to_align_by)
     if include_conjugate_modes:
         for el, em in modes_to_hybridize.copy():
             if (el, -em) not in modes_to_hybridize:
@@ -276,10 +278,9 @@ def hybridize_modes(
         for el, em in modes_not_aligned_by.copy():
             if (el, -em) not in modes_not_aligned_by:
                 modes_not_aligned_by.append((el, -em))
-    modes_not_aligned_by.remove(mode_to_align_by)
 
     # Input checks
-    for lm in modes_to_hybridize + [mode_to_align_by]:
+    for lm in modes_to_hybridize:
         if lm not in inspiral_modes or lm not in merger_ringdown_modes:
             raise IOError(
                 "We cannot hybridize {} mode as its missing in the input inspiral modes"
