@@ -231,5 +231,11 @@ class Catalog(pycbc.catalog.Catalog):
 
 
 # Names of available events
-c = pycbc.catalog.Catalog()
-catalog_events = c.names
+try:
+    c = pycbc.catalog.Catalog()
+    catalog_events = c.names
+except:
+    # In case of no network connectivity, we do not want this file
+    # to not be imported
+    c = None
+    catalog_events = []
