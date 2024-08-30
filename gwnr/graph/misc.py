@@ -33,6 +33,32 @@ mp.rc("text", usetex=True)
 plt.rcParams.update({"text.usetex": True})
 
 
+def set_matplotlib_params():
+    linestyles = ["-", "--", "-.", "-x", "--o"]
+    linecolors = ["r", "g", "b", "k", "m", "y"]
+
+    # Figure settings
+    ppi = 72.0
+    aspect = (5.0**0.5 - 1) * 0.5
+    size = 3.0 * 3  # was 6
+    figsize = (size, aspect * size)
+    plt.rcParams.update(
+        {
+            "legend.fontsize": 20,  #'text.fontsize':22,\
+            "axes.labelsize": 22,
+            "font.family": "serif",
+            "font.size": 22,
+            "xtick.labelsize": 22,
+            "ytick.labelsize": 22,
+            "figure.subplot.bottom": 0.2,
+            "figure.figsize": figsize,
+            "savefig.dpi": 100.0,
+            "figure.autolayout": True,
+        }
+    )
+    return linestyles, linecolors
+
+
 def make_filled_contour_plot(
     x,
     y,
