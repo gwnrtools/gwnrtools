@@ -302,7 +302,7 @@ def get_inspiral_esigma_modes(
             k: pt.TimeSeries(
                 modes[k].data.data,
                 delta_t=delta_t,
-                epoch=-delta_t * len(modes[k].data.data),
+                epoch=-delta_t * (len(modes[k].data.data)-1),
             )
             for k in modes
         }
@@ -320,7 +320,7 @@ def get_inspiral_esigma_modes(
         if return_pycbc_timeseries:
             for name in return_orbital_params:
                 exec(
-                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=delta_t, epoch=-delta_t * len({name}.data.data)"
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries({name}.data.data, delta_t=delta_t, epoch=-delta_t * (len({name}.data.data)-1))"
                 )
             return orbital_var_dict, modes
 
@@ -419,14 +419,14 @@ def get_inspiral_esigma_waveform(
     )
 
     if return_pycbc_timeseries:
-        hp = pt.TimeSeries(hp, delta_t=delta_t, epoch=-delta_t * len(hp))
-        hc = pt.TimeSeries(hc, delta_t=delta_t, epoch=-delta_t * len(hc))
+        hp = pt.TimeSeries(hp, delta_t=delta_t, epoch=-delta_t * (len(hp)-1))
+        hc = pt.TimeSeries(hc, delta_t=delta_t, epoch=-delta_t * (len(hc)-1))
 
     if return_orbital_params:
         if return_pycbc_timeseries:
             for name in orbital_var_dict:
                 exec(
-                    f"orbital_var_dict['{name}'] = pt.TimeSeries(orbital_var_dict['{name}'], delta_t=t[1]-t[0], epoch=0)"
+                    f"orbital_var_dict['{name}'] = pt.TimeSeries(orbital_var_dict['{name}'], delta_t=delta_t, epoch=-delta_t * (len(orbital_var_dict['{name}'])-1))"
                 )
             return orbital_var_dict, hp, hc
         return t, orbital_var_dict, hp, hc
