@@ -20,8 +20,9 @@
 #
 # =============================================================================
 #
-"""Master function to hybridise any complex timeseries using the 'frequency' as a user input, 
-specifically to be used for gravitational waveform hybridisation, fine-tuned for a single mode.
+"""Master function to hybridise any complex timeseries using the 'frequency' as
+a user input, specifically to be used for gravitational waveform hybridisation,
+fine-tuned for a single mode.
 """
 
 import numpy as np
