@@ -1,0 +1,507 @@
+#!/bin/bash
+# Script to build SpEC dependencies from scratch with compile-time optimizations.
+# Automatically builds 'environment-modules' and generates a Tcl module for dependencies.
+
+set -e
+
+# Record the SpEC root directory based on script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+# ==============================================================================
+# Dependency Versions & Justifications (vis-a-vis Vaishak's web post on Sonic)
+# ==============================================================================
+# Vaishak's web post specifically addresses optimizations for AMD Epyc CPUs (like 
+# on the Sonic HPC) and recommends building everything manually from source, 
+# avoiding Spack, and using the latest iter-compatible library versions.
+
+ENV_MODULES_VER="5.4.0"
+OPENMPI_VER="4.1.4"
+OPENMPI_MAJOR_MINOR="4.1"
+OPENBLAS_VER="0.3.25"
+FFTW_VER="3.3.10"
+GSL_VER="2.7.1"
+HDF5_VER="1.12.3"
+PETSC_VER="3.18.4"
+TCL_VER="8.6.14"
+UCX_VER="1.15.0"
+
+# ==============================================================================
+# Command-line Options Parsing
+# ==============================================================================
+DEPS_DIR="${HOME}/pfs/spec_dependencies"
+# UCX is removed from the default list as it is usually provided by the system.
+# It can still be explicitly added via --libs if a custom build is needed.
+LIBS_TO_BUILD="tcl env-modules openblas openmpi fftw gsl hdf5 petsc"
+DOWNLOAD_ONLY=0
+REBUILD=0
+
+usage() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --prefix <path>     Installation directory (default: ~/spec-dependencies)"
+    echo "  --libs <list>       Comma-separated list of libraries to build"
+    echo "                      (default: tcl,env-modules,openblas,openmpi,fftw,gsl,hdf5,petsc)"
+    echo "  --download-only     Only download source code, do not build or install"
+    echo "  --rebuild           Rebuild existing installations (deletes existing source dir)"
+    echo "  -h, --help          Show this help message"
+    exit 1
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --prefix)
+            DEPS_DIR="$2"
+            shift 2
+            ;;
+        --libs)
+            LIBS_TO_BUILD=$(echo "$2" | tr ',' ' ')
+            shift 2
+            ;;
+        --download-only)
+            DOWNLOAD_ONLY=1
+            shift
+            ;;
+        --rebuild)
+            REBUILD=1
+            shift
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Unknown option: $1"
+            usage
+            ;;
+    esac
+done
+
+# Derived directories
+MODULES_DIR="${DEPS_DIR}/modulefiles/spec-deps"
+SRC_DIR="${DEPS_DIR}/src"
+
+# ==============================================================================
+# Configuration & Optimization Flags
+# ==============================================================================
+# The post emphasizes: "Consistently turning on avx2, fma, pic, optimizations at O3"
+# It also mentions: "Dynamically linked executables and lto (!)"
+# We will use GCC as it has comparable performance to AMD AOCC (which the post 
+# noted was buggy).
+
+# O3: Maximum safe optimizations. (Post: "Avoid Ofast")
+# mavx2: Recommended over avx512 due to thermal throttling and grouping availability on AMD.
+# mfma: Highly recommended for performance (SpEC default disables it due to ticket #720, but the post explicitly calls for it).
+# fPIC: Required for shared libraries/dynamic linking as recommended.
+# flto: Link-time optimization explicitly recommended by the post.
+# We will apply these aggressive flags ONLY to the scientific libraries 
+# (OpenBLAS, OpenMPI, FFTW, GSL, HDF5, PETSc) to prevent build failures 
+# in basic utilities like Tcl and env-modules which often fail with -flto.
+OPT_FLAGS="-O3 -mavx2 -mfma -fPIC -flto"
+
+export CC=gcc
+export CXX=g++
+export FC=gfortran
+export F77=gfortran
+
+mkdir -p "$SRC_DIR"
+mkdir -p "$DEPS_DIR"
+mkdir -p "$MODULES_DIR"
+
+cd "$SRC_DIR"
+
+# Helper function to check if a library should be processed
+should_build() {
+    local lib="$1"
+    if [[ " $LIBS_TO_BUILD " =~ " $lib " ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+echo "========================================================================="
+echo "Configuration Summary:"
+echo "Prefix: $DEPS_DIR"
+echo "Libraries to process: $LIBS_TO_BUILD"
+echo "Download only: $DOWNLOAD_ONLY"
+echo "Rebuild: $REBUILD"
+echo "========================================================================="
+
+# ==============================================================================
+# Tcl (Required for Environment Modules)
+# ==============================================================================
+if should_build "tcl"; then
+    echo ">>> Processing Tcl ${TCL_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "tcl${TCL_VER}" ]; then
+        echo "Removing existing tcl${TCL_VER} directory..."
+        rm -rf "tcl${TCL_VER}"
+    fi
+
+    if [ ! -f "tcl${TCL_VER}-src.tar.gz" ]; then
+        curl -LO "https://prdownloads.sourceforge.net/tcl/tcl${TCL_VER}-src.tar.gz"
+    fi
+    if [ ! -d "tcl${TCL_VER}" ]; then
+        tar -xzf "tcl${TCL_VER}-src.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "tcl${TCL_VER}/unix"
+        ./configure --prefix="${DEPS_DIR}"
+        make -j$(nproc)
+        make install
+        cd ../..
+        
+        # Add Tcl to paths immediately so that 'env-modules' picks up the correct 'tclsh'
+        export PATH="${DEPS_DIR}/bin:${PATH}"
+        export LD_LIBRARY_PATH="${DEPS_DIR}/lib:${LD_LIBRARY_PATH}"
+    fi
+fi
+
+# ==============================================================================
+# Environment Modules
+# ==============================================================================
+if should_build "env-modules"; then
+    echo ">>> Processing Environment Modules ${ENV_MODULES_VER} from scratch"
+    if [ "$REBUILD" -eq 1 ] && [ -d "modules-${ENV_MODULES_VER}" ]; then
+        echo "Removing existing modules-${ENV_MODULES_VER} directory..."
+        rm -rf "modules-${ENV_MODULES_VER}"
+    fi
+
+    if [ ! -f "modules-${ENV_MODULES_VER}.tar.gz" ]; then
+        curl -LO "https://github.com/cea-hpc/modules/releases/download/v${ENV_MODULES_VER}/modules-${ENV_MODULES_VER}.tar.gz"
+    fi
+    if [ ! -d "modules-${ENV_MODULES_VER}" ]; then
+        tar -xzf "modules-${ENV_MODULES_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "modules-${ENV_MODULES_VER}"
+        # Point to the freshly installed Tcl configuration
+        ./configure --prefix="${DEPS_DIR}/env-modules" --with-tcl="${DEPS_DIR}/lib"
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# Try to initialize modules for the current script if they were built previously or just now
+if [ -f "${DEPS_DIR}/env-modules/init/bash" ]; then
+    source "${DEPS_DIR}/env-modules/init/bash"
+    module use "${DEPS_DIR}/modulefiles"
+fi
+
+# ==============================================================================
+# Apply Aggressive Optimizations for HPC Libraries
+# ==============================================================================
+export CFLAGS="$OPT_FLAGS"
+export CXXFLAGS="$OPT_FLAGS"
+export FFLAGS="$OPT_FLAGS"
+export FCFLAGS="$OPT_FLAGS"
+export LDFLAGS="-flto"
+
+# ==============================================================================
+# OpenBLAS
+# ==============================================================================
+if should_build "openblas"; then
+    echo ">>> Processing OpenBLAS ${OPENBLAS_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "OpenBLAS-${OPENBLAS_VER}" ]; then
+        echo "Removing existing OpenBLAS-${OPENBLAS_VER} directory..."
+        rm -rf "OpenBLAS-${OPENBLAS_VER}"
+    fi
+
+    if [ ! -f "OpenBLAS-${OPENBLAS_VER}.tar.gz" ]; then
+        curl -LO "https://github.com/OpenMathLib/OpenBLAS/releases/download/v${OPENBLAS_VER}/OpenBLAS-${OPENBLAS_VER}.tar.gz"
+    fi
+    if [ ! -d "OpenBLAS-${OPENBLAS_VER}" ]; then
+        tar -xzf "OpenBLAS-${OPENBLAS_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "OpenBLAS-${OPENBLAS_VER}"
+        # USE_OPENMP=0: SpEC does not strictly rely on OpenMP for BLAS, and threading can sometimes conflict with MPI.
+        make CC=$CC FC=$FC CFLAGS="$CFLAGS" FFLAGS="$FFLAGS" USE_OPENMP=0 DYNAMIC_ARCH=0 -j$(nproc)
+        make PREFIX="$DEPS_DIR" install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# UCX (Unified Communication X)
+# ==============================================================================
+if should_build "ucx"; then
+    echo ">>> Processing UCX ${UCX_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "ucx-${UCX_VER}" ]; then
+        echo "Removing existing ucx-${UCX_VER} directory..."
+        rm -rf "ucx-${UCX_VER}"
+    fi
+
+    if [ ! -f "ucx-${UCX_VER}.tar.gz" ]; then
+        curl -LO "https://github.com/openucx/ucx/releases/download/v${UCX_VER}/ucx-${UCX_VER}.tar.gz"
+    fi
+    if [ ! -d "ucx-${UCX_VER}" ]; then
+        tar -xzf "ucx-${UCX_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "ucx-${UCX_VER}"
+        # Configure UCX for maximum performance
+        ./configure --prefix="$DEPS_DIR" \
+            --disable-logging \
+            --disable-debug \
+            --disable-assertions \
+            --disable-params-check
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# OpenMPI
+# ==============================================================================
+if should_build "openmpi"; then
+    echo ">>> Processing OpenMPI ${OPENMPI_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "openmpi-${OPENMPI_VER}" ]; then
+        echo "Removing existing openmpi-${OPENMPI_VER} directory..."
+        rm -rf "openmpi-${OPENMPI_VER}"
+    fi
+
+    if [ ! -f "openmpi-${OPENMPI_VER}.tar.gz" ]; then
+        curl -LO "https://download.open-mpi.org/release/open-mpi/v${OPENMPI_MAJOR_MINOR}/openmpi-${OPENMPI_VER}.tar.gz"
+    fi
+    if [ ! -d "openmpi-${OPENMPI_VER}" ]; then
+        tar -xzf "openmpi-${OPENMPI_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "openmpi-${OPENMPI_VER}"
+        
+        # Check if we built a custom UCX or should rely on the system one
+        if [[ " $LIBS_TO_BUILD " =~ " ucx " ]] || [ -d "${DEPS_DIR}/include/ucx" ]; then
+            UCX_FLAG="--with-ucx=$DEPS_DIR"
+        else
+            UCX_FLAG="--with-ucx"
+        fi
+        
+        ./configure --prefix="$DEPS_DIR" $UCX_FLAG
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# If OpenMPI was built previously or just now, use it for subsequent builds
+if [ -f "${DEPS_DIR}/bin/mpicc" ]; then
+    export PATH="${DEPS_DIR}/bin:${PATH}"
+    export LD_LIBRARY_PATH="${DEPS_DIR}/lib:${LD_LIBRARY_PATH}"
+    export CC="${DEPS_DIR}/bin/mpicc"
+    export CXX="${DEPS_DIR}/bin/mpicxx"
+    export FC="${DEPS_DIR}/bin/mpifort"
+    export F77="${DEPS_DIR}/bin/mpifort"
+fi
+
+# ==============================================================================
+# FFTW
+# ==============================================================================
+if should_build "fftw"; then
+    echo ">>> Processing FFTW ${FFTW_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "fftw-${FFTW_VER}" ]; then
+        echo "Removing existing fftw-${FFTW_VER} directory..."
+        rm -rf "fftw-${FFTW_VER}"
+    fi
+
+    if [ ! -f "fftw-${FFTW_VER}.tar.gz" ]; then
+        curl -LO "http://fftw.org/fftw-${FFTW_VER}.tar.gz"
+    fi
+    if [ ! -d "fftw-${FFTW_VER}" ]; then
+        tar -xzf "fftw-${FFTW_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "fftw-${FFTW_VER}"
+        ./configure --prefix="$DEPS_DIR" --enable-shared --enable-avx2 --enable-fma CC=$CC
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# GSL
+# ==============================================================================
+if should_build "gsl"; then
+    echo ">>> Processing GSL ${GSL_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "gsl-${GSL_VER}" ]; then
+        echo "Removing existing gsl-${GSL_VER} directory..."
+        rm -rf "gsl-${GSL_VER}"
+    fi
+
+    if [ ! -f "gsl-${GSL_VER}.tar.gz" ]; then
+        curl -LO "https://ftp.gnu.org/gnu/gsl/gsl-${GSL_VER}.tar.gz"
+    fi
+    if [ ! -d "gsl-${GSL_VER}" ]; then
+        tar -xzf "gsl-${GSL_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "gsl-${GSL_VER}"
+        ./configure --prefix="$DEPS_DIR" CC=$CC
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# HDF5
+# ==============================================================================
+if should_build "hdf5"; then
+    echo ">>> Processing HDF5 ${HDF5_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "hdf5-${HDF5_VER}" ]; then
+        echo "Removing existing hdf5-${HDF5_VER} directory..."
+        rm -rf "hdf5-${HDF5_VER}"
+    fi
+
+    if [ ! -f "hdf5-${HDF5_VER}.tar.gz" ]; then
+        # Use the official HDF Group distribution server for the release tarball
+        HDF5_MAJOR_MINOR=$(echo ${HDF5_VER} | cut -d. -f1,2)
+        curl -LO "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-${HDF5_MAJOR_MINOR}/hdf5-${HDF5_VER}/src/hdf5-${HDF5_VER}.tar.gz"
+    fi
+    if [ ! -d "hdf5-${HDF5_VER}" ]; then
+        tar -xzf "hdf5-${HDF5_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "hdf5-${HDF5_VER}"
+        ./configure --prefix="$DEPS_DIR" --enable-parallel --enable-shared CC=$CC CXX=$CXX
+        make -j$(nproc)
+        make install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# PETSc
+# ==============================================================================
+if should_build "petsc"; then
+    echo ">>> Processing PETSc ${PETSC_VER}"
+    if [ "$REBUILD" -eq 1 ] && [ -d "petsc-${PETSC_VER}" ]; then
+        echo "Removing existing petsc-${PETSC_VER} directory..."
+        rm -rf "petsc-${PETSC_VER}"
+    fi
+
+    if [ ! -f "petsc-${PETSC_VER}.tar.gz" ]; then
+        curl -LO "https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-${PETSC_VER}.tar.gz"
+    fi
+    if [ ! -d "petsc-${PETSC_VER}" ]; then
+        tar -xzf "petsc-${PETSC_VER}.tar.gz"
+    fi
+
+    if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+        cd "petsc-${PETSC_VER}"
+        ./configure --prefix="$DEPS_DIR" \
+            --with-cc=$CC \
+            --with-cxx=$CXX \
+            --with-fc=$FC \
+            --with-blaslapack-lib="-L${DEPS_DIR}/lib -lopenblas" \
+            --with-debugging=0 \
+            COPTFLAGS="$CFLAGS" \
+            CXXOPTFLAGS="$CXXFLAGS" \
+            FOPTFLAGS="$FFLAGS"
+        make all
+        make install
+        cd ..
+    fi
+fi
+
+# ==============================================================================
+# Environment Module Generation
+# ==============================================================================
+if [ "$DOWNLOAD_ONLY" -eq 0 ]; then
+    echo "========================================================================="
+    echo "Generating Environment Module"
+    echo "========================================================================="
+    cat << EOF > "${MODULES_DIR}/default"
+#%Module1.0
+proc ModulesHelp { } {
+    puts stderr "Loads SpEC dependencies with optimized flags"
+}
+
+module-whatis "SpEC optimized dependencies"
+
+set prefix ${DEPS_DIR}
+
+prepend-path PATH \$prefix/bin
+prepend-path LD_LIBRARY_PATH \$prefix/lib
+prepend-path CPATH \$prefix/include
+prepend-path PKG_CONFIG_PATH \$prefix/lib/pkgconfig
+EOF
+
+    echo "========================================================================="
+    echo "Generating SpEC Machine Definition for Sonic HPC"
+    echo "========================================================================="
+    # Sonic specific machine definition adapted to use these exact compiled deps
+    SPEC_DEF_DIR="${SCRIPT_DIR}/MakefileRules/Machines"
+    if [ -d "$SPEC_DEF_DIR" ]; then
+    cat << EOF > "${SPEC_DEF_DIR}/Sonic_Optimized_gcc.def"
+DYNAMIC_LINKING = yes
+HAVE_DOT = NO
+PRINT_TIMING_INFO = YES
+VERBOSE = 0
+REQUIRE_ENVFILE = yes
+
+# Optimized deps paths
+DEPS_DIR = ${DEPS_DIR}
+
+MPIHOME = \$(DEPS_DIR)
+MPI_INCLUDE = -I\$(MPIHOME)/include
+MPI_LIB = -Wl,-rpath,\$(MPIHOME)/lib -L\$(MPIHOME)/lib -lmpi
+
+LAPACK_INCLUDE = -I\$(DEPS_DIR)/include
+LAPACK_LIB     = -Wl,-rpath,\$(DEPS_DIR)/lib -L\$(DEPS_DIR)/lib -lopenblas
+
+FFTW_INCLUDE = -I\$(DEPS_DIR)/include
+FFTW_LIB     = -Wl,-rpath,\$(DEPS_DIR)/lib -L\$(DEPS_DIR)/lib -lfftw3
+
+GSL_INCLUDE = -I\$(DEPS_DIR)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
+GSL_LIB     = -Wl,-rpath,\$(DEPS_DIR)/lib -L\$(DEPS_DIR)/lib -lgsl -lgslcblas
+
+HDF_INCLUDE = -isystem \$(DEPS_DIR)/include
+HDF_LIB     = -Wl,-rpath,\$(DEPS_DIR)/lib -L\$(DEPS_DIR)/lib -lhdf5 -lhdf5_hl -lz
+
+PETSC_INCLUDE = -I\$(DEPS_DIR)/include
+PETSC_LIB     = -Wl,-rpath,\$(DEPS_DIR)/lib -L\$(DEPS_DIR)/lib -lpetsc
+
+ARCH_INCLUDE = \$(MPI_INCLUDE) \$(PETSC_INCLUDE) \$(HDF_INCLUDE) \$(GSL_INCLUDE) \$(FFTW_INCLUDE) \$(LAPACK_INCLUDE)
+ARCH_LIB_PARALLEL = \$(MPI_LIB) \$(PETSC_LIB) \$(HDF_LIB) \$(GSL_LIB) \$(FFTW_LIB) \$(LAPACK_LIB) -lgfortran -lm -pthread -ldl -lrt
+
+include \$(CODE_HOME)/MakefileRules/Machines/Standards/compilers_openmpi.def
+include \$(CODE_HOME)/MakefileRules/Machines/Standards/flags_gcc.def
+
+# Optimized math: overriding SpEC's default disabling of FMA as per Vaishak's AMD guide
+OPTIMIZE += -mavx2 -mfma -flto -fPIC
+DYNAMIC_FLAGS = -fPIC
+DYNAMIC_LDFLAGS = -Wl,--no-as-needed -flto
+EOF
+
+    cat << EOF > "${SPEC_DEF_DIR}/Sonic_Optimized_gcc.env"
+#!/usr/bin/env bash
+# Source the locally built environment-modules initialization
+source ${DEPS_DIR}/env-modules/init/bash
+module use ${DEPS_DIR}/modulefiles
+module load spec-deps/default
+EOF
+    echo "Created MakefileRules/Machines/Sonic_Optimized_gcc.def and .env"
+    fi
+
+    echo "========================================================================="
+    echo "Done! You can load the dependencies manually by running:"
+    echo "source ${DEPS_DIR}/env-modules/init/bash"
+    echo "module use ${DEPS_DIR}/modulefiles"
+    echo "module load spec-deps/default"
+    echo "Then configure SpEC using: ./configure -c Sonic_Optimized_gcc"
+    echo "========================================================================="
+else
+    echo "========================================================================="
+    echo "Downloads complete. Skipping installation phase as requested."
+    echo "========================================================================="
+fi
