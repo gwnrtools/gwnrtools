@@ -25,12 +25,16 @@ from __future__ import print_function
 import os
 import sys
 import glob
-import subprocess
 import numpy as np
 from scipy.optimize import minimize
+import subprocess
+import time
 
-from pycbc.waveform import frequency_from_polarizations
+import gwnr
 from gwnr.waveform.align import align_curves
+import lalsimulation as ls
+import pycbc.types as pt
+from pycbc.waveform import frequency_from_polarizations
 
 
 def get_peak_freqs(freq):
@@ -94,6 +98,145 @@ def get_apastron_frequencies(hp, hc):
     freq = frequency_from_polarizations(hp, hc)
     ft, ff = get_peak_freqs(-1 * freq)
     return (ft, -1 * ff)
+
+
+def eccentricity_at_extremum_frequency(
+    mass1,
+    mass2,
+    spin1z,
+    spin2z,
+    e0,
+    l0,
+    f_lower,
+    sample_rate,
+    f_extremum,
+    extremum="periastron",
+    show_figures=False,
+    verbose=False,
+):
+    """Get eccentricity"""
+
+    def find_x_for_y(x, y, y0):
+        return x[abs(y - y0).argmin()]
+
+    if extremum.lower() not in ["periastron", "apastron"]:
+        raise IOError("Allowed values for extremum: periastron, apastron")
+
+    itime = time.perf_counter()
+    retval = ls.SimInspiralENIGMADynamics(
+        mass1, mass2, spin1z, spin2z, e0, f_lower, l0, 1e-12, sample_rate, False
+    )
+    t, x, e, l, phi, phidot, r, rdot = retval[:8]
+    t.data.data *= lal.MTSUN_SI
+
+    if verbose:
+        print(f"Orbital evolution took: {time.perf_counter() - itime} seconds")
+
+    omega = pt.TimeSeries(phidot.data.data, delta_t=t.data.data[1] - t.data.data[0])
+    if extremum == "periastron":
+        extremum_frequencies_times, extremum_frequencies = gwnr.waveform.get_peak_freqs(
+            omega
+        )
+    else:
+        extremum_frequencies_times, extremum_frequencies = gwnr.waveform.get_peak_freqs(
+            -1 * omega
+        )
+        extremum_frequencies *= -1
+
+    piMf_extremum = f_extremum * lal.PI * (mass1 + mass2) * lal.MTSUN_SI
+    time_at_sensitive_freq = find_x_for_y(
+        extremum_frequencies_times, extremum_frequencies, piMf_extremum
+    )
+    idx_e0 = abs(t.data.data - time_at_sensitive_freq).argmin()
+    e0 = e.data.data[idx_e0]
+
+    if show_figures:
+        import matplotlib.pyplot as plt
+
+        fig, (ax1) = plt.subplots(1, 1, figsize=(10, 5), sharex=True)
+        ax2 = ax1
+        ax1.plot(
+            extremum_frequencies_times,
+            extremum_frequencies,
+            "o",
+            markersize=1,
+            label="extrema",
+        )
+        ax1.plot(t.data.data, x.data.data**1.5, "--", label="x ** {3/2}")
+        ax1.plot(t.data.data, phidot.data.data, lw=0.5, label="omega")
+
+        ax1.axhline(piMf_extremum, c="c", lw=1)
+        ax1.axvline(time_at_sensitive_freq, c="r", lw=1)
+
+        ax1.set_xlabel("Time (s)")
+        ax1.set_ylabel("Orbital angular velocity")
+
+        ax = plt.twinx(ax2)
+        ax.plot(t.data.data, e.data.data, label="eccentricity", lw=1)
+        ax.axhline(e0, c="k", lw=1)
+        ax.set_xlim(ax1.get_xlim())
+
+        ax1.legend(loc="center left")
+        ax.legend(loc="upper center")
+
+        return e0, fig
+
+    return e0
+
+
+def eccentricity_at_reference_frequency(
+    mass1,
+    mass2,
+    spin1z,
+    spin2z,
+    e0,
+    l0,
+    f_lower,
+    sample_rate,
+    f_reference,
+    show_figures=False,
+    verbose=False,
+):
+    """Compute the orbital eccentricity at a reference frequency given the
+    initial eccentricity and the initial orbital angular momentum at a lower
+    orbit-averaged frequency."""
+
+    itime = time.perf_counter()
+    retval = ls.SimInspiralENIGMADynamics(
+        mass1, mass2, spin1z, spin2z, e0, f_lower, l0, 1e-12, sample_rate, False
+    )
+    t, x, e, l, phi, phidot, r, rdot = retval[:8]
+    t.data.data *= lal.MTSUN_SI
+
+    if verbose:
+        print(f"Orbital evolution took: {time.perf_counter() - itime} seconds")
+
+    x_reference = (np.pi * (mass1 + mass2) * lal.MTSUN_SI * f_reference) ** (2.0 / 3.0)
+
+    idx_e0 = abs(x.data.data - x_reference).argmin()
+    e0 = e.data.data[idx_e0]
+
+    if show_figures:
+        import matplotlib.pyplot as plt
+
+        fig, (ax) = plt.subplots(1, 1, figsize=(10, 5), sharex=True)
+        ax.plot(t.data.data, x.data.data**1.5, "--", label="x ** {3/2}")
+        ax.plot(t.data.data, phidot.data.data, lw=0.5, label="omega")
+        ax.axhline(x_reference**1.5, color="c", lw=1)
+        ax.axvline(t.data.data[idx_e0], color="r", lw=1)
+        ax.set_xlabel("Time (s)")
+        ax.set_ylabel("Orbital angular velocity")
+
+        ax2 = plt.twinx(ax)
+        ax2.plot(t.data.data, e.data.data, label="eccentricity", lw=1)
+        ax2.axhline(e0, c="k", lw=1)
+        ax2.set_xlim(ax.get_xlim())
+
+        ax.legend(loc="center left")
+        ax2.legend(loc="upper center")
+        return e0, fig
+
+    return e0
 
 
 os.environ[
