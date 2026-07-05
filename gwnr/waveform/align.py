@@ -170,6 +170,7 @@ def shift_waveform_time(
         hp,
         hc,
         t_shift,
+        0,
         shift_epochs_only=shift_epochs_only,
         trim_leading=trim_leading,
         trim_trailing=trim_trailing,

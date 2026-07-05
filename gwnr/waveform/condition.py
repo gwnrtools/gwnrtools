@@ -26,11 +26,7 @@ import sys
 import os
 
 import numpy as np
-
-try:
-    pass
-except ImportError:
-    pass
+from numpy import ones, array, exp, append, asarray
 
 from pycbc.types import TimeSeries
 from pycbc.pnutils import *
@@ -123,8 +119,8 @@ def moving_window_average(x, i, window_len=10):
     """
     Return the average of x[i - window_len/2 : i + window_len/2]
     """
-    imin = np.maximum(0, i - window_len / 2)
-    imax = np.minimum(len(x), i + window_len / 2)
+    imin = int(np.maximum(0, i - window_len // 2))
+    imax = int(np.minimum(len(x), i + window_len // 2))
     return np.mean(x[imin:imax])
 
 
@@ -141,7 +137,7 @@ def planck_window(N=None, eps=None, one_sided=True, winstart=0):
     win[0:N1] = array(1.0 / (exp(Zp) + 1.0))[0:N1]
     ##
     if one_sided is not True:
-        N2 = (1.0 - eps) * (N - 1.0) + 1
+        N2 = int((1.0 - eps) * (N - 1.0) + 1)
         den_t1_Zm = 1.0 - 2.0 * win / (N - 1.0)
         Zm = 2.0 * eps * (1.0 / den_t1_Zm + 1.0 / (den_t1_Zm - 2.0 * eps))
         win[N2:] = array(1.0 / (exp(Zm) + 1.0))[N2:]

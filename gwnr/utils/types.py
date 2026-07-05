@@ -137,8 +137,8 @@ def convert_numpy_to_pycbc_type(arr, out_type, sample_rate=None, time_length=Non
     """
     delta_t = 1.0 / sample_rate
     delta_f = 1.0 / time_length
-    N = sample_rate * time_length
-    n = N / 2 + 1
+    N = int(sample_rate * time_length)
+    n = N // 2 + 1
     if out_type == TimeSeries:
         out_arr = TimeSeries(arr, delta_t=delta_t)
         out_arr = extend_waveform_TimeSeries(out_arr, N)
@@ -160,7 +160,8 @@ def make_padded_frequency_series(vec, filter_N=None, delta_f=None):
     # {{{
     if filter_N is None:
         filter_N = nearest_larger_binary_number(len(vec))
-    filter_n = filter_N / 2 + 1
+    filter_N = int(filter_N)
+    filter_n = filter_N // 2 + 1
 
     if isinstance(vec, FrequencySeries):
         vectilde = FrequencySeries(
@@ -168,7 +169,8 @@ def make_padded_frequency_series(vec, filter_N=None, delta_f=None):
             delta_f=vec.get_delta_f(),
             dtype=complex_same_precision_as(vec),
         )
-        cplen = min(len(vec), len(vectilde))
+        # NOTE: builtin min is shadowed by `from numpy import *` above
+        cplen = int(np.minimum(len(vec), len(vectilde)))
         vectilde[:cplen] = vec[:cplen]
         if delta_f is not None:
             delta_f_ratio = max(1, int(ceil(vectilde.get_delta_f() / delta_f)))
