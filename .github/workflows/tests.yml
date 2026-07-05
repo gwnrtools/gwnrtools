@@ -7,6 +7,26 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install linters
+        run: pip install black==24.10.0 flake8
+
+      - name: Check formatting (black)
+        run: black --check gwnr/ tests/ setup.py
+
+      - name: Lint (flake8)
+        run: flake8 gwnr/ tests/ setup.py --count
+
   unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -27,11 +47,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install \
-            numpy scipy matplotlib pandas h5py astropy \
-            lalsuite pycbc lscsoft-glue igwn-ligolw \
-            emcee statsmodels bilby pytest \
-            "pyswarm @ git+https://github.com/tisimst/pyswarm@master"
+          pip install -r requirements.txt
+          pip install pytest
 
       - name: Install gwnr
         run: pip install --no-deps .
