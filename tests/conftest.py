@@ -1,5 +1,5 @@
 # Copyright (c) 2026, Prayush Kumar
-# See LICENSE file for details: <https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/gwnr/gwnr/blob/master/LICENSE>
 """Shared pytest configuration for the gwnr test suite.
 
 Ensures the working-tree package (repository root) is imported in

@@ -10,7 +10,7 @@ permalink: /docs/api/cosmo/
 {: .no_toc }
 
 Cosmological conversions used in GW population and rates work. Source:
-[`gwnr/cosmo/utils.py`](https://github.com/gwnrtools/gwnrtools/blob/master/gwnr/cosmo/utils.py).
+[`gwnr/cosmo/utils.py`](https://github.com/gwnr/gwnr/blob/master/gwnr/cosmo/utils.py).
 
 1. TOC
 {:toc}

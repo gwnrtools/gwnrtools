@@ -10,7 +10,7 @@ permalink: /docs/api/waveform/
 {: .no_toc }
 
 Generation, conditioning, alignment, hybridization and characterization of gravitational
-waveforms. Source: [`gwnr/waveform/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/waveform).
+waveforms. Source: [`gwnr/waveform/`](https://github.com/gwnr/gwnr/tree/master/gwnr/waveform).
 
 1. TOC
 {:toc}

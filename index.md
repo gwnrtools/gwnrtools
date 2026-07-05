@@ -5,17 +5,17 @@ nav_order: 1
 permalink: /
 ---
 
-# gwnrtools
+# gwnr
 
 **A collection of tools for academic research in gravitational-wave astronomy, astrophysics, and numerical relativity.**
 {: .fs-6 .fw-300 }
 
 [Get started]({{ site.baseurl }}/docs/getting-started/){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/gwnrtools/gwnrtools){: .btn .fs-5 .mb-4 .mb-md-0 }
+[View on GitHub](https://github.com/gwnr/gwnr){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
-`gwnrtools` (imported as the Python package **`gwnr`**) is a research toolkit built on top of
+`gwnr` (imported as the Python package **`gwnr`**) is a research toolkit built on top of
 [PyCBC](https://pycbc.org/), [LALSuite](https://git.ligo.org/lscsoft/lalsuite),
 [Bilby](https://lscsoft.docs.ligo.org/bilby/) and the scientific Python stack. It collects the
 utilities, analysis pipelines and plotting machinery developed over years of research on
@@ -70,6 +70,6 @@ match = calculate_faithfulness(
 
 ## Citation & license
 
-`gwnrtools` is developed by [Prayush Kumar](https://github.com/prayush) and collaborators, and is
+`gwnr` is developed by [Prayush Kumar](https://github.com/prayush) and collaborators, and is
 distributed under the GNU General Public License. If you use it in published work, please cite the
-repository: <https://github.com/gwnrtools/gwnrtools>.
+repository: <https://github.com/gwnr/gwnr>.

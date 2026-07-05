@@ -14023,8 +14023,8 @@ a.anchor-link {
 <span class="kn">from</span> <span class="nn">gwnr.analysis</span> <span class="kn">import</span> <span class="n">get_unique_hex_tag</span>
 <span class="kn">import</span> <span class="nn">gwnr.analysis</span> <span class="k">as</span> <span class="nn">DA</span>
 
-<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/prayush.kumar/src/gwnrtools/bin/&#39;</span><span class="p">)</span>
-<span class="c1">#sys.path.append(&#39;/home/prayush.kumar/local/venv/pycbc_master_enigma/src/gwnrtools/bin/&#39;)</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/prayush.kumar/src/gwnr/bin/&#39;</span><span class="p">)</span>
+<span class="c1">#sys.path.append(&#39;/home/prayush.kumar/local/venv/pycbc_master_enigma/src/gwnr/bin/&#39;)</span>
 </pre></div>
 
      </div>
@@ -14070,7 +14070,7 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>Could not import ligolw in /home/prayush.kumar/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
+<pre>Could not import ligolw in /home/prayush.kumar/src/GWNR/GWNR/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
 </pre>
 </div>
 </div>
@@ -14178,9 +14178,9 @@ a.anchor-link {
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>bank				       gwnrtools_banksim_match_combine.sub
-banksim.dag			       gwnrtools_banksim_plots.sub
-banksim.dag.condor.sub		       gwnrtools_banksim.sub
+<pre>bank				       gwnr_banksim_match_combine.sub
+banksim.dag			       gwnr_banksim_plots.sub
+banksim.dag.condor.sub		       gwnr_banksim.sub
 banksim.dag.dagman.log		       injection
 banksim.dag.dagman.out		       inj.xml
 banksim.dag.lib.err		       log
@@ -14191,7 +14191,7 @@ banksim.dax			       plots
 banksim.ini			       results.dat
 banksim.sh			       scripts
 bank.xml			       submit.sh
-gwnrtools_banksim_collect_results.sub  sub.out
+gwnr_banksim_collect_results.sub  sub.out
 </pre>
 </div>
 </div>
@@ -14359,8 +14359,8 @@ as <code>match/matchA.dat</code>.</li>
 
 
 <span class="s2">[executables]</span>
-<span class="s2">inspinj = /home/prayush/src/gwnrtools/bin/gwnr_sample_parameter_space</span>
-<span class="s2">banksim = /home/prayush/src/gwnrtools/bin/gwnr_banksim</span>
+<span class="s2">inspinj = /home/prayush/src/gwnr/bin/gwnr_sample_parameter_space</span>
+<span class="s2">banksim = /home/prayush/src/gwnr/bin/gwnr_banksim</span>
 
 <span class="s2">[workflow]</span>
 <span class="s2">accounting-group = ligo.dev.o3.cbc.explore.test</span>
@@ -14470,7 +14470,7 @@ as <code>match/matchA.dat</code>.</li>
 <pre>2020-01-23 00:59:00,469 Making workspace directories
 2020-01-23 00:59:00,546 Copying scripts
 2020-01-23 00:59:00,558 Creating injection file
-Could not import ligolw in /home/prayush.kumar/src/GWNRTools/GWNRTools/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
+Could not import ligolw in /home/prayush.kumar/src/GWNR/GWNR/Stats/FisherMatrixUtilities.pyc, LIGO XML tables wont be read
 2020-01-23 00:59:05,156 | INFO : mchirp-window = 0.000000
 2020-01-23 00:59:05,156 | INFO : eccentricity-window = 0.000000
 2020-01-23 00:59:05,156 | INFO : Storing the new sample points in inj.xml
@@ -14571,10 +14571,10 @@ banksim.dax			       log
 banksim.ini			       match
 banksim.sh			       match-part
 bank.xml			       partial_results.sh
-gwnrtools_banksim_collect_results.sub  plots
-gwnrtools_banksim_match_combine.sub    scripts
-gwnrtools_banksim_plots.sub	       submit.sh
-gwnrtools_banksim.sub
+gwnr_banksim_collect_results.sub  plots
+gwnr_banksim_match_combine.sub    scripts
+gwnr_banksim_plots.sub	       submit.sh
+gwnr_banksim.sub
      1	#!/bin/bash
      2	    condor_submit_dag banksim.dag
      3	    </pre>

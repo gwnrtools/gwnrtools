@@ -1,5 +1,5 @@
 # Copyright (c) 2026, Prayush Kumar
-# See LICENSE file for details: <https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/gwnr/gwnr/blob/master/LICENSE>
 """Smoke tests: every eagerly-imported gwnr subpackage must be importable.
 
 These guard the compatibility shims for the modern GW software stack

@@ -10,7 +10,7 @@ permalink: /docs/api/graph/
 {: .no_toc }
 
 Plotting utilities for posteriors, model-comparison studies and simulation data. Source:
-[`gwnr/graph/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/graph).
+[`gwnr/graph/`](https://github.com/gwnr/gwnr/tree/master/gwnr/graph).
 
 1. TOC
 {:toc}

@@ -10,7 +10,7 @@ permalink: /docs/api/data/
 
 Detector noise curves shipped with the package under `gwnr/data/gw_noise_curves/` (ASCII `.txt`
 and `.dat` files of PSD/ASD estimates versus frequency for various GW detectors). Source:
-[`gwnr/data/data.py`](https://github.com/gwnrtools/gwnrtools/blob/master/gwnr/data/data.py).
+[`gwnr/data/data.py`](https://github.com/gwnr/gwnr/blob/master/gwnr/data/data.py).
 
 ### `available_gw_noise_curves()`
 

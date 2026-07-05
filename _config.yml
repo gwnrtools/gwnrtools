@@ -1,24 +1,24 @@
-title: gwnrtools
+title: gwnr
 description: A collection of tools for academic research in gravitational-wave astronomy, astrophysics and numerical relativity
 remote_theme: just-the-docs/just-the-docs
 
 plugins:
   - jekyll-remote-theme
 
-url: https://gwnrtools.github.io
-baseurl: /gwnrtools
+url: https://gwnr.github.io
+baseurl: /gwnr
 
 search_enabled: true
 heading_anchors: true
 
 aux_links:
-  gwnrtools on GitHub:
-    - https://github.com/gwnrtools/gwnrtools
+  gwnr on GitHub:
+    - https://github.com/gwnr/gwnr
 aux_links_new_tab: true
 
 footer_content: >-
   Copyright &copy; Prayush Kumar. Distributed under the
-  <a href="https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE">GPL license</a>.
+  <a href="https://github.com/gwnr/gwnr/blob/master/LICENSE">GPL license</a>.
 
 # Don't build the site out of package sources, build products or notebooks.
 exclude:

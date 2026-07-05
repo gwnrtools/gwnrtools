@@ -11,7 +11,7 @@ permalink: /docs/api/stats/
 
 Bayesian-inference configuration, sampling utilities, Fisher matrices and distribution
 containers. Source:
-[`gwnr/stats/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/stats).
+[`gwnr/stats/`](https://github.com/gwnr/gwnr/tree/master/gwnr/stats).
 
 1. TOC
 {:toc}

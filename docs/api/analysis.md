@@ -11,7 +11,7 @@ permalink: /docs/api/analysis/
 
 Matched-filter comparisons between waveform models, PSD utilities, GW transient catalog access,
 and template-bank construction. Source:
-[`gwnr/analysis/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/analysis).
+[`gwnr/analysis/`](https://github.com/gwnr/gwnr/tree/master/gwnr/analysis).
 
 1. TOC
 {:toc}

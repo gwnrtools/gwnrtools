@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2018, Prayush Kumar
-# See LICENSE file for details: <https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/gwnr/gwnr/blob/master/LICENSE>
 """Build shim for gwnr.
 
 All package metadata lives in pyproject.toml. This file exists only to

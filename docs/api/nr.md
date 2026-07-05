@@ -11,7 +11,7 @@ permalink: /docs/api/nr/
 
 Reading, characterizing and using numerical-relativity waveforms and simulation output, with
 support for SXS/SpEC catalogs and the SpECTRE code. Source:
-[`gwnr/nr/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/nr).
+[`gwnr/nr/`](https://github.com/gwnr/gwnr/tree/master/gwnr/nr).
 
 1. TOC
 {:toc}

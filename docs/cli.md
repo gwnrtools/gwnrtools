@@ -9,13 +9,13 @@ permalink: /docs/cli/
 {: .no_toc }
 
 Installing the package puts the scripts below on your `PATH` (see the `scripts` list in
-[`setup.py`](https://github.com/gwnrtools/gwnrtools/blob/master/setup.py)). All are Python
+[`setup.py`](https://github.com/gwnr/gwnr/blob/master/setup.py)). All are Python
 scripts; run any of them with `--help` for the full option list. Additional unpackaged
-scripts live under [`bin/`](https://github.com/gwnrtools/gwnrtools/tree/master/bin)
+scripts live under [`bin/`](https://github.com/gwnr/gwnr/tree/master/bin)
 (NR run management under `bin/nr/`, plotting under `bin/graph/`, etc.).
 
 Sample configuration files for several workflows are provided in
-[`bin/configs/`](https://github.com/gwnrtools/gwnrtools/tree/master/bin/configs)
+[`bin/configs/`](https://github.com/gwnr/gwnr/tree/master/bin/configs)
 (`banksim.ini`, `faithsim.ini`, `pe_events.ini`).
 
 1. TOC

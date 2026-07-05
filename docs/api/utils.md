@@ -10,7 +10,7 @@ permalink: /docs/api/utils/
 {: .no_toc }
 
 Cross-cutting helpers used throughout the package. Source:
-[`gwnr/utils/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/utils).
+[`gwnr/utils/`](https://github.com/gwnr/gwnr/tree/master/gwnr/utils).
 
 1. TOC
 {:toc}

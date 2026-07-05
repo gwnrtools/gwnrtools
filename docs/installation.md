@@ -13,7 +13,7 @@ permalink: /docs/installation/
 
 ## Requirements
 
-`gwnrtools` targets **Python 3** and builds on the LIGO/Virgo software stack. The heavyweight
+`gwnr` targets **Python 3** and builds on the LIGO/Virgo software stack. The heavyweight
 dependencies are:
 
 - [PyCBC](https://pycbc.org/) — waveform generation, matched filtering, types (`TimeSeries`, `FrequencySeries`)
@@ -26,8 +26,8 @@ plus the standard scientific stack: `numpy`, `scipy`, `matplotlib`, `pandas`, `h
 optimization, used by the fitting-factor machinery).
 
 The full list is in
-[`requirements.txt`](https://github.com/gwnrtools/gwnrtools/blob/master/requirements.txt) and
-[`setup.py`](https://github.com/gwnrtools/gwnrtools/blob/master/setup.py).
+[`requirements.txt`](https://github.com/gwnr/gwnr/blob/master/requirements.txt) and
+[`setup.py`](https://github.com/gwnr/gwnr/blob/master/setup.py).
 
 {: .note }
 Some optional features shell out to external software that must be installed separately:
@@ -37,8 +37,8 @@ HTCondor (workflow DAGs), ParaView (`graph.paraview`), the SpECTRE code
 ## Installing from source
 
 ```bash
-git clone https://github.com/gwnrtools/gwnrtools.git
-cd gwnrtools
+git clone https://github.com/gwnr/gwnr.git
+cd gwnr
 pip install -r requirements.txt
 python setup.py install        # or: pip install .
 ```
@@ -50,7 +50,7 @@ pip install -e .
 ```
 
 The installed Python package is named **`gwnr`** (the repository and project are called
-*gwnrtools*):
+*gwnr*):
 
 ```python
 import gwnr
@@ -68,7 +68,7 @@ conda activate gwnr
 conda install -c conda-forge lalsuite pycbc bilby astropy h5py \
     matplotlib pandas scikit-learn scipy seaborn statsmodels
 pip install lscsoft-glue romspline numexpr "pyswarm @ git+https://github.com/tisimst/pyswarm@master"
-git clone https://github.com/gwnrtools/gwnrtools.git && cd gwnrtools && pip install .
+git clone https://github.com/gwnr/gwnr.git && cd gwnr && pip install .
 ```
 
 ## Verifying the installation

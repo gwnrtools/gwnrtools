@@ -24,7 +24,7 @@ SOFTWARE.
 A script to use PrepareSXSWaveforms class.
 
 """
-from gwnrtools.gwnr.waveform import PrepareSXSWaveform
+from gwnr.gwnr.waveform import PrepareSXSWaveform
 
 sims1 = ["ICTSEccParallel01", "ICTSEccParallel02", "ICTSEccParallel03"]
 

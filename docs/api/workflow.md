@@ -11,7 +11,7 @@ permalink: /docs/api/workflow/
 
 Programmatic construction of batch analyses and HTCondor workflows; the engine behind the
 `gwnr_create_*_workflow` [command-line tools]({{ site.baseurl }}/docs/cli/). Source:
-[`gwnr/workflow/`](https://github.com/gwnrtools/gwnrtools/tree/master/gwnr/workflow).
+[`gwnr/workflow/`](https://github.com/gwnr/gwnr/tree/master/gwnr/workflow).
 
 1. TOC
 {:toc}

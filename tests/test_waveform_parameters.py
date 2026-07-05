@@ -1,5 +1,5 @@
 # Copyright (c) 2026, Prayush Kumar
-# See LICENSE file for details: <https://github.com/gwnrtools/gwnrtools/blob/master/LICENSE>
+# See LICENSE file for details: <https://github.com/gwnr/gwnr/blob/master/LICENSE>
 """Tests for gwnr.waveform.parameters"""
 
 import numpy as np

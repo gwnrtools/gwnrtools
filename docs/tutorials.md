@@ -8,7 +8,7 @@ permalink: /docs/tutorials/
 # Tutorials
 
 Executable Jupyter notebooks live in
-[`notebooks/`](https://github.com/gwnrtools/gwnrtools/tree/master/notebooks); HTML renderings of
+[`notebooks/`](https://github.com/gwnr/gwnr/tree/master/notebooks); HTML renderings of
 the main ones are published with this site.
 
 ## Waveform comparisons
@@ -50,4 +50,4 @@ The repository also carries research notebooks that are not rendered here, inclu
 parameter-optimization studies (`OptimizeENIGMAParameters.ipynb`,
 `OptimizeENIGMARingdownAttachmentFrequencyFITParameters.ipynb`), GW skymap visualization
 (`VisualizeGWSkymaps.ipynb`), and geodesic-kinematics explorations. Browse them in
-[`notebooks/`](https://github.com/gwnrtools/gwnrtools/tree/master/notebooks).
+[`notebooks/`](https://github.com/gwnr/gwnr/tree/master/notebooks).
