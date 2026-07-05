@@ -1,22 +1,22 @@
+# Runtime dependencies of the gwnr package; kept in sync with
+# [project.dependencies] in pyproject.toml.
 astropy>=2.0.16
 bilby
-celluloid>=0.2.0; python_version >= '3.5'
+emcee
 h5py>=2.10.0
+igwn-ligolw
 lalsuite>=6.63
-lscsoft_glue==2.0.0
+lscsoft-glue>=2.0.0
 matplotlib>=2.1
-numexpr
-numpy==1.22.0
-pandas==0.24.2
-pathlib
-pycbc>=1.15.4
+numpy>=1.16.5
+pandas>=0.24.2
+pycbc
 pyswarm @ git+https://github.com/tisimst/pyswarm@master
-pytest
-romspline==1.1.6
-scikit-learn==1.5.0
-scipy>=1.10.0; python_version >= '3.5'
-scipy==1.2.3; python_version <= '2'
-seaborn==0.9.1
-six==1.10.0
-statsmodels>=0.10.2
-utils==0.9.0
+scipy>=1.2.3
+seaborn>=0.9.1
+
+# Development tools ([project.optional-dependencies] dev):
+#   pip install "gwnr[dev]"  -- or uncomment below
+# black==24.10.0
+# flake8>=6.0
+# pytest>=6.0
