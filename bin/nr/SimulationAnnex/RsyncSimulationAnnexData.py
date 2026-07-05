@@ -5,9 +5,9 @@ import subprocess as cmd
 from optparse import OptionParser
 
 from glue import git_version
-from glue.ligolw import ligolw
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+from igwn_ligolw import ligolw
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 
 
 @lsctables.use_in

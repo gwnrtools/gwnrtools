@@ -23,12 +23,11 @@ import gwnr.analysis as DA
 from pycbc.pnutils import *
 from glue import gpstime
 
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import ilwd
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw.utils import process as ligolw_process
 
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"
@@ -393,7 +392,7 @@ def sample_lat_lon(N=1):
 
 
 def get_sim_hash(N=1, num_digits=10):
-    return ilwd.ilwdchar(":%s:0" % DA.get_unique_hex_tag(N=N, num_digits=num_digits))
+    return int(DA.get_unique_hex_tag(N=N, num_digits=num_digits), 16)
 
 
 def accept_point_boundary(mc, eta):

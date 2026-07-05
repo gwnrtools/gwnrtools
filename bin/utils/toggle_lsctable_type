@@ -7,12 +7,11 @@ import sys
 import argparse
 
 from glue import gpstime
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
-from glue.ligolw import ilwd
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw.utils import process as ligolw_process
 
 from pycbc.waveform import parameters as default_parameters
 
@@ -26,8 +25,8 @@ PROGRAM_NAME = os.path.abspath(sys.argv[0])
 
 ####################       Functions     #####################
 def get_sim_hash(N=1, num_digits=10):
-      return ilwd.ilwdchar(":%s:0"%DA.get_unique_hex_tag(N = N,
-                                                         num_digits = num_digits))
+      return int(DA.get_unique_hex_tag(N = N,
+                                                         num_digits = num_digits), 16)
 
 ####################       Input parsing     #####################
 parser = argparse.ArgumentParser(usage = "%%prog [OPTIONS]", description="""

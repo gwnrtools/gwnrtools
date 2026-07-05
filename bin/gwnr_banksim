@@ -31,10 +31,10 @@ import gwnr.analysis as DA
 import gwnr.waveform as WF
 
 import lal
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.waveform import td_approximants, fd_approximants

@@ -18,11 +18,10 @@ import gwnr.analysis as DA
 import gwnr.waveform as WF
 
 import lal
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw import ilwd
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 
 from pycbc.waveform import get_td_waveform, get_fd_waveform
 from pycbc.waveform import td_approximants, fd_approximants
@@ -314,7 +313,7 @@ def get_waveform(wav, approximant, f_min, dt, N):
 
 
 def get_sim_hash(N=1, num_digits=10):
-    return ilwd.ilwdchar(":%s:0" % DA.get_unique_hex_tag(N=N, num_digits=num_digits))
+    return int(DA.get_unique_hex_tag(N=N, num_digits=num_digits), 16)
 
 
 def get_tag(wav):

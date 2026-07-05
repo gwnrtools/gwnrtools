@@ -54,7 +54,7 @@ except BaseException:
 try:
     import UseNRinDA
     import lal
-    from glue.ligolw import ligolw, lsctables
+    from igwn_ligolw import ligolw, lsctables
 
     @lsctables.use_in
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):

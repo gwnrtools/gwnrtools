@@ -13,11 +13,11 @@ import numpy as np
 import argparse
 
 from glue import gpstime
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw.utils import process as ligolw_process
 
 PROGRAM_NAME = os.path.abspath(sys.argv[0])
 __author__ = "Prayush Kumar <prayush@astro.cornell.edu>"

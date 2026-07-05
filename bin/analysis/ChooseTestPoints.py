@@ -15,11 +15,11 @@ from glue import gpstime
 
 from pycbc.pnutils import eta_mass1_to_mass2
 
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw.utils import process as ligolw_process
 from glue import git_version
 
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
