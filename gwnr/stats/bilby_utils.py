@@ -1116,9 +1116,8 @@ class BilbyScriptWriterEvent(BilbyScriptWriterBase):
         to changes in the gwpy API.
         """
         assert (
-            type(self.ifo_list) == list,
-            "interferometer_names should be passed as a python list of strings",
-        )
+            type(self.ifo_list) == list
+        ), "interferometer_names should be passed as a python list of strings"
         data = [
             """\
 

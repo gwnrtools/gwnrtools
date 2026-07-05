@@ -74,9 +74,9 @@ figsize = (size, aspect * size)
 
 
 def KDEMeanOverRange(kde_func, x_range):
-    total_area = si.quad(kde_func, low, high)
     low = np.min(x_range)
     high = np.max(x_range)
+    total_area = si.quad(kde_func, low, high)
 
     def give_integrand(xval):
         return kde_func(xval) * xval
@@ -91,7 +91,7 @@ def KDEMedianOverRange(kde_func, x_range):
     def give_pdf(xval):
         return -1.0 * kde_func(xval)
 
-    return so.minimize(give_pdf, H0).x[0]
+    return so.minimize(give_pdf, 0.5 * (low + high)).x[0]
 
 
 #######################################################
@@ -273,8 +273,8 @@ class MultipleOneDDistributions:
         # Event IDs (int) labeling events and their order
         self.event_ids = event_ids
         self.var_type = var_type
-        self.data = self.read_distributions()
         self.verbose = verbose
+        self.data = self.read_distributions()
 
         ### =======         INITLIAZE              ======= ###
         self.event = {}
@@ -292,7 +292,7 @@ class MultipleOneDDistributions:
             if c == "%":
                 id_cnt += 1
         for event_id in event_ids:
-            if verbose:
+            if self.verbose:
                 logging.info("Reading posterior for event ", event_id)
             event_id_pattern = tuple(np.ones(id_cnt) * event_id)
             res_file = os.path.join(datadir, result_tag % event_id_pattern)
@@ -443,7 +443,6 @@ class MultipleOneDDistributions:
 
         # COMMON FORMATTING
         for ax in [ax0, ax2]:
-            ax.axvline(H0, color="y", lw=2)
             ax.grid()
             ax.set_xlabel(xlabel)
             ax.set_xlim(x_range.min(), x_range.max())
@@ -578,9 +577,9 @@ class MultiDDistribution:
         if self.debug:
             logging.info("Shape of structured_data: ", np.shape(self.structured_data))
 
-        if len(var_names) == np.shape(self.input_data)[-1]:
+        if len(self.var_names) == np.shape(self.input_data)[-1]:
             self.structured_data = np.array(
-                self.structured_data, dtype=[(h, "<f8") for h in var_names]
+                self.structured_data, dtype=[(h, "<f8") for h in self.var_names]
             )
         return self.structured_data
 

@@ -25,7 +25,7 @@ except ImportError:
 ############################################################################
 
 
-def play_movie(m):
+def play_movie(m, base_dir="."):
     import subprocess
 
     subprocess.call(["mpv", os.path.join(base_dir, m)])

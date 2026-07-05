@@ -649,13 +649,13 @@ def ReadSpECTabularOutputFromH5(
             print("READING %s" % filename)
         with h5py.File(filename, "r") as fp:
             try:
-                if GROUP is not "":
+                if GROUP != "":
                     _data = fp[GROUP]
                 else:
                     _data = fp
             except:
                 continue
-            if DATASET is not "":
+            if DATASET != "":
                 _data = _data[DATASET]
             else:
                 raise IOError("Please provide name of dataset to read")
@@ -883,17 +883,15 @@ def GetOpOfQuantityOverDomain(data_dict, op_func=DummyMin, verbose=True, debug=F
     if verbose:
         print("Extracting global times .. ")
 
-    for idx, sd in enumerate(all_subdomains):
-        if idx != 0:
-            sd_tseries = data_dict[sd][:, 0]
-            if sd_tseries.min() < all_tseries.min():
-                mask = sd_tseries < all_tseries.min()
-                all_tseries = np.append(sd_tseries[mask], all_tseries)
-            if sd_tseries.max() > all_tseries.max():
-                mask = sd_tseries > all_tseries.max()
-                all_tseries = np.append(all_tseries, sd_tseries[mask])
-        else:
-            all_tseries = data_dict[sd][:, 0]
+    all_tseries = data_dict[all_subdomains[0]][:, 0]
+    for sd in all_subdomains[1:]:
+        sd_tseries = data_dict[sd][:, 0]
+        if sd_tseries.min() < all_tseries.min():
+            mask = sd_tseries < all_tseries.min()
+            all_tseries = np.append(sd_tseries[mask], all_tseries)
+        if sd_tseries.max() > all_tseries.max():
+            mask = sd_tseries > all_tseries.max()
+            all_tseries = np.append(all_tseries, sd_tseries[mask])
 
     # Get min/max over *available* subdomains at all times
     if verbose:
