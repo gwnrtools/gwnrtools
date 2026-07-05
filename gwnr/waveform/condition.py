@@ -34,7 +34,11 @@ except ImportError:
 
 from pycbc.types import TimeSeries
 from pycbc.pnutils import *
-from glue.ligolw import ligolw, lsctables
+
+try:
+    from glue.ligolw import ligolw, lsctables
+except ImportError:
+    from igwn_ligolw import ligolw, lsctables
 
 from gwnr.nr.types import nr_wave
 

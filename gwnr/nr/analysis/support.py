@@ -69,11 +69,11 @@ def extrapolated_outdir_from_cce_outdir(outdir):
     if np.float64(d[1:]) == np.round(np.float64(d[1:])):
         d = "d" + str(int(np.float64(d[1:])))
     print((s1z, s2z))
-    if np.float(s1z) == 0.0:
+    if float(s1z) == 0.0:
         s1z = "0"
     else:
         s1z = "%.3f" % np.float128(s1z)
-    if np.float(s2z) == 0.0:
+    if float(s2z) == 0.0:
         s2z = "0"
     else:
         s2z = "%.3f" % np.float128(s2z)

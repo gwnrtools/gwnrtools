@@ -25,7 +25,11 @@ from pycbc.filter import make_frequency_series
 from pycbc import inject, types, waveform
 from pycbc import DYN_RANGE_FAC
 from pycbc.pnutils import *
-from glue.ligolw import ligolw, lsctables
+
+try:
+    from glue.ligolw import ligolw, lsctables
+except ImportError:
+    from igwn_ligolw import ligolw, lsctables
 
 from gwnr.utils.types import extend_waveform_TimeSeries, extend_waveform_FrequencySeries
 
@@ -240,7 +244,7 @@ def get_waveform(
         dt = data[1, 0] - data[0, 0]
         delta_t = 1.0 / sample_rate
         downsample_ratio = delta_t / dt
-        if not approx_equal(downsample_ratio, np.int(downsample_ratio)):
+        if not approx_equal(downsample_ratio, int(downsample_ratio)):
             raise RuntimeError(
                 "Cannot handling resampling at a fractional factor = %e"
                 % downsample_ratio

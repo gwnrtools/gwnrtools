@@ -23,13 +23,6 @@
 import pycbc.pnutils as pnutils
 import numpy as np
 
-try:
-    pass
-except:
-    pass
-
-from glue.ligolw import ilwd
-
 
 def get_uniform_mass_range(m_lower, m_upper, m_sep):
     # {{{

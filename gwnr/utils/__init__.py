@@ -18,4 +18,12 @@ def get_unique_hex_tag(N=1, num_digits=10):
 
 
 def get_sim_hash(N=1, num_digits=10):
-    return ilwd.ilwdchar(":{}:0".format(get_unique_hex_tag(N=N, num_digits=num_digits)))
+    tag = ":{}:0".format(get_unique_hex_tag(N=N, num_digits=num_digits))
+    try:
+        from glue.ligolw import ilwd
+
+        return ilwd.ilwdchar(tag)
+    except ImportError:
+        # ilwd was removed from modern ligolw libraries; use the plain
+        # string representation of the same identifier instead
+        return tag

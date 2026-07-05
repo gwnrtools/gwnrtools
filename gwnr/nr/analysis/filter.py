@@ -26,8 +26,12 @@ from gwnr.utils.support import *
 from gwnr.waveform.condition import blend
 import sys
 
-from glue.ligolw import lsctables
-from glue.ligolw import ligolw
+try:
+    from glue.ligolw import lsctables
+    from glue.ligolw import ligolw
+except ImportError:
+    from igwn_ligolw import lsctables
+    from igwn_ligolw import ligolw
 import lal
 
 

@@ -37,11 +37,18 @@ import pycbc.pnutils as pnutils
 import pycbc.waveform.generator as pywfg
 import pycbc.waveform as pywf
 
-from glue.ligolw import lsctables
-from glue.ligolw import ligolw
+try:
+    from glue.ligolw import lsctables
+    from glue.ligolw import ligolw
+except ImportError:
+    from igwn_ligolw import lsctables
+    from igwn_ligolw import ligolw
+
+# modern ligolw content handlers parse all tables natively; use_in is gone
+_lsctables_use_in = getattr(lsctables, "use_in", lambda handler: handler)
 
 
-@lsctables.use_in
+@_lsctables_use_in
 class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
     pass
 

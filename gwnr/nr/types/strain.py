@@ -30,7 +30,12 @@ from numpy import *
 import numpy as np
 
 from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.integrate import cumtrapz
+
+try:
+    from scipy.integrate import cumtrapz
+except ImportError:
+    # cumtrapz was renamed in scipy>=1.6 and removed in scipy>=1.14
+    from scipy.integrate import cumulative_trapezoid as cumtrapz
 
 import lal
 from pycbc.waveform import *
@@ -1053,7 +1058,7 @@ class nr_strain:
         # Combine window configuration
         ntapers = np.array([ntaper1, ntaper2, ntaper3, ntaper4], dtype=np.int64)
         ttapers = np.float128(ntapers) * hp.delta_t
-        time_array = hp.sample_times.data - np.float(hp._epoch)
+        time_array = hp.sample_times.data - float(hp._epoch)
 
         if self.verbose > 2:
             print("ntapers = ", ntapers)

@@ -35,7 +35,11 @@ from pycbc.filter import make_frequency_series, match, matched_filter_core, over
 from pycbc.types import TimeSeries
 from pycbc.waveform import amplitude_from_polarizations, phase_from_polarizations
 from pycbc.pnutils import *
-from glue.ligolw import ligolw, lsctables
+
+try:
+    from glue.ligolw import ligolw, lsctables
+except ImportError:
+    from igwn_ligolw import ligolw, lsctables
 
 from gwnr.utils import find_nearest, trim_leading_zeros, trim_trailing_zeros
 

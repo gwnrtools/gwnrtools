@@ -35,12 +35,20 @@ import lal
 from pycbc.types import TimeSeries
 from pycbc.waveform import amplitude_from_polarizations
 
-from glue.ligolw import ligolw
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+try:
+    from glue.ligolw import ligolw
+    from glue.ligolw import lsctables
+    from glue.ligolw import utils as ligolw_utils
+except ImportError:
+    from igwn_ligolw import ligolw
+    from igwn_ligolw import lsctables
+    from igwn_ligolw import utils as ligolw_utils
+
+# modern ligolw content handlers parse all tables natively; use_in is gone
+_lsctables_use_in = getattr(lsctables, "use_in", lambda handler: handler)
 
 
-@lsctables.use_in
+@_lsctables_use_in
 class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):
     pass
 
