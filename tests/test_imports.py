@@ -3,7 +3,7 @@
 """Smoke tests: every eagerly-imported gwnr subpackage must be importable.
 
 These guard the compatibility shims for the modern GW software stack
-(igwn_ligolw instead of glue.ligolw, scipy>=1.14, numpy>=1.24).
+(igwn_ligolw instead of igwn_ligolw, scipy>=1.14, numpy>=1.24).
 """
 
 import importlib

@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
 from glue import git_version
-from glue.ligolw.utils import process as ligolw_process
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw import lsctables
-from glue.ligolw import table
-from glue.ligolw import ligolw
+from igwn_ligolw.utils import process as ligolw_process
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw import lsctables
+from igwn_ligolw import table
+from igwn_ligolw import ligolw
 from glue import gpstime
 from optparse import OptionParser
 import time

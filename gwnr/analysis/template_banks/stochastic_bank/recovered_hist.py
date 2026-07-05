@@ -5,9 +5,9 @@ matplotlib.use("Agg")
 
 import os
 from optparse import OptionParser
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 from numpy import loadtxt
 import pylab
 from pylab import sqrt

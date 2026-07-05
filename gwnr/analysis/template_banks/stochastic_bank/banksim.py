@@ -25,8 +25,8 @@
 import sys
 from numpy import complex64, float32
 from optparse import OptionParser
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw import table, lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw import table, lsctables
 
 from pycbc.utils import mass1_mass2_to_mchirp_eta
 from pycbc.waveform import (

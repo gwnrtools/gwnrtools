@@ -20,10 +20,10 @@ from pycbc.pnutils import *
 import lal
 from glue import gpstime
 
-from glue.ligolw import ligolw
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+from igwn_ligolw import ligolw
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 
 __author__ = "Prayush Kumar <prkumar@cita.utoronto.ca>"
 PROGRAM_NAME = os.path.abspath(sys.argv[0])

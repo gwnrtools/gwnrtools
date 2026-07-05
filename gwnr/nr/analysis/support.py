@@ -35,7 +35,7 @@ except:
     print("Warning: Could not import Psi4->h integration modules")
 
 try:
-    from glue.ligolw import ligolw, lsctables
+    from igwn_ligolw import ligolw, lsctables
 
     @lsctables.use_in
     class LIGOLWContentHandler(ligolw.LIGOLWContentHandler):

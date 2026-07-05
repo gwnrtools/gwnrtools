@@ -27,7 +27,7 @@ from pycbc import DYN_RANGE_FAC
 from pycbc.pnutils import *
 
 try:
-    from glue.ligolw import ligolw, lsctables
+    from igwn_ligolw import ligolw, lsctables
 except ImportError:
     from igwn_ligolw import ligolw, lsctables
 

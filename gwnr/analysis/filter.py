@@ -38,8 +38,8 @@ import pycbc.waveform.generator as pywfg
 import pycbc.waveform as pywf
 
 try:
-    from glue.ligolw import lsctables
-    from glue.ligolw import ligolw
+    from igwn_ligolw import lsctables
+    from igwn_ligolw import ligolw
 except ImportError:
     from igwn_ligolw import lsctables
     from igwn_ligolw import ligolw

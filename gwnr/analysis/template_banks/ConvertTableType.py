@@ -24,10 +24,10 @@ import sys
 from optparse import OptionParser
 
 from glue import gpstime, git_version
-from glue.ligolw import ligolw, ilwd
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
-from glue.ligolw.utils import process as ligolw_process
+from igwn_ligolw import ligolw, ilwd
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
+from igwn_ligolw.utils import process as ligolw_process
 
 
 @lsctables.use_in

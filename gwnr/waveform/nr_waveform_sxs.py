@@ -36,9 +36,9 @@ from pycbc.types import TimeSeries
 from pycbc.waveform import amplitude_from_polarizations
 
 try:
-    from glue.ligolw import ligolw
-    from glue.ligolw import lsctables
-    from glue.ligolw import utils as ligolw_utils
+    from igwn_ligolw import ligolw
+    from igwn_ligolw import lsctables
+    from igwn_ligolw import utils as ligolw_utils
 except ImportError:
     from igwn_ligolw import ligolw
     from igwn_ligolw import lsctables

@@ -17,9 +17,9 @@ import pylab as pb
 import numpy as np
 from numpy import sqrt
 
-from glue.ligolw import table
-from glue.ligolw import lsctables
-from glue.ligolw import utils as ligolw_utils
+from igwn_ligolw import table
+from igwn_ligolw import lsctables
+from igwn_ligolw import utils as ligolw_utils
 
 # setting some figure properties
 # taken from http://www.scipy.org/Cookbook/Matplotlib/LaTeX_Examples
