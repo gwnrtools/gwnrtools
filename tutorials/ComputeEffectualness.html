@@ -14002,11 +14002,11 @@ a.anchor-link {
 
 <span class="o">%</span><span class="k">pylab</span> inline
 
-<span class="kn">from</span> <span class="nn">glue.ligolw</span> <span class="kn">import</span> <span class="n">ligolw</span>
-<span class="kn">from</span> <span class="nn">glue.ligolw</span> <span class="kn">import</span> <span class="n">table</span>
-<span class="kn">from</span> <span class="nn">glue.ligolw</span> <span class="kn">import</span> <span class="n">lsctables</span>
-<span class="kn">from</span> <span class="nn">glue.ligolw</span> <span class="kn">import</span> <span class="n">ilwd</span>
-<span class="kn">from</span> <span class="nn">glue.ligolw</span> <span class="kn">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">ligolw_utils</span>
+<span class="kn">from</span> <span class="nn">igwn_ligolw</span> <span class="kn">import</span> <span class="n">ligolw</span>
+<span class="kn">from</span> <span class="nn">igwn_ligolw</span> <span class="kn">import</span> <span class="n">table</span>
+<span class="kn">from</span> <span class="nn">igwn_ligolw</span> <span class="kn">import</span> <span class="n">lsctables</span>
+<span class="kn">from</span> <span class="nn">igwn_ligolw</span> <span class="kn">import</span> <span class="n">ilwd</span>
+<span class="kn">from</span> <span class="nn">igwn_ligolw</span> <span class="kn">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">ligolw_utils</span>
 
 <span class="kn">import</span> <span class="nn">pycbc.strain</span>
 <span class="kn">import</span> <span class="nn">pycbc.psd</span>
@@ -14019,9 +14019,9 @@ a.anchor-link {
 <span class="kn">from</span> <span class="nn">pycbc.scheme</span> <span class="kn">import</span> <span class="n">CPUScheme</span><span class="p">,</span> <span class="n">CUDAScheme</span>
 <span class="kn">from</span> <span class="nn">pycbc</span> <span class="kn">import</span> <span class="n">pnutils</span>
 
-<span class="kn">from</span> <span class="nn">gwnr.Utils.SupportFunctions</span> <span class="kn">import</span> <span class="n">make_padded_frequency_series</span>
-<span class="kn">from</span> <span class="nn">gwnr.DataAnalysis</span> <span class="kn">import</span> <span class="n">get_unique_hex_tag</span>
-<span class="kn">import</span> <span class="nn">gwnr.DataAnalysis</span> <span class="k">as</span> <span class="nn">DA</span>
+<span class="kn">from</span> <span class="nn">gwnr.utils.types</span> <span class="kn">import</span> <span class="n">make_padded_frequency_series</span>
+<span class="kn">from</span> <span class="nn">gwnr.analysis</span> <span class="kn">import</span> <span class="n">get_unique_hex_tag</span>
+<span class="kn">import</span> <span class="nn">gwnr.analysis</span> <span class="k">as</span> <span class="nn">DA</span>
 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;/home/prayush.kumar/src/gwnrtools/bin/&#39;</span><span class="p">)</span>
 <span class="c1">#sys.path.append(&#39;/home/prayush.kumar/local/venv/pycbc_master_enigma/src/gwnrtools/bin/&#39;)</span>
