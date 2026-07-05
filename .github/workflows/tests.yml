@@ -1,0 +1,45 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install \
+            numpy scipy matplotlib pandas h5py astropy \
+            lalsuite pycbc lscsoft-glue igwn-ligolw \
+            emcee statsmodels bilby pytest \
+            "pyswarm @ git+https://github.com/tisimst/pyswarm@master"
+
+      - name: Install gwnr
+        run: pip install --no-deps .
+
+      - name: Run test suite
+        run: python -m pytest tests/ -v --tb=short
+
+      - name: Run import smoke test from installed package
+        # Import outside the repo root to make sure the *installed*
+        # package (not the working tree) is complete
+        run: cd /tmp && python -c "import gwnr; print(gwnr.get_version_information())"

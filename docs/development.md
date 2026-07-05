@@ -41,9 +41,26 @@ gwnrtools/
    ```
 2. Code style is [black](https://github.com/psf/black); please format touched files before
    committing.
-3. Tests use `pytest` (configuration in `setup.cfg`).
-4. Open pull requests against `master` at
+3. Open pull requests against `master` at
    [gwnrtools/gwnrtools](https://github.com/gwnrtools/gwnrtools).
+
+## Running the tests
+
+The unit-test suite lives in `tests/` and uses `pytest` (configuration in `setup.cfg`):
+
+```bash
+python -m pytest tests/            # full suite
+python -m pytest tests/ -m "not slow"   # skip waveform-generation/sampler tests
+```
+
+Tests marked `slow` generate waveforms or run MCMC samplers. The suite requires the GW software
+stack (LALSuite, PyCBC, `igwn-ligolw`, `lscsoft-glue`); tests for optional functionality skip
+automatically when their dependency is missing.
+
+Continuous integration runs the full suite on every pull request and on pushes to `master` via
+GitHub Actions
+([`.github/workflows/tests.yml`](https://github.com/gwnrtools/gwnrtools/blob/master/.github/workflows/tests.yml)),
+on Python 3.10 and 3.11.
 
 ## This documentation site
 
