@@ -851,9 +851,9 @@ def calculate_fitting_factor(
             raise RuntimeError(" WARNING: FAILURE READING DATA FROM %s.." % signal_file)
 
         waveform_params = lsctables.SimInspiral()
-        waveform_params.latitude = (
-            waveform_params.longitude
-        ) = waveform_params.polarization = 0
+        waveform_params.latitude = waveform_params.longitude = (
+            waveform_params.polarization
+        ) = 0
         waveform_params.spin1x = waveform_params.spin1y = waveform_params.spin1z = 0
         waveform_params.spin2x = waveform_params.spin2y = waveform_params.spin2z = 0
         # try:

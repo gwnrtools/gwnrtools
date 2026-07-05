@@ -96,9 +96,9 @@ def get_apastron_frequencies(hp, hc):
     return (ft, -1 * ff)
 
 
-os.environ[
-    "LD_LIBRARY_PATH"
-] = "/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/"
+os.environ["LD_LIBRARY_PATH"] = (
+    "/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/"
+)
 
 
 def get_eccentric_waveform_and_dynamics(

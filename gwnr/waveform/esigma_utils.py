@@ -302,7 +302,7 @@ def get_inspiral_esigma_modes(
             k: pt.TimeSeries(
                 modes[k].data.data,
                 delta_t=delta_t,
-                epoch=-delta_t * (len(modes[k].data.data)-1),
+                epoch=-delta_t * (len(modes[k].data.data) - 1),
             )
             for k in modes
         }
@@ -419,8 +419,8 @@ def get_inspiral_esigma_waveform(
     )
 
     if return_pycbc_timeseries:
-        hp = pt.TimeSeries(hp, delta_t=delta_t, epoch=-delta_t * (len(hp)-1))
-        hc = pt.TimeSeries(hc, delta_t=delta_t, epoch=-delta_t * (len(hc)-1))
+        hp = pt.TimeSeries(hp, delta_t=delta_t, epoch=-delta_t * (len(hp) - 1))
+        hc = pt.TimeSeries(hc, delta_t=delta_t, epoch=-delta_t * (len(hc) - 1))
 
     if return_orbital_params:
         if return_pycbc_timeseries:

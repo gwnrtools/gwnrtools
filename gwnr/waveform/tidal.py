@@ -114,9 +114,7 @@ class tidalWavs:
             * (1 + 4243.0 * eta / 234.0 - 6217 * eta2 / 234.0 - 10.0 * eta3 / 9.0)
         )
         pimf3rd = (np.pi * mf) ** (1.0 / 3.0)
-        DpsiT = (
-            np.pi * (5.0 * a0 * pimf3rd**2 + 7.0 * a1 * pimf3rd**4) / (128.0 * eta)
-        )
+        DpsiT = np.pi * (5.0 * a0 * pimf3rd**2 + 7.0 * a1 * pimf3rd**4) / (128.0 * eta)
         return DpsiT
 
     #

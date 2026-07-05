@@ -30,9 +30,8 @@ reduction_data_file_name = "EvolutionReductions"
 volume_data_file_name = "EvolutionVolume"
 
 input_files = {}
-input_files[
-    "bc_on_x_periodic_on_y"
-] = """\
+input_files["bc_on_x_periodic_on_y"] = (
+    """\
 # Distributed under the MIT License.
 # See LICENSE.txt for details.
 
@@ -97,12 +96,12 @@ Observers:
   VolumeFileName: "{0:s}"
   ReductionFileName: "{1:s}"
 """.format(
-    volume_data_file_name, reduction_data_file_name
+        volume_data_file_name, reduction_data_file_name
+    )
 )
 
-input_files[
-    "bc_on_xy"
-] = """\
+input_files["bc_on_xy"] = (
+    """\
 # Distributed under the MIT License.
 # See LICENSE.txt for details.
 
@@ -167,7 +166,8 @@ Observers:
   VolumeFileName: "{0:s}"
   ReductionFileName: "{1:s}"
 """.format(
-    volume_data_file_name, reduction_data_file_name
+        volume_data_file_name, reduction_data_file_name
+    )
 )
 
 #

@@ -38,9 +38,9 @@ except ImportError:
 
 from gwnr.nr.types import nr_wave
 
-os.environ[
-    "LD_LIBRARY_PATH"
-] = "/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/"
+os.environ["LD_LIBRARY_PATH"] = (
+    "/home/prayush/research/Eccentric_IMRGPR/Code/MergerRingdownModel/C_implementation/bin/"
+)
 
 
 class ContentHandler(ligolw.LIGOLWContentHandler):

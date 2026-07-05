@@ -215,9 +215,8 @@ pad-data = 8
         # Injections
         import numpy
 
-        self.configs["data"][
-            "gw150914-like-gaussian"
-        ] = """\
+        self.configs["data"]["gw150914-like-gaussian"] = (
+            """\
 [data]
 instruments = H1 L1
 trigger-time = 1126259462.42
@@ -253,7 +252,8 @@ strain-high-pass = 15
 ; likelihood integral, it has little affect on the run time.
 pad-data = 8
 """.format(
-            numpy.random.randint(1, 1e6), numpy.random.randint(1, 1e6)
+                numpy.random.randint(1, 1e6), numpy.random.randint(1, 1e6)
+            )
         )
         self.configs["data"][
             "gw150914-like-zeronoise"
@@ -301,9 +301,8 @@ pad-data = 8
         n_eff_samples=4000,
         ckpt_interval=2000,
     ):
-        self.configs["sampler"][
-            "emcee"
-        ] = """\
+        self.configs["sampler"]["emcee"] = (
+            """\
 [sampler]
 name = emcee
 nprocesses = {n_cpus}
@@ -315,15 +314,15 @@ checkpoint-interval = {ckpt_interval}
 ;[sampler-burn_in]
 ;burn-in-test = nacl & max_posterior
 """.format(
-            n_cpus=n_cpus,
-            n_walkers=n_walkers,
-            n_eff_samples=n_eff_samples,
-            n_maxsamps_per_walker=n_maxsamps_per_walker,
-            ckpt_interval=ckpt_interval,
+                n_cpus=n_cpus,
+                n_walkers=n_walkers,
+                n_eff_samples=n_eff_samples,
+                n_maxsamps_per_walker=n_maxsamps_per_walker,
+                ckpt_interval=ckpt_interval,
+            )
         )
-        self.configs["sampler"][
-            "emcee_pt"
-        ] = """\
+        self.configs["sampler"]["emcee_pt"] = (
+            """\
 [sampler]
 name = emcee_pt
 nprocesses = {n_cpus}
@@ -349,16 +348,16 @@ mass1, mass2 : mchirp, q
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
 """.format(
-            n_cpus=n_cpus,
-            n_walkers=n_walkers,
-            n_temperatures=n_temperatures,
-            n_maxsamps_per_walker=n_maxsamps_per_walker,
-            n_eff_samples=n_eff_samples,
-            ckpt_interval=ckpt_interval,
+                n_cpus=n_cpus,
+                n_walkers=n_walkers,
+                n_temperatures=n_temperatures,
+                n_maxsamps_per_walker=n_maxsamps_per_walker,
+                n_eff_samples=n_eff_samples,
+                ckpt_interval=ckpt_interval,
+            )
         )
-        self.configs["sampler"][
-            "epsie"
-        ] = """\
+        self.configs["sampler"]["epsie"] = (
+            """\
 [sampler]
 name = epsie
 nprocesses = {n_cpus}
@@ -430,16 +429,16 @@ name = normal
 [jump_proposal-spin2_a]
 name = normal
 """.format(
-            n_cpus=n_cpus,
-            n_walkers=n_walkers,
-            n_eff_samples=n_eff_samples,
-            n_temperatures=n_temperatures,
-            n_maxsamps_per_walker=n_maxsamps_per_walker,
-            ckpt_interval=ckpt_interval,
+                n_cpus=n_cpus,
+                n_walkers=n_walkers,
+                n_eff_samples=n_eff_samples,
+                n_temperatures=n_temperatures,
+                n_maxsamps_per_walker=n_maxsamps_per_walker,
+                ckpt_interval=ckpt_interval,
+            )
         )
-        self.configs["sampler"][
-            "dynesty"
-        ] = """\
+        self.configs["sampler"]["dynesty"] = (
+            """\
 [sampler]
 name = dynesty
 nprocesses = {n_cpus}
@@ -456,11 +455,11 @@ bound = multi  ; none, single, multi, balls, cubes
 ; update_interval =
 ; loglikelihood-function = loglr
 """.format(
-            n_cpus=n_cpus, d_logz=d_logz, n_live=n_live
+                n_cpus=n_cpus, d_logz=d_logz, n_live=n_live
+            )
         )
-        self.configs["sampler"][
-            "ultranest"
-        ] = """\
+        self.configs["sampler"]["ultranest"] = (
+            """\
 [sampler]
 name = ultranest
 dlogz = {d_logz}
@@ -473,11 +472,11 @@ min_num_live_points = {n_live}
 ; max_num_improvement_loops, 
 ; cluster_num_live_points
 """.format(
-            n_live=n_live, d_logz=d_logz
+                n_live=n_live, d_logz=d_logz
+            )
         )
-        self.configs["sampler"][
-            "multinest"
-        ] = """\
+        self.configs["sampler"]["multinest"] = (
+            """\
 [sampler]
 name = multinest
 nprocesses = {n_cpus}
@@ -487,11 +486,11 @@ evidence-tolerance = {d_logz}
 sampling-efficiency = 0.8
 importance-nested-sampling = True
 """.format(
-            n_cpus=n_cpus, n_live=n_live, d_logz=d_logz, ckpt_interval=ckpt_interval
+                n_cpus=n_cpus, n_live=n_live, d_logz=d_logz, ckpt_interval=ckpt_interval
+            )
         )
-        self.configs["sampler"][
-            "cpnest"
-        ] = """\
+        self.configs["sampler"]["cpnest"] = (
+            """\
 [sampler]
 ;
 ; WARNING: this sampler requires python3 support
@@ -518,7 +517,8 @@ mass1, mass2 : mchirp, q
 ; outputs mchirp, q
 name = mass1_mass2_to_mchirp_q
 """.format(
-            n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc
+                n_cpus=n_cpus, n_live=n_live, n_maxmcmc=n_maxmcmc
+            )
         )
 
     def add_inference_configs(self):

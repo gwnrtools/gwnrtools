@@ -191,7 +191,7 @@ class HandleSpectreVolumeDatum(object):
         cmax=1.0,
         ncolors=10,
         name="movie.mp4",
-        **kwargs
+        **kwargs,
     ):
         """
         Make a movie

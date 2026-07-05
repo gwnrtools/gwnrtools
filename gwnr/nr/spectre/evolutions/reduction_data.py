@@ -138,7 +138,7 @@ class HandleSpectreReductionDatum(object):
                 lw=linewidth,
                 ls=linestyle,
                 c=linecolor,
-                **plot_kwargs
+                **plot_kwargs,
             )
 
         if grid:

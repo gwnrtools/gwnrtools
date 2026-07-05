@@ -222,14 +222,7 @@ def get_isco_x(mass1, mass2, spin1z, spin2z, show_figure=False):
             (22.0 + 32.0 * eta) * s_c_l + dm_over_m * sigma_c_l * (18.0 + 15.0 * eta)
         )
         pn3 = (397.0 / 2.0 - 123.0 * np.pi * np.pi / 16.0) * eta - 14.0 * eta**2
-        return (
-            1
-            - 6.0 * x
-            + pn1p5 * x**1.5
-            + pn2 * x**2
-            + pn2p5 * x**2.5
-            + pn3 * x**3
-        )
+        return 1 - 6.0 * x + pn1p5 * x**1.5 + pn2 * x**2 + pn2p5 * x**2.5 + pn3 * x**3
 
     res = minimize_scalar(
         isco_eqn, method="brent", bracket=[0.01, 1], args=(mass1, mass2, spin1z, spin2z)

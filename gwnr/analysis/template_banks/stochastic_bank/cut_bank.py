@@ -38,10 +38,7 @@ class test:
         mt = m1 + m2
         et = m1 * m2 / mt**2
         tau3 = 1.0 / (
-            8.0
-            * (pi * pi * options.f_min**5.0) ** (1.0 / 3.0)
-            * mt ** (2.0 / 3.0)
-            * et
+            8.0 * (pi * pi * options.f_min**5.0) ** (1.0 / 3.0) * mt ** (2.0 / 3.0) * et
         )
         tau0 = 5.0 / (
             256.0 * pi * options.f_min ** (8.0 / 3.0) * mt ** (5.0 / 3.0) * et
@@ -71,13 +68,7 @@ qm = test()
 def within_region_nonspinning(m1, m2):
     eta = m1 * m2 / (m1 + m2) ** 2
     mc = (m1 + m2) * eta**0.6
-    feta = (
-        -7011.5 * eta**4
-        + 5169.4 * eta**3
-        - 1469.6 * eta**2
-        + 217.76 * eta
-        + 12.02
-    )
+    feta = -7011.5 * eta**4 + 5169.4 * eta**3 - 1469.6 * eta**2 + 217.76 * eta + 12.02
     if mc >= feta:
         return True
     else:
@@ -88,13 +79,7 @@ def within_region_alignedspin(mt, et, chi):
     feta = (
         et**-0.6
         * 12.9241
-        * (
-            1.0
-            + 15.1506 * et
-            - 96.7042 * et**2
-            + 305.441 * et**3
-            - 342.732 * et**4
-        )
+        * (1.0 + 15.1506 * et - 96.7042 * et**2 + 305.441 * et**3 - 342.732 * et**4)
         * (
             1.0
             + 0.304976 * chi
