@@ -2,7 +2,7 @@
 
 A collection of tools for academic research in gravitational-wave astronomy & astrophysics, and numerical relativity
 
-**📖 Documentation: <https://gwnr.github.io/gwnr/>**
+**📖 Documentation: <https://gwnrtools.github.io/gwnr/>**
 
 The Python package is named `gwnr` and provides:
 
@@ -19,13 +19,13 @@ The Python package is named `gwnr` and provides:
 ## Installation
 
 ```bash
-git clone https://github.com/gwnr/gwnr.git
+git clone https://github.com/gwnrtools/gwnr.git
 cd gwnr
 pip install -r requirements.txt
 pip install .
 ```
 
-See the [installation guide](https://gwnr.github.io/gwnr/docs/installation/) for details.
+See the [installation guide](https://gwnrtools.github.io/gwnr/docs/installation/) for details.
 
 ## Tutorials
 
@@ -34,7 +34,7 @@ See the [installation guide](https://gwnr.github.io/gwnr/docs/installation/) for
  * [Effectualness of GW search template banks](tutorials/ComputeEffectualness.html)
  * [Inference on GW events](tutorials/BayesianInferenceOnGWEvents.html)
  * [Inference on Injections](tutorials/BayesianInferenceOnGWInjections.html)
- * ... more [here](https://github.com/gwnr/gwnr/tree/master/tutorials)
+ * ... more [here](https://github.com/gwnrtools/gwnr/tree/master/tutorials)
 
 ## License
 
